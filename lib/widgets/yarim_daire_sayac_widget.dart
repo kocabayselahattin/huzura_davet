@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'dart:async';
+import '../services/diyanet_api_service.dart';
+import '../services/konum_service.dart';
+import '../services/tema_service.dart';
 
 class YarimDaireSayacWidget extends StatefulWidget {
   const YarimDaireSayacWidget({super.key});
@@ -13,84 +16,97 @@ class _YarimDaireSayacWidgetState extends State<YarimDaireSayacWidget> {
   Timer? _timer;
   Duration _kalanSure = Duration.zero;
   String _sonrakiVakit = '';
-
-  final List<_VakitDilimi> vakitler = [
-    _VakitDilimi(
-      'Sabah',
-      const TimeOfDay(hour: 6, minute: 12),
-      const TimeOfDay(hour: 7, minute: 45),
-    ),
-    _VakitDilimi(
-      'Güneş',
-      const TimeOfDay(hour: 7, minute: 45),
-      const TimeOfDay(hour: 12, minute: 0),
-    ),
-    _VakitDilimi(
-      'Öğle',
-      const TimeOfDay(hour: 13, minute: 22),
-      const TimeOfDay(hour: 15, minute: 58),
-    ),
-    _VakitDilimi(
-      'İkindi',
-      const TimeOfDay(hour: 15, minute: 58),
-      const TimeOfDay(hour: 18, minute: 25),
-    ),
-    _VakitDilimi(
-      'Akşam',
-      const TimeOfDay(hour: 18, minute: 25),
-      const TimeOfDay(hour: 19, minute: 50),
-    ),
-    _VakitDilimi(
-      'Yatsı',
-      const TimeOfDay(hour: 19, minute: 50),
-      const TimeOfDay(hour: 6, minute: 12),
-    ),
-  ];
+  final TemaService _temaService = TemaService();
+  
+  // API'den gelen vakitler (varsayılan değerler)
+  Map<String, String> _vakitSaatleri = {
+    'imsak': '05:30',
+    'gunes': '07:00',
+    'ogle': '12:30',
+    'ikindi': '15:45',
+    'aksam': '18:15',
+    'yatsi': '19:45',
+  };
 
   @override
   void initState() {
     super.initState();
+    _vakitleriYukle();
     _hesaplaKalanSure();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       _hesaplaKalanSure();
     });
+    _temaService.addListener(_onTemaChanged);
+  }
+
+  void _onTemaChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _temaService.removeListener(_onTemaChanged);
     super.dispose();
+  }
+
+  Future<void> _vakitleriYukle() async {
+    final ilceId = await KonumService.getIlceId();
+    if (ilceId != null) {
+      final vakitler = await DiyanetApiService.getVakitler(ilceId);
+      if (vakitler != null && mounted) {
+        setState(() {
+          _vakitSaatleri = {
+            'imsak': vakitler['Imsak'] ?? '05:30',
+            'gunes': vakitler['Gunes'] ?? '07:00',
+            'ogle': vakitler['Ogle'] ?? '12:30',
+            'ikindi': vakitler['Ikindi'] ?? '15:45',
+            'aksam': vakitler['Aksam'] ?? '18:15',
+            'yatsi': vakitler['Yatsi'] ?? '19:45',
+          };
+        });
+        _hesaplaKalanSure();
+      }
+    }
+  }
+
+  TimeOfDay _parseVakit(String saat) {
+    final parts = saat.split(':');
+    return TimeOfDay(
+      hour: int.parse(parts[0]),
+      minute: int.parse(parts[1]),
+    );
   }
 
   void _hesaplaKalanSure() {
     final now = DateTime.now();
     final nowMinutes = now.hour * 60 + now.minute;
 
-    // Sonraki vakti bul
     DateTime? sonrakiVakitZamani;
     String sonrakiVakitAdi = '';
 
-    final vakitSaatleri = [
-      {'adi': 'İmsak', 'saat': 6, 'dakika': 12},
-      {'adi': 'Güneş', 'saat': 7, 'dakika': 45},
-      {'adi': 'Öğle', 'saat': 13, 'dakika': 22},
-      {'adi': 'İkindi', 'saat': 15, 'dakika': 58},
-      {'adi': 'Akşam', 'saat': 18, 'dakika': 25},
-      {'adi': 'Yatsı', 'saat': 19, 'dakika': 50},
+    final vakitListesi = [
+      {'adi': 'İmsak', 'saat': _vakitSaatleri['imsak']!},
+      {'adi': 'Güneş', 'saat': _vakitSaatleri['gunes']!},
+      {'adi': 'Öğle', 'saat': _vakitSaatleri['ogle']!},
+      {'adi': 'İkindi', 'saat': _vakitSaatleri['ikindi']!},
+      {'adi': 'Akşam', 'saat': _vakitSaatleri['aksam']!},
+      {'adi': 'Yatsı', 'saat': _vakitSaatleri['yatsi']!},
     ];
 
-    for (final vakit in vakitSaatleri) {
-      final vakitMinutes =
-          (vakit['saat'] as int) * 60 + (vakit['dakika'] as int);
+    for (final vakit in vakitListesi) {
+      final time = _parseVakit(vakit['saat']!);
+      final vakitMinutes = time.hour * 60 + time.minute;
+      
       if (vakitMinutes > nowMinutes) {
         sonrakiVakitZamani = DateTime(
           now.year,
           now.month,
           now.day,
-          vakit['saat'] as int,
-          vakit['dakika'] as int,
+          time.hour,
+          time.minute,
         );
-        sonrakiVakitAdi = vakit['adi'] as String;
+        sonrakiVakitAdi = vakit['adi']!;
         break;
       }
     }
@@ -98,14 +114,15 @@ class _YarimDaireSayacWidgetState extends State<YarimDaireSayacWidget> {
     // Eğer bugün için vakit kalmadıysa, yarının ilk vakti
     if (sonrakiVakitZamani == null) {
       final yarin = now.add(const Duration(days: 1));
+      final imsakTime = _parseVakit(_vakitSaatleri['imsak']!);
       sonrakiVakitZamani = DateTime(
         yarin.year,
         yarin.month,
         yarin.day,
-        vakitSaatleri[0]['saat'] as int,
-        vakitSaatleri[0]['dakika'] as int,
+        imsakTime.hour,
+        imsakTime.minute,
       );
-      sonrakiVakitAdi = vakitSaatleri[0]['adi'] as String;
+      sonrakiVakitAdi = 'İmsak';
     }
 
     setState(() {
@@ -123,18 +140,21 @@ class _YarimDaireSayacWidgetState extends State<YarimDaireSayacWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final renkler = _temaService.renkler;
+    
     return Card(
-      color: const Color(0xFF1B2741),
+      color: renkler.kartArkaPlan,
       margin: const EdgeInsets.all(10),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
         padding: const EdgeInsets.all(10),
         child: CustomPaint(
           painter: _YarimDairePainter(
-            vakitler: vakitler,
+            vakitSaatleri: _vakitSaatleri,
             kalanSure: _kalanSure,
             sonrakiVakit: _sonrakiVakit,
             mevcutSaat: DateTime.now(),
+            renkler: renkler,
           ),
           child: SizedBox(
             height: 200,
@@ -142,10 +162,10 @@ class _YarimDaireSayacWidgetState extends State<YarimDaireSayacWidget> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                const Text(
+                Text(
                   'Vaktin Çıkmasına',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: renkler.yaziSecondary,
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),
@@ -153,8 +173,8 @@ class _YarimDaireSayacWidgetState extends State<YarimDaireSayacWidget> {
                 const SizedBox(height: 2),
                 Text(
                   _formatDuration(_kalanSure),
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: renkler.yaziPrimary,
                     fontSize: 26,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 2,
@@ -171,17 +191,27 @@ class _YarimDaireSayacWidgetState extends State<YarimDaireSayacWidget> {
 }
 
 class _YarimDairePainter extends CustomPainter {
-  final List<_VakitDilimi> vakitler;
+  final Map<String, String> vakitSaatleri;
   final Duration kalanSure;
   final String sonrakiVakit;
   final DateTime mevcutSaat;
+  final TemaRenkleri renkler;
 
   _YarimDairePainter({
-    required this.vakitler,
+    required this.vakitSaatleri,
     required this.kalanSure,
     required this.sonrakiVakit,
     required this.mevcutSaat,
+    required this.renkler,
   });
+
+  TimeOfDay _parseVakit(String saat) {
+    final parts = saat.split(':');
+    return TimeOfDay(
+      hour: int.parse(parts[0]),
+      minute: int.parse(parts[1]),
+    );
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -189,9 +219,9 @@ class _YarimDairePainter extends CustomPainter {
     final radius = size.height - 30;
     final innerRadius = radius * 0.55;
 
-    // Beyaz arka plan yarım daire
+    // Arka plan yarım daire
     final bgPaint = Paint()
-      ..color = const Color(0xFFF5F5F5)
+      ..color = renkler.yaziPrimary.withValues(alpha: 0.9)
       ..style = PaintingStyle.fill;
 
     canvas.drawArc(
@@ -202,9 +232,9 @@ class _YarimDairePainter extends CustomPainter {
       bgPaint,
     );
 
-    // Turkuaz iç daire
+    // Vurgu renkli iç daire
     final innerPaint = Paint()
-      ..color = const Color(0xFF2D9DA6)
+      ..color = renkler.vurgu
       ..style = PaintingStyle.fill;
 
     canvas.drawArc(
@@ -217,50 +247,58 @@ class _YarimDairePainter extends CustomPainter {
 
     // Vakit dilimleri
     final vakitRenkleri = [
-      const Color(0xFFB8B8B8), // Sabah - gri
-      const Color(0xFFE0E0E0), // Güneş - açık gri
-      const Color(0xFFB8B8B8), // Öğle - gri
-      const Color(0xFFD0D0D0), // İkindi - orta gri
-      const Color(0xFFC0C0C0), // Akşam - gri
-      const Color(0xFFE8E8E8), // Yatsı - açık gri
+      renkler.arkaPlan.withValues(alpha: 0.7), // İmsak
+      renkler.arkaPlan.withValues(alpha: 0.5), // Güneş
+      renkler.arkaPlan.withValues(alpha: 0.7), // Öğle
+      renkler.arkaPlan.withValues(alpha: 0.6), // İkindi
+      renkler.arkaPlan.withValues(alpha: 0.65), // Akşam
+      renkler.arkaPlan.withValues(alpha: 0.55), // Yatsı
     ];
 
-    // Vakit açılarını gerçek saatlere göre hesapla
+    // Vakitleri parse et
+    final imsak = _parseVakit(vakitSaatleri['imsak']!);
+    final gunes = _parseVakit(vakitSaatleri['gunes']!);
+    final ogle = _parseVakit(vakitSaatleri['ogle']!);
+    final ikindi = _parseVakit(vakitSaatleri['ikindi']!);
+    final aksam = _parseVakit(vakitSaatleri['aksam']!);
+    final yatsi = _parseVakit(vakitSaatleri['yatsi']!);
+
+    // Vakit açılarını hesapla - gece yarısından itibaren 24 saati yarım daireye sığdır
     double _saatToOran(int saat, int dakika) {
       double toplamSaat = saat + dakika / 60.0;
-      if (toplamSaat < 6) toplamSaat += 24;
-      return (toplamSaat - 6) / 24.0;
+      // Gece yarısından (00:00) başlayarak 24 saati yarım daireye (pi) sığdır
+      return toplamSaat / 24.0;
     }
 
     final vakitAcilari = [
       {
-        'start': _saatToOran(6, 12),
-        'sweep': _saatToOran(7, 45) - _saatToOran(6, 12),
-        'label': 'Sabah',
+        'start': _saatToOran(imsak.hour, imsak.minute),
+        'sweep': _saatToOran(gunes.hour, gunes.minute) - _saatToOran(imsak.hour, imsak.minute),
+        'label': 'İmsak',
       },
       {
-        'start': _saatToOran(7, 45),
-        'sweep': _saatToOran(13, 22) - _saatToOran(7, 45),
+        'start': _saatToOran(gunes.hour, gunes.minute),
+        'sweep': _saatToOran(ogle.hour, ogle.minute) - _saatToOran(gunes.hour, gunes.minute),
         'label': 'Güneş',
       },
       {
-        'start': _saatToOran(13, 22),
-        'sweep': _saatToOran(15, 58) - _saatToOran(13, 22),
+        'start': _saatToOran(ogle.hour, ogle.minute),
+        'sweep': _saatToOran(ikindi.hour, ikindi.minute) - _saatToOran(ogle.hour, ogle.minute),
         'label': 'Öğle',
       },
       {
-        'start': _saatToOran(15, 58),
-        'sweep': _saatToOran(18, 25) - _saatToOran(15, 58),
+        'start': _saatToOran(ikindi.hour, ikindi.minute),
+        'sweep': _saatToOran(aksam.hour, aksam.minute) - _saatToOran(ikindi.hour, ikindi.minute),
         'label': 'İkindi',
       },
       {
-        'start': _saatToOran(18, 25),
-        'sweep': _saatToOran(19, 50) - _saatToOran(18, 25),
+        'start': _saatToOran(aksam.hour, aksam.minute),
+        'sweep': _saatToOran(yatsi.hour, yatsi.minute) - _saatToOran(aksam.hour, aksam.minute),
         'label': 'Akşam',
       },
       {
-        'start': _saatToOran(19, 50),
-        'sweep': (1.0 + _saatToOran(6, 12)) - _saatToOran(19, 50),
+        'start': _saatToOran(yatsi.hour, yatsi.minute),
+        'sweep': 1.0 - _saatToOran(yatsi.hour, yatsi.minute) + _saatToOran(imsak.hour, imsak.minute),
         'label': 'Yatsı',
       },
     ];
@@ -307,9 +345,9 @@ class _YarimDairePainter extends CustomPainter {
       final textPainter = TextPainter(
         text: TextSpan(
           text: vakit['label'] as String,
-          style: const TextStyle(
-            color: Color(0xFF555555),
-            fontSize: 11,
+          style: TextStyle(
+            color: renkler.yaziPrimary.withValues(alpha: 0.8),
+            fontSize: 10,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -324,7 +362,7 @@ class _YarimDairePainter extends CustomPainter {
 
       // Çizgi ayırıcı
       final linePaint = Paint()
-        ..color = const Color(0xFF2D9DA6)
+        ..color = renkler.vurgu
         ..strokeWidth = 1.5;
 
       canvas.drawLine(
@@ -340,15 +378,15 @@ class _YarimDairePainter extends CustomPainter {
       );
     }
 
-    // Saat noktaları
-    final saatler = [6, 10, 14, 18, 22, 2];
+    // Saat noktaları (00, 04, 08, 12, 16, 20, 24)
+    final saatler = [0, 4, 8, 12, 16, 20, 24];
     for (int i = 0; i <= 6; i++) {
       final angle = math.pi + (i / 6) * math.pi;
       final dotRadius = radius - 8;
 
       // Nokta
       final dotPaint = Paint()
-        ..color = const Color(0xFF888888)
+        ..color = renkler.yaziSecondary
         ..style = PaintingStyle.fill;
 
       canvas.drawCircle(
@@ -368,8 +406,8 @@ class _YarimDairePainter extends CustomPainter {
         final textPainter = TextPainter(
           text: TextSpan(
             text: saatler[i].toString().padLeft(2, '0'),
-            style: const TextStyle(
-              color: Colors.white70,
+            style: TextStyle(
+              color: renkler.yaziSecondary,
               fontSize: 12,
               fontWeight: FontWeight.w500,
             ),
@@ -394,16 +432,15 @@ class _YarimDairePainter extends CustomPainter {
     // Kadran (saat ibresi) - mevcut saate göre
     final hour = mevcutSaat.hour;
     final minute = mevcutSaat.minute;
-    // 6'dan başlayıp 6'ya kadar (24 saat = pi radyan)
-    // Saat 6 = 0, Saat 18 = pi/2, Saat 6 (ertesi gün) = pi
-    double saatNormalize = hour + minute / 60.0;
-    if (saatNormalize < 6) saatNormalize += 24;
-    final saatOrani = (saatNormalize - 6) / 24.0; // 0-1 arası
+    final second = mevcutSaat.second;
+    
+    // Saati 0-24 arasında normalize et ve pi açısına çevir
+    double saatOrani = (hour + minute / 60.0 + second / 3600.0) / 24.0;
     final kadranAcisi = math.pi + saatOrani * math.pi;
 
     // Kadran çizgisi
     final kadranPaint = Paint()
-      ..color = const Color(0xFF2D9DA6)
+      ..color = renkler.vurgu
       ..strokeWidth = 3
       ..strokeCap = StrokeCap.round;
 
@@ -437,17 +474,9 @@ class _YarimDairePainter extends CustomPainter {
         arrowTip.dy - arrowLength * math.sin(kadranAcisi + arrowAngle),
       )
       ..close();
-    canvas.drawPath(arrowPath, Paint()..color = const Color(0xFF2D9DA6));
+    canvas.drawPath(arrowPath, Paint()..color = renkler.vurgu);
   }
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
-}
-
-class _VakitDilimi {
-  final String adi;
-  final TimeOfDay baslangic;
-  final TimeOfDay bitis;
-
-  _VakitDilimi(this.adi, this.baslangic, this.bitis);
 }

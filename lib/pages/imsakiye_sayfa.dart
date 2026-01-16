@@ -88,30 +88,17 @@ class _ImsakiyeSayfaState extends State<ImsakiyeSayfa> {
     _yukleniyorAylar.add(key);
 
     try {
-      final data = await DiyanetApiService.getVakitler(secilenIlceId!);
-      if (data != null && data.containsKey('vakitler')) {
-        final tumVakitler = data['vakitler'] as List;
+      // Yeni aylık API metodunu kullan
+      final ayVakitleri = await DiyanetApiService.getAylikVakitler(
+        secilenIlceId!,
+        ay.year,
+        ay.month,
+      );
 
-        final ayVakitleri = tumVakitler.where((vakit) {
-          final tarih = vakit['MiladiTarihKisa'] ?? '';
-          try {
-            final parts = tarih.split('.');
-            if (parts.length == 3) {
-              final ayNum = int.parse(parts[1]);
-              final yilNum = int.parse(parts[2]);
-              return yilNum == ay.year && ayNum == ay.month;
-            }
-          } catch (e) {
-            // Parse hatası
-          }
-          return false;
-        }).toList();
-
-        if (mounted) {
-          setState(() {
-            _vakitCache[key] = ayVakitleri;
-          });
-        }
+      if (mounted && ayVakitleri.isNotEmpty) {
+        setState(() {
+          _vakitCache[key] = ayVakitleri;
+        });
       }
     } catch (e) {
       print('Ön yükleme hatası ($key): $e');
@@ -131,26 +118,14 @@ class _ImsakiyeSayfaState extends State<ImsakiyeSayfa> {
     }
 
     try {
-      final data = await DiyanetApiService.getVakitler(secilenIlceId!);
-      if (data != null && data.containsKey('vakitler')) {
-        final tumVakitler = data['vakitler'] as List;
+      // Yeni aylık API metodunu kullan
+      final ayVakitleri = await DiyanetApiService.getAylikVakitler(
+        secilenIlceId!,
+        ay.year,
+        ay.month,
+      );
 
-        // Seçili aya ait vakitleri filtrele
-        final ayVakitleri = tumVakitler.where((vakit) {
-          final tarih = vakit['MiladiTarihKisa'] ?? '';
-          try {
-            final parts = tarih.split('.');
-            if (parts.length == 3) {
-              final ayNum = int.parse(parts[1]);
-              final yilNum = int.parse(parts[2]);
-              return yilNum == ay.year && ayNum == ay.month;
-            }
-          } catch (e) {
-            print('İmsakiye tarih parse hatası: $tarih - $e');
-          }
-          return false;
-        }).toList();
-
+      if (ayVakitleri.isNotEmpty) {
         _vakitCache[key] = ayVakitleri;
         return ayVakitleri;
       }

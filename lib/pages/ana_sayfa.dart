@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
-import '../widgets/pasta_sayac_widget.dart';
+import '../widgets/premium_sayac_widget.dart';
 import '../widgets/vakit_listesi_widget.dart';
 import '../widgets/gunun_icerigi_widget.dart';
 import '../widgets/yarim_daire_sayac_widget.dart';
 import '../widgets/dijital_sayac_widget.dart';
+import '../widgets/esmaul_husna_widget.dart';
 import '../services/konum_service.dart';
 import '../services/tema_service.dart';
 import 'imsakiye_sayfa.dart';
 import 'ayarlar_sayfa.dart';
 import 'zikir_matik_sayfa.dart';
+import 'kirk_hadis_sayfa.dart';
+import 'kuran_sayfa.dart';
 
 class AnaSayfa extends StatefulWidget {
   const AnaSayfa({super.key});
@@ -86,11 +89,16 @@ class _AnaSayfaState extends State<AnaSayfa> {
                   controller: PageController(viewportFraction: 0.95),
                   children: const [
                     DijitalSayacWidget(),
-                    PastaSayacWidget(),
+                    PremiumSayacWidget(),
                     YarimDaireSayacWidget(),
                   ],
                 ),
               ),
+
+              const SizedBox(height: 10),
+
+              // --- ESMAUL HUSNA ---
+              const EsmaulHusnaWidget(),
 
               const SizedBox(height: 10),
 
@@ -161,6 +169,38 @@ class _AnaSayfaState extends State<AnaSayfa> {
                     context,
                     MaterialPageRoute(
                       builder: (context) => const ZikirMatikSayfa(),
+                    ),
+                  );
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.menu_book, color: renkler.vurgu),
+                title: Text(
+                  '40 Hadis',
+                  style: TextStyle(color: renkler.yaziPrimary),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const KirkHadisSayfa(),
+                    ),
+                  );
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.auto_stories, color: renkler.vurgu),
+                title: Text(
+                  'Kur\'an-ı Kerim',
+                  style: TextStyle(color: renkler.yaziPrimary),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const KuranSayfa(),
                     ),
                   );
                 },

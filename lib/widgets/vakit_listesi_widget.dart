@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import '../services/konum_service.dart';
 import '../services/diyanet_api_service.dart';
+import '../services/tema_service.dart';
 
 class VakitListesiWidget extends StatefulWidget {
   const VakitListesiWidget({super.key});
@@ -11,6 +12,7 @@ class VakitListesiWidget extends StatefulWidget {
 }
 
 class _VakitListesiWidgetState extends State<VakitListesiWidget> {
+  final TemaService _temaService = TemaService();
   Map<String, String> vakitSaatleri = {
     'Imsak': '—:—',
     'Gunes': '—:—',
@@ -37,11 +39,17 @@ class _VakitListesiWidgetState extends State<VakitListesiWidget> {
         setState(() => _iconVisible = !_iconVisible);
       }
     });
+    _temaService.addListener(_onTemaChanged);
+  }
+
+  void _onTemaChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _temaService.removeListener(_onTemaChanged);
     super.dispose();
   }
 
@@ -157,11 +165,16 @@ class _VakitListesiWidgetState extends State<VakitListesiWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final renkler = _temaService.renkler;
+    
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: renkler.kartArkaPlan.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: renkler.vurgu.withValues(alpha: 0.1),
+        ),
       ),
       child: Column(
         children: [
@@ -170,51 +183,57 @@ class _VakitListesiWidgetState extends State<VakitListesiWidget> {
             vakitSaatleri['Imsak']!,
             Icons.nightlight_round,
             'Imsak',
+            renkler,
           ),
           _vakitSatiri(
             "Güneş",
             vakitSaatleri['Gunes']!,
             Icons.wb_sunny,
             'Gunes',
+            renkler,
           ),
           _vakitSatiri(
             "Öğle",
             vakitSaatleri['Ogle']!,
             Icons.light_mode,
             'Ogle',
+            renkler,
           ),
           _vakitSatiri(
             "İkindi",
             vakitSaatleri['Ikindi']!,
             Icons.brightness_6,
             'Ikindi',
+            renkler,
           ),
           _vakitSatiri(
             "Akşam",
             vakitSaatleri['Aksam']!,
             Icons.wb_twilight,
             'Aksam',
+            renkler,
           ),
           _vakitSatiri(
             "Yatsı",
             vakitSaatleri['Yatsi']!,
             Icons.nights_stay,
             'Yatsi',
+            renkler,
           ),
         ],
       ),
     );
   }
 
-  Widget _vakitSatiri(String ad, String saat, IconData icon, String key) {
+  Widget _vakitSatiri(String ad, String saat, IconData icon, String key, TemaRenkleri renkler) {
     final aktif = aktifVakit == key;
     final sonraki = sonrakiVakit == key;
 
     return Container(
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: aktif ? Colors.cyanAccent.withOpacity(0.15) : Colors.transparent,
-        border: const Border(bottom: BorderSide(color: Colors.white10)),
+        color: aktif ? renkler.vurgu.withValues(alpha: 0.15) : Colors.transparent,
+        border: Border(bottom: BorderSide(color: renkler.yaziSecondary.withValues(alpha: 0.1))),
       ),
       child: Row(
         children: [
@@ -224,10 +243,10 @@ class _VakitListesiWidgetState extends State<VakitListesiWidget> {
             child: Icon(
               icon,
               color: aktif
-                  ? Colors.cyanAccent
+                  ? renkler.vurgu
                   : sonraki
                       ? Colors.orange
-                      : Colors.white54,
+                      : renkler.yaziSecondary,
               size: 24,
             ),
           ),
@@ -236,7 +255,7 @@ class _VakitListesiWidgetState extends State<VakitListesiWidget> {
             child: Text(
               ad,
               style: TextStyle(
-                color: aktif ? Colors.cyanAccent : Colors.white,
+                color: aktif ? renkler.vurgu : renkler.yaziPrimary,
                 fontSize: 16,
                 fontWeight: aktif ? FontWeight.bold : FontWeight.normal,
               ),
@@ -245,7 +264,7 @@ class _VakitListesiWidgetState extends State<VakitListesiWidget> {
           Text(
             saat,
             style: TextStyle(
-              color: aktif ? Colors.cyanAccent : Colors.white70,
+              color: aktif ? renkler.vurgu : renkler.yaziSecondary,
               fontSize: 16,
               fontWeight: FontWeight.bold,
             ),

@@ -4,6 +4,7 @@ import 'package:hijri/hijri_calendar.dart';
 import 'package:intl/intl.dart';
 import '../services/konum_service.dart';
 import '../services/diyanet_api_service.dart';
+import '../services/tema_service.dart';
 
 class DijitalSayacWidget extends StatefulWidget {
   const DijitalSayacWidget({super.key});
@@ -18,6 +19,7 @@ class _DijitalSayacWidgetState extends State<DijitalSayacWidget> {
   String _sonrakiVakit = '';
   String _sonrakiVakitSaati = '';
   Map<String, String> _vakitSaatleri = {};
+  final TemaService _temaService = TemaService();
 
   @override
   void initState() {
@@ -26,11 +28,17 @@ class _DijitalSayacWidgetState extends State<DijitalSayacWidget> {
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       _hesaplaKalanSure();
     });
+    _temaService.addListener(_onTemaChanged);
+  }
+
+  void _onTemaChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _temaService.removeListener(_onTemaChanged);
     super.dispose();
   }
 
@@ -163,6 +171,7 @@ class _DijitalSayacWidgetState extends State<DijitalSayacWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final renkler = _temaService.renkler;
     final hours = _kalanSure.inHours;
     final minutes = _kalanSure.inMinutes % 60;
     final seconds = _kalanSure.inSeconds % 60;
@@ -181,14 +190,18 @@ class _DijitalSayacWidgetState extends State<DijitalSayacWidget> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Colors.blue.shade900.withOpacity(0.5),
-            Colors.black.withOpacity(0.5),
+            renkler.kartArkaPlan,
+            renkler.kartArkaPlan.withValues(alpha: 0.7),
           ],
         ),
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: renkler.vurgu.withValues(alpha: 0.3),
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             spreadRadius: 2,
             blurRadius: 10,
             offset: const Offset(0, 5),
@@ -201,13 +214,13 @@ class _DijitalSayacWidgetState extends State<DijitalSayacWidget> {
           Text(
             '$_sonrakiVakit Vaktine',
             style: TextStyle(
-              fontSize: 24, // Yazı boyutu büyütüldü
+              fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: Colors.cyanAccent,
+              color: renkler.vurgu,
               shadows: [
                 Shadow(
                   blurRadius: 10.0,
-                  color: Colors.cyanAccent.withOpacity(0.5),
+                  color: renkler.vurgu.withValues(alpha: 0.5),
                   offset: const Offset(0, 0),
                 ),
               ],
@@ -216,10 +229,10 @@ class _DijitalSayacWidgetState extends State<DijitalSayacWidget> {
           const SizedBox(height: 5),
           Text(
             '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 66,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: renkler.yaziPrimary,
               fontFamily: 'Digital-7',
               letterSpacing: 2,
             ),
@@ -232,10 +245,10 @@ class _DijitalSayacWidgetState extends State<DijitalSayacWidget> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Miladi',
                       style: TextStyle(
-                        color: Colors.white38,
+                        color: renkler.yaziSecondary.withValues(alpha: 0.6),
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
                       ),
@@ -243,8 +256,8 @@ class _DijitalSayacWidgetState extends State<DijitalSayacWidget> {
                     const SizedBox(height: 2),
                     Text(
                       miladiTarih,
-                      style: const TextStyle(
-                        color: Colors.white70,
+                      style: TextStyle(
+                        color: renkler.yaziSecondary,
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                       ),
@@ -256,10 +269,10 @@ class _DijitalSayacWidgetState extends State<DijitalSayacWidget> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    const Text(
+                    Text(
                       'Hicri',
                       style: TextStyle(
-                        color: Colors.white38,
+                        color: renkler.yaziSecondary.withValues(alpha: 0.6),
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
                       ),
@@ -267,8 +280,8 @@ class _DijitalSayacWidgetState extends State<DijitalSayacWidget> {
                     const SizedBox(height: 2),
                     Text(
                       hicriTarih,
-                      style: const TextStyle(
-                        color: Colors.white70,
+                      style: TextStyle(
+                        color: renkler.yaziSecondary,
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                       ),
