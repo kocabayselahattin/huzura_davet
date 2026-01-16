@@ -1,335 +1,560 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
+import 'dart:async';
 
 class PastaSayacWidget extends StatelessWidget {
   const PastaSayacWidget({super.key});
 
-  TimeOfDay _parseTime(String time) {
-    final parts = time.split(':');
-    return TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
-  }
-
   @override
   Widget build(BuildContext context) {
-    final now = DateTime.now();
-    final prayerTimes = [
-      _parseTime("06:12"), // İmsak
-      _parseTime("07:45"), // Güneş
-      _parseTime("13:22"), // Öğle
-      _parseTime("15:58"), // İkindi
-      _parseTime("18:25"), // Akşam
-      _parseTime("19:50"), // Yatsı
+    final now = TimeOfDay.fromDateTime(DateTime.now());
+    final mainSegments = <_Segment>[
+      _Segment(
+        'İmsak',
+        const TimeOfDay(hour: 6, minute: 12),
+        const TimeOfDay(hour: 7, minute: 45),
+        const Color(0xFF7E819A),
+      ),
+      _Segment(
+        'Güneş',
+        const TimeOfDay(hour: 7, minute: 45),
+        const TimeOfDay(hour: 9, minute: 6),
+        const Color(0xFF8A8D9F),
+      ),
+      _Segment(
+        'Kerahat Vakti',
+        const TimeOfDay(hour: 9, minute: 6),
+        const TimeOfDay(hour: 9, minute: 26),
+        const Color(0xFFA1A4B7),
+      ),
+      _Segment(
+        'Duha',
+        const TimeOfDay(hour: 9, minute: 26),
+        const TimeOfDay(hour: 12, minute: 0),
+        const Color(0xFF8A8D9F),
+      ),
+      _Segment(
+        'Kerahat Vakti',
+        const TimeOfDay(hour: 12, minute: 0),
+        const TimeOfDay(hour: 13, minute: 0),
+        const Color(0xFFA1A4B7),
+      ),
+      _Segment(
+        'Öğle',
+        const TimeOfDay(hour: 13, minute: 0),
+        const TimeOfDay(hour: 15, minute: 58),
+        const Color(0xFF7E819A),
+      ),
+      _Segment(
+        'İkindi',
+        const TimeOfDay(hour: 15, minute: 58),
+        const TimeOfDay(hour: 17, minute: 0),
+        const Color(0xFF8A8D9F),
+      ),
+      _Segment(
+        'Kerahat Vakti',
+        const TimeOfDay(hour: 17, minute: 0),
+        const TimeOfDay(hour: 18, minute: 5),
+        const Color(0xFFA1A4B7),
+      ),
+      _Segment(
+        'Akşam',
+        const TimeOfDay(hour: 18, minute: 5),
+        const TimeOfDay(hour: 19, minute: 0),
+        const Color(0xFF8A8D9F),
+      ),
+      _Segment(
+        'Yatsı',
+        const TimeOfDay(hour: 19, minute: 0),
+        const TimeOfDay(hour: 4, minute: 44),
+        const Color(0xFF7B7F96),
+      ),
     ];
-    return Column(
-      children: [
-        Stack(
-          alignment: Alignment.bottomCenter,
-          clipBehavior: Clip.none,
-          children: [
-            // 1. Yarım Daire Kadran: Vakitlerin (Sabah, Öğle...) Pasta Dilimleri ve Saatler
-            SizedBox(
-              width: 360,
-              height: 210,
-              child: CustomPaint(
-                painter: PastaDilimiPainter(prayerTimes: prayerTimes, now: now),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _ZamanUstBaslik(segments: mainSegments),
+          const SizedBox(height: 3),
+          const SizedBox(
+            height: 18,
+            child: CustomPaint(painter: _VakitTickPainter()),
+          ),
+          const SizedBox(height: 3),
+          SizedBox(
+            height: 115,
+            child: CustomPaint(
+              painter: _VakitCizelgePainter(
+                now: now,
+                mainSegments: mainSegments,
               ),
             ),
-
-            // 2. Merkez Panel: Görseldeki turkuaz/yeşil yarım daire alan
-            Positioned(
-              bottom: 0,
-              child: Container(
-                width: 200,
-                height: 100,
-                decoration: BoxDecoration(
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(100),
-                    topRight: Radius.circular(100),
-                  ),
-                  color: const Color(0xFF3AAFA9), // Görseldeki turkuaz ton
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
-                      blurRadius: 15,
-                      spreadRadius: 1,
-                    ),
-                  ],
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 20),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Vaktin Çıkmasına",
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 12,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      const Text(
-                        "03:46:48", // Dinamik sayaç buraya gelecek
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
+          ),
+        ],
+      ),
     );
   }
 }
 
-class PastaDilimiPainter extends CustomPainter {
-  PastaDilimiPainter({required this.prayerTimes, required this.now});
+class _ZamanUstBaslik extends StatefulWidget {
+  const _ZamanUstBaslik({required this.segments});
 
-  final List<TimeOfDay> prayerTimes;
-  final DateTime now;
+  final List<_Segment> segments;
+
+  @override
+  State<_ZamanUstBaslik> createState() => _ZamanUstBaslikState();
+}
+
+class _ZamanUstBaslikState extends State<_ZamanUstBaslik> {
+  late final ScrollController _controller;
+  Timer? _timer;
+  DateTime? _lastTick;
+
+  // px / second (keep slow and readable)
+  static const double _speed = 30.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = ScrollController();
+
+    // Slow continuous marquee (prevents the "it doesn't move" feeling).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (_controller.hasClients) {
+        _controller.jumpTo(0);
+        _lastTick = DateTime.now();
+        _timer = Timer.periodic(const Duration(milliseconds: 16), (_) {
+          _tick();
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _tick() {
+    if (!_controller.hasClients) return;
+    final max = _controller.position.maxScrollExtent;
+    if (max <= 0) return;
+
+    final now = DateTime.now();
+    final last = _lastTick ?? now;
+    _lastTick = now;
+
+    final dtSeconds = now.difference(last).inMilliseconds / 1000.0;
+    final delta = _speed * dtSeconds;
+    final next = _controller.offset + delta;
+
+    if (next >= max) {
+      _controller.jumpTo(0);
+    } else {
+      _controller.jumpTo(next);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFF121B3A),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: ShaderMask(
+        blendMode: BlendMode.dstIn,
+        shaderCallback: (rect) {
+          return const LinearGradient(
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+            colors: [
+              Colors.transparent,
+              Colors.white,
+              Colors.white,
+              Colors.transparent,
+            ],
+            stops: [0.0, 0.06, 0.94, 1.0],
+          ).createShader(rect);
+        },
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          controller: _controller,
+          physics: const NeverScrollableScrollPhysics(),
+          child: Row(children: _buildItems()),
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildItems() {
+    final widgets = <Widget>[];
+    // Duplicate the list multiple times to create seamless loop
+    final repeatedSegments = [
+      ...widget.segments,
+      ...widget.segments,
+      ...widget.segments,
+    ];
+    for (int i = 0; i < repeatedSegments.length; i++) {
+      final seg = repeatedSegments[i];
+      final isKerahat = seg.label == 'Kerahat Vakti';
+      final isDuha = seg.label == 'Duha';
+      final isEvvabin = seg.label == 'Akşam'; // Evvabin aslında Akşam vakti
+      
+      if (i > 0) {
+        widgets.add(const SizedBox(width: 6));
+      }
+      
+      widgets.add(
+        _BaslikItem(
+          label: seg.label,
+          time: _formatTime(seg.start),
+          endTime: (isKerahat || isDuha || isEvvabin) ? _formatTime(seg.end) : null,
+        ),
+      );
+    }
+    return widgets;
+  }
+
+  String _formatTime(TimeOfDay t) {
+    final h = t.hour.toString().padLeft(2, '0');
+    final m = t.minute.toString().padLeft(2, '0');
+    return '$h:$m';
+  }
+}
+
+class _BaslikItem extends StatelessWidget {
+  const _BaslikItem({required this.label, required this.time, this.endTime});
+
+  final String label;
+  final String time;
+  final String? endTime;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 120,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            label,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            time,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          if (endTime != null) ...[
+            const SizedBox(height: 2),
+            Text(
+              endTime!,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _VakitTickPainter extends CustomPainter {
+  const _VakitTickPainter();
 
   @override
   void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height); // Merkez altta
-    final radius = size.width / 2 - 55; // Dış saat rakamları için pay bıraktık
+    final startHour = 6;
+    final endHour = 5;
+    final totalHours = 24 - startHour + endHour;
     final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 45; // Dilim kalınlığı
+      ..color = Colors.white70
+      ..strokeWidth = 1;
 
-    final segmentCount = prayerTimes.length;
-    final segmentAngle = math.pi / segmentCount;
-    final angleOffset = _calculateAngleOffset(segmentAngle, segmentCount);
-
-    // --- 0. DIŞ BEYAZ ÇEMBER (ARKA PLAN) ---
-    final backgroundPaint = Paint()
-      ..style = PaintingStyle.fill
-      ..color = const Color(0xFFF0EDE8); // Açık krem beyaz ton
-
-    // Yarım daire dolgulu arka plan
-    final path = Path();
-    path.moveTo(center.dx - radius - 30, center.dy);
-    path.arcToPoint(
-      Offset(center.dx + radius + 30, center.dy),
-      radius: Radius.circular(radius + 30),
-      clockwise: false,
-    );
-    path.close();
-    canvas.drawPath(path, backgroundPaint);
-
-    // --- 1. VAKİT DİLİMLERİ (SABAH, ÖĞLE, İKİNDİ...) ---
-    // Yarım daire şeklinde vakitler (sadece üst yarım)
-    // Görseldeki gibi 6 dilim: Sabah, Öğle, İkindi, Akşam, Yatsı, (gece)
-
-    // Dilim 1: Sabah (Koyu Gri)
-    paint.color = const Color(0xFF8A8A8A);
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      -math.pi + angleOffset,
-      segmentAngle,
-      false,
-      paint,
-    );
-
-    // Dilim 2: Öğle (Orta Gri)
-    paint.color = const Color(0xFFA5A5A5);
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      -math.pi + segmentAngle + angleOffset,
-      segmentAngle,
-      false,
-      paint,
-    );
-
-    // Dilim 3: İkindi (Açık Gri)
-    paint.color = const Color(0xFFC0C0C0);
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      -math.pi + 2 * segmentAngle + angleOffset,
-      segmentAngle,
-      false,
-      paint,
-    );
-
-    // Dilim 4: Akşam (Daha Açık Gri)
-    paint.color = const Color(0xFFD5D5D5);
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      -math.pi + 3 * segmentAngle + angleOffset,
-      segmentAngle,
-      false,
-      paint,
-    );
-
-    // Dilim 5: Yatsı (En Açık Gri)
-    paint.color = const Color(0xFFE8E8E8);
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      -math.pi + 4 * segmentAngle + angleOffset,
-      segmentAngle,
-      false,
-      paint,
-    );
-
-    // Dilim 6: Gece/İmsak (Beyazımsı)
-    paint.color = const Color(0xFFF0F0F0);
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      -math.pi + 5 * segmentAngle + angleOffset,
-      segmentAngle,
-      false,
-      paint,
-    );
-
-    // --- 2. VAKİT AYRAÇLARI (İNCE TURKUAZ ÇİZGİLER) ---
-    final separatorPaint = Paint()
-      ..color =
-          const Color(0xFF3AAFA9) // Turkuaz
-      ..strokeWidth = 2;
-    for (var i = 0; i <= segmentCount; i++) {
-      double angle =
-          -math.pi +
-          segmentAngle * i +
-          angleOffset; // Yarım daire için 0-180 derece
+    for (int i = 0; i <= totalHours; i++) {
+      final x = size.width * (i / totalHours);
+      final isMajor = i % 2 == 0;
       canvas.drawLine(
-        Offset(
-          center.dx + (radius - 22) * math.cos(angle),
-          center.dy + (radius - 22) * math.sin(angle),
-        ),
-        Offset(
-          center.dx + (radius + 22) * math.cos(angle),
-          center.dy + (radius + 22) * math.sin(angle),
-        ),
-        separatorPaint,
+        Offset(x, size.height),
+        Offset(x, size.height - (isMajor ? 10 : 6)),
+        paint,
       );
-    }
 
-    // --- 2.5. DIŞ NOKTALAR (SAAT İŞARETLERİ) ---
-    final dotPaint = Paint()..color = const Color(0xFF4A5568);
-    // Noktalar (12 adet)
-    for (var i = 0; i <= 12; i++) {
-      double angle = -math.pi + (math.pi / 12) * i + angleOffset;
-      double x = center.dx + (radius + 38) * math.cos(angle);
-      double y = center.dy + (radius + 38) * math.sin(angle);
-
-      // Her 2. nokta büyük (ana saat noktaları)
-      double dotRadius = (i % 2 == 0) ? 3.5 : 2.0;
-      canvas.drawCircle(Offset(x, y), dotRadius, dotPaint);
-    }
-
-    // --- 3. DIŞ SAAT RAKAMLARI ---
-    final textPainter = TextPainter(textDirection: TextDirection.ltr);
-    final saatler = ["06", "10", "14", "18", "22", "02"];
-
-    for (int i = 0; i < saatler.length; i++) {
-      double angle = -math.pi + segmentAngle * i + angleOffset;
-      double x = center.dx + (radius + 52) * math.cos(angle);
-      double y = center.dy + (radius + 52) * math.sin(angle);
-
-      textPainter.text = TextSpan(
-        text: saatler[i],
-        style: const TextStyle(
-          color: Color(0xFF2F3E4E), // Daha koyu ve belirgin
-          fontSize: 20,
-          fontWeight: FontWeight.w800,
-          shadows: [Shadow(color: Colors.black26, blurRadius: 2)],
-        ),
-      );
-      textPainter.layout();
-      textPainter.paint(
-        canvas,
-        Offset(x - textPainter.width / 2, y - textPainter.height / 2),
-      );
-    }
-
-    // --- 4. VAKİT İSİMLERİ (Sabah, Öğle, İkindi, Akşam, Yatsı) ---
-    final vakitler = [
-      {"isim": "İmsak", "index": 0},
-      {"isim": "Güneş", "index": 1},
-      {"isim": "Öğle", "index": 2},
-      {"isim": "İkindi", "index": 3},
-      {"isim": "Akşam", "index": 4},
-      {"isim": "Yatsı", "index": 5},
-    ];
-
-    for (var vakit in vakitler) {
-      int index = vakit["index"] as int;
-      // Dilimin ortasına yaz
-      double angle =
-          -math.pi + segmentAngle * index + (segmentAngle / 2) + angleOffset;
-      double x = center.dx + radius * math.cos(angle);
-      double y = center.dy + radius * math.sin(angle);
-
-      canvas.save();
-      canvas.translate(x, y);
-
-      // Yazıyı daire boyunca döndür (radyal)
-      // Sol taraftakiler (index 0,1,2) için farklı döndürme
-      double rotation;
-      if (index <= 2) {
-        rotation = angle + math.pi / 2; // Sol taraf - aşağıdan yukarı okuma
-      } else {
-        rotation = angle - math.pi / 2; // Sağ taraf - yukarıdan aşağı okuma
-      }
-      canvas.rotate(rotation);
-
-      textPainter.text = TextSpan(
-        text: vakit["isim"] as String,
-        style: const TextStyle(
-          color: Color(0xFF4A5568), // Koyu gri
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
-      );
-      textPainter.layout();
-      textPainter.paint(
-        canvas,
-        Offset(-textPainter.width / 2, -textPainter.height / 2),
-      );
-      canvas.restore();
-    }
-
-    // --- 5. GÜNCEL ZAMAN ÇİZGİSİ (TURKUAZ İBRE) ---
-    // (Opsiyonel - şu an vakit ayraçları zaten turkuaz)
-  }
-
-  double _calculateAngleOffset(double segmentAngle, int segmentCount) {
-    if (prayerTimes.isEmpty) {
-      return 0;
-    }
-
-    final nowMinutes = now.hour * 60 + now.minute;
-    final timeMinutes = prayerTimes
-        .map((t) => t.hour * 60 + t.minute)
-        .toList(growable: false);
-
-    int activeIndex = 0;
-    for (int i = 0; i < segmentCount; i++) {
-      final start = timeMinutes[i];
-      final end = timeMinutes[(i + 1) % segmentCount];
-      if (i == segmentCount - 1) {
-        if (nowMinutes >= start || nowMinutes < end) {
-          activeIndex = i;
-          break;
-        }
-      } else if (nowMinutes >= start && nowMinutes < end) {
-        activeIndex = i;
-        break;
+      if (isMajor) {
+        final hour = (startHour + i) % 24;
+        final textPainter = TextPainter(
+          text: TextSpan(
+            text: hour.toString().padLeft(2, '0'),
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          textDirection: TextDirection.ltr,
+        )..layout();
+        textPainter.paint(canvas, Offset(x - textPainter.width / 2, 0));
       }
     }
-
-    final activeMidAngle = -math.pi + (activeIndex + 0.5) * segmentAngle;
-    final desiredAngle = -math.pi / 2;
-    return desiredAngle - activeMidAngle;
   }
 
   @override
   bool shouldRepaint(CustomPainter oldDelegate) => false;
+}
+
+class _VakitCizelgePainter extends CustomPainter {
+  const _VakitCizelgePainter({required this.now, required this.mainSegments});
+
+  final TimeOfDay now;
+  final List<_Segment> mainSegments;
+
+  String _getCurrentVakit() {
+    final nowMinutes = now.hour * 60 + now.minute;
+    for (final seg in mainSegments) {
+      final startMinutes = seg.start.hour * 60 + seg.start.minute;
+      var endMinutes = seg.end.hour * 60 + seg.end.minute;
+      
+      // Gece geçişini ele al
+      if (endMinutes < startMinutes) {
+        endMinutes += 24 * 60;
+      }
+      
+      var checkNowMinutes = nowMinutes;
+      if (nowMinutes < startMinutes && seg.start.hour > 12) {
+        checkNowMinutes += 24 * 60;
+      }
+      
+      if (checkNowMinutes >= startMinutes && checkNowMinutes < endMinutes) {
+        return seg.label;
+      }
+    }
+    return '';
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final startHour = 6;
+    final endHour = 5;
+    final totalMinutes = (24 - startHour + endHour) * 60;
+
+    double toX(TimeOfDay t) {
+      int hour = t.hour;
+      if (hour < startHour) {
+        hour += 24;
+      }
+      final minutes = hour * 60 + t.minute - startHour * 60;
+      return size.width * (minutes / totalMinutes);
+    }
+
+    // Arka bant
+    final bgPaint = Paint()..color = const Color(0xFF2B3151);
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), bgPaint);
+
+    // Ana vakit bantları
+    final mainBandTop = 2.0;
+    final mainBandHeight = 98.0;
+    final gapWidth = 2.0; // Vakitler arası boşluk
+    
+    for (final seg in mainSegments) {
+      final left = toX(seg.start) + gapWidth / 2;
+      final right = toX(seg.end) - gapWidth / 2;
+      final rect = Rect.fromLTWH(
+        left,
+        mainBandTop,
+        right - left,
+        mainBandHeight,
+      );
+      final paint = Paint()..color = seg.color;
+      canvas.drawRect(rect, paint);
+
+      // Yatsı yazısını yatay olarak ortala
+      if (seg.label == 'Yatsı') {
+        final textPainter = TextPainter(
+          text: const TextSpan(
+            text: 'Yatsı',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          textDirection: TextDirection.ltr,
+        )..layout();
+        
+        textPainter.paint(
+          canvas,
+          Offset(
+            rect.center.dx - textPainter.width / 2,
+            rect.center.dy - textPainter.height / 2,
+          ),
+        );
+      } else {
+        _paintRotatedLabel(
+          canvas,
+          seg.label,
+          rect.center,
+          math.pi / 2,
+        );
+      }
+    }
+
+    // Anlık zaman işareti + mevcut vakit adı
+    final nowX = toX(now);
+    final markerPaint = Paint()
+      ..color = const Color(0xFFCC3333)
+      ..strokeWidth = 2;
+    canvas.drawLine(
+      Offset(nowX, 0),
+      Offset(nowX, mainBandTop + mainBandHeight),
+      markerPaint,
+    );
+
+    // Kırmızı üçgen işaretçi üstte
+    final trianglePath = Path()
+      ..moveTo(nowX - 6, 0)
+      ..lineTo(nowX + 6, 0)
+      ..lineTo(nowX, 8)
+      ..close();
+    canvas.drawPath(trianglePath, markerPaint);
+
+    // Mevcut vakit adı kırmızı çizginin altında
+    final currentVakit = _getCurrentVakit();
+    if (currentVakit.isNotEmpty) {
+      final vakitTextPainter = TextPainter(
+        text: TextSpan(
+          text: currentVakit,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 9,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      
+      // Şeffaf kırmızı kutu
+      final boxPadding = 6.0;
+      final boxRect = Rect.fromLTWH(
+        nowX - vakitTextPainter.width / 2 - boxPadding,
+        mainBandTop + mainBandHeight + 3,
+        vakitTextPainter.width + boxPadding * 2,
+        vakitTextPainter.height + boxPadding,
+      );
+      final boxPaint = Paint()
+        ..color = const Color(0xFFCC3333).withOpacity(0.7)
+        ..style = PaintingStyle.fill;
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(boxRect, const Radius.circular(4)),
+        boxPaint,
+      );
+      
+      vakitTextPainter.paint(
+        canvas,
+        Offset(
+          nowX - vakitTextPainter.width / 2,
+          mainBandTop + mainBandHeight + 3 + boxPadding / 2,
+        ),
+      );
+    }
+
+    // Evvabin etiketi
+    final evvabinX = toX(const TimeOfDay(hour: 18, minute: 5));
+    final evvRect = Rect.fromLTWH(
+      evvabinX - 40,
+      mainBandTop + mainBandHeight + 3,
+      80,
+      16,
+    );
+    final evvBg = Paint()..color = const Color(0xFF3D3F57);
+    canvas.drawRect(evvRect, evvBg);
+    _paintCenteredLabel(canvas, 'Evvabin', evvRect.center, 10, Colors.white);
+  }
+
+  void _paintRotatedLabel(
+    Canvas canvas,
+    String text,
+    Offset center,
+    double angle,
+  ) {
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: text,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+    canvas.rotate(angle);
+    textPainter.paint(
+      canvas,
+      Offset(-textPainter.width / 2, -textPainter.height / 2),
+    );
+    canvas.restore();
+  }
+
+  void _paintCenteredLabel(
+    Canvas canvas,
+    String text,
+    Offset center,
+    double fontSize,
+    Color color,
+  ) {
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: text,
+        style: TextStyle(
+          color: color,
+          fontSize: fontSize,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+
+    textPainter.paint(
+      canvas,
+      Offset(
+        center.dx - textPainter.width / 2,
+        center.dy - textPainter.height / 2,
+      ),
+    );
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
+}
+
+class _Segment {
+  _Segment(this.label, this.start, this.end, this.color);
+
+  final String label;
+  final TimeOfDay start;
+  final TimeOfDay end;
+  final Color color;
 }

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../widgets/pasta_sayac_widget.dart';
 import '../widgets/vakit_listesi_widget.dart';
 import '../widgets/gunun_icerigi_widget.dart';
+import '../widgets/yarim_daire_sayac_widget.dart';
+import 'imsakiye_sayfa.dart';
+import 'ayarlar_sayfa.dart';
 
 class AnaSayfa extends StatelessWidget {
   const AnaSayfa({super.key});
@@ -29,7 +32,7 @@ class AnaSayfa extends StatelessWidget {
                 ), // Yan sayfaları hafif hissettirir
                 children: [
                   const PastaSayacWidget(), // Senin yarım dairesel tasarımın
-                  _ikinciSayac(), // Sağa kaydırınca gelecek 2. sayaç
+                  const YarimDaireSayacWidget(), // Yarım daire geri sayım
                   _ucuncuSayac(), // Sağa kaydırınca gelecek 3. sayaç
                 ],
               ),
@@ -49,24 +52,68 @@ class AnaSayfa extends StatelessWidget {
           ],
         ),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          _showMenu(context);
+        },
+        backgroundColor: const Color(0xFF2B3151),
+        child: const Icon(Icons.menu, color: Colors.white),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+    );
+  }
+
+  void _showMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1B2741),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.schedule, color: Colors.white),
+                title: const Text('İmsakiye', style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ImsakiyeSayfa()),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.auto_awesome, color: Colors.white),
+                title: const Text('Zikir Matik', style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.pop(context);
+                  // TODO: Zikir Matik sayfasına git
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.settings, color: Colors.white),
+                title: const Text('Ayarlar', style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const AyarlarSayfa()),
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
   // Örnek ek sayaçlar (İleride bunları 'diger_sayaclar.dart' içine taşıyabiliriz)
-  Widget _ikinciSayac() {
-    return Card(
-      color: Colors.white.withOpacity(0.05),
-      margin: const EdgeInsets.all(10),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: const Center(
-        child: Text(
-          "Dijital Geri Sayım (Yakında)",
-          style: TextStyle(color: Colors.cyanAccent),
-        ),
-      ),
-    );
-  }
-
   Widget _ucuncuSayac() {
     return Card(
       color: Colors.white.withOpacity(0.05),
