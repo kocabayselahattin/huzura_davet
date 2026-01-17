@@ -25,6 +25,54 @@ class DiyanetApiService {
     print('✅ DiyanetApiService cache temizlendi');
   }
 
+  /// Bugünün namaz vakitlerini döndürür (Imsak, Gunes, Ogle, Ikindi, Aksam, Yatsi)
+  static Future<Map<String, String>?> getBugunVakitler(String ilceId) async {
+    final data = await getVakitler(ilceId);
+    if (data == null) return null;
+    
+    final vakitler = data['vakitler'];
+    if (vakitler == null || vakitler is! List || vakitler.isEmpty) {
+      return null;
+    }
+    
+    // Bugünün tarihini al
+    final now = DateTime.now();
+    final bugunStr = '${now.day.toString().padLeft(2, '0')}.${now.month.toString().padLeft(2, '0')}.${now.year}';
+    
+    // Bugünün vakitlerini bul
+    Map<String, dynamic>? bugunVakit;
+    for (final v in vakitler) {
+      if (v is Map<String, dynamic>) {
+        final tarih = v['MiladiTarihKisa'] ?? '';
+        if (tarih == bugunStr) {
+          bugunVakit = v;
+          break;
+        }
+      }
+    }
+    
+    // Bugun bulunamazsa ilk kaydı kullan
+    if (bugunVakit == null && vakitler.isNotEmpty) {
+      bugunVakit = vakitler.first as Map<String, dynamic>?;
+      print('⚠️ Bugünün vakti bulunamadı, ilk kayıt kullanılıyor');
+    }
+    
+    if (bugunVakit == null) return null;
+    
+    return {
+      'Imsak': bugunVakit['Imsak']?.toString() ?? '05:30',
+      'Gunes': bugunVakit['Gunes']?.toString() ?? '07:00',
+      'Ogle': bugunVakit['Ogle']?.toString() ?? '12:30',
+      'Ikindi': bugunVakit['Ikindi']?.toString() ?? '15:30',
+      'Aksam': bugunVakit['Aksam']?.toString() ?? '18:00',
+      'Yatsi': bugunVakit['Yatsi']?.toString() ?? '19:30',
+      'HicriTarihKisa': bugunVakit['HicriTarihKisa']?.toString() ?? '',
+      'HicriTarihUzun': bugunVakit['HicriTarihUzun']?.toString() ?? '',
+      'MiladiTarihKisa': bugunVakit['MiladiTarihKisa']?.toString() ?? '',
+      'MiladiTarihUzun': bugunVakit['MiladiTarihUzun']?.toString() ?? '',
+    };
+  }
+
   // Belirli bir ay için vakitleri getir
   static Future<List<Map<String, dynamic>>> getAylikVakitler(
     String ilceId,
@@ -112,52 +160,9 @@ class DiyanetApiService {
       print('⚠️ Fallback vakit alınamadı: $e');
     }
 
-    // Son çare: Dummy veri
-    final dummyVakitler = _generateDummyMonthVakitler(yil, ay);
-    _aylikVakitCache[cacheKey] = dummyVakitler;
-    return dummyVakitler;
-  }
-
-  // Belirli bir ay için dummy veri oluştur
-  static List<Map<String, dynamic>> _generateDummyMonthVakitler(int yil, int ay) {
-    final List<Map<String, dynamic>> vakitler = [];
-    final ayinSonGunu = DateTime(yil, ay + 1, 0).day;
-
-    for (int gun = 1; gun <= ayinSonGunu; gun++) {
-      final tarih = DateTime(yil, ay, gun);
-      final gun2 = tarih.day.toString().padLeft(2, '0');
-      final ay2 = tarih.month.toString().padLeft(2, '0');
-      final yilStr = tarih.year.toString();
-
-      final yilGunu = tarih.difference(DateTime(tarih.year, 1, 1)).inDays;
-      int imsakDakika = 20 + (yilGunu % 40);
-      int gunesDakika = 45 + (yilGunu % 30);
-      int ogleDakika = 50 + (yilGunu % 20);
-      int ikindiDakika = 30 + (yilGunu % 35);
-      int aksamDakika = 10 + (yilGunu % 30);
-      int yatsiDakika = 35 + (yilGunu % 30);
-
-      // Dakika değerlerini 59 ile sınırla
-      imsakDakika = imsakDakika.clamp(0, 59);
-      gunesDakika = gunesDakika.clamp(0, 59);
-      ogleDakika = ogleDakika.clamp(0, 59);
-      ikindiDakika = ikindiDakika.clamp(0, 59);
-      aksamDakika = aksamDakika.clamp(0, 59);
-      yatsiDakika = yatsiDakika.clamp(0, 59);
-
-      vakitler.add({
-        'MiladiTarihKisa': '$gun2.$ay2.$yilStr',
-        'MiladiTarihUzun': '$gun2.$ay2.$yilStr',
-        'HicriTarihKisa': '$gun2.$ay2.${(int.parse(yilStr) - 578).toString()}',
-        'Imsak': '05:${imsakDakika.toString().padLeft(2, '0')}',
-        'Gunes': '06:${gunesDakika.toString().padLeft(2, '0')}',
-        'Ogle': '12:${ogleDakika.toString().padLeft(2, '0')}',
-        'Ikindi': '15:${ikindiDakika.toString().padLeft(2, '0')}',
-        'Aksam': '18:${aksamDakika.toString().padLeft(2, '0')}',
-        'Yatsi': '19:${yatsiDakika.toString().padLeft(2, '0')}',
-      });
-    }
-    return vakitler;
+    // API'den veri alınamadıysa boş liste döndür
+    print('❌ Aylık vakitler alınamadı: $cacheKey');
+    return [];
   }
 
   // İlleri API'den getir
@@ -259,11 +264,13 @@ class DiyanetApiService {
     final cached = _vakitCache[ilceId];
     final cachedTime = _vakitCacheTimes[ilceId];
 
+    // Cache'i kontrol et - sadece aynı gün ve 30 dakikadan az ise kullan
     if (cached != null && cachedTime != null) {
       final sameDay = cachedTime.year == now.year &&
           cachedTime.month == now.month &&
           cachedTime.day == now.day;
-      if (sameDay && now.difference(cachedTime) < const Duration(hours: 1)) {
+      if (sameDay && now.difference(cachedTime) < const Duration(minutes: 30)) {
+        print('📦 Cache kullanılıyor ($ilceId) - ${now.difference(cachedTime).inMinutes} dk önce');
         return cached;
       }
     }
@@ -280,16 +287,14 @@ class DiyanetApiService {
       print('⚠️ Canlı vakit alınamadı ($ilceId): $e');
     }
 
+    // Cache'de eski veri varsa onu kullan (API başarısız olursa)
     if (cached != null) {
-      print('ℹ️ İnternet yok, cache kullanılıyor: $ilceId');
+      print('ℹ️ İnternet yok, eski cache kullanılıyor: $ilceId');
       return cached;
     }
 
-    print('⚠️ Canlı veri yok, sahte verilere düşüldü: $ilceId');
-    final fallback = _getDummyVakitler(ilceId);
-    _vakitCache[ilceId] = fallback;
-    _vakitCacheTimes[ilceId] = now;
-    return fallback;
+    print('❌ API\'den veri alınamadı ve cache boş: $ilceId');
+    return null;
   }
 
   static Future<Map<String, dynamic>?> _fetchRemoteVakitler(
@@ -338,88 +343,5 @@ class DiyanetApiService {
     // API zaten doğru formatta veri döndürüyor (örn: "16.01.2026")
     // Herhangi bir dönüşüm gerekmez
     return Map<String, dynamic>.from(raw);
-  }
-
-  // Test için sahte vakit verileri
-  static Map<String, dynamic> _getDummyVakitler(String ilceId) {
-    print('ℹ️ Vakit verileri yerel üretildi');
-
-    // 6 ay için veri oluştur (3 ay geriye, 3 ay ileriye)
-    final now = DateTime.now();
-    final List<Map<String, dynamic>> vakitler = [];
-
-    // 3 ay önceden başla, 6 ay boyunca veri oluştur
-    final baslangic = DateTime(now.year, now.month - 3, 1);
-
-    for (int ayOffset = 0; ayOffset < 6; ayOffset++) {
-      final ay = DateTime(baslangic.year, baslangic.month + ayOffset, 1);
-      final ayinSonGunu = DateTime(ay.year, ay.month + 1, 0).day;
-
-      for (int gun = 1; gun <= ayinSonGunu; gun++) {
-        final tarih = DateTime(ay.year, ay.month, gun);
-        final gun2 = tarih.day.toString().padLeft(2, '0');
-        final ay2 = tarih.month.toString().padLeft(2, '0');
-        final yil = tarih.year.toString();
-
-        // Yılın gününe göre vakit saatlerini değiştir (gerçekçi olsun)
-        final yilGunu = tarih.difference(DateTime(tarih.year, 1, 1)).inDays;
-        int imsakDakika = 20 + (yilGunu % 40); // 20-60 arası
-        int gunesDakika = 45 + (yilGunu % 30); // 45-75 arası
-        int ogleDakika = 50 + (yilGunu % 20); // 50-70 arası
-        int ikindiDakika = 30 + (yilGunu % 35); // 30-65 arası
-        int aksamDakika = 10 + (yilGunu % 30); // 10-40 arası
-        int yatsiDakika = 35 + (yilGunu % 30); // 35-65 arası
-
-        // Dakika değerlerini 59 ile sınırla
-        imsakDakika = imsakDakika.clamp(0, 59);
-        gunesDakika = gunesDakika.clamp(0, 59);
-        ogleDakika = ogleDakika.clamp(0, 59);
-        ikindiDakika = ikindiDakika.clamp(0, 59);
-        aksamDakika = aksamDakika.clamp(0, 59);
-        yatsiDakika = yatsiDakika.clamp(0, 59);
-
-        vakitler.add({
-          'MiladiTarihKisa': '$gun2.$ay2.$yil',
-          'MiladiTarihUzun': '$gun2.$ay2.$yil',
-          'HicriTarihKisa': '$gun2.$ay2.${(int.parse(yil) - 578).toString()}',
-          'HicriTarihUzun':
-              '$gun2 ${_getAyAdi(int.parse(ay2))} ${(int.parse(yil) - 578).toString()}',
-          'Imsak': '05:${imsakDakika.toString().padLeft(2, '0')}',
-          'Gunes': '06:${gunesDakika.toString().padLeft(2, '0')}',
-          'Ogle': '12:${ogleDakika.toString().padLeft(2, '0')}',
-          'Ikindi': '15:${ikindiDakika.toString().padLeft(2, '0')}',
-          'Aksam': '18:${aksamDakika.toString().padLeft(2, '0')}',
-          'Yatsi': '19:${yatsiDakika.toString().padLeft(2, '0')}',
-        });
-      }
-    }
-
-    return {
-      'IlceID': ilceId,
-      'IlceAdi': 'Test İlçe',
-      'SehirAdi': 'Test İl',
-      'UlkeAdi': 'Türkiye',
-      'vakitler': vakitler,
-    };
-  }
-
-  // Ay adlarını döndürür
-  static String _getAyAdi(int ay) {
-    const aylar = [
-      '',
-      'Ocak',
-      'Şubat',
-      'Mart',
-      'Nisan',
-      'Mayıs',
-      'Haziran',
-      'Temmuz',
-      'Ağustos',
-      'Eylül',
-      'Ekim',
-      'Kasım',
-      'Aralık',
-    ];
-    return aylar[ay];
   }
 }

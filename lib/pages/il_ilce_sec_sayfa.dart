@@ -314,8 +314,8 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
     String? enYakinIlAdi;
 
     for (final entry in ilKoordinatlari.entries) {
-      final ilLat = entry.value[0] as double;
-      final ilLon = entry.value[1] as double;
+      final ilLat = entry.value[0];
+      final ilLon = entry.value[1];
 
       // Basit mesafe hesaplama
       final mesafe = _mesafeHesapla(lat, lon, ilLat, ilLon);

@@ -78,7 +78,7 @@ class _GalaksiSayacWidgetState extends State<GalaksiSayacWidget>
   Future<void> _vakitleriYukle() async {
     final ilceId = await KonumService.getIlceId();
     if (ilceId != null) {
-      final vakitler = await DiyanetApiService.getVakitler(ilceId);
+      final vakitler = await DiyanetApiService.getBugunVakitler(ilceId);
       if (vakitler != null && mounted) {
         setState(() {
           _vakitSaatleri = {

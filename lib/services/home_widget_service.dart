@@ -9,7 +9,6 @@ import 'konum_service.dart';
 /// Android Home Screen Widget'larını güncelleyen servis
 class HomeWidgetService {
   static const String _appGroupId = 'group.com.example.huzur_vakti';
-  static const String _androidWidgetName = 'KompaktVakitWidget';
   
   static Timer? _updateTimer;
   static Map<String, String> _vakitSaatleri = {};
@@ -73,7 +72,7 @@ class HomeWidgetService {
   static Future<void> _loadVakitler() async {
     final ilceId = await KonumService.getIlceId();
     if (ilceId != null) {
-      final data = await DiyanetApiService.getVakitler(ilceId);
+      final data = await DiyanetApiService.getBugunVakitler(ilceId);
       if (data != null) {
         _vakitSaatleri = {
           'Imsak': data['Imsak'] ?? '05:30',
@@ -195,7 +194,6 @@ class HomeWidgetService {
       };
     }
     
-    final nowMinutes = now.hour * 60 + now.minute;
     final nowTotalSeconds = now.hour * 3600 + now.minute * 60 + now.second;
     
     final vakitListesi = [
@@ -207,55 +205,75 @@ class HomeWidgetService {
       {'key': 'Yatsi', 'adi': 'Yatsı'},
     ];
     
+    // Vakit saniyelerini hesapla
+    List<int> vakitSaniyeleri = [];
+    for (final vakit in vakitListesi) {
+      final saat = _vakitSaatleri[vakit['key']] ?? '00:00';
+      final parts = saat.split(':');
+      vakitSaniyeleri.add(int.parse(parts[0]) * 3600 + int.parse(parts[1]) * 60);
+    }
+    
     String sonrakiVakit = 'İmsak';
     String sonrakiSaat = _vakitSaatleri['Imsak'] ?? '05:30';
     String mevcutVakit = 'Yatsı';
     String mevcutSaat = _vakitSaatleri['Yatsi'] ?? '19:30';
-    int kalanDakika = 0;
-    int toplamDakika = 1;
-    int gecenDakika = 0;
-    int kalanToplamSaniye = 0;
     int toplamSaniye = 1;
     int gecenSaniye = 0;
+    int kalanToplamSaniye = 0;
     
-    for (int i = 0; i < vakitListesi.length; i++) {
-      final vakit = vakitListesi[i];
-      final saat = _vakitSaatleri[vakit['key']] ?? '00:00';
-      final parts = saat.split(':');
-      final vakitMinutes = int.parse(parts[0]) * 60 + int.parse(parts[1]);
-      
-      if ((vakitMinutes * 60) > nowTotalSeconds) {
-        sonrakiVakit = vakit['adi']!;
-        sonrakiSaat = saat;
-        
-        if (i > 0) {
-          mevcutVakit = vakitListesi[i - 1]['adi']!;
-          mevcutSaat = _vakitSaatleri[vakitListesi[i - 1]['key']] ?? '00:00';
-          final mevcutParts = mevcutSaat.split(':');
-          final mevcutMinutes = int.parse(mevcutParts[0]) * 60 + int.parse(mevcutParts[1]);
-          toplamDakika = vakitMinutes - mevcutMinutes;
-          gecenDakika = nowMinutes - mevcutMinutes;
-          toplamSaniye = (vakitMinutes * 60) - (mevcutMinutes * 60);
-          gecenSaniye = nowTotalSeconds - (mevcutMinutes * 60);
-        }
-        
-        kalanDakika = vakitMinutes - nowMinutes;
-        kalanToplamSaniye = (vakitMinutes * 60) - nowTotalSeconds;
+    // Sonraki vakti bul
+    int sonrakiIndex = -1;
+    for (int i = 0; i < vakitSaniyeleri.length; i++) {
+      if (vakitSaniyeleri[i] > nowTotalSeconds) {
+        sonrakiIndex = i;
         break;
       }
     }
     
-    // Yarın imsak
-    if (kalanDakika == 0 && kalanToplamSaniye == 0) {
-      final imsakSaat = _vakitSaatleri['Imsak'] ?? '05:30';
-      final parts = imsakSaat.split(':');
-      final imsakMinutes = int.parse(parts[0]) * 60 + int.parse(parts[1]);
-      kalanDakika = (24 * 60 - nowMinutes) + imsakMinutes;
-      kalanToplamSaniye = (24 * 3600 - nowTotalSeconds) + (imsakMinutes * 60);
+    if (sonrakiIndex == -1) {
+      // Tüm vakitler geçmiş, yarın imsak
       sonrakiVakit = 'İmsak';
-      sonrakiSaat = imsakSaat;
+      sonrakiSaat = _vakitSaatleri['Imsak'] ?? '05:30';
       mevcutVakit = 'Yatsı';
       mevcutSaat = _vakitSaatleri['Yatsi'] ?? '19:30';
+      
+      final yatsiSaniye = vakitSaniyeleri.last;
+      final imsakSaniye = vakitSaniyeleri.first;
+      
+      // Yatsıdan yarın imsaka kadar toplam süre
+      toplamSaniye = (24 * 3600 - yatsiSaniye) + imsakSaniye;
+      // Yatsıdan şimdiye kadar geçen süre
+      gecenSaniye = nowTotalSeconds - yatsiSaniye;
+      if (gecenSaniye < 0) gecenSaniye = 0;
+      
+      // Yarın imsaka kalan süre
+      kalanToplamSaniye = (24 * 3600 - nowTotalSeconds) + imsakSaniye;
+    } else if (sonrakiIndex == 0) {
+      // İmsak henüz olmadı (gece yarısından sonra, imsak öncesi)
+      sonrakiVakit = 'İmsak';
+      sonrakiSaat = _vakitSaatleri['Imsak'] ?? '05:30';
+      mevcutVakit = 'Yatsı';
+      mevcutSaat = _vakitSaatleri['Yatsi'] ?? '19:30';
+      
+      final yatsiSaniye = vakitSaniyeleri.last;
+      final imsakSaniye = vakitSaniyeleri.first;
+      
+      // Dün yatsıdan bugün imsaka kadar toplam süre
+      toplamSaniye = (24 * 3600 - yatsiSaniye) + imsakSaniye;
+      // Gece yarısından şimdiye + dün yatsıdan gece yarısına = geçen süre
+      gecenSaniye = nowTotalSeconds + (24 * 3600 - yatsiSaniye);
+      
+      kalanToplamSaniye = imsakSaniye - nowTotalSeconds;
+    } else {
+      // Normal durum: gündüz vakitleri
+      sonrakiVakit = vakitListesi[sonrakiIndex]['adi']!;
+      sonrakiSaat = _vakitSaatleri[vakitListesi[sonrakiIndex]['key']] ?? '00:00';
+      mevcutVakit = vakitListesi[sonrakiIndex - 1]['adi']!;
+      mevcutSaat = _vakitSaatleri[vakitListesi[sonrakiIndex - 1]['key']] ?? '00:00';
+      
+      toplamSaniye = vakitSaniyeleri[sonrakiIndex] - vakitSaniyeleri[sonrakiIndex - 1];
+      gecenSaniye = nowTotalSeconds - vakitSaniyeleri[sonrakiIndex - 1];
+      kalanToplamSaniye = vakitSaniyeleri[sonrakiIndex] - nowTotalSeconds;
     }
     
     if (kalanToplamSaniye < 0) {
@@ -266,7 +284,8 @@ class HomeWidgetService {
     final kalanDk = (kalanToplamSaniye % 3600) ~/ 60;
     final kalanSaniye = kalanToplamSaniye % 60;
     
-    final ilerleme = toplamSaniye > 0 ? ((gecenSaniye / toplamSaniye) * 100).round() : 0;
+    int ilerleme = toplamSaniye > 0 ? ((gecenSaniye / toplamSaniye) * 100).round() : 0;
+    ilerleme = ilerleme.clamp(0, 100);
     
     return {
       'sonrakiVakit': sonrakiVakit,

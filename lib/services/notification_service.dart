@@ -1,10 +1,9 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:flutter/material.dart';
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
 
-  static Future<void> initialize(BuildContext context) async {
+  static Future<void> initialize([dynamic context]) async {
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
     const InitializationSettings initializationSettings = InitializationSettings(
@@ -16,7 +15,7 @@ class NotificationService {
   static Future<void> showVakitNotification({
     required String title,
     required String body,
-    String? soundAsset, // ör: 'ezan.mp3'
+    String? soundAsset, // ör: 'ding_dong.mp3'
   }) async {
     final androidPlatformChannelSpecifics = AndroidNotificationDetails(
       'vakit_channel',
@@ -29,7 +28,7 @@ class NotificationService {
           : null,
       playSound: true,
     );
-    const notificationDetails = NotificationDetails(
+    final notificationDetails = NotificationDetails(
       android: androidPlatformChannelSpecifics,
     );
     await _notificationsPlugin.show(

@@ -68,7 +68,7 @@ class _NeonSayacWidgetState extends State<NeonSayacWidget>
   Future<void> _vakitleriYukle() async {
     final ilceId = await KonumService.getIlceId();
     if (ilceId != null) {
-      final vakitler = await DiyanetApiService.getVakitler(ilceId);
+      final vakitler = await DiyanetApiService.getBugunVakitler(ilceId);
       if (vakitler != null && mounted) {
         setState(() {
           _vakitSaatleri = {
@@ -89,7 +89,7 @@ class _NeonSayacWidgetState extends State<NeonSayacWidget>
     if (_vakitSaatleri.isEmpty) return;
     
     final now = DateTime.now();
-    final nowMinutes = now.hour * 60 + now.minute;
+    final nowTotalSeconds = now.hour * 3600 + now.minute * 60 + now.second;
 
     final vakitListesi = [
       {'adi': 'İmsak', 'saat': _vakitSaatleri['imsak']!},
@@ -100,45 +100,62 @@ class _NeonSayacWidgetState extends State<NeonSayacWidget>
       {'adi': 'Yatsı', 'saat': _vakitSaatleri['yatsi']!},
     ];
 
-    DateTime? sonrakiVakitZamani;
-    DateTime? oncekiVakitZamani;
-    String sonrakiVakitAdi = '';
-
-    for (int i = 0; i < vakitListesi.length; i++) {
-      final vakit = vakitListesi[i];
+    // Vakit saniyelerini hesapla
+    List<int> vakitSaniyeleri = [];
+    for (final vakit in vakitListesi) {
       final parts = vakit['saat']!.split(':');
-      final vakitMinutes = int.parse(parts[0]) * 60 + int.parse(parts[1]);
-      
-      if (vakitMinutes > nowMinutes) {
-        sonrakiVakitZamani = DateTime(now.year, now.month, now.day,
-            int.parse(parts[0]), int.parse(parts[1]));
-        sonrakiVakitAdi = vakit['adi']!;
-        
-        if (i > 0) {
-          final oncekiParts = vakitListesi[i - 1]['saat']!.split(':');
-          oncekiVakitZamani = DateTime(now.year, now.month, now.day,
-              int.parse(oncekiParts[0]), int.parse(oncekiParts[1]));
-        }
+      vakitSaniyeleri.add(int.parse(parts[0]) * 3600 + int.parse(parts[1]) * 60);
+    }
+
+    DateTime? sonrakiVakitZamani;
+    String sonrakiVakitAdi = '';
+    double oran = 0.0;
+
+    // Sonraki vakti bul
+    int sonrakiIndex = -1;
+    for (int i = 0; i < vakitSaniyeleri.length; i++) {
+      if (vakitSaniyeleri[i] > nowTotalSeconds) {
+        sonrakiIndex = i;
         break;
       }
     }
 
-    if (sonrakiVakitZamani == null) {
+    if (sonrakiIndex == -1) {
+      // Tüm vakitler geçmiş, yarın imsak
       final yarin = now.add(const Duration(days: 1));
       final imsakParts = _vakitSaatleri['imsak']!.split(':');
       sonrakiVakitZamani = DateTime(yarin.year, yarin.month, yarin.day,
           int.parse(imsakParts[0]), int.parse(imsakParts[1]));
       sonrakiVakitAdi = 'İmsak';
       
-      final yatsiParts = _vakitSaatleri['yatsi']!.split(':');
-      oncekiVakitZamani = DateTime(now.year, now.month, now.day,
-          int.parse(yatsiParts[0]), int.parse(yatsiParts[1]));
-    }
-
-    double oran = 0.0;
-    if (oncekiVakitZamani != null) {
-      final toplamSure = sonrakiVakitZamani.difference(oncekiVakitZamani).inSeconds;
-      final gecenSure = now.difference(oncekiVakitZamani).inSeconds;
+      // Yatsıdan yarın imsaka kadar ilerleme
+      final yatsiSaniye = vakitSaniyeleri.last;
+      final imsakSaniye = vakitSaniyeleri.first;
+      final toplamSure = (24 * 3600 - yatsiSaniye) + imsakSaniye;
+      final gecenSure = nowTotalSeconds - yatsiSaniye;
+      oran = (gecenSure / toplamSure).clamp(0.0, 1.0);
+    } else if (sonrakiIndex == 0) {
+      // İmsak henüz olmadı (gece yarısından sonra, imsak öncesi)
+      final imsakParts = _vakitSaatleri['imsak']!.split(':');
+      sonrakiVakitZamani = DateTime(now.year, now.month, now.day,
+          int.parse(imsakParts[0]), int.parse(imsakParts[1]));
+      sonrakiVakitAdi = 'İmsak';
+      
+      // Dün yatsıdan bugün imsaka kadar ilerleme
+      final yatsiSaniye = vakitSaniyeleri.last;
+      final imsakSaniye = vakitSaniyeleri.first;
+      final toplamSure = (24 * 3600 - yatsiSaniye) + imsakSaniye;
+      final gecenSure = nowTotalSeconds + (24 * 3600 - yatsiSaniye);
+      oran = (gecenSure / toplamSure).clamp(0.0, 1.0);
+    } else {
+      // Normal durum: gündüz vakitleri
+      final parts = vakitListesi[sonrakiIndex]['saat']!.split(':');
+      sonrakiVakitZamani = DateTime(now.year, now.month, now.day,
+          int.parse(parts[0]), int.parse(parts[1]));
+      sonrakiVakitAdi = vakitListesi[sonrakiIndex]['adi']!;
+      
+      final toplamSure = vakitSaniyeleri[sonrakiIndex] - vakitSaniyeleri[sonrakiIndex - 1];
+      final gecenSure = nowTotalSeconds - vakitSaniyeleri[sonrakiIndex - 1];
       oran = (gecenSure / toplamSure).clamp(0.0, 1.0);
     }
 
@@ -339,25 +356,42 @@ class _NeonSayacWidgetState extends State<NeonSayacWidget>
   }
 
   Widget _buildProgressBar(TemaRenkleri renkler) {
+    // Yeşilden kırmızıya gradient renk hesapla
+    // 0% = Yeşil (#00C853), 50% = Sarı (#FFD600), 100% = Koyu Kırmızı (#B71C1C)
+    final Color ecirRengi = _getEcirRengi(_ilerlemeOrani);
+    
     return Column(
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'İLERLEME',
+              'ECİR',
               style: TextStyle(
-                color: renkler.yaziSecondary,
+                color: ecirRengi,
                 fontSize: 10,
                 letterSpacing: 2,
+                fontWeight: FontWeight.bold,
+                shadows: [
+                  Shadow(
+                    color: ecirRengi.withValues(alpha: 0.5),
+                    blurRadius: 8,
+                  ),
+                ],
               ),
             ),
             Text(
               '${(_ilerlemeOrani * 100).toInt()}%',
               style: TextStyle(
-                color: renkler.vurgu,
+                color: ecirRengi,
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
+                shadows: [
+                  Shadow(
+                    color: ecirRengi.withValues(alpha: 0.5),
+                    blurRadius: 8,
+                  ),
+                ],
               ),
             ),
           ],
@@ -378,13 +412,13 @@ class _NeonSayacWidgetState extends State<NeonSayacWidget>
                     borderRadius: BorderRadius.circular(3),
                     gradient: LinearGradient(
                       colors: [
-                        renkler.vurgu,
-                        renkler.vurgu.withValues(alpha: 0.7),
+                        const Color(0xFF00C853), // Yeşil başlangıç
+                        ecirRengi, // Mevcut renk
                       ],
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: renkler.vurgu.withValues(alpha: 0.6),
+                        color: ecirRengi.withValues(alpha: 0.6),
                         blurRadius: 8,
                         spreadRadius: 1,
                       ),
@@ -397,6 +431,30 @@ class _NeonSayacWidgetState extends State<NeonSayacWidget>
         ),
       ],
     );
+  }
+
+  /// İlerleme oranına göre yeşilden kırmızıya renk döndürür
+  Color _getEcirRengi(double oran) {
+    // 0.0 - 0.5 arası: Yeşilden Sarıya
+    // 0.5 - 1.0 arası: Sarıdan Koyu Kırmızıya
+    
+    if (oran <= 0.5) {
+      // Yeşil (#00C853) -> Sarı (#FFD600)
+      final t = oran * 2; // 0 -> 1
+      return Color.lerp(
+        const Color(0xFF00C853), // Yeşil
+        const Color(0xFFFFD600), // Sarı
+        t,
+      )!;
+    } else {
+      // Sarı (#FFD600) -> Koyu Kırmızı (#B71C1C)
+      final t = (oran - 0.5) * 2; // 0 -> 1
+      return Color.lerp(
+        const Color(0xFFFFD600), // Sarı
+        const Color(0xFFB71C1C), // Koyu Kırmızı
+        t,
+      )!;
+    }
   }
   
   Widget _buildTakvimRow(TemaRenkleri renkler) {

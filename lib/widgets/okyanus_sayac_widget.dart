@@ -105,7 +105,7 @@ class _OkyanusSayacWidgetState extends State<OkyanusSayacWidget>
   Future<void> _vakitleriYukle() async {
     final ilceId = await KonumService.getIlceId();
     if (ilceId != null) {
-      final vakitler = await DiyanetApiService.getVakitler(ilceId);
+      final vakitler = await DiyanetApiService.getBugunVakitler(ilceId);
       if (vakitler != null && mounted) {
         setState(() {
           _vakitSaatleri = {
@@ -179,7 +179,6 @@ class _OkyanusSayacWidgetState extends State<OkyanusSayacWidget>
     final seconds = _kalanSure.inSeconds % 60;
 
     // Okyanus renkleri
-    final deepBlue = const Color(0xFF0D1B2A);
     final oceanBlue = const Color(0xFF1B263B);
     final waveColor = renkler.vurgu.withValues(alpha: 0.6);
 

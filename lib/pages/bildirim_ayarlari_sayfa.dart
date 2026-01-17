@@ -9,6 +9,7 @@ class BildirimAyarlariSayfa extends StatefulWidget {
   State<BildirimAyarlariSayfa> createState() => _BildirimAyarlariSayfaState();
 }
 
+class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
   // Bildirim açık/kapalı durumları
   Map<String, bool> _bildirimAcik = {
     'imsak': true,
@@ -34,25 +35,26 @@ class BildirimAyarlariSayfa extends StatefulWidget {
 
   // Bildirim sesi seçimi (her vakit için)
   Map<String, String> _bildirimSesi = {
-    'imsak': 'ezan.mp3',
-    'gunes': 'bip.mp3',
-    'ogle': 'ezan.mp3',
-    'ikindi': 'tekbir.mp3',
-    'aksam': 'dua.mp3',
-    'yatsi': 'ezan.mp3',
+    'imsak': 'ding_dong.mp3',
+    'gunes': 'arriving.mp3',
+    'ogle': 'echo.mp3',
+    'ikindi': 'sweet_favour.mp3',
+    'aksam': 'violet.mp3',
+    'yatsi': 'woodpecker.mp3',
   };
 
   final List<int> _erkenSureler = [0, 5, 10, 15, 20, 30, 45, 60];
   final List<Map<String, String>> _sesSecenekleri = [
-    {'ad': '2015 Best', 'dosya': '2015_best.mp3'},
+    {'ad': 'Best 2015', 'dosya': 'best_2015.mp3'},
     {'ad': 'Arriving', 'dosya': 'arriving.mp3'},
-    {'ad': 'Corner', 'dosya': 'Corner.mp3'},
-    {'ad': 'Ding Dong', 'dosya': 'Ding_Dong.mp3'},
-    {'ad': 'Echo', 'dosya': 'Echo.mp3'},
+    {'ad': 'Corner', 'dosya': 'corner.mp3'},
+    {'ad': 'Ding Dong', 'dosya': 'ding_dong.mp3'},
+    {'ad': 'Echo', 'dosya': 'echo.mp3'},
     {'ad': 'iPhone SMS', 'dosya': 'iphone_sms_original.mp3'},
-    {'ad': 'Sweet Favour', 'dosya': 'Sweet_Favour.mp3'},
-    {'ad': 'Violet', 'dosya': 'Violet.mp3'},
-    {'ad': 'Woodpecker', 'dosya': 'Woodpecker.mp3'},
+    {'ad': 'Snaps', 'dosya': 'snaps.mp3'},
+    {'ad': 'Sweet Favour', 'dosya': 'sweet_favour.mp3'},
+    {'ad': 'Violet', 'dosya': 'violet.mp3'},
+    {'ad': 'Woodpecker', 'dosya': 'woodpecker.mp3'},
   ];
 
   @override
@@ -402,7 +404,7 @@ class BildirimAyarlariSayfa extends StatefulWidget {
             ),
           ),
 
-          // Alt kısım - Erken bildirim seçimi
+          // Alt kısım - Erken bildirim ve ses seçimi
           if (acik)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -487,7 +489,9 @@ class BildirimAyarlariSayfa extends StatefulWidget {
                           ),
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<String>(
-                              value: seciliSes,
+                              value: _sesSecenekleri.any((s) => s['dosya'] == seciliSes) 
+                                  ? seciliSes 
+                                  : _sesSecenekleri.first['dosya'],
                               isExpanded: true,
                               dropdownColor: const Color(0xFF2B3151),
                               icon: const Icon(Icons.arrow_drop_down,

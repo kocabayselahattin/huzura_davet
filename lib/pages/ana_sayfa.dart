@@ -8,6 +8,7 @@ import '../widgets/neon_sayac_widget.dart';
 import '../widgets/okyanus_sayac_widget.dart';
 import '../widgets/dijital_sayac_widget.dart';
 import '../widgets/esmaul_husna_widget.dart';
+import '../widgets/ozel_gun_popup.dart';
 import '../services/konum_service.dart';
 import '../services/tema_service.dart';
 import 'imsakiye_sayfa.dart';
@@ -16,6 +17,7 @@ import 'zikir_matik_sayfa.dart';
 import 'kirk_hadis_sayfa.dart';
 import 'kuran_sayfa.dart';
 import 'ibadet_sayfa.dart';
+import 'ozel_gunler_sayfa.dart';
 
 class AnaSayfa extends StatefulWidget {
   const AnaSayfa({super.key});
@@ -29,7 +31,6 @@ class _AnaSayfaState extends State<AnaSayfa> {
   final TemaService _temaService = TemaService();
   PageController? _sayacController;
   int _currentSayacIndex = 0;
-  final int _sayacCount = 5; // Toplam sayaç sayısı
   bool _sayacYuklendi = false;
 
   @override
@@ -38,6 +39,16 @@ class _AnaSayfaState extends State<AnaSayfa> {
     _loadSayacIndex();
     _konumYukle();
     _temaService.addListener(_onTemaChanged);
+    // Özel gün popup kontrolü
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkOzelGun();
+    });
+  }
+
+  Future<void> _checkOzelGun() async {
+    if (mounted) {
+      await checkAndShowOzelGunPopup(context);
+    }
   }
 
   Future<void> _loadSayacIndex() async {
@@ -309,6 +320,22 @@ class _AnaSayfaState extends State<AnaSayfa> {
                     context,
                     MaterialPageRoute(
                       builder: (context) => const IbadetSayfa(),
+                    ),
+                  );
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.celebration, color: renkler.vurgu),
+                title: Text(
+                  'Özel Gün ve Geceler',
+                  style: TextStyle(color: renkler.yaziPrimary),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const OzelGunlerSayfa(),
                     ),
                   );
                 },

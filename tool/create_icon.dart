@@ -1,11 +1,6 @@
 // Bu script uygulama ikonunu oluşturur
 // Çalıştırmak için: dart run tool/create_icon.dart
 
-import 'dart:io';
-import 'dart:typed_data';
-import 'dart:ui' as ui;
-import 'package:flutter/material.dart';
-
 Future<void> main() async {
   // Basit bir PNG oluştur - 1024x1024
   // Bu dosya manuel olarak veya online araçlarla oluşturulabilir

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:math';
 import '../services/tema_service.dart';
 
 class GununIcerigiWidget extends StatefulWidget {

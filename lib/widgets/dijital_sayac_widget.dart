@@ -17,7 +17,6 @@ class _DijitalSayacWidgetState extends State<DijitalSayacWidget> {
   Timer? _timer;
   Duration _kalanSure = Duration.zero;
   String _sonrakiVakit = '';
-  String _sonrakiVakitSaati = '';
   Map<String, String> _vakitSaatleri = {};
   final TemaService _temaService = TemaService();
 
@@ -123,7 +122,6 @@ class _DijitalSayacWidgetState extends State<DijitalSayacWidget> {
 
     DateTime? sonrakiVakitZamani;
     String sonrakiVakitAdi = '';
-    String vakitSaati = '';
 
     for (final vakit in vakitSaatleri) {
       final saat = vakit['saat'] as String;
@@ -140,7 +138,6 @@ class _DijitalSayacWidgetState extends State<DijitalSayacWidget> {
             int.parse(parts[1]),
           );
           sonrakiVakitAdi = vakit['adi'] as String;
-          vakitSaati = saat;
           break;
         }
       } catch (e) {
@@ -159,13 +156,11 @@ class _DijitalSayacWidgetState extends State<DijitalSayacWidget> {
         int.parse(imsakSaat[1]),
       );
       sonrakiVakitAdi = 'İmsak';
-      vakitSaati = _vakitSaatleri['Imsak']!;
     }
 
     setState(() {
       _kalanSure = sonrakiVakitZamani!.difference(now);
       _sonrakiVakit = sonrakiVakitAdi;
-      _sonrakiVakitSaati = vakitSaati;
     });
   }
 

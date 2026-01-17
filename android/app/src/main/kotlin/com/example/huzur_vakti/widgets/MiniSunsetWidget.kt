@@ -127,8 +127,11 @@ class MiniSunsetWidget : AppWidgetProvider() {
             views.setTextViewText(R.id.tv_sonraki_label, "$sonrakiVakit Vaktine Kalan")
             views.setTextColor(R.id.tv_sonraki_label, yaziRengiSecondary)
 
-            // İlerleme
+            // İlerleme ve ECİR - widget yazı rengiyle aynı renk kullan
             views.setProgressBar(R.id.progress_vakit, 100, ilerleme, false)
+            views.setTextViewText(R.id.tv_ecir_percent, "$ilerleme%")
+            views.setTextColor(R.id.tv_ecir_label, yaziRengi)
+            views.setTextColor(R.id.tv_ecir_percent, yaziRengi)
 
             // Alt bilgi
             views.setTextViewText(R.id.tv_mevcut_vakit, "$mevcutVakit ($mevcutSaat)")
