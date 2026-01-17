@@ -197,7 +197,12 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa> {
           
           // Bilgi
           Card(
-            color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+            color: Color.fromRGBO(
+              theme.colorScheme.primaryContainer.red,
+              theme.colorScheme.primaryContainer.green,
+              theme.colorScheme.primaryContainer.blue,
+              0.3,
+            ),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Row(
@@ -228,29 +233,42 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa> {
     
     final Color renk1 = _seffafTema 
         ? Colors.transparent 
-        : (arkaPlan['renk1'] as Color).withOpacity(_seffaflik);
+        : Color.fromRGBO(
+            (arkaPlan['renk1'] as Color).red,
+            (arkaPlan['renk1'] as Color).green,
+            (arkaPlan['renk1'] as Color).blue,
+            _seffaflik,
+          );
     final Color renk2 = _seffafTema 
         ? Colors.transparent 
-        : (arkaPlan['renk2'] as Color).withOpacity(_seffaflik);
+        : Color.fromRGBO(
+            (arkaPlan['renk2'] as Color).red,
+            (arkaPlan['renk2'] as Color).green,
+            (arkaPlan['renk2'] as Color).blue,
+            _seffaflik,
+          );
     
     return Container(
       height: 120,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [renk1, renk2],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: _seffafTema 
+            ? null 
+            : LinearGradient(
+                colors: [renk1, renk2],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+        color: _seffafTema ? Colors.transparent : null,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isDark ? Colors.white24 : Colors.black12,
           width: 2,
         ),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
             color: Colors.black26,
             blurRadius: 8,
-            offset: const Offset(0, 4),
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -263,6 +281,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa> {
                 borderRadius: BorderRadius.circular(14),
                 child: CustomPaint(
                   painter: CheckerboardPainter(),
+                  size: Size.infinite,
                 ),
               ),
             ),
@@ -274,7 +293,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa> {
                 Text(
                   'Önizleme',
                   style: TextStyle(
-                    color: yaziRengi.withOpacity(0.7),
+                    color: Color.fromRGBO(yaziRengi.red, yaziRengi.green, yaziRengi.blue, 0.7),
                     fontSize: 12,
                   ),
                 ),
@@ -293,7 +312,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa> {
                     Text(
                       'İstanbul',
                       style: TextStyle(
-                        color: yaziRengi.withOpacity(0.8),
+                        color: Color.fromRGBO(yaziRengi.red, yaziRengi.green, yaziRengi.blue, 0.8),
                         fontSize: 14,
                       ),
                     ),
