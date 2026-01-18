@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'namazvakti_api_service.dart';
 import 'aladhan_api_service.dart';
 
@@ -25,6 +26,85 @@ class DiyanetApiService {
     _illerCache = null;
     _ilcelerCache.clear();
     print('✅ DiyanetApiService cache temizlendi');
+  }
+  
+  // Cache'i SharedPreferences'a kaydet
+  static Future<void> _saveVakitToPrefs(String ilceId, Map<String, dynamic> data) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final jsonStr = jsonEncode(data);
+      await prefs.setString('vakit_cache_$ilceId', jsonStr);
+      await prefs.setInt('vakit_cache_time_$ilceId', DateTime.now().millisecondsSinceEpoch);
+      print('💾 Vakit verileri kaydedildi: $ilceId');
+    } catch (e) {
+      print('⚠️ Cache kaydetme hatası: $e');
+    }
+  }
+  
+  // SharedPreferences'tan cache yükle
+  static Future<Map<String, dynamic>?> _loadVakitFromPrefs(String ilceId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final jsonStr = prefs.getString('vakit_cache_$ilceId');
+      final cacheTime = prefs.getInt('vakit_cache_time_$ilceId');
+      
+      if (jsonStr != null && cacheTime != null) {
+        final cacheDate = DateTime.fromMillisecondsSinceEpoch(cacheTime);
+        final now = DateTime.now();
+        
+        // Cache 7 günden eskiyse kullanma
+        if (now.difference(cacheDate).inDays < 7) {
+          final data = jsonDecode(jsonStr) as Map<String, dynamic>;
+          print('📂 Kaydedilmiş vakit verileri yüklendi: $ilceId');
+          return data;
+        } else {
+          print('⏰ Kaydedilmiş veriler çok eski (${now.difference(cacheDate).inDays} gün)');
+        }
+      }
+    } catch (e) {
+      print('⚠️ Cache yükleme hatası: $e');
+    }
+    return null;
+  }
+  
+  // Aylık vakit cache'ini SharedPreferences'a kaydet
+  static Future<void> _saveAylikVakitToPrefs(String cacheKey, List<Map<String, dynamic>> data) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final jsonStr = jsonEncode(data);
+      await prefs.setString('aylik_vakit_$cacheKey', jsonStr);
+      await prefs.setInt('aylik_vakit_time_$cacheKey', DateTime.now().millisecondsSinceEpoch);
+      print('💾 Aylık vakit verileri kaydedildi: $cacheKey');
+    } catch (e) {
+      print('⚠️ Aylık cache kaydetme hatası: $e');
+    }
+  }
+  
+  // Aylık vakit cache'ini SharedPreferences'tan yükle
+  static Future<List<Map<String, dynamic>>?> _loadAylikVakitFromPrefs(String cacheKey) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final jsonStr = prefs.getString('aylik_vakit_$cacheKey');
+      final cacheTime = prefs.getInt('aylik_vakit_time_$cacheKey');
+      
+      if (jsonStr != null && cacheTime != null) {
+        final cacheDate = DateTime.fromMillisecondsSinceEpoch(cacheTime);
+        final now = DateTime.now();
+        
+        // Cache 30 günden eskiyse kullanma
+        if (now.difference(cacheDate).inDays < 30) {
+          final data = jsonDecode(jsonStr) as List;
+          final result = data.map((item) => item as Map<String, dynamic>).toList();
+          print('📂 Kaydedilmiş aylık vakit verileri yüklendi: $cacheKey');
+          return result;
+        } else {
+          print('⏰ Kaydedilmiş aylık veriler çok eski (${now.difference(cacheDate).inDays} gün)');
+        }
+      }
+    } catch (e) {
+      print('⚠️ Aylık cache yükleme hatası: $e');
+    }
+    return null;
   }
 
   /// Bugünün namaz vakitlerini döndürür (Imsak, Gunes, Ogle, Ikindi, Aksam, Yatsi)
@@ -97,9 +177,18 @@ class DiyanetApiService {
   ) async {
     final cacheKey = '$ilceId-$yil-$ay';
     
-    // Cache'de varsa döndür
+    // 1. RAM cache'de varsa döndür
     if (_aylikVakitCache.containsKey(cacheKey)) {
+      print('📦 Aylık RAM cache kullanılıyor: $cacheKey');
       return _aylikVakitCache[cacheKey]!;
+    }
+
+    // 2. SharedPreferences'tan yükle
+    final savedData = await _loadAylikVakitFromPrefs(cacheKey);
+    if (savedData != null && savedData.isNotEmpty) {
+      _aylikVakitCache[cacheKey] = savedData;
+      print('💾 Aylık kaydedilmiş veriler kullanılıyor: $cacheKey');
+      return savedData;
     }
 
     try {
@@ -145,14 +234,15 @@ class DiyanetApiService {
             }
           }
           
-          // Tüm ayları cache'le
-          ayGruplari.forEach((key, vakitler) {
-            _aylikVakitCache[key] = vakitler;
-          });
+          // Tüm ayları cache'le ve kaydet
+          for (var entry in ayGruplari.entries) {
+            _aylikVakitCache[entry.key] = entry.value;
+            await _saveAylikVakitToPrefs(entry.key, entry.value);
+          }
           
           // İstenen ayı döndür
           if (ayGruplari.containsKey(cacheKey)) {
-            print('✅ Aylık vakitler alındı: $cacheKey (${ayGruplari[cacheKey]!.length} gün)');
+            print('✅ Aylık vakitler alındı ve kaydedildi: $cacheKey (${ayGruplari[cacheKey]!.length} gün)');
             return ayGruplari[cacheKey]!;
           }
         }
@@ -284,36 +374,47 @@ class DiyanetApiService {
     final cached = _vakitCache[ilceId];
     final cachedTime = _vakitCacheTimes[ilceId];
 
-    // Cache'i kontrol et - sadece aynı gün ve 30 dakikadan az ise kullan
+    // 1. RAM cache'i kontrol et - sadece aynı gün ve 30 dakikadan az ise kullan
     if (cached != null && cachedTime != null) {
       final sameDay = cachedTime.year == now.year &&
           cachedTime.month == now.month &&
           cachedTime.day == now.day;
       if (sameDay && now.difference(cachedTime) < const Duration(minutes: 30)) {
-        print('📦 Cache kullanılıyor ($ilceId) - ${now.difference(cachedTime).inMinutes} dk önce');
+        print('📦 RAM cache kullanılıyor ($ilceId) - ${now.difference(cachedTime).inMinutes} dk önce');
         return cached;
       }
     }
 
+    // 2. İnternetten yeni veri almayı dene
     try {
       final remote = await _fetchRemoteVakitler(ilceId);
       if (remote != null) {
         _vakitCache[ilceId] = remote;
         _vakitCacheTimes[ilceId] = now;
-        print('✅ API\'den veri başarıyla alındı ve cache\'lendi: $ilceId');
+        await _saveVakitToPrefs(ilceId, remote); // Kalıcı olarak kaydet
+        print('✅ API\'den veri başarıyla alındı ve kaydedildi: $ilceId');
         return remote;
       }
     } catch (e) {
       print('⚠️ Canlı vakit alınamadı ($ilceId): $e');
     }
 
-    // Cache'de eski veri varsa onu kullan (API başarısız olursa)
+    // 3. RAM cache'de eski veri varsa onu kullan
     if (cached != null) {
-      print('ℹ️ İnternet yok, eski cache kullanılıyor: $ilceId');
+      print('ℹ️ İnternet yok, RAM cache kullanılıyor: $ilceId');
       return cached;
     }
 
-    print('❌ API\'den veri alınamadı ve cache boş: $ilceId');
+    // 4. SharedPreferences'tan kaydedilmiş veriyi yükle
+    final savedData = await _loadVakitFromPrefs(ilceId);
+    if (savedData != null) {
+      _vakitCache[ilceId] = savedData;
+      _vakitCacheTimes[ilceId] = now;
+      print('💾 Kaydedilmiş offline veriler kullanılıyor: $ilceId');
+      return savedData;
+    }
+
+    print('❌ API\'den veri alınamadı ve hiçbir cache yok: $ilceId');
     return null;
   }
 

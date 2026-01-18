@@ -347,11 +347,12 @@ class _AnaSayfaState extends State<AnaSayfa> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
+        return SingleChildScrollView(
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
               ListTile(
                 leading: Icon(Icons.schedule, color: renkler.vurgu),
                 title: Text(
@@ -499,6 +500,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
               ),
             ],
           ),
+        ),
         );
       },
     );

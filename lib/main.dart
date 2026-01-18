@@ -65,6 +65,7 @@ class _HuzurVaktiAppState extends State<HuzurVaktiApp> {
       debugShowCheckedModeBanner: false,
       title: 'Huzur Vakti',
       theme: _temaService.buildThemeData(),
+
       home: const SplashScreen(),
     );
   }

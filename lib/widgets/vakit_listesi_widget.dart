@@ -133,17 +133,17 @@ class _VakitListesiWidgetState extends State<VakitListesiWidget> {
       // Eğer dosya yoksa varsayılan olarak 'ding_dong.mp3' kullan
       final rawSes = [
         'arriving.mp3',
-        'best_2015.mp3',
-        'corner.mp3',
-        'ding_dong.mp3',
-        'echo.mp3',
+        'best.mp3',
+        'Corner.mp3',
+        'Ding_Dong.mp3',
+        'Echo.mp3',
         'iphone_sms_original.mp3',
         'snaps.mp3',
-        'sweet_favour.mp3',
-        'violet.mp3',
-        'woodpecker.mp3',
+        'Sweet_Favour.mp3',
+        'Violet.mp3',
+        'Woodpecker.mp3',
       ];
-      final sesDosyasi = (ses != null && rawSes.contains(ses)) ? ses : 'ding_dong.mp3';
+      final sesDosyasi = (ses != null && rawSes.contains(ses)) ? ses : 'Ding_Dong.mp3';
       if (bildirimAcik) {
         await NotificationService.showVakitNotification(
           title: 'Vakit Girdi',

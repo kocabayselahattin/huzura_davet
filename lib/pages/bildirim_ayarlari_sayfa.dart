@@ -62,7 +62,7 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
 
   final List<int> _erkenSureler = [0, 5, 10, 15, 20, 30, 45, 60];
   final List<Map<String, String>> _sesSecenekleri = [
-    {'ad': 'Best 2015', 'dosya': '2015_best.mp3'},
+    {'ad': 'Best', 'dosya': 'best.mp3'},
     {'ad': 'Arriving', 'dosya': 'arriving.mp3'},
     {'ad': 'Corner', 'dosya': 'Corner.mp3'},
     {'ad': 'Ding Dong', 'dosya': 'Ding_Dong.mp3'},
@@ -210,6 +210,35 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
   }
   
   Future<void> _ozelSesSec(String key) async {
+    // Önce kullanıcıyı bilgilendir
+    final devam = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Özel Ses Seçimi'),
+        content: const Text(
+          'Önemli: Ses dosyanızın adı rakamla başlamamalıdır.\n\n'
+          'Android sisteminde ses dosyası isimleri harfle başlamalıdır.\n\n'
+          'Örnek:\n'
+          '✓ vakit_sesi.mp3\n'
+          '✓ namaz_ezani.mp3\n'
+          '✗ 2024_ses.mp3\n'
+          '✗ 1_ezan.mp3',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('İptal'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Anladım, Devam Et'),
+          ),
+        ],
+      ),
+    );
+    
+    if (devam != true) return;
+    
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.audio,

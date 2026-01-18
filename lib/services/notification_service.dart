@@ -15,16 +15,26 @@ class NotificationService {
   static Future<void> showVakitNotification({
     required String title,
     required String body,
-    String? soundAsset, // ör: 'ding_dong.mp3'
+    String? soundAsset, // ör: 'Ding_Dong.mp3' veya 'ding_dong.mp3'
   }) async {
+    // Android raw resource formatına dönüştür: küçük harf, tire yerine alt çizgi, uzantı yok
+    String? androidSound;
+    if (soundAsset != null) {
+      androidSound = soundAsset
+          .replaceAll('.mp3', '')
+          .replaceAll('.wav', '')
+          .toLowerCase()
+          .replaceAll('-', '_');
+    }
+    
     final androidPlatformChannelSpecifics = AndroidNotificationDetails(
       'vakit_channel',
       'Vakit Bildirimleri',
       channelDescription: 'Namaz vakitleri için bildirimler',
       importance: Importance.max,
       priority: Priority.high,
-      sound: soundAsset != null
-          ? RawResourceAndroidNotificationSound(soundAsset.replaceAll('.mp3', '').replaceAll('.wav', ''))
+      sound: androidSound != null
+          ? RawResourceAndroidNotificationSound(androidSound)
           : null,
       playSound: true,
     );
