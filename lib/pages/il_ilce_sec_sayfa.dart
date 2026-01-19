@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import '../services/diyanet_api_service.dart';
 import '../services/konum_service.dart';
+import '../services/home_widget_service.dart';
 import '../data/il_ilce_data.dart';
+import '../models/konum_model.dart';
 
 class IlIlceSecSayfa extends StatefulWidget {
   final bool ilkKurulum;
@@ -26,6 +28,24 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
   String? secilenIlceId;
   bool yukleniyor = false;
   bool konumTespit = false;
+  
+  // Ülke seçimi
+  String secilenUlke = 'Türkiye';
+  final List<Map<String, String>> ulkeler = [
+    {'kod': 'TR', 'ad': '🇹🇷 Türkiye'},
+    {'kod': 'DE', 'ad': '🇩🇪 Almanya'},
+    {'kod': 'NL', 'ad': '🇳🇱 Hollanda'},
+    {'kod': 'BE', 'ad': '🇧🇪 Belçika'},
+    {'kod': 'FR', 'ad': '🇫🇷 Fransa'},
+    {'kod': 'GB', 'ad': '🇬🇧 İngiltere'},
+    {'kod': 'AT', 'ad': '🇦🇹 Avusturya'},
+    {'kod': 'SA', 'ad': '🇸🇦 Suudi Arabistan'},
+    {'kod': 'AE', 'ad': '🇦🇪 BAE'},
+    {'kod': 'QA', 'ad': '🇶🇦 Katar'},
+    {'kod': 'KW', 'ad': '🇰🇼 Kuveyt'},
+    {'kod': 'US', 'ad': '🇺🇸 ABD'},
+    {'kod': 'CA', 'ad': '🇨🇦 Kanada'},
+  ];
 
   final TextEditingController _ilAramaController = TextEditingController();
   final TextEditingController _ilceAramaController = TextEditingController();
@@ -166,10 +186,39 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
       }
 
       // Konum al
-      final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.low,
-        timeLimit: const Duration(seconds: 10),
-      );
+      Position? position;
+      
+      // Önce son bilinen konumu al (hızlı başlangıç için)
+      Position? lastKnown = await Geolocator.getLastKnownPosition();
+      
+      try {
+        // Konum al (60 saniye timeout, daha düşük hassasiyet)
+        position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.medium,
+          timeLimit: const Duration(seconds: 60),
+        );
+      } catch (e) {
+        // getCurrentPosition başarısızsa son bilinen konumu kullan
+        if (lastKnown != null) {
+          position = lastKnown;
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Canlı konum alınamadı, son bilinen konum kullanıldı.'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          }
+        } else {
+          _konumHatasi('Konum alınamadı. Lütfen GPS\'i açık alanda tekrar deneyin.');
+          return;
+        }
+      }
+
+      if (position == null) {
+        _konumHatasi('Konum bilgisi alınamadı. Lütfen manuel seçim yapın.');
+        return;
+      }
 
       // Koordinatlara göre en yakın ili bul
       final enYakinIl = _enYakinIliBul(position.latitude, position.longitude);
@@ -360,13 +409,31 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
 
   Future<void> _kaydet() async {
     if (secilenIlId != null && secilenIlceId != null) {
+      // Yeni konum modeli oluştur
+      final yeniKonum = KonumModel(
+        ilAdi: secilenIlAdi!,
+        ilId: secilenIlId!,
+        ilceAdi: secilenIlceAdi!,
+        ilceId: secilenIlceId!,
+        aktif: true,
+      );
+
+      // Konumu listeye ekle (zaten varsa eklenmez)
+      await KonumService.addKonum(yeniKonum);
+      
+      // Eski sisteme de kaydet (uyumluluk için)
       await KonumService.setIl(secilenIlAdi!, secilenIlId!);
       await KonumService.setIlce(secilenIlceAdi!, secilenIlceId!);
 
+      // Widget'ları ve uygulama verilerini hemen güncelle
+      print('🔄 Konum değişti, veriler güncelleniyor...');
+      await HomeWidgetService.updateAllWidgets();
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Konum kaydedildi')),
+          const SnackBar(content: Text('Konum kaydedildi ve güncelleniyor...')),
         );
+        // Ana sayfanın güncellemesi için true döndür
         Navigator.pop(context, true);
       }
     }
@@ -393,6 +460,145 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
         ),
         body: Column(
           children: [
+            // Ülke seçici (gelecekte daha fazla ülke için)
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFF2A3F5F),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.cyanAccent.withOpacity(0.3)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.public, color: Colors.cyanAccent, size: 20),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'Ülke:',
+                    style: TextStyle(color: Colors.white70, fontSize: 14),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: DropdownButton<String>(
+                      value: secilenUlke,
+                      isExpanded: true,
+                      underline: const SizedBox(),
+                      dropdownColor: const Color(0xFF2A3F5F),
+                      style: const TextStyle(color: Colors.white, fontSize: 16),
+                      items: ulkeler.map((ulke) {
+                        return DropdownMenuItem<String>(
+                          value: ulke['ad'],
+                          child: Text(ulke['ad']!),
+                        );
+                      }).toList(),
+                      onChanged: (yeniUlke) {
+                        if (yeniUlke != null) {
+                          setState(() {
+                            secilenUlke = yeniUlke;
+                            // Türkiye dışındaki ülkeler için şehir listesini temizle
+                            if (!yeniUlke.contains('Türkiye')) {
+                              iller = [];
+                              filtrelenmisIller = [];
+                              ilceler = [];
+                              filtrelenmisIlceler = [];
+                              secilenIlAdi = null;
+                              secilenIlId = null;
+                              secilenIlceAdi = null;
+                              secilenIlceId = null;
+                            } else {
+                              _illeriYukle();
+                            }
+                          });
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            // Türkiye dışındaki ülkeler için şehir adı girişi
+            if (!secilenUlke.contains('Türkiye'))
+              Container(
+                margin: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2A3F5F),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.cyanAccent.withOpacity(0.3)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.info_outline, color: Colors.cyanAccent, size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Şehir Bilgisi',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'GPS ile konumunuzu tespit edin veya aşağıya şehir adını yazın:',
+                      style: TextStyle(color: Colors.white70, fontSize: 13),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _ilAramaController,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        hintText: 'Örn: Berlin, London, Paris...',
+                        hintStyle: const TextStyle(color: Colors.white54),
+                        prefixIcon: const Icon(Icons.location_city, color: Colors.white54),
+                        filled: true,
+                        fillColor: const Color(0xFF1B2741),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                      onChanged: (value) {
+                        if (value.isNotEmpty) {
+                          setState(() {
+                            secilenIlAdi = value;
+                            secilenIlceAdi = secilenUlke.split(' ')[1]; // Ülke adı
+                            // Koordinatlar GPS ile alınacak
+                          });
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.wb_sunny, color: Colors.orange, size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Namaz vakitleri GPS koordinatlarınıza göre hesaplanacaktır.',
+                              style: TextStyle(color: Colors.orange, fontSize: 11),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            
             // GPS ile konum tespit butonu (her zaman göster)
             Container(
               width: double.infinity,
@@ -476,8 +682,9 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
               ),
             ),
 
-            // İl Arama ve Seçimi
-            Padding(
+            // İl Arama ve Seçimi (sadece Türkiye için)
+            if (secilenUlke.contains('Türkiye'))
+              Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: TextField(
                 controller: _ilAramaController,
@@ -555,8 +762,8 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
                       ),
               ),
 
-            // Seçili il göstergesi ve ilçe seçimi
-            if (secilenIlId != null) ...[
+            // Seçili il göstergesi ve ilçe seçimi (sadece Türkiye için)
+            if (secilenUlke.contains('Türkiye') && secilenIlId != null) ...[
               // Seçili il
               Container(
                 margin: const EdgeInsets.all(16),

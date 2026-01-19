@@ -21,8 +21,20 @@ class DndService {
   static Future<bool> schedulePrayerDnd() async {
     if (!Platform.isAndroid) return false;
 
+    // Önce izin var mı kontrol et
+    final hasAccess = await hasPolicyAccess();
+    if (!hasAccess) {
+      print('⚠️ DND izni yok! Kullanıcı ayarlardan izin vermelidir.');
+      return false;
+    }
+
     final entries = await _buildEntries();
-    if (entries.isEmpty) return false;
+    if (entries.isEmpty) {
+      print('⚠️ DND planlanacak vakit bulunamadı.');
+      return false;
+    }
+
+    print('📵 ${entries.length} vakit için DND planlanıyor...');
 
     final payload = entries
         .map((entry) => {
@@ -36,6 +48,8 @@ class DndService {
       'scheduleDnd',
       {'entries': payload},
     );
+    
+    print(result == true ? '✅ DND planlandı' : '❌ DND planlanamadı');
     return result ?? false;
   }
 

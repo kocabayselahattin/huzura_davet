@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:math' as math;
+import '../services/vibration_service.dart';
 
 class ZikirMatikSayfa extends StatefulWidget {
   const ZikirMatikSayfa({super.key});
@@ -82,13 +83,10 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
     super.dispose();
   }
 
-  void _artir() {
+  void _artir() async {
     if (_titresimAcik) {
-      HapticFeedback.lightImpact();
-      // 3 saliselik (milisaniye) titreşim için tekrar çağır
-      Future.delayed(const Duration(milliseconds: 3), () {
-        if (mounted) HapticFeedback.lightImpact();
-      });
+      // VibrationService ile daha güvenilir titreşim
+      await VibrationService.medium();
     }
     _pulseController.forward().then((_) => _pulseController.reverse());
     _rippleController.forward(from: 0.0);
@@ -99,16 +97,17 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
         _toplamTur++;
         _sayac = 0;
         if (_titresimAcik) {
-          HapticFeedback.heavyImpact();
+          // Başarı titreşimi - daha belirgin
+          VibrationService.success();
         }
       }
     });
     _verileriKaydet();
   }
 
-  void _sifirla() {
+  void _sifirla() async {
     if (_titresimAcik) {
-      HapticFeedback.mediumImpact();
+      await VibrationService.medium();
     }
     setState(() {
       _sayac = 0;
@@ -116,9 +115,9 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
     _verileriKaydet();
   }
 
-  void _tamSifirla() {
+  void _tamSifirla() async {
     if (_titresimAcik) {
-      HapticFeedback.heavyImpact();
+      await VibrationService.heavy();
     }
     setState(() {
       _sayac = 0;

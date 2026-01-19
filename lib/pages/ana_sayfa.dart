@@ -11,6 +11,9 @@ import '../widgets/esmaul_husna_widget.dart';
 import '../widgets/ozel_gun_popup.dart';
 import '../services/konum_service.dart';
 import '../services/tema_service.dart';
+import '../services/language_service.dart';
+import '../services/home_widget_service.dart';
+import '../models/konum_model.dart';
 import 'imsakiye_sayfa.dart';
 import 'ayarlar_sayfa.dart';
 import 'zikir_matik_sayfa.dart';
@@ -31,9 +34,18 @@ class AnaSayfa extends StatefulWidget {
 class _AnaSayfaState extends State<AnaSayfa> {
   String konumBasligi = "KONUM SEÇİLMEDİ";
   final TemaService _temaService = TemaService();
+  final LanguageService _languageService = LanguageService();
   PageController? _sayacController;
   int _currentSayacIndex = 0;
   bool _sayacYuklendi = false;
+  
+  // Çoklu konum sistemi
+  List<KonumModel> _konumlar = [];
+  int _aktifKonumIndex = 0;
+  PageController? _konumPageController;
+  
+  // Widget yenileme için key
+  Key _vakitListesiKey = UniqueKey();
 
   @override
   void initState() {
@@ -41,6 +53,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
     _loadSayacIndex();
     _konumYukle();
     _temaService.addListener(_onTemaChanged);
+    _languageService.addListener(_onTemaChanged);
     // Özel gün popup kontrolü
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkOzelGun();
@@ -73,7 +86,9 @@ class _AnaSayfaState extends State<AnaSayfa> {
   @override
   void dispose() {
     _sayacController?.dispose();
+    _konumPageController?.dispose();
     _temaService.removeListener(_onTemaChanged);
+    _languageService.removeListener(_onTemaChanged);
     super.dispose();
   }
 
@@ -82,18 +97,152 @@ class _AnaSayfaState extends State<AnaSayfa> {
   }
 
   Future<void> _konumYukle() async {
-    final il = await KonumService.getIl();
-    final ilce = await KonumService.getIlce();
+    final konumlar = await KonumService.getKonumlar();
+    final aktifIndex = await KonumService.getAktifKonumIndex();
 
-    if (il != null && ilce != null) {
+    if (mounted) {
       setState(() {
-        konumBasligi = "$il / $ilce";
-      });
-    } else if (il != null) {
-      setState(() {
-        konumBasligi = il;
+        _konumlar = konumlar;
+        _aktifKonumIndex = aktifIndex < konumlar.length ? aktifIndex : 0;
+        
+        if (konumlar.isEmpty) {
+          konumBasligi = "KONUM SEÇİLMEDİ";
+        } else {
+          final aktifKonum = konumlar[_aktifKonumIndex];
+          konumBasligi = "${aktifKonum.ilAdi} / ${aktifKonum.ilceAdi}";
+        }
+        
+        _konumPageController = PageController(initialPage: _aktifKonumIndex);
       });
     }
+  }
+
+  // Konum değiştirme fonksiyonu
+  Future<void> _konumDegistir(int yeniIndex) async {
+    if (yeniIndex >= 0 && yeniIndex < _konumlar.length) {
+      await KonumService.setAktifKonumIndex(yeniIndex);
+      setState(() {
+        _aktifKonumIndex = yeniIndex;
+        final aktifKonum = _konumlar[yeniIndex];
+        konumBasligi = "${aktifKonum.ilAdi} / ${aktifKonum.ilceAdi}";
+      });
+      
+      // Widget'ları güncelle
+      await HomeWidgetService.updateAllWidgets();
+      print('✅ Aktif konum değiştirildi: ${_konumlar[yeniIndex].tamAd}');
+      
+      // Vakit listesini ve tüm widgetları yenile
+      if (mounted) {
+        setState(() {
+          _vakitListesiKey = UniqueKey(); // Vakit listesini zorla yeniden oluştur
+        });
+      }
+    }
+  }
+
+  // Konum yönetim dialogu
+  void _konumYonetimDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        final renkler = _temaService.renkler;
+        return AlertDialog(
+          backgroundColor: renkler.kartArkaPlan,
+          title: Text(
+            'Kayıtlı Konumlar',
+            style: TextStyle(color: renkler.yaziPrimary),
+          ),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: _konumlar.isEmpty
+                ? Text(
+                    'Henüz kayıtlı konum yok',
+                    style: TextStyle(color: renkler.yaziSecondary),
+                  )
+                : ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: _konumlar.length,
+                    itemBuilder: (context, index) {
+                      final konum = _konumlar[index];
+                      final isAktif = index == _aktifKonumIndex;
+                      
+                      return Card(
+                        color: isAktif ? renkler.vurgu.withValues(alpha: 0.2) : renkler.arkaPlan,
+                        child: ListTile(
+                          leading: Icon(
+                            isAktif ? Icons.location_on : Icons.location_city,
+                            color: isAktif ? renkler.vurgu : renkler.yaziSecondary,
+                          ),
+                          title: Text(
+                            konum.tamAd,
+                            style: TextStyle(
+                              color: renkler.yaziPrimary,
+                              fontWeight: isAktif ? FontWeight.bold : FontWeight.normal,
+                            ),
+                          ),
+                          subtitle: isAktif
+                              ? Text(
+                                  'Aktif Konum',
+                                  style: TextStyle(color: renkler.vurgu, fontSize: 12),
+                                )
+                              : null,
+                          trailing: _konumlar.length > 1
+                              ? IconButton(
+                                  icon: Icon(Icons.delete, color: Colors.red[400]),
+                                  onPressed: () async {
+                                    final onay = await showDialog<bool>(
+                                      context: context,
+                                      builder: (ctx) => AlertDialog(
+                                        backgroundColor: renkler.kartArkaPlan,
+                                        title: Text(
+                                          'Konumu Sil',
+                                          style: TextStyle(color: renkler.yaziPrimary),
+                                        ),
+                                        content: Text(
+                                          '${konum.tamAd} konumunu silmek istediğinize emin misiniz?',
+                                          style: TextStyle(color: renkler.yaziSecondary),
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(ctx, false),
+                                            child: Text('İptal', style: TextStyle(color: renkler.yaziSecondary)),
+                                          ),
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(ctx, true),
+                                            child: const Text('Sil', style: TextStyle(color: Colors.red)),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                    
+                                    if (onay == true) {
+                                      await KonumService.removeKonum(index);
+                                      Navigator.pop(context);
+                                      _konumYukle();
+                                    }
+                                  },
+                                )
+                              : null,
+                          onTap: () {
+                            if (!isAktif) {
+                              _konumDegistir(index);
+                              Navigator.pop(context);
+                            }
+                          },
+                        ),
+                      );
+                    },
+                  ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Kapat', style: TextStyle(color: renkler.vurgu)),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -114,15 +263,25 @@ class _AnaSayfaState extends State<AnaSayfa> {
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
+        leading: _konumlar.isNotEmpty
+            ? IconButton(
+                icon: Badge(
+                  label: Text('${_konumlar.length}'),
+                  child: Icon(Icons.location_city, color: renkler.vurgu),
+                ),
+                tooltip: 'Kayıtlı Konumlar',
+                onPressed: () => _konumYonetimDialog(),
+              )
+            : null,
         actions: [
-          // Konum değiştir ikonu
+          // Konum ekle ikonu
           IconButton(
             icon: Icon(
-              Icons.location_on,
+              Icons.add_location_alt,
               color: renkler.vurgu,
               size: 28,
             ),
-            tooltip: 'Konum Değiştir',
+            tooltip: 'Konum Ekle',
             onPressed: () async {
               final result = await Navigator.push(
                 context,
@@ -131,7 +290,11 @@ class _AnaSayfaState extends State<AnaSayfa> {
                 ),
               );
               if (result == true || result == null) {
-                _konumYukle();
+                await _konumYukle();
+                // Vakit listesini yenile
+                setState(() {
+                  _vakitListesiKey = UniqueKey();
+                });
               }
             },
           ),
@@ -236,7 +399,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
               const SizedBox(height: 10),
 
               // --- VAKİT LİSTESİ ---
-              const VakitListesiWidget(),
+              VakitListesiWidget(key: _vakitListesiKey),
 
               const SizedBox(height: 20),
 
@@ -356,7 +519,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
               ListTile(
                 leading: Icon(Icons.schedule, color: renkler.vurgu),
                 title: Text(
-                  'İmsakiye',
+                  _languageService['calendar'] ?? 'İmsakiye',
                   style: TextStyle(color: renkler.yaziPrimary),
                 ),
                 onTap: () {
@@ -372,7 +535,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
               ListTile(
                 leading: Icon(Icons.auto_awesome, color: renkler.vurgu),
                 title: Text(
-                  'Zikir Matik',
+                  _languageService['dhikr'] ?? 'Zikir Matik',
                   style: TextStyle(color: renkler.yaziPrimary),
                 ),
                 onTap: () {
@@ -388,7 +551,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
               ListTile(
                 leading: Icon(Icons.mosque, color: renkler.vurgu),
                 title: Text(
-                  'İbadet',
+                  _languageService['worship'] ?? 'İbadet',
                   style: TextStyle(color: renkler.yaziPrimary),
                 ),
                 onTap: () {
@@ -404,7 +567,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
               ListTile(
                 leading: Icon(Icons.explore, color: renkler.vurgu),
                 title: Text(
-                  'Kıble Yönü',
+                  _languageService['qibla'] ?? 'Kıble Yönü',
                   style: TextStyle(color: renkler.yaziPrimary),
                 ),
                 onTap: () {
@@ -420,7 +583,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
               ListTile(
                 leading: Icon(Icons.place, color: renkler.vurgu),
                 title: Text(
-                  'Yakındaki Camiler',
+                  _languageService['nearby_mosques'] ?? 'Yakındaki Camiler',
                   style: TextStyle(color: renkler.yaziPrimary),
                 ),
                 onTap: () {
@@ -436,7 +599,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
               ListTile(
                 leading: Icon(Icons.celebration, color: renkler.vurgu),
                 title: Text(
-                  'Özel Gün ve Geceler',
+                  _languageService['special_days'] ?? 'Özel Gün ve Geceler',
                   style: TextStyle(color: renkler.yaziPrimary),
                 ),
                 onTap: () {
@@ -452,7 +615,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
               ListTile(
                 leading: Icon(Icons.menu_book, color: renkler.vurgu),
                 title: Text(
-                  '40 Hadis',
+                  _languageService['hadith'] ?? '40 Hadis',
                   style: TextStyle(color: renkler.yaziPrimary),
                 ),
                 onTap: () {
@@ -468,7 +631,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
               ListTile(
                 leading: Icon(Icons.auto_stories, color: renkler.vurgu),
                 title: Text(
-                  'Kur\'an-ı Kerim',
+                  _languageService['quran'] ?? 'Kur\'an-ı Kerim',
                   style: TextStyle(color: renkler.yaziPrimary),
                 ),
                 onTap: () {
@@ -484,7 +647,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
               ListTile(
                 leading: Icon(Icons.settings, color: renkler.vurgu),
                 title: Text(
-                  'Ayarlar',
+                  _languageService['settings'] ?? 'Ayarlar',
                   style: TextStyle(color: renkler.yaziPrimary),
                 ),
                 onTap: () async {
@@ -495,7 +658,11 @@ class _AnaSayfaState extends State<AnaSayfa> {
                       builder: (context) => const AyarlarSayfa(),
                     ),
                   );
-                  _konumYukle();
+                  await _konumYukle();
+                  // Vakit listesini yenile
+                  setState(() {
+                    _vakitListesiKey = UniqueKey();
+                  });
                 },
               ),
             ],

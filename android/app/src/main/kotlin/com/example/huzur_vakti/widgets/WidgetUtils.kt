@@ -43,21 +43,9 @@ object WidgetUtils {
     }
 
     fun applyCountdown(views: RemoteViews, viewId: Int, remaining: String) {
-        val parts = remaining.split(":")
-        val hours = parts.getOrNull(0)?.toIntOrNull()
-        val minutes = parts.getOrNull(1)?.toIntOrNull()
-        val seconds = parts.getOrNull(2)?.toIntOrNull() ?: 0
-        if (hours == null || minutes == null) {
-            views.setTextViewText(viewId, remaining)
-            return
-        }
-        val totalSeconds = (hours * 3600) + (minutes * 60) + seconds
-        val base = SystemClock.elapsedRealtime() + (totalSeconds * 1000L)
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            views.setChronometerCountDown(viewId, true)
-        }
-        views.setChronometer(viewId, base, "%s", true)
+        // Chronometer widget update'lerinde sürekli reset oluyor
+        // Basit TextView kullan - her 5 saniyede güncellenir
+        views.setTextViewText(viewId, remaining)
     }
 
     fun applyFontStyle(views: RemoteViews, styleRes: Int, vararg viewIds: Int) {

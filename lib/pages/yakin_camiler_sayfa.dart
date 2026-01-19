@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher.dart';
 import '../services/tema_service.dart';
 
 class YakinCamilerSayfa extends StatefulWidget {
@@ -16,6 +17,8 @@ class _YakinCamilerSayfaState extends State<YakinCamilerSayfa> {
   List<Map<String, dynamic>> _camiler = [];
   bool _yukleniyor = true;
   String? _hata;
+  VoidCallback? _hataAksiyon;
+  String? _hataAksiyonLabel;
   Position? _konum;
 
   @override
@@ -39,6 +42,8 @@ class _YakinCamilerSayfaState extends State<YakinCamilerSayfa> {
     setState(() {
       _yukleniyor = true;
       _hata = null;
+      _hataAksiyon = null;
+      _hataAksiyonLabel = null;
     });
 
     try {
@@ -49,6 +54,8 @@ class _YakinCamilerSayfaState extends State<YakinCamilerSayfa> {
         if (permission == LocationPermission.denied) {
           setState(() {
             _hata = 'Konum izni reddedildi';
+            _hataAksiyon = Geolocator.openAppSettings;
+            _hataAksiyonLabel = 'Ayarlara Git';
             _yukleniyor = false;
           });
           return;
@@ -58,6 +65,8 @@ class _YakinCamilerSayfaState extends State<YakinCamilerSayfa> {
       if (permission == LocationPermission.deniedForever) {
         setState(() {
           _hata = 'Konum izni kalıcı olarak reddedildi. Ayarlardan izin verin.';
+          _hataAksiyon = Geolocator.openAppSettings;
+          _hataAksiyonLabel = 'Ayarlara Git';
           _yukleniyor = false;
         });
         return;
@@ -68,15 +77,56 @@ class _YakinCamilerSayfaState extends State<YakinCamilerSayfa> {
       if (!serviceEnabled) {
         setState(() {
           _hata = 'Konum servisi kapalı. Lütfen açın.';
+          _hataAksiyon = Geolocator.openLocationSettings;
+          _hataAksiyonLabel = 'Konum Ayarları';
           _yukleniyor = false;
         });
         return;
       }
 
-      // Mevcut konumu al
-      final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.best,
-      );
+      Position? position;
+      
+      // Önce son bilinen konumu al (hızlı başlangıç için)
+      Position? lastKnown = await Geolocator.getLastKnownPosition();
+      
+      try {
+        // Konum al (30 saniye timeout)
+        position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+          timeLimit: const Duration(seconds: 30),
+        );
+      } catch (e) {
+        // getCurrentPosition başarısızsa son bilinen konumu kullan
+        if (lastKnown != null) {
+          position = lastKnown;
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Canlı konum alınamadı, son bilinen konum kullanıldı.'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          }
+        } else {
+          setState(() {
+            _hata = 'Konum alınamadı. Lütfen GPS\'i açık alanda tekrar deneyin.\nHata: $e';
+            _hataAksiyon = _camileriYukle;
+            _hataAksiyonLabel = 'Tekrar Dene';
+            _yukleniyor = false;
+          });
+          return;
+        }
+      }
+
+      if (position == null) {
+        setState(() {
+          _hata = 'Konum bilgisi alınamadı.';
+          _hataAksiyon = _camileriYukle;
+          _hataAksiyonLabel = 'Tekrar Dene';
+          _yukleniyor = false;
+        });
+        return;
+      }
 
       setState(() {
         _konum = position;
@@ -87,6 +137,8 @@ class _YakinCamilerSayfaState extends State<YakinCamilerSayfa> {
     } catch (e) {
       setState(() {
         _hata = 'Konum alınamadı: $e';
+        _hataAksiyon = _camileriYukle;
+        _hataAksiyonLabel = 'Tekrar Dene';
         _yukleniyor = false;
       });
     }
@@ -96,15 +148,13 @@ class _YakinCamilerSayfaState extends State<YakinCamilerSayfa> {
     try {
       // Overpass API sorgusu (5km yarıçapında camiler)
       final query = '''
-        [out:json];
+        [out:json][timeout:25];
         (
-          node["amenity"="place_of_worship"]["religion"="muslim"](around:5000,$enlem,$boylam);
-          way["amenity"="place_of_worship"]["religion"="muslim"](around:5000,$enlem,$boylam);
-          relation["amenity"="place_of_worship"]["religion"="muslim"](around:5000,$enlem,$boylam);
+          node["amenity"="place_of_worship"]["religion"="muslim"](around:2000,$enlem,$boylam);
+          way["amenity"="place_of_worship"]["religion"="muslim"](around:2000,$enlem,$boylam);
+          relation["amenity"="place_of_worship"]["religion"="muslim"](around:2000,$enlem,$boylam);
         );
-        out body;
-        >;
-        out skel qt;
+        out center;
       ''';
 
       final response = await http.post(
@@ -118,32 +168,46 @@ class _YakinCamilerSayfaState extends State<YakinCamilerSayfa> {
 
         final List<Map<String, dynamic>> camiler = [];
         for (final element in elements) {
+          double? lat;
+          double? lon;
+          Map<String, dynamic>? tags;
+          
           if (element['type'] == 'node') {
-            final lat = element['lat'] as double;
-            final lon = element['lon'] as double;
-            final tags = element['tags'] as Map<String, dynamic>?;
-
-            if (tags != null) {
-              final mesafe = Geolocator.distanceBetween(
-                enlem,
-                boylam,
-                lat,
-                lon,
-              );
-
-              camiler.add({
-                'ad': tags['name'] ?? 'İsimsiz Cami',
-                'enlem': lat,
-                'boylam': lon,
-                'mesafe': mesafe,
-                'adres': tags['addr:street'] ?? '',
-              });
+            lat = element['lat'] as double?;
+            lon = element['lon'] as double?;
+            tags = element['tags'] as Map<String, dynamic>?;
+          } else if (element['type'] == 'way' || element['type'] == 'relation') {
+            // Way ve relation için merkez koordinatlarını kullan
+            final center = element['center'] as Map<String, dynamic>?;
+            if (center != null) {
+              lat = center['lat'] as double?;
+              lon = center['lon'] as double?;
             }
+            tags = element['tags'] as Map<String, dynamic>?;
+          }
+
+          if (lat != null && lon != null && tags != null && tags['name'] != null) {
+            final mesafe = Geolocator.distanceBetween(
+              enlem,
+              boylam,
+              lat,
+              lon,
+            );
+
+            camiler.add({
+              'ad': tags['name'] ?? 'İsimsiz Cami',
+              'enlem': lat,
+              'boylam': lon,
+              'mesafe': mesafe,
+              'adres': tags['addr:street'] ?? tags['addr:full'] ?? '',
+            });
           }
         }
 
-        // Mesafeye göre sırala
+        // Mesafeye göre sırala (en yakından en uzağa)
         camiler.sort((a, b) => (a['mesafe'] as double).compareTo(b['mesafe'] as double));
+
+        print('✅ ${camiler.length} cami bulundu, en yakın: ${camiler.isNotEmpty ? camiler[0]['ad'] : 'yok'} (${camiler.isNotEmpty ? (camiler[0]['mesafe'] as double).round() : 0}m)');
 
         setState(() {
           _camiler = camiler;
@@ -231,9 +295,9 @@ class _YakinCamilerSayfaState extends State<YakinCamilerSayfa> {
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
-              onPressed: _camileriYukle,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Tekrar Dene'),
+              onPressed: _hataAksiyon ?? _camileriYukle,
+              icon: const Icon(Icons.settings),
+              label: Text(_hataAksiyonLabel ?? 'Tekrar Dene'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: renkler.vurgu,
                 foregroundColor: Colors.white,
@@ -276,6 +340,16 @@ class _YakinCamilerSayfaState extends State<YakinCamilerSayfa> {
                 fontSize: 14,
               ),
             ),
+            if (_konum != null) ...[
+              const SizedBox(height: 24),
+              Text(
+                'Konum: ${_konum!.latitude.toStringAsFixed(6)}, ${_konum!.longitude.toStringAsFixed(6)}',
+                style: TextStyle(
+                  color: renkler.yaziSecondary,
+                  fontSize: 12,
+                ),
+              ),
+            ],
           ],
         ),
       );
@@ -283,10 +357,41 @@ class _YakinCamilerSayfaState extends State<YakinCamilerSayfa> {
 
     return Column(
       children: [
-        // Bilgi banner
+        // Harita butonu (OpenStreetMap'te aç)
         if (_konum != null)
           Container(
             margin: const EdgeInsets.all(16),
+            child: ElevatedButton.icon(
+              onPressed: () async {
+                final lat = _konum!.latitude;
+                final lon = _konum!.longitude;
+                final url = Uri.parse('https://www.openstreetmap.org/?mlat=$lat&mlon=$lon&zoom=15#map=15/$lat/$lon');
+                final launched = await launchUrl(
+                  url,
+                  mode: LaunchMode.externalApplication,
+                );
+                if (!launched && mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('Harita açılamadı.'),
+                      backgroundColor: Colors.red.shade700,
+                    ),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: renkler.vurgu,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
+              icon: const Icon(Icons.map),
+              label: const Text('Haritada Göster (OpenStreetMap)'),
+            ),
+          ),
+        
+        // Bilgi banner
+        if (_konum != null)
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: renkler.kartArkaPlan,
@@ -319,12 +424,28 @@ class _YakinCamilerSayfaState extends State<YakinCamilerSayfa> {
                           fontSize: 12,
                         ),
                       ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Enlem: ${_konum!.latitude.toStringAsFixed(6)}',
+                        style: TextStyle(
+                          color: renkler.yaziSecondary,
+                          fontSize: 10,
+                        ),
+                      ),
+                      Text(
+                        'Boylam: ${_konum!.longitude.toStringAsFixed(6)}',
+                        style: TextStyle(
+                          color: renkler.yaziSecondary,
+                          fontSize: 10,
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ],
             ),
           ),
+        const SizedBox(height: 16),
 
         // Cami listesi
         Expanded(
@@ -430,32 +551,91 @@ class _YakinCamilerSayfaState extends State<YakinCamilerSayfa> {
   void _yolTarifiAl(Map<String, dynamic> cami) {
     if (_konum == null) return;
 
-    // URL'yi açmak için showDialog göster
-    showDialog(
+    final renkler = _temaService.renkler;
+    showModalBottomSheet<void>(
       context: context,
+      backgroundColor: renkler.kartArkaPlan,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (context) {
-        final renkler = _temaService.renkler;
-        return AlertDialog(
-          backgroundColor: renkler.kartArkaPlan,
-          title: Text(
-            'Yol Tarifi',
-            style: TextStyle(color: renkler.yaziPrimary),
-          ),
-          content: Text(
-            '${cami['ad']} için yol tarifi almak ister misiniz?\n\nGoogle Maps ile yürüme yol tarifi özelliği yakında eklenecek.',
-            style: TextStyle(color: renkler.yaziSecondary),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                'Tamam',
-                style: TextStyle(color: renkler.vurgu),
+        return Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                cami['ad'],
+                style: TextStyle(
+                  color: renkler.yaziPrimary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              Text(
+                'Google Maps üzerinden yol tarifi almak ister misiniz?',
+                style: TextStyle(color: renkler.yaziSecondary),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: renkler.yaziSecondary,
+                        side: BorderSide(color: renkler.ayirac),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: const Text('Vazgeç'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        await _openGoogleMaps(cami);
+                      },
+                      icon: const Icon(Icons.map),
+                      label: const Text('Google Maps'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: renkler.vurgu,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         );
       },
     );
+  }
+
+  Future<void> _openGoogleMaps(Map<String, dynamic> cami) async {
+    final lat = cami['enlem'] as double;
+    final lon = cami['boylam'] as double;
+    final url = Uri.parse(
+      'https://www.google.com/maps/dir/?api=1&destination=$lat,$lon&travelmode=walking',
+    );
+
+    final launched = await launchUrl(
+      url,
+      mode: LaunchMode.externalApplication,
+    );
+
+    if (!launched && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Google Maps açılamadı.'),
+          backgroundColor: Colors.red.shade700,
+        ),
+      );
+    }
   }
 }

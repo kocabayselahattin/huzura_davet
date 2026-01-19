@@ -12,6 +12,7 @@ import android.provider.Settings
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.huzur_vakti.dnd.PrayerDndScheduler
+import com.example.huzur_vakti.widgets.WidgetUpdateReceiver
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -19,10 +20,30 @@ import io.flutter.plugin.common.MethodChannel
 class MainActivity : FlutterActivity() {
 	private val dndChannelName = "huzur_vakti/dnd"
 	private val permissionsChannelName = "huzur_vakti/permissions"
+	private val widgetsChannelName = "huzur_vakti/widgets"
 	private val NOTIFICATION_PERMISSION_CODE = 1001
 
 	override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
 		super.configureFlutterEngine(flutterEngine)
+
+		// Vibration Handler
+		VibrationHandler.setup(flutterEngine, this)
+
+		// Widget Channel
+		MethodChannel(flutterEngine.dartExecutor.binaryMessenger, widgetsChannelName)
+			.setMethodCallHandler { call, result ->
+				when (call.method) {
+					"scheduleWidgetUpdates" -> {
+						WidgetUpdateReceiver.scheduleWidgetUpdates(this)
+						result.success(true)
+					}
+					"cancelWidgetUpdates" -> {
+						WidgetUpdateReceiver.cancelWidgetUpdates(this)
+						result.success(true)
+					}
+					else -> result.notImplemented()
+				}
+			}
 
 		// DND Channel
 		MethodChannel(flutterEngine.dartExecutor.binaryMessenger, dndChannelName)

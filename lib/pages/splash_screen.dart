@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'ana_sayfa.dart';
 import 'il_ilce_sec_sayfa.dart';
+import 'dil_secim_sayfa.dart';
 import '../services/konum_service.dart';
 import '../services/permission_service.dart';
 
@@ -22,12 +24,38 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _kontrolVeYonlendir() async {
-    // 2 saniye splash screen göster
-    await Future.delayed(const Duration(seconds: 2));
+    // İlk önce temel izinleri kontrol et
+    if (!mounted) return;
+    
+    setState(() => _durum = 'İzinler kontrol ediliyor...');
+    
+    // Bildirim izinlerini iste (konum izninden önce)
+    await PermissionService.requestAllPermissions();
+    
+    // 1.5 saniye splash screen göster
+    await Future.delayed(const Duration(milliseconds: 1500));
 
     if (!mounted) return;
 
+    // Dil seçimi kontrol et (ilk açılış)
+    final prefs = await SharedPreferences.getInstance();
+    final dilSecildi = prefs.containsKey('language');
+    
+    if (!dilSecildi) {
+      // İlk açılış - dil seçim ekranını göster
+      final result = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const DilSecimSayfa(),
+        ),
+      );
+      
+      if (result != true || !mounted) return;
+    }
+
     // Önce kaydedilmiş konum var mı kontrol et
+    setState(() => _durum = 'Konum kontrol ediliyor...');
+    
     final ilceId = await KonumService.getIlceId();
     final ilId = await KonumService.getIlId();
     
@@ -54,19 +82,10 @@ class _SplashScreenState extends State<SplashScreen> {
       return;
     }
 
-    // Konum kaydedilmemişse (ilk açılış) izinleri iste
-    setState(() => _durum = 'İzinler kontrol ediliyor...');
+    // Konum kaydedilmemişse (ilk açılış) konum iznini kontrol et
+    setState(() => _durum = 'Konum izni kontrol ediliyor...');
 
-    // Bildirim izinlerini iste
-    await PermissionService.requestAllPermissions();
-    
-    await Future.delayed(const Duration(milliseconds: 300));
-
-    if (!mounted) return;
-
-    setState(() => _durum = 'Konum kontrol ediliyor...');
-
-    // Konum iznini kontrol et ve iste (sadece ilk açılışta)
+    // Konum iznini kontrol et (ancak zorla isteme)
     final konumIzniVar = await _konumIzniKontrolEt();
 
     if (!mounted) return;

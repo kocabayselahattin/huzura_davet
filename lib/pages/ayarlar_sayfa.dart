@@ -5,6 +5,7 @@ import 'il_ilce_sec_sayfa.dart';
 import 'tema_ayarlari_sayfa.dart';
 import 'hakkinda_sayfa.dart';
 import '../services/tema_service.dart';
+import '../services/language_service.dart';
 import 'widget_ayarlari_sayfa.dart';
 
 class AyarlarSayfa extends StatefulWidget {
@@ -16,6 +17,7 @@ class AyarlarSayfa extends StatefulWidget {
 
 class _AyarlarSayfaState extends State<AyarlarSayfa> {
   final TemaService _temaService = TemaService();
+  final LanguageService _languageService = LanguageService();
   static const platform = MethodChannel('huzur_vakti/permissions');
 
   @override
@@ -82,6 +84,30 @@ class _AyarlarSayfaState extends State<AyarlarSayfa> {
               );
             },
             renkler: renkler,
+          ),
+          Divider(color: renkler.ayirac),
+
+          // Dil Seçimi
+          _ayarSatiri(
+            icon: Icons.language,
+            iconColor: Colors.blue,
+            baslik: 'Dil / Language',
+            altBaslik: _languageService.supportedLanguages
+                .firstWhere((lang) => lang['code'] == _languageService.currentLanguage)['name']!,
+            onTap: () => _dilSecimDialog(),
+            renkler: renkler,
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _languageService.supportedLanguages
+                      .firstWhere((lang) => lang['code'] == _languageService.currentLanguage)['flag']!,
+                  style: const TextStyle(fontSize: 24),
+                ),
+                const SizedBox(width: 8),
+                Icon(Icons.chevron_right, color: renkler.yaziSecondary),
+              ],
+            ),
           ),
           Divider(color: renkler.ayirac),
 
@@ -165,6 +191,71 @@ class _AyarlarSayfaState extends State<AyarlarSayfa> {
           ),
         ],
       ),
+    );
+  }
+
+  void _dilSecimDialog() {
+    final renkler = _temaService.renkler;
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: renkler.kartArkaPlan,
+          title: Row(
+            children: [
+              const Icon(Icons.language, color: Colors.blue),
+              const SizedBox(width: 12),
+              Text(
+                'Dil Seçin / Select Language',
+                style: TextStyle(color: renkler.yaziPrimary, fontSize: 18),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: _languageService.supportedLanguages.map((lang) {
+              final isSelected = lang['code'] == _languageService.currentLanguage;
+              return ListTile(
+                leading: Text(
+                  lang['flag']!,
+                  style: const TextStyle(fontSize: 32),
+                ),
+                title: Text(
+                  lang['name']!,
+                  style: TextStyle(
+                    color: renkler.yaziPrimary,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  ),
+                ),
+                trailing: isSelected
+                    ? Icon(Icons.check_circle, color: renkler.vurgu)
+                    : null,
+                tileColor: isSelected ? renkler.vurgu.withOpacity(0.1) : null,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                onTap: () async {
+                  await _languageService.changeLanguage(lang['code']!);
+                  Navigator.pop(context);
+                  setState(() {});
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('${lang['flag']} ${lang['name']} seçildi'),
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                },
+              );
+            }).toList(),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Kapat', style: TextStyle(color: renkler.vurgu)),
+            ),
+          ],
+        );
+      },
     );
   }
 

@@ -20,9 +20,9 @@ class HomeWidgetService {
     await _loadWidgetColors();
     await updateAllWidgets();
     
-    // Her 30 saniyede bir güncelle
+    // Her 5 saniyede bir güncelle (Chronometer zaten kendi geri sayıyor)
     _updateTimer?.cancel();
-    _updateTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+    _updateTimer = Timer.periodic(const Duration(seconds: 5), (_) {
       updateAllWidgets();
     });
   }

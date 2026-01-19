@@ -4,6 +4,7 @@ import '../services/konum_service.dart';
 import '../services/diyanet_api_service.dart';
 import '../services/tema_service.dart';
 import '../services/notification_service.dart';
+import '../services/language_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class VakitListesiWidget extends StatefulWidget {
@@ -15,6 +16,7 @@ class VakitListesiWidget extends StatefulWidget {
 
 class _VakitListesiWidgetState extends State<VakitListesiWidget> {
   final TemaService _temaService = TemaService();
+  final LanguageService _languageService = LanguageService();
   Map<String, String> vakitSaatleri = {
     'Imsak': '—:—',
     'Gunes': '—:—',
@@ -28,20 +30,25 @@ class _VakitListesiWidgetState extends State<VakitListesiWidget> {
   Timer? _timer;
   bool _iconVisible = true;
 
+  Timer? _blinkTimer;
+
   @override
   void initState() {
     super.initState();
     _vakitleriYukle();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      _aktifVaktiGuncelle();
+      if (mounted) {
+        _aktifVaktiGuncelle();
+      }
     });
     // İkon yanıp sönme animasyonu için
-    Timer.periodic(const Duration(milliseconds: 800), (_) {
+    _blinkTimer = Timer.periodic(const Duration(milliseconds: 800), (_) {
       if (mounted) {
         setState(() => _iconVisible = !_iconVisible);
       }
     });
     _temaService.addListener(_onTemaChanged);
+    _languageService.addListener(_onTemaChanged);
   }
 
   void _onTemaChanged() {
@@ -51,7 +58,9 @@ class _VakitListesiWidgetState extends State<VakitListesiWidget> {
   @override
   void dispose() {
     _timer?.cancel();
+    _blinkTimer?.cancel();
     _temaService.removeListener(_onTemaChanged);
+    _languageService.removeListener(_onTemaChanged);
     super.dispose();
   }
 
@@ -61,7 +70,7 @@ class _VakitListesiWidgetState extends State<VakitListesiWidget> {
 
     try {
       final vakitler = await DiyanetApiService.getBugunVakitler(ilceId);
-      if (vakitler != null) {
+      if (vakitler != null && mounted) {
         setState(() {
           vakitSaatleri = {
             'Imsak': vakitler['Imsak'] ?? '—:—',
@@ -75,7 +84,7 @@ class _VakitListesiWidgetState extends State<VakitListesiWidget> {
         _aktifVaktiGuncelle();
       }
     } catch (e) {
-      // Hata durumunda varsayılan değerler kalacak
+      print('⚠️ Vakitler yüklenemedi: $e');
     }
   }
 
@@ -95,61 +104,82 @@ class _VakitListesiWidgetState extends State<VakitListesiWidget> {
     String? yeniAktif;
     String? yeniSonraki;
 
-    for (int i = 0; i < vakitListesi.length; i++) {
-      final vakit = vakitListesi[i];
-      final saat = vakit['saat'] as String;
-      if (saat == '—:—') continue;
-
-      try {
-        final parts = saat.split(':');
-        final vakitMinutes = int.parse(parts[0]) * 60 + int.parse(parts[1]);
-
-        if (nowMinutes < vakitMinutes) {
-          yeniSonraki = vakit['adi'] as String;
-          if (i > 0) {
-            yeniAktif = vakitListesi[i - 1]['adi'] as String;
-          } else {
-            yeniAktif = vakitListesi.last['adi'] as String;
-          }
-          break;
-        }
-      } catch (e) {
-        // Parse hatası
-      }
+    // İlk önce İmsak dakikasını al
+    int? imsakMinutes;
+    try {
+      final imsakParts = vakitSaatleri['Imsak']!.split(':');
+      imsakMinutes = int.parse(imsakParts[0]) * 60 + int.parse(imsakParts[1]);
+    } catch (e) {
+      // İmsak parse edilemezse devam et
     }
 
-    if (yeniSonraki == null) {
-      yeniAktif = vakitListesi.last['adi'] as String;
-      yeniSonraki = vakitListesi.first['adi'] as String;
+    // Eğer gece 00:00 ile İmsak arası ise (örn: 02:30 ve İmsak 05:30)
+    if (imsakMinutes != null && nowMinutes < imsakMinutes && now.hour < 6) {
+      // Gece yarısı sonrası: Yatsı aktif, İmsak sonraki
+      yeniAktif = 'Yatsi';
+      yeniSonraki = 'Imsak';
+    } else {
+      // Normal durum: vakitleri sırayla kontrol et
+      for (int i = 0; i < vakitListesi.length; i++) {
+        final vakit = vakitListesi[i];
+        final saat = vakit['saat'] as String;
+        if (saat == '—:—') continue;
+
+        try {
+          final parts = saat.split(':');
+          final vakitMinutes = int.parse(parts[0]) * 60 + int.parse(parts[1]);
+
+          if (nowMinutes < vakitMinutes) {
+            yeniSonraki = vakit['adi'] as String;
+            if (i > 0) {
+              yeniAktif = vakitListesi[i - 1]['adi'] as String;
+            }
+            break;
+          }
+        } catch (e) {
+          // Parse hatası
+        }
+      }
+
+      // Hiçbir vakit bulunamadıysa (tüm vakitler geçmişse)
+      if (yeniSonraki == null) {
+        yeniAktif = 'Yatsi'; // Son vakit Yatsı
+        yeniSonraki = 'Imsak'; // Yarının ilk vakti İmsak
+      }
     }
 
     // Bildirim tetikleme: aktif vakit değiştiyse bildir
     if (yeniAktif != aktifVakit && yeniAktif != null) {
+      print('🔔 Vakit değişti! Yeni aktif vakit: $yeniAktif (Eski: $aktifVakit)');
       // Kullanıcı ayarlarını oku
       final prefs = await SharedPreferences.getInstance();
       final key = yeniAktif.toLowerCase();
       final bildirimAcik = prefs.getBool('bildirim_$key') ?? true;
       final ses = prefs.getString('bildirim_sesi_$key');
+      print('📱 Bildirim ayarı ($key): $bildirimAcik, Ses: $ses');
       // Eğer dosya yoksa varsayılan olarak 'ding_dong.mp3' kullan
       final rawSes = [
         'arriving.mp3',
         'best.mp3',
-        'Corner.mp3',
-        'Ding_Dong.mp3',
-        'Echo.mp3',
+        'corner.mp3',
+        'ding_dong.mp3',
+        'echo.mp3',
         'iphone_sms_original.mp3',
         'snaps.mp3',
-        'Sweet_Favour.mp3',
-        'Violet.mp3',
-        'Woodpecker.mp3',
+        'sweet_favour.mp3',
+        'violet.mp3',
+        'woodpecker.mp3',
       ];
-      final sesDosyasi = (ses != null && rawSes.contains(ses)) ? ses : 'Ding_Dong.mp3';
+      final sesDosyasi = (ses != null && rawSes.contains(ses)) ? ses : 'ding_dong.mp3';
       if (bildirimAcik) {
+        print('🔊 Bildirim gönderiliyor: Vakit Girdi - $yeniAktif vakti başladı (Ses: $sesDosyasi)');
         await NotificationService.showVakitNotification(
           title: 'Vakit Girdi',
           body: '$yeniAktif vakti başladı.',
           soundAsset: sesDosyasi,
         );
+      } else {
+        print('🔇 Bildirim kapalı, gönderilmedi.');
       }
     }
 
@@ -177,42 +207,42 @@ class _VakitListesiWidgetState extends State<VakitListesiWidget> {
       child: Column(
         children: [
           _vakitSatiri(
-            "Imsak",
+            _languageService['imsak'] ?? "İmsak",
             vakitSaatleri['Imsak']!,
             Icons.nightlight_round,
             'Imsak',
             renkler,
           ),
           _vakitSatiri(
-            "Güneş",
+            _languageService['gunes'] ?? "Güneş",
             vakitSaatleri['Gunes']!,
             Icons.wb_sunny,
             'Gunes',
             renkler,
           ),
           _vakitSatiri(
-            "Öğle",
+            _languageService['ogle'] ?? "Öğle",
             vakitSaatleri['Ogle']!,
             Icons.light_mode,
             'Ogle',
             renkler,
           ),
           _vakitSatiri(
-            "İkindi",
+            _languageService['ikindi'] ?? "İkindi",
             vakitSaatleri['Ikindi']!,
             Icons.brightness_6,
             'Ikindi',
             renkler,
           ),
           _vakitSatiri(
-            "Akşam",
+            _languageService['aksam'] ?? "Akşam",
             vakitSaatleri['Aksam']!,
             Icons.wb_twilight,
             'Aksam',
             renkler,
           ),
           _vakitSatiri(
-            "Yatsı",
+            _languageService['yatsi'] ?? "Yatsı",
             vakitSaatleri['Yatsi']!,
             Icons.nights_stay,
             'Yatsi',
@@ -230,13 +260,14 @@ class _VakitListesiWidgetState extends State<VakitListesiWidget> {
     return Container(
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: aktif ? renkler.vurgu.withValues(alpha: 0.15) : Colors.transparent,
+        color: aktif ? renkler.vurgu.withValues(alpha: 0.25) : Colors.transparent,
         border: Border(bottom: BorderSide(color: renkler.yaziSecondary.withValues(alpha: 0.1))),
       ),
       child: Row(
         children: [
+          // Yanıp sönen ikon sadece sonraki vakitte (aktif değilse)
           AnimatedOpacity(
-            opacity: sonraki && !_iconVisible ? 0.2 : 1.0,
+            opacity: (sonraki && !aktif && !_iconVisible) ? 0.2 : 1.0,
             duration: const Duration(milliseconds: 400),
             child: Icon(
               icon,

@@ -100,8 +100,10 @@ class TemaService extends ChangeNotifier {
     'Oswald',
     'Merriweather',
     'Playfair Display',
-    'Source Sans Pro',
-    'DM Sans',
+    'Open Sans',
+    'Raleway',
+    'Quicksand',
+    'Work Sans',
   ];
   
   AppTema get mevcutTema => _mevcutTema;
@@ -494,7 +496,15 @@ class TemaService extends ChangeNotifier {
 
   ThemeData buildThemeData() {
     final r = renkler;
-    final fontTextTheme = GoogleFonts.getTextTheme(_fontFamily);
+    // Font yüklerken try-catch kullan - bazı fontlar yüklenemeyebilir
+    TextTheme fontTextTheme;
+    try {
+      fontTextTheme = GoogleFonts.getTextTheme(_fontFamily);
+    } catch (e) {
+      print('⚠️ Font yüklenemedi ($_fontFamily), varsayılan font kullanılıyor: $e');
+      fontTextTheme = GoogleFonts.poppinsTextTheme();
+      _fontFamily = 'Poppins';
+    }
     final textTheme = fontTextTheme.copyWith(
       bodyLarge: fontTextTheme.bodyLarge?.copyWith(color: r.yaziPrimary),
       bodyMedium: fontTextTheme.bodyMedium?.copyWith(color: r.yaziPrimary),
