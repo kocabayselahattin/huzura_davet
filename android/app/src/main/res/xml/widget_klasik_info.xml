@@ -6,6 +6,7 @@
     android:targetCellHeight="1"
     android:updatePeriodMillis="60000"
     android:initialLayout="@layout/widget_klasik_turuncu"
+    android:previewLayout="@layout/widget_klasik_turuncu"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen"
     android:previewImage="@drawable/widget_bg_orange"

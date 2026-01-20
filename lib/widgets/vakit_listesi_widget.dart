@@ -3,9 +3,7 @@ import 'dart:async';
 import '../services/konum_service.dart';
 import '../services/diyanet_api_service.dart';
 import '../services/tema_service.dart';
-import '../services/notification_service.dart';
 import '../services/language_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class VakitListesiWidget extends StatefulWidget {
   const VakitListesiWidget({super.key});
@@ -29,6 +27,7 @@ class _VakitListesiWidgetState extends State<VakitListesiWidget> {
   String? sonrakiVakit;
   Timer? _timer;
   bool _iconVisible = true;
+  int _lastCheckedMinute = -1; // Son kontrol edilen dakika
 
   Timer? _blinkTimer;
 
@@ -36,13 +35,14 @@ class _VakitListesiWidgetState extends State<VakitListesiWidget> {
   void initState() {
     super.initState();
     _vakitleriYukle();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+    // Dakikada bir kontrol yeterli (her saniye değil)
+    _timer = Timer.periodic(const Duration(seconds: 10), (_) {
       if (mounted) {
         _aktifVaktiGuncelle();
       }
     });
-    // İkon yanıp sönme animasyonu için
-    _blinkTimer = Timer.periodic(const Duration(milliseconds: 800), (_) {
+    // İkon yanıp sönme animasyonu için (daha yavaş)
+    _blinkTimer = Timer.periodic(const Duration(milliseconds: 1200), (_) {
       if (mounted) {
         setState(() => _iconVisible = !_iconVisible);
       }
@@ -91,6 +91,10 @@ class _VakitListesiWidgetState extends State<VakitListesiWidget> {
   Future<void> _aktifVaktiGuncelle() async {
     final now = DateTime.now();
     final nowMinutes = now.hour * 60 + now.minute;
+    
+    // Aynı dakikada tekrar kontrol etme (gereksiz işlem)
+    if (nowMinutes == _lastCheckedMinute) return;
+    _lastCheckedMinute = nowMinutes;
 
     final vakitListesi = [
       {'adi': 'Imsak', 'saat': vakitSaatleri['Imsak']!},
@@ -154,50 +158,6 @@ class _VakitListesiWidgetState extends State<VakitListesiWidget> {
       if (yeniSonraki == null) {
         yeniAktif = 'Yatsi';
         yeniSonraki = 'Imsak';
-      }
-    }
-
-    // Bildirim tetikleme: aktif vakit değiştiyse bildir
-    if (yeniAktif != aktifVakit && yeniAktif != null) {
-      print('🔔 Vakit değişti! Yeni aktif vakit: $yeniAktif (Eski: $aktifVakit)');
-      // Kullanıcı ayarlarını oku
-      final prefs = await SharedPreferences.getInstance();
-      final key = yeniAktif.toLowerCase();
-      final bildirimAcik = prefs.getBool('bildirim_$key') ?? true;
-      final ses = prefs.getString('bildirim_sesi_$key');
-      print('📱 Bildirim ayarı ($key): $bildirimAcik, Ses: $ses');
-      // Asset klasöründeki dosya adları
-      final rawSes = [
-        'arriving.mp3',
-        '2015_best.mp3',
-        'Corner.mp3',
-        'Ding_Dong.mp3',
-        'Echo.mp3',
-        'iphone_sms_original.mp3',
-        'snaps.mp3',
-        'Sweet_Favour.mp3',
-        'Violet.mp3',
-        'Woodpecker.mp3',
-      ];
-      // Küçük harf ile eşleşme için normalize et
-      String? sesDosyasi;
-      if (ses != null) {
-        sesDosyasi = rawSes.firstWhere(
-          (element) => element.toLowerCase() == ses.toLowerCase(),
-          orElse: () => 'Ding_Dong.mp3',
-        );
-      } else {
-        sesDosyasi = 'Ding_Dong.mp3';
-      }
-      if (bildirimAcik) {
-        print('🔊 Bildirim gönderiliyor: Vakit Girdi - $yeniAktif vakti başladı (Ses: $sesDosyasi)');
-        await NotificationService.showVakitNotification(
-          title: 'Vakit Girdi',
-          body: '$yeniAktif vakti başladı.',
-          soundAsset: sesDosyasi,
-        );
-      } else {
-        print('🔇 Bildirim kapalı, gönderilmedi.');
       }
     }
 

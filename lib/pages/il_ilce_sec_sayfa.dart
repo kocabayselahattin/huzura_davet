@@ -30,7 +30,7 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
   bool konumTespit = false;
   
   // Ülke seçimi
-  String secilenUlke = 'Türkiye';
+  String secilenUlke = '🇹🇷 Türkiye';
   final List<Map<String, String>> ulkeler = [
     {'kod': 'TR', 'ad': '🇹🇷 Türkiye'},
     {'kod': 'DE', 'ad': '🇩🇪 Almanya'},

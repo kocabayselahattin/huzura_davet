@@ -14,6 +14,7 @@ import '../services/tema_service.dart';
 import '../services/language_service.dart';
 import '../services/home_widget_service.dart';
 import '../services/diyanet_api_service.dart';
+import '../services/scheduled_notification_service.dart';
 import '../models/konum_model.dart';
 import 'imsakiye_sayfa.dart';
 import 'ayarlar_sayfa.dart';
@@ -42,9 +43,6 @@ class _AnaSayfaState extends State<AnaSayfa> {
   int _currentSayacIndex = 0;
   bool _sayacYuklendi = false;
   
-  // Mevcut vakit bildirimi için
-  static bool _mevcutVakitBildirimGosterildi = false;
-  
   // Çoklu konum sistemi
   List<KonumModel> _konumlar = [];
   int _aktifKonumIndex = 0;
@@ -60,84 +58,25 @@ class _AnaSayfaState extends State<AnaSayfa> {
     _konumYukle();
     _temaService.addListener(_onTemaChanged);
     _languageService.addListener(_onTemaChanged);
-    // Özel gün popup kontrolü ve mevcut vakit bildirimi
+    // Özel gün popup kontrolü
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkOzelGun();
-      _showMevcutVakitBildirimi();
+      // Zamanlanmış bildirimleri ayarla
+      _scheduleNotifications();
     });
+  }
+
+  Future<void> _scheduleNotifications() async {
+    try {
+      await ScheduledNotificationService.scheduleAllPrayerNotifications();
+    } catch (e) {
+      print('⚠️ Bildirim zamanlama hatası: $e');
+    }
   }
 
   Future<void> _checkOzelGun() async {
     if (mounted) {
       await checkAndShowOzelGunPopup(context);
-    }
-  }
-  
-  // Mevcut vakte girdiğini gösteren bildirim (sadece uygulama açıldığında bir kez)
-  Future<void> _showMevcutVakitBildirimi() async {
-    // Sadece bir kez göster
-    if (_mevcutVakitBildirimGosterildi) return;
-    _mevcutVakitBildirimGosterildi = true;
-    
-    final ilceId = await KonumService.getIlceId();
-    if (ilceId == null) return;
-    
-    try {
-      final vakitler = await DiyanetApiService.getBugunVakitler(ilceId);
-      if (vakitler == null || !mounted) return;
-      
-      final now = DateTime.now();
-      final nowMinutes = now.hour * 60 + now.minute;
-      
-      final vakitListesi = [
-        {'key': 'Imsak', 'adi': _languageService['imsak'] ?? 'İmsak'},
-        {'key': 'Gunes', 'adi': _languageService['gunes'] ?? 'Güneş'},
-        {'key': 'Ogle', 'adi': _languageService['ogle'] ?? 'Öğle'},
-        {'key': 'Ikindi', 'adi': _languageService['ikindi'] ?? 'İkindi'},
-        {'key': 'Aksam', 'adi': _languageService['aksam'] ?? 'Akşam'},
-        {'key': 'Yatsi', 'adi': _languageService['yatsi'] ?? 'Yatsı'},
-      ];
-      
-      String mevcutVakit = vakitListesi.last['adi']!;
-      
-      // Mevcut vakti bul
-      for (int i = vakitListesi.length - 1; i >= 0; i--) {
-        final saat = vakitler[vakitListesi[i]['key']] ?? '00:00';
-        final parts = saat.split(':');
-        final vakitMinutes = int.parse(parts[0]) * 60 + int.parse(parts[1]);
-        
-        if (nowMinutes >= vakitMinutes) {
-          mevcutVakit = vakitListesi[i]['adi']!;
-          break;
-        }
-      }
-      
-      // Kısa bir gecikme ile snackbar göster
-      await Future.delayed(const Duration(milliseconds: 800));
-      
-      if (!mounted) return;
-      
-      final renkler = _temaService.renkler;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              Icon(Icons.access_time, color: Colors.white, size: 20),
-              const SizedBox(width: 12),
-              Text(
-                '${_languageService['current_prayer'] ?? 'Mevcut Vakit'}: $mevcutVakit',
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-              ),
-            ],
-          ),
-          backgroundColor: renkler.vurgu,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          duration: const Duration(seconds: 3),
-        ),
-      );
-    } catch (e) {
-      print('Mevcut vakit bildirimi hatası: $e');
     }
   }
 
@@ -412,18 +351,134 @@ class _AnaSayfaState extends State<AnaSayfa> {
     );
   }
   
-  // Konum sola/sağa kaydırma
-  void _konumSolaSagaKaydir(bool sagaMi) {
-    if (_konumlar.isEmpty) return;
+  // Konum seçim popup dialogu
+  void _showKonumSecimDialog() {
+    final renkler = _temaService.renkler;
     
-    int yeniIndex;
-    if (sagaMi) {
-      yeniIndex = (_aktifKonumIndex + 1) % _konumlar.length;
-    } else {
-      yeniIndex = (_aktifKonumIndex - 1 + _konumlar.length) % _konumlar.length;
-    }
-    
-    _konumDegistir(yeniIndex);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: renkler.kartArkaPlan,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(Icons.location_on, color: renkler.vurgu),
+            const SizedBox(width: 12),
+            Text(
+              _languageService['saved_locations_title'] ?? 'Kayıtlı Konumlar',
+              style: TextStyle(color: renkler.yaziPrimary, fontSize: 18),
+            ),
+          ],
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: _konumlar.isEmpty
+              ? Text(
+                  _languageService['no_saved_locations'] ?? 'Henüz kayıtlı konum yok',
+                  style: TextStyle(color: renkler.yaziSecondary),
+                )
+              : ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: _konumlar.length,
+                  itemBuilder: (context, index) {
+                    final konum = _konumlar[index];
+                    final isAktif = index == _aktifKonumIndex;
+                    
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      decoration: BoxDecoration(
+                        color: isAktif ? renkler.vurgu.withValues(alpha: 0.15) : renkler.arkaPlan,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isAktif ? renkler.vurgu : renkler.ayirac.withValues(alpha: 0.3),
+                          width: isAktif ? 2 : 1,
+                        ),
+                      ),
+                      child: ListTile(
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: isAktif ? renkler.vurgu.withValues(alpha: 0.2) : renkler.kartArkaPlan,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            isAktif ? Icons.location_on : Icons.location_city,
+                            color: isAktif ? renkler.vurgu : renkler.yaziSecondary,
+                            size: 20,
+                          ),
+                        ),
+                        title: Text(
+                          konum.tamAd,
+                          style: TextStyle(
+                            color: renkler.yaziPrimary,
+                            fontWeight: isAktif ? FontWeight.bold : FontWeight.normal,
+                            fontSize: 14,
+                          ),
+                        ),
+                        subtitle: isAktif
+                            ? Text(
+                                _languageService['active_location'] ?? 'Aktif Konum',
+                                style: TextStyle(color: renkler.vurgu, fontSize: 11),
+                              )
+                            : null,
+                        trailing: _konumlar.length > 1 && !isAktif
+                            ? IconButton(
+                                icon: Icon(Icons.delete_outline, color: Colors.red[400], size: 20),
+                                onPressed: () async {
+                                  Navigator.pop(context);
+                                  final onay = await showDialog<bool>(
+                                    context: this.context,
+                                    builder: (ctx) => AlertDialog(
+                                      backgroundColor: renkler.kartArkaPlan,
+                                      title: Text(
+                                        _languageService['delete_location'] ?? 'Konumu Sil',
+                                        style: TextStyle(color: renkler.yaziPrimary),
+                                      ),
+                                      content: Text(
+                                        '${konum.tamAd} ${_languageService['delete_location_confirm'] ?? 'konumunu silmek istediğinize emin misiniz?'}',
+                                        style: TextStyle(color: renkler.yaziSecondary),
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(ctx, false),
+                                          child: Text(_languageService['cancel'] ?? 'İptal', style: TextStyle(color: renkler.yaziSecondary)),
+                                        ),
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(ctx, true),
+                                          child: Text(_languageService['delete'] ?? 'Sil', style: const TextStyle(color: Colors.red)),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                  
+                                  if (onay == true) {
+                                    await KonumService.removeKonum(index);
+                                    _konumYukle();
+                                  }
+                                },
+                              )
+                            : isAktif
+                                ? Icon(Icons.check_circle, color: renkler.vurgu, size: 20)
+                                : null,
+                        onTap: () {
+                          if (!isAktif) {
+                            _konumDegistir(index);
+                            Navigator.pop(context);
+                          }
+                        },
+                      ),
+                    );
+                  },
+                ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(_languageService['close'] ?? 'Kapat', style: TextStyle(color: renkler.vurgu)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -454,15 +509,9 @@ class _AnaSayfaState extends State<AnaSayfa> {
           ),
         ),
         title: GestureDetector(
-          onHorizontalDragEnd: (details) {
-            if (_konumlar.length > 1) {
-              if (details.primaryVelocity! < 0) {
-                // Sola kaydırıldı - sonraki konum
-                _konumSolaSagaKaydir(true);
-              } else if (details.primaryVelocity! > 0) {
-                // Sağa kaydırıldı - önceki konum
-                _konumSolaSagaKaydir(false);
-              }
+          onTap: () {
+            if (_konumlar.isNotEmpty) {
+              _showKonumSecimDialog();
             }
           },
           child: Row(
@@ -470,7 +519,8 @@ class _AnaSayfaState extends State<AnaSayfa> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (_konumlar.length > 1)
-                Icon(Icons.chevron_left, color: renkler.yaziSecondary.withOpacity(0.5), size: 20),
+                Icon(Icons.unfold_more, color: renkler.yaziSecondary.withOpacity(0.5), size: 18),
+              const SizedBox(width: 4),
               Flexible(
                 child: Text(
                   konumBasligi.toUpperCase(),
@@ -484,13 +534,32 @@ class _AnaSayfaState extends State<AnaSayfa> {
                   maxLines: 1,
                 ),
               ),
-              if (_konumlar.length > 1)
-                Icon(Icons.chevron_right, color: renkler.yaziSecondary.withOpacity(0.5), size: 20),
+              if (_konumlar.length > 1) ...[
+                const SizedBox(width: 4),
+                Icon(Icons.expand_more, color: renkler.yaziSecondary.withOpacity(0.5), size: 18),
+              ],
             ],
           ),
         ),
         centerTitle: true,
         actions: [
+          // Kıble Pusulası ikonu
+          IconButton(
+            icon: Icon(
+              Icons.explore,
+              color: renkler.vurgu,
+              size: 26,
+            ),
+            tooltip: _languageService['qibla'] ?? 'Kıble Yönü',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const KibleSayfa(),
+                ),
+              );
+            },
+          ),
           // Konum ekle ikonu
           IconButton(
             icon: Icon(

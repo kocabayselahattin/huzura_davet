@@ -30,15 +30,22 @@ class _SplashScreenState extends State<SplashScreen> {
     
     setState(() => _durum = 'İzinler kontrol ediliyor...');
     
-    // Bildirim izinlerini iste (konum izninden önce)
-    await PermissionService.requestAllPermissions();
+    // Bildirim izinlerini iste (konum izninden önce) - timeout ile
+    try {
+      await PermissionService.requestAllPermissions()
+          .timeout(const Duration(seconds: 5), onTimeout: () {
+        print('⚠️ İzin isteği zaman aşımına uğradı');
+      });
+    } catch (e) {
+      print('⚠️ İzin isteği hatası: $e');
+    }
     
-    // 1.5 saniye splash screen göster
-    await Future.delayed(const Duration(milliseconds: 1500));
+    // 1 saniye splash screen göster (hız için kısaltıldı)
+    await Future.delayed(const Duration(milliseconds: 800));
 
     if (!mounted) return;
 
-    // Dil seçimi kontrol et (ilk açılış)
+    // SharedPreferences'ı tek seferde al (performans için)
     final prefs = await SharedPreferences.getInstance();
     final dilSecildi = prefs.containsKey('language');
     
@@ -57,11 +64,12 @@ class _SplashScreenState extends State<SplashScreen> {
     // Önce kaydedilmiş konum var mı kontrol et
     setState(() => _durum = 'Konum kontrol ediliyor...');
     
-    final ilceId = await KonumService.getIlceId();
-    final ilId = await KonumService.getIlId();
+    // SharedPreferences'tan direkt oku (ayrı await'ler yerine)
+    final ilceId = prefs.getString('selected_ilce_id');
+    final ilId = prefs.getString('selected_il_id');
     
-    // Konum validasyonu - geçersiz ID varsa temizle
-    final isValid = await KonumService.validateAndClearIfInvalid();
+    // Hızlı validasyon (API çağrısı yapmadan)
+    bool isValid = _hizliValidasyon(ilceId);
     
     // Eğer geçerli konum varsa, direkt ana sayfaya git
     if (isValid && ilceId != null && ilceId.isNotEmpty && ilId != null && ilId.isNotEmpty) {
@@ -135,6 +143,23 @@ class _SplashScreenState extends State<SplashScreen> {
       return true;
     } catch (e) {
       print('⚠️ Konum izni kontrolü hatası: $e');
+      return false;
+    }
+  }
+
+  // Hızlı ilçe ID validasyonu (async olmadan)
+  bool _hizliValidasyon(String? ilceId) {
+    if (ilceId == null || ilceId.isEmpty) return false;
+    
+    // Bilinen geçersiz ID'ler
+    const invalidIds = ['1219', '1823', '1020', '1003', '1421', '1200', '1201', '1202', '1203', '1204', '1205'];
+    if (invalidIds.contains(ilceId)) return false;
+    
+    // Geçerli ID'ler genelde 9000-18000 aralığında
+    try {
+      final idNum = int.parse(ilceId);
+      return idNum >= 9000 && idNum <= 20000;
+    } catch (e) {
       return false;
     }
   }

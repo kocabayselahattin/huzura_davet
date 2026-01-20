@@ -14,6 +14,7 @@ class HomeWidgetService {
   static Timer? _updateTimer;
   static Map<String, String> _vakitSaatleri = {};
   static String? _lastGeriSayim; // Son gönderilen geri sayım değeri
+  static int _lastMinute = -1; // Son güncellenen dakika
   
   /// Servisi başlat
   static Future<void> initialize() async {
@@ -22,9 +23,9 @@ class HomeWidgetService {
     await _loadWidgetColors();
     await updateAllWidgets();
     
-    // Her 1 saniyede bir güncelle (gerçek geri sayım için)
+    // Her 30 saniyede bir güncelle (performans için artırıldı)
     _updateTimer?.cancel();
-    _updateTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+    _updateTimer = Timer.periodic(const Duration(seconds: 30), (_) {
       updateAllWidgets();
     });
   }
@@ -90,11 +91,18 @@ class HomeWidgetService {
   
   /// Tüm widget'ları güncelle
   static Future<void> updateAllWidgets() async {
+    final now = DateTime.now();
+    
+    // Dakika değişmediyse güncelleme yapma (performans için)
+    if (_lastMinute == now.minute && _vakitSaatleri.isNotEmpty) {
+      return;
+    }
+    _lastMinute = now.minute;
+    
     if (_vakitSaatleri.isEmpty) {
       await _loadVakitler();
     }
     
-    final now = DateTime.now();
     final vakitBilgisi = _hesaplaVakitBilgisi(now);
     
     // Geri sayım değişmediyse widget'ları güncelleme (gereksiz güncellemeyi önle)

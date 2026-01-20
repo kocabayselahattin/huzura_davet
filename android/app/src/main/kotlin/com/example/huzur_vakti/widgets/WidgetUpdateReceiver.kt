@@ -61,7 +61,7 @@ class WidgetUpdateReceiver : BroadcastReceiver() {
                 )
             }
             
-            Log.d(TAG, "Widget updates scheduled for every 5 seconds (WAKE_LOCK enabled)")
+            Log.d(TAG, "Widget updates scheduled for every 30 seconds (WAKE_LOCK enabled)")
         }
         
         /**

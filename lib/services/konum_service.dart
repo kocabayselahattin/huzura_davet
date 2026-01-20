@@ -107,10 +107,10 @@ class KonumService {
     
     if (jsonList.isEmpty) {
       // Eğer eski sistemden konum varsa, onu listeye ekle
-      final il = await getIl();
-      final ilId = await getIlId();
-      final ilce = await getIlce();
-      final ilceId = await getIlceId();
+      final il = prefs.getString(_ilKey);
+      final ilId = prefs.getString(_ilIdKey);
+      final ilce = prefs.getString(_ilceKey);
+      final ilceId = prefs.getString(_ilceIdKey);
       
       if (il != null && ilId != null && ilce != null && ilceId != null) {
         final eskiKonum = KonumModel(
@@ -120,7 +120,8 @@ class KonumService {
           ilceId: ilceId,
           aktif: true,
         );
-        await addKonum(eskiKonum);
+        // Doğrudan kaydet - addKonum kullanma (sonsuz döngü önleme)
+        await prefs.setStringList(_konumlarKey, [jsonEncode(eskiKonum.toJson())]);
         return [eskiKonum];
       }
       return [];
@@ -131,7 +132,9 @@ class KonumService {
 
   // Yeni konum ekle
   static Future<void> addKonum(KonumModel konum) async {
-    final konumlar = await getKonumlar();
+    final prefs = await SharedPreferences.getInstance();
+    final jsonList = prefs.getStringList(_konumlarKey) ?? [];
+    final konumlar = jsonList.map((json) => KonumModel.fromJson(jsonDecode(json))).toList();
     
     // Aynı konum zaten varsa ekleme
     if (konumlar.any((k) => k.ilceId == konum.ilceId && k.ilId == konum.ilId)) {

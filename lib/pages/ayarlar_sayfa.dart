@@ -4,6 +4,7 @@ import 'bildirim_ayarlari_sayfa.dart';
 import 'il_ilce_sec_sayfa.dart';
 import 'tema_ayarlari_sayfa.dart';
 import 'hakkinda_sayfa.dart';
+import 'kilit_ekrani_ayarlari_sayfa.dart';
 import '../services/tema_service.dart';
 import '../services/language_service.dart';
 import 'widget_ayarlari_sayfa.dart';
@@ -157,6 +158,24 @@ class _AyarlarSayfaState extends State<AyarlarSayfa> {
                 context,
                 MaterialPageRoute(
                   builder: (context) => const WidgetAyarlariSayfa(),
+                ),
+              );
+            },
+            renkler: renkler,
+          ),
+          Divider(color: renkler.ayirac),
+
+          // Kilit Ekranı Widget Ayarları
+          _ayarSatiri(
+            icon: Icons.lock_clock,
+            iconColor: Colors.purple,
+            baslik: _languageService['lock_screen_widget'] ?? 'Kilit Ekranı Widget',
+            altBaslik: _languageService['lock_screen_notification'] ?? 'Kilit ekranı bildirimi',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const KilitEkraniAyarlariSayfa(),
                 ),
               );
             },

@@ -98,10 +98,6 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
                   _ozelliklerBolumu(renkler),
                   const SizedBox(height: 24),
 
-                  // Sürüm Notları
-                  _surumNotlari(renkler),
-                  const SizedBox(height: 24),
-
                   // Önemli Bilgiler
                   _onemliNotlar(renkler),
                   const SizedBox(height: 24),
@@ -155,7 +151,7 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Huzur Vakti',
+            _languageService['app_name'] ?? 'Huzur Vakti',
             style: TextStyle(
               color: renkler.yaziPrimary,
               fontSize: 28,
@@ -164,7 +160,7 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Namaz Vakitleri ve İbadet Asistanı',
+            _languageService['prayer_times_assistant'] ?? 'Namaz Vakitleri ve İbadet Asistanı',
             style: TextStyle(
               color: renkler.yaziSecondary,
               fontSize: 14,
@@ -172,30 +168,10 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
           ),
           const SizedBox(height: 4),
           Text(
-            'Versiyon 2.3.0',
+            '${_languageService['version'] ?? 'Versiyon'} 2.3.0',
             style: TextStyle(
               color: renkler.yaziSecondary.withValues(alpha: 0.7),
               fontSize: 12,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.green.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.green.withValues(alpha: 0.5)),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.new_releases, color: Colors.green, size: 16),
-                SizedBox(width: 6),
-                Text(
-                  'Yeni Güncelleme!',
-                  style: TextStyle(color: Colors.green, fontSize: 11, fontWeight: FontWeight.bold),
-                ),
-              ],
             ),
           ),
         ],
@@ -416,195 +392,6 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
     );
   }
 
-  Widget _surumNotlari(TemaRenkleri renkler) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.blue.withValues(alpha: 0.1),
-            Colors.purple.withValues(alpha: 0.1),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.blue.withValues(alpha: 0.3),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.blue.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.history,
-                  color: Colors.blue,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'Sürüm Notları',
-                style: TextStyle(
-                  color: renkler.yaziPrimary,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          
-          // v2.3.0
-          _surumBaslik('v2.3.0', '21 Ocak 2026', renkler),
-          const SizedBox(height: 8),
-          _surumMaddesi('🔊 Bildirim sesi sorunu tamamen çözüldü (AudioPlayer optimizasyonu)', renkler, duzeltme: true),
-          _surumMaddesi('📿 Zikirmatik: Özel zikir ekleme/silme özelliği', renkler, yeni: true),
-          _surumMaddesi('🕌 Uygulama açılınca mevcut vakit bildirimi', renkler, yeni: true),
-          _surumMaddesi('📱 AppBar yenilendi: Logo ile versiyon popup, kaydırarak konum değiştirme', renkler, iyilestirme: true),
-          _surumMaddesi('🌙 Özel günler widget\'ta gösteriliyor', renkler, yeni: true),
-          _surumMaddesi('📖 İbadet rehberi tamamen yenilendi: 32 farz, 54 farz, Cuma ve Cenaze namazı', renkler, yeni: true),
-          _surumMaddesi('🤲 Namazda okunan sure ve dualar Arapça metinlerle eklendi', renkler, yeni: true),
-          _surumMaddesi('🌍 Tüm dil çevirileri tamamlandı (TR, EN, DE, FR)', renkler, iyilestirme: true),
-          
-          const SizedBox(height: 16),
-          
-          // v2.2.0
-          _surumBaslik('v2.2.0', '20 Ocak 2026', renkler),
-          const SizedBox(height: 8),
-          _surumMaddesi('📱 Widget geri sayım döngüsü sorunu tamamen çözüldü', renkler, duzeltme: true),
-          _surumMaddesi('🌙 Gece 12 sonrası vakit listesi ve ikon animasyonu düzeltildi', renkler, duzeltme: true),
-          _surumMaddesi('📳 Zikirmatik: Her tıklamada hafif titreşim, tur tamamında 2 kez kesik titreşim', renkler, iyilestirme: true),
-          _surumMaddesi('🔊 Bildirim sesleri audioplayer ile yeniden düzenlendi', renkler, duzeltme: true),
-          _surumMaddesi('🌍 Çeviri dosyaları genişletildi (130+ kelime)', renkler, iyilestirme: true),
-          _surumMaddesi('⚡ Widget güncelleme performansı optimize edildi', renkler, iyilestirme: true),
-          
-          const SizedBox(height: 16),
-          
-          // v2.1.0
-          _surumBaslik('v2.1.0', '19 Ocak 2026', renkler),
-          const SizedBox(height: 8),
-          _surumMaddesi('🌍 Çoklu dil desteği (Türkçe, İngilizce, Almanca, Fransızca)', renkler, yeni: true),
-          _surumMaddesi('🎨 Dil değişimi ile tüm UI güncelleniyor', renkler, yeni: true),
-          _surumMaddesi('🔧 Widget geri sayım döngüsü düzeltildi', renkler, duzeltme: true),
-          _surumMaddesi('🌙 Gece yarısı sonrası vakit listesi sorunu çözüldü', renkler, duzeltme: true),
-          _surumMaddesi('📳 Zikirmatik titreşim sistemi geliştirildi (VibrationService)', renkler, iyilestirme: true),
-          _surumMaddesi('🔊 Bildirim sesleri düzeltildi', renkler, duzeltme: true),
-          _surumMaddesi('🎯 Sonraki vakit ikonu yanıp sönme animasyonu eklendi', renkler, yeni: true),
-          _surumMaddesi('🌐 İlk açılışta dil seçim ekranı eklendi', renkler, yeni: true),
-          
-          const SizedBox(height: 16),
-          
-          // v2.0.0
-          _surumBaslik('v2.0.0', '18 Ocak 2026', renkler),
-          const SizedBox(height: 8),
-          _surumMaddesi('🏙️ Çoklu konum desteği', renkler, yeni: true),
-          _surumMaddesi('🔔 Bildirim sistemi tamamen yenilendi', renkler, iyilestirme: true),
-          _surumMaddesi('📱 Widget ekran açılınca otomatik güncelleniyor', renkler, yeni: true),
-          _surumMaddesi('🕌 Yakındaki camiler OpenStreetMap ile gösteriliyor', renkler, yeni: true),
-          _surumMaddesi('📍 Konum değişince otomatik güncelleme', renkler, iyilestirme: true),
-        ],
-      ),
-    );
-  }
-
-  Widget _surumBaslik(String versiyon, String tarih, TemaRenkleri renkler) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: renkler.vurgu.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: renkler.vurgu.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.label, color: renkler.vurgu, size: 16),
-          const SizedBox(width: 8),
-          Text(
-            versiyon,
-            style: TextStyle(
-              color: renkler.yaziPrimary,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            tarih,
-            style: TextStyle(
-              color: renkler.yaziSecondary,
-              fontSize: 12,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _surumMaddesi(String metin, TemaRenkleri renkler, {bool yeni = false, bool duzeltme = false, bool iyilestirme = false}) {
-    Color etiketRengi = Colors.grey;
-    String etiket = '';
-    
-    if (yeni) {
-      etiketRengi = Colors.green;
-      etiket = 'YENİ';
-    } else if (duzeltme) {
-      etiketRengi = Colors.orange;
-      etiket = 'DÜZELTİLDİ';
-    } else if (iyilestirme) {
-      etiketRengi = Colors.blue;
-      etiket = 'İYİLEŞTİRİLDİ';
-    }
-    
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (etiket.isNotEmpty) ...[
-            Container(
-              margin: const EdgeInsets.only(top: 2),
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: etiketRengi.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: etiketRengi.withValues(alpha: 0.5), width: 0.5),
-              ),
-              child: Text(
-                etiket,
-                style: TextStyle(
-                  color: etiketRengi,
-                  fontSize: 9,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-          ],
-          Expanded(
-            child: Text(
-              metin,
-              style: TextStyle(
-                color: renkler.yaziSecondary,
-                fontSize: 13,
-                height: 1.4,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _onemliNotlar(TemaRenkleri renkler) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -623,7 +410,7 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
               Icon(Icons.info_outline, color: Colors.amber[700], size: 24),
               const SizedBox(width: 12),
               Text(
-                'Önemli Bilgiler',
+                _languageService['important_info'] ?? 'Önemli Bilgiler',
                 style: TextStyle(
                   color: renkler.yaziPrimary,
                   fontSize: 18,
@@ -634,19 +421,19 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
           ),
           const SizedBox(height: 12),
           _notSatiri(
-            '• Vakit hesaplamaları Diyanet İşleri Başkanlığı verilerine göre yapılmaktadır.',
+            '• ${_languageService['diyanet_data_note'] ?? 'Vakit hesaplamaları Diyanet İşleri Başkanlığı verilerine göre yapılmaktadır.'}',
             renkler,
           ),
           _notSatiri(
-            '• Bildirimlerin düzgün çalışması için pil optimizasyonu izinlerini ayarlamanız önerilir.',
+            '• ${_languageService['battery_optimization_note'] ?? 'Bildirimlerin düzgün çalışması için pil optimizasyonu izinlerini ayarlamanız önerilir.'}',
             renkler,
           ),
           _notSatiri(
-            '• Konum izni verilmediğinde manuel şehir seçimi yapmanız gerekmektedir.',
+            '• ${_languageService['location_permission_note'] ?? 'Konum izni verilmediğinde manuel şehir seçimi yapmanız gerekmektedir.'}',
             renkler,
           ),
           _notSatiri(
-            '• İnternet bağlantısı sadece ilk kurulumda ve konum güncellemelerinde gereklidir.',
+            '• ${_languageService['internet_note'] ?? 'İnternet bağlantısı sadece ilk kurulumda ve konum güncellemelerinde gereklidir.'}',
             renkler,
           ),
         ],
@@ -679,7 +466,7 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'İletişim ve Destek',
+            _languageService['contact_support'] ?? 'İletişim ve Destek',
             style: TextStyle(
               color: renkler.yaziPrimary,
               fontSize: 18,
@@ -687,9 +474,9 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
             ),
           ),
           const SizedBox(height: 12),
-          _iletisimSatiri(Icons.email, 'E-posta', ' ', renkler),
-          _iletisimSatiri(Icons.web, 'Web', ' ', renkler),
-          _iletisimSatiri(Icons.bug_report, 'Hata Bildirimi', ' ', renkler),
+          _iletisimSatiri(Icons.email, _languageService['email'] ?? 'E-posta', ' ', renkler),
+          _iletisimSatiri(Icons.web, _languageService['web'] ?? 'Web', ' ', renkler),
+          _iletisimSatiri(Icons.bug_report, _languageService['bug_report'] ?? 'Hata Bildirimi', ' ', renkler),
         ],
       ),
     );
@@ -731,48 +518,6 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
   Widget _altBilgi(TemaRenkleri renkler) {
     return Column(
       children: [
-        // Yenilikler bölümü
-        Container(
-          padding: const EdgeInsets.all(16),
-          margin: const EdgeInsets.only(bottom: 16),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Colors.green.withValues(alpha: 0.2),
-                Colors.blue.withValues(alpha: 0.2),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.new_releases, color: Colors.green),
-                  const SizedBox(width: 8),
-                  Text(
-                    'v2.0.0 Yenilikler',
-                    style: TextStyle(
-                      color: renkler.yaziPrimary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              _yenilikSatiri('✅ Çoklu konum desteği eklendi', renkler),
-              _yenilikSatiri('✅ Bildirim sistemi tamamen yenilendi', renkler),
-              _yenilikSatiri('✅ Widget ekran açılınca otomatik güncelleniyor', renkler),
-              _yenilikSatiri('✅ Yakındaki camiler OpenStreetMap ile gösteriliyor', renkler),
-              _yenilikSatiri('✅ Konum değişince otomatik güncelleme', renkler),
-              _yenilikSatiri('🔜 Uluslararası ülke desteği hazırlanıyor', renkler),
-            ],
-          ),
-        ),
-        
         Divider(color: renkler.ayirac),
         const SizedBox(height: 16),
         
@@ -783,14 +528,14 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
             onPressed: () {
               // Play Store linki (şimdilik devre dışı)
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Yakında Play Store\'da!'),
-                  duration: Duration(seconds: 2),
+                SnackBar(
+                  content: Text(_languageService['coming_soon_playstore'] ?? 'Yakında Play Store\'da!'),
+                  duration: const Duration(seconds: 2),
                 ),
               );
             },
             icon: const Icon(Icons.shop, size: 20),
-            label: const Text('Play Store\'da Değerlendir'),
+            label: Text(_languageService['rate_on_playstore'] ?? 'Play Store\'da Değerlendir'),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.green,
               foregroundColor: Colors.white,
@@ -804,7 +549,7 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
         
         const SizedBox(height: 8),
         Text(
-          '© 2026 Huzur Vakti',
+          '© 2026 ${_languageService['app_name'] ?? 'Huzur Vakti'}',
           style: TextStyle(
             color: renkler.yaziSecondary,
             fontSize: 14,
@@ -813,7 +558,7 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
         ),
         const SizedBox(height: 8),
         Text(
-          'Tüm hakları saklıdır.',
+          _languageService['all_rights_reserved'] ?? 'Tüm hakları saklıdır.',
           style: TextStyle(
             color: renkler.yaziSecondary.withValues(alpha: 0.7),
             fontSize: 12,
@@ -821,7 +566,7 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
         ),
         const SizedBox(height: 16),
         Text(
-          'Allah\'ın (C.C) rızası için hazırlanmıştır.',
+          _languageService['for_allah'] ?? 'Allah\'ın (C.C) rızası için hazırlanmıştır.',
           style: TextStyle(
             color: renkler.vurgu,
             fontSize: 13,
@@ -831,7 +576,7 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
         ),
         const SizedBox(height: 8),
         Text(
-          'Geliştirici: Selahattin Kocabay',
+          _languageService['developer_name'] ?? 'Geliştirici: Selahattin Kocabay',
           style: TextStyle(
             color: renkler.yaziSecondary.withValues(alpha: 0.6),
             fontSize: 11,
@@ -840,20 +585,6 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
         ),
         const SizedBox(height: 24),
       ],
-    );
-  }
-  
-  Widget _yenilikSatiri(String metin, TemaRenkleri renkler) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Text(
-        metin,
-        style: TextStyle(
-          color: renkler.yaziSecondary,
-          fontSize: 13,
-          height: 1.4,
-        ),
-      ),
     );
   }
 }

@@ -6,6 +6,7 @@
     android:targetCellHeight="2"
     android:updatePeriodMillis="60000"
     android:initialLayout="@layout/widget_kompakt_banner"
+    android:previewLayout="@layout/widget_kompakt_banner"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen"
     android:previewImage="@drawable/widget_bg_card_dark"

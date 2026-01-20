@@ -9,12 +9,10 @@ class PermissionService {
     if (!Platform.isAndroid) return;
 
     try {
-      // Android 13+ için bildirim izni - konum izninden ÖNCE istenmeli
-      final hasNotification = await _requestNotificationPermission();
+      // Android 13+ için bildirim izni - timeout ile
+      final hasNotification = await _requestNotificationPermission()
+          .timeout(const Duration(seconds: 3), onTimeout: () => false);
       print('📱 Bildirim izni: ${hasNotification ? "verildi" : "istendi/reddedildi"}');
-      
-      // İzinler arasında kısa bir bekleme
-      await Future.delayed(const Duration(milliseconds: 500));
       
       print('✅ İzinler kontrol edildi');
     } catch (e) {

@@ -10,6 +10,7 @@ import 'services/dnd_service.dart';
 import 'services/language_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'services/notification_service.dart';
+import 'services/scheduled_notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -52,6 +53,9 @@ void main() async {
 
   // Bildirim altyapısını başlat
   await NotificationService.initialize(null);
+  
+  // Zamanlanmış bildirim servisini başlat
+  await ScheduledNotificationService.initialize();
   
   runApp(const HuzurVaktiApp());
 }

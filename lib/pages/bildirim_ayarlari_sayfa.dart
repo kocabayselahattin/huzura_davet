@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:file_picker/file_picker.dart';
 import '../services/dnd_service.dart';
+import '../services/scheduled_notification_service.dart';
 
 class BildirimAyarlariSayfa extends StatefulWidget {
   const BildirimAyarlariSayfa({super.key});
@@ -131,6 +132,9 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
     } else {
       await DndService.cancelPrayerDnd();
     }
+
+    // Zamanlanmış bildirimleri yeniden ayarla
+    await ScheduledNotificationService.scheduleAllPrayerNotifications();
 
     setState(() {
       _degisiklikYapildi = false;
