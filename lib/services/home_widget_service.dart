@@ -5,6 +5,7 @@ import 'package:hijri/hijri_calendar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'diyanet_api_service.dart';
 import 'konum_service.dart';
+import 'ozel_gunler_service.dart';
 
 /// Android Home Screen Widget'larını güncelleyen servis
 class HomeWidgetService {
@@ -154,6 +155,18 @@ class HomeWidgetService {
     await HomeWidget.saveWidgetData<String>('esma_arapca', esma['arapca'] ?? '');
     await HomeWidget.saveWidgetData<String>('esma_turkce', esma['turkce'] ?? '');
     await HomeWidget.saveWidgetData<String>('esma_anlam', esma['anlam'] ?? '');
+    
+    // Özel gün kontrolü
+    final ozelGun = OzelGunlerService.bugunOzelGunMu();
+    if (ozelGun != null) {
+      await HomeWidget.saveWidgetData<String>('ozel_gun_adi', ozelGun.ad);
+      await HomeWidget.saveWidgetData<String>('ozel_gun_mesaj', ozelGun.tebrikMesaji);
+      await HomeWidget.saveWidgetData<bool>('ozel_gun_var', true);
+    } else {
+      await HomeWidget.saveWidgetData<String>('ozel_gun_adi', '');
+      await HomeWidget.saveWidgetData<String>('ozel_gun_mesaj', '');
+      await HomeWidget.saveWidgetData<bool>('ozel_gun_var', false);
+    }
     
     // Kıble derecesi (örnek değer - gerçek hesaplama için konum gerekli)
     await HomeWidget.saveWidgetData<double>('kible_derece', 156.7);

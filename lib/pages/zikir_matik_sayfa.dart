@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:math' as math;
+import 'dart:convert';
 import '../services/vibration_service.dart';
 import '../services/language_service.dart';
+import '../services/tema_service.dart';
 
 class ZikirMatikSayfa extends StatefulWidget {
   const ZikirMatikSayfa({super.key});
@@ -15,6 +17,7 @@ class ZikirMatikSayfa extends StatefulWidget {
 class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
     with TickerProviderStateMixin {
   final LanguageService _languageService = LanguageService();
+  final TemaService _temaService = TemaService();
   int _sayac = 0;
   int _hedef = 33;
   int _toplamTur = 0;
@@ -27,20 +30,29 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
 
   final List<int> _hedefler = [33, 99, 100, 500, 1000];
   
-  List<Map<String, String>> get _zikirler => [
-    {'isim': _languageService['subhanallah'], 'anlam': _languageService['subhanallah_meaning']},
-    {'isim': _languageService['alhamdulillah'], 'anlam': _languageService['alhamdulillah_meaning']},
-    {'isim': _languageService['allahu_akbar'], 'anlam': _languageService['allahu_akbar_meaning']},
-    {'isim': _languageService['la_ilaha_illallah'], 'anlam': _languageService['la_ilaha_illallah_meaning']},
-    {'isim': _languageService['astaghfirullah'], 'anlam': _languageService['astaghfirullah_meaning']},
-    {'isim': _languageService['la_hawla'], 'anlam': _languageService['la_hawla_meaning']},
+  // Varsayılan zikirler
+  List<Map<String, String>> get _varsayilanZikirler => [
+    {'isim': _languageService['subhanallah'], 'anlam': _languageService['subhanallah_meaning'], 'varsayilan': 'true'},
+    {'isim': _languageService['alhamdulillah'], 'anlam': _languageService['alhamdulillah_meaning'], 'varsayilan': 'true'},
+    {'isim': _languageService['allahu_akbar'], 'anlam': _languageService['allahu_akbar_meaning'], 'varsayilan': 'true'},
+    {'isim': _languageService['la_ilaha_illallah'], 'anlam': _languageService['la_ilaha_illallah_meaning'], 'varsayilan': 'true'},
+    {'isim': _languageService['astaghfirullah'], 'anlam': _languageService['astaghfirullah_meaning'], 'varsayilan': 'true'},
+    {'isim': _languageService['la_hawla'], 'anlam': _languageService['la_hawla_meaning'], 'varsayilan': 'true'},
   ];
+  
+  // Kullanıcının özel zikirleri
+  List<Map<String, String>> _ozelZikirler = [];
+  
+  // Tüm zikirler (varsayılan + özel)
+  List<Map<String, String>> get _zikirler => [..._varsayilanZikirler, ..._ozelZikirler];
+  
   int _secilenZikirIndex = 0;
 
   @override
   void initState() {
     super.initState();
     _languageService.addListener(_onLanguageChanged);
+    _temaService.addListener(_onLanguageChanged);
     _pulseController = AnimationController(
       duration: const Duration(milliseconds: 150),
       vsync: this,
@@ -66,12 +78,29 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
 
   Future<void> _verileriYukle() async {
     final prefs = await SharedPreferences.getInstance();
+    
+    // Özel zikirleri yükle
+    final ozelZikirlerJson = prefs.getString('ozel_zikirler');
+    if (ozelZikirlerJson != null) {
+      try {
+        final List<dynamic> decoded = jsonDecode(ozelZikirlerJson);
+        _ozelZikirler = decoded.map((e) => Map<String, String>.from(e)).toList();
+      } catch (e) {
+        _ozelZikirler = [];
+      }
+    }
+    
     setState(() {
       _sayac = prefs.getInt('zikir_sayac') ?? 0;
       _hedef = prefs.getInt('zikir_hedef') ?? 33;
       _toplamTur = prefs.getInt('zikir_toplam_tur') ?? 0;
       _secilenZikirIndex = prefs.getInt('zikir_secilen_index') ?? 0;
       _titresimAcik = prefs.getBool('zikir_titresim') ?? true;
+      
+      // Seçilen index geçerli mi kontrol et
+      if (_secilenZikirIndex >= _zikirler.length) {
+        _secilenZikirIndex = 0;
+      }
     });
   }
 
@@ -83,17 +112,22 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
     await prefs.setInt('zikir_secilen_index', _secilenZikirIndex);
     await prefs.setBool('zikir_titresim', _titresimAcik);
   }
+  
+  Future<void> _ozelZikirleriKaydet() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('ozel_zikirler', jsonEncode(_ozelZikirler));
+  }
 
   @override
   void dispose() {
     _languageService.removeListener(_onLanguageChanged);
+    _temaService.removeListener(_onLanguageChanged);
     _pulseController.dispose();
     _rippleController.dispose();
     super.dispose();
   }
 
   void _artir() async {
-    // Önce tıklama titreşimi (her tıklamada)
     if (_titresimAcik) {
       await VibrationService.light();
     }
@@ -107,7 +141,6 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
         _toplamTur++;
         _sayac = 0;
         if (_titresimAcik) {
-          // Tur tamamlandığında 2 kez kesik kesik titreşim
           _turTamamTitresim();
         }
       }
@@ -115,12 +148,9 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
     _verileriKaydet();
   }
   
-  /// Tur tamamlandığında kesik kesik 2 kez titreşim
   Future<void> _turTamamTitresim() async {
-    // İlk titreşim
     await VibrationService.heavy();
     await Future.delayed(const Duration(milliseconds: 150));
-    // İkinci titreşim
     await VibrationService.heavy();
   }
 
@@ -144,6 +174,159 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
     });
     _verileriKaydet();
   }
+  
+  void _zikirEkleDialog() {
+    final isimController = TextEditingController();
+    final anlamController = TextEditingController();
+    final renkler = _temaService.renkler;
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: renkler.kartArkaPlan,
+        title: Text(
+          _languageService['add_custom_dhikr'] ?? 'Özel Zikir Ekle',
+          style: TextStyle(color: renkler.yaziPrimary),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: isimController,
+                style: TextStyle(color: renkler.yaziPrimary),
+                decoration: InputDecoration(
+                  labelText: _languageService['dhikr_name'] ?? 'Zikir Adı',
+                  labelStyle: TextStyle(color: renkler.yaziSecondary),
+                  hintText: 'Örn: Sübhanallahi ve bihamdihi',
+                  hintStyle: TextStyle(color: renkler.yaziSecondary.withOpacity(0.5)),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: renkler.vurgu.withOpacity(0.3)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: renkler.vurgu),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: anlamController,
+                style: TextStyle(color: renkler.yaziPrimary),
+                decoration: InputDecoration(
+                  labelText: _languageService['meaning'] ?? 'Anlamı',
+                  labelStyle: TextStyle(color: renkler.yaziSecondary),
+                  hintText: 'Örn: Allah\'ı hamd ile tesbih ederim',
+                  hintStyle: TextStyle(color: renkler.yaziSecondary.withOpacity(0.5)),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: renkler.vurgu.withOpacity(0.3)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: renkler.vurgu),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                maxLines: 2,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              _languageService['cancel'] ?? 'İptal',
+              style: TextStyle(color: renkler.yaziSecondary),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (isimController.text.trim().isNotEmpty) {
+                setState(() {
+                  _ozelZikirler.add({
+                    'isim': isimController.text.trim(),
+                    'anlam': anlamController.text.trim().isEmpty 
+                        ? '-' 
+                        : anlamController.text.trim(),
+                    'varsayilan': 'false',
+                  });
+                });
+                _ozelZikirleriKaydet();
+                Navigator.pop(context);
+                
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(_languageService['dhikr_added'] ?? 'Zikir eklendi'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: renkler.vurgu,
+            ),
+            child: Text(
+              _languageService['add'] ?? 'Ekle',
+              style: const TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  void _zikirSil(int index) {
+    final gercekIndex = index - _varsayilanZikirler.length;
+    if (gercekIndex < 0) return;
+    
+    final renkler = _temaService.renkler;
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: renkler.kartArkaPlan,
+        title: Text(
+          _languageService['delete_dhikr'] ?? 'Zikri Sil',
+          style: TextStyle(color: renkler.yaziPrimary),
+        ),
+        content: Text(
+          '${_ozelZikirler[gercekIndex]['isim']} ${_languageService['confirm_delete_dhikr'] ?? 'zikrini silmek istediğinize emin misiniz?'}',
+          style: TextStyle(color: renkler.yaziSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              _languageService['cancel'] ?? 'İptal',
+              style: TextStyle(color: renkler.yaziSecondary),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              setState(() {
+                _ozelZikirler.removeAt(gercekIndex);
+                if (_secilenZikirIndex >= _zikirler.length) {
+                  _secilenZikirIndex = 0;
+                }
+              });
+              _ozelZikirleriKaydet();
+              _verileriKaydet();
+              Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            child: Text(
+              _languageService['delete'] ?? 'Sil',
+              style: const TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -152,18 +335,23 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
     return Scaffold(
       backgroundColor: const Color(0xFF1B2741),
       appBar: AppBar(
-        title: const Text('Zikir Matik'),
+        title: Text(_languageService['dhikr'] ?? 'Zikir Matik'),
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
           IconButton(
+            icon: const Icon(Icons.add_circle_outline),
+            onPressed: _zikirEkleDialog,
+            tooltip: _languageService['add_custom_dhikr'] ?? 'Özel Zikir Ekle',
+          ),
+          IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _tamSifirla,
-            tooltip: 'Sıfırla',
+            tooltip: _languageService['reset'] ?? 'Sıfırla',
           ),
           PopupMenuButton<int>(
             icon: const Icon(Icons.tune),
-            tooltip: 'Hedef Seç',
+            tooltip: _languageService['target'] ?? 'Hedef Seç',
             onSelected: (value) {
               setState(() {
                 _hedef = value;
@@ -177,8 +365,7 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
                       child: Text(
                         '$h',
                         style: TextStyle(
-                          fontWeight:
-                              _hedef == h ? FontWeight.bold : FontWeight.normal,
+                          fontWeight: _hedef == h ? FontWeight.bold : FontWeight.normal,
                           color: _hedef == h ? Colors.cyanAccent : null,
                         ),
                       ),
@@ -189,60 +376,107 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
       ),
       body: Column(
         children: [
-          // Zikir seçimi
           Container(
             height: 80,
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
-              itemCount: _zikirler.length,
+              itemCount: _zikirler.length + 1,
               itemBuilder: (context, index) {
+                if (index == _zikirler.length) {
+                  return GestureDetector(
+                    onTap: _zikirEkleDialog,
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: Colors.cyanAccent.withOpacity(0.3),
+                          width: 2,
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.add, color: Colors.cyanAccent, size: 24),
+                          const SizedBox(height: 4),
+                          Text(
+                            _languageService['add'] ?? 'Ekle',
+                            style: const TextStyle(color: Colors.cyanAccent, fontSize: 10),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+                
                 final isSelected = index == _secilenZikirIndex;
+                final isCustom = _zikirler[index]['varsayilan'] == 'false';
+                
                 return GestureDetector(
                   onTap: () {
-                    setState(() {
-                      _secilenZikirIndex = index;
-                    });
+                    setState(() => _secilenZikirIndex = index);
                     _verileriKaydet();
                   },
+                  onLongPress: isCustom ? () => _zikirSil(index) : null,
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     margin: const EdgeInsets.symmetric(horizontal: 6),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     decoration: BoxDecoration(
                       color: isSelected
                           ? Colors.cyanAccent.withOpacity(0.2)
                           : Colors.white.withOpacity(0.05),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: isSelected
-                            ? Colors.cyanAccent
-                            : Colors.transparent,
+                        color: isSelected ? Colors.cyanAccent : Colors.transparent,
                         width: 2,
                       ),
                     ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                    child: Stack(
                       children: [
-                        Text(
-                          _zikirler[index]['isim']!,
-                          style: TextStyle(
-                            color: isSelected ? Colors.cyanAccent : Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              _zikirler[index]['isim']!,
+                              style: TextStyle(
+                                color: isSelected ? Colors.cyanAccent : Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              _zikirler[index]['anlam']!,
+                              style: TextStyle(
+                                color: isSelected
+                                    ? Colors.cyanAccent.withOpacity(0.7)
+                                    : Colors.white54,
+                                fontSize: 10,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          _zikirler[index]['anlam']!,
-                          style: TextStyle(
-                            color: isSelected
-                                ? Colors.cyanAccent.withOpacity(0.7)
-                                : Colors.white54,
-                            fontSize: 10,
+                        if (isCustom)
+                          Positioned(
+                            right: -8,
+                            top: -8,
+                            child: Container(
+                              padding: const EdgeInsets.all(2),
+                              decoration: const BoxDecoration(
+                                color: Colors.orange,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.person, size: 10, color: Colors.white),
+                            ),
                           ),
-                        ),
                       ],
                     ),
                   ),
@@ -250,21 +484,17 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
               },
             ),
           ),
-
-          // Tur ve hedef bilgisi
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 16),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _infoChip(Icons.loop, '$_toplamTur Tur'),
+                _infoChip(Icons.loop, '$_toplamTur ${_languageService['rounds'] ?? 'Tur'}'),
                 const SizedBox(width: 16),
-                _infoChip(Icons.flag, 'Hedef: $_hedef'),
+                _infoChip(Icons.flag, '${_languageService['target'] ?? 'Hedef'}: $_hedef'),
               ],
             ),
           ),
-
-          // Titreşim kontrol butonu
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: Row(
@@ -274,13 +504,9 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
                   padding: const EdgeInsets.only(right: 24),
                   child: GestureDetector(
                     onTap: () {
-                      setState(() {
-                        _titresimAcik = !_titresimAcik;
-                      });
+                      setState(() => _titresimAcik = !_titresimAcik);
                       _verileriKaydet();
-                      if (_titresimAcik) {
-                        HapticFeedback.lightImpact();
-                      }
+                      if (_titresimAcik) HapticFeedback.lightImpact();
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -290,9 +516,7 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
                             : Colors.white.withOpacity(0.05),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: _titresimAcik 
-                              ? Colors.cyanAccent 
-                              : Colors.white24,
+                          color: _titresimAcik ? Colors.cyanAccent : Colors.white24,
                           width: 1.5,
                         ),
                       ),
@@ -306,7 +530,9 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            _titresimAcik ? 'Titreşim Açık' : 'Titreşim Kapalı',
+                            _titresimAcik 
+                                ? (_languageService['vibration_on'] ?? 'Titreşim Açık')
+                                : (_languageService['vibration_off'] ?? 'Titreşim Kapalı'),
                             style: TextStyle(
                               color: _titresimAcik ? Colors.cyanAccent : Colors.white54,
                               fontSize: 12,
@@ -321,8 +547,6 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
               ],
             ),
           ),
-
-          // Ana sayaç alanı
           Expanded(
             child: Center(
               child: GestureDetector(
@@ -333,7 +557,6 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
                     return Stack(
                       alignment: Alignment.center,
                       children: [
-                        // Ripple efekti
                         if (_rippleAnimation.value > 0)
                           Container(
                             width: 260 + (_rippleAnimation.value * 60),
@@ -341,14 +564,11 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: Colors.cyanAccent.withOpacity(
-                                    1 - _rippleAnimation.value),
+                                color: Colors.cyanAccent.withOpacity(1 - _rippleAnimation.value),
                                 width: 3,
                               ),
                             ),
                           ),
-
-                        // Progress circle
                         SizedBox(
                           width: 260,
                           height: 260,
@@ -361,8 +581,6 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
                             ),
                           ),
                         ),
-
-                        // Ana buton
                         Transform.scale(
                           scale: _pulseAnimation.value,
                           child: Container(
@@ -370,13 +588,10 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
                             height: 220,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              gradient: LinearGradient(
+                              gradient: const LinearGradient(
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
-                                colors: [
-                                  const Color(0xFF2B3151),
-                                  const Color(0xFF1B2741),
-                                ],
+                                colors: [Color(0xFF2B3151), Color(0xFF1B2741)],
                               ),
                               boxShadow: [
                                 BoxShadow(
@@ -403,11 +618,14 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
                                     letterSpacing: 2,
                                   ),
                                 ),
-                                Text(
-                                  _zikirler[_secilenZikirIndex]['isim']!,
-                                  style: const TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 16,
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  child: Text(
+                                    _zikirler[_secilenZikirIndex]['isim']!,
+                                    style: const TextStyle(color: Colors.white70, fontSize: 14),
+                                    textAlign: TextAlign.center,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                               ],
@@ -421,8 +639,6 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
               ),
             ),
           ),
-
-          // Alt kontroller
           Padding(
             padding: const EdgeInsets.all(32),
             child: Row(
@@ -432,23 +648,14 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
                   icon: Icons.remove,
                   onTap: () {
                     if (_sayac > 0) {
-                      if (_titresimAcik) {
-                        HapticFeedback.lightImpact();
-                      }
+                      if (_titresimAcik) HapticFeedback.lightImpact();
                       setState(() => _sayac--);
                       _verileriKaydet();
                     }
                   },
                 ),
-                _controlButton(
-                  icon: Icons.refresh,
-                  onTap: _sifirla,
-                  isLarge: true,
-                ),
-                _controlButton(
-                  icon: Icons.add,
-                  onTap: _artir,
-                ),
+                _controlButton(icon: Icons.refresh, onTap: _sifirla, isLarge: true),
+                _controlButton(icon: Icons.add, onTap: _artir),
               ],
             ),
           ),
@@ -469,23 +676,13 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
         children: [
           Icon(icon, color: Colors.cyanAccent, size: 18),
           const SizedBox(width: 8),
-          Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
+          Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
         ],
       ),
     );
   }
 
-  Widget _controlButton({
-    required IconData icon,
-    required VoidCallback onTap,
-    bool isLarge = false,
-  }) {
+  Widget _controlButton({required IconData icon, required VoidCallback onTap, bool isLarge = false}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -494,16 +691,9 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: Colors.white.withOpacity(0.1),
-          border: Border.all(
-            color: Colors.cyanAccent.withOpacity(0.3),
-            width: 2,
-          ),
+          border: Border.all(color: Colors.cyanAccent.withOpacity(0.3), width: 2),
         ),
-        child: Icon(
-          icon,
-          color: Colors.cyanAccent,
-          size: isLarge ? 32 : 24,
-        ),
+        child: Icon(icon, color: Colors.cyanAccent, size: isLarge ? 32 : 24),
       ),
     );
   }
@@ -527,7 +717,6 @@ class _CircleProgressPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = (size.width - strokeWidth) / 2;
 
-    // Arkaplan çemberi
     final bgPaint = Paint()
       ..color = backgroundColor
       ..style = PaintingStyle.stroke
@@ -536,7 +725,6 @@ class _CircleProgressPainter extends CustomPainter {
 
     canvas.drawCircle(center, radius, bgPaint);
 
-    // Progress çemberi
     final progressPaint = Paint()
       ..color = progressColor
       ..style = PaintingStyle.stroke

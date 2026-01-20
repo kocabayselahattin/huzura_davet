@@ -166,20 +166,29 @@ class _VakitListesiWidgetState extends State<VakitListesiWidget> {
       final bildirimAcik = prefs.getBool('bildirim_$key') ?? true;
       final ses = prefs.getString('bildirim_sesi_$key');
       print('📱 Bildirim ayarı ($key): $bildirimAcik, Ses: $ses');
-      // Eğer dosya yoksa varsayılan olarak 'ding_dong.mp3' kullan
+      // Asset klasöründeki dosya adları
       final rawSes = [
         'arriving.mp3',
-        'best.mp3',
-        'corner.mp3',
-        'ding_dong.mp3',
-        'echo.mp3',
+        '2015_best.mp3',
+        'Corner.mp3',
+        'Ding_Dong.mp3',
+        'Echo.mp3',
         'iphone_sms_original.mp3',
         'snaps.mp3',
-        'sweet_favour.mp3',
-        'violet.mp3',
-        'woodpecker.mp3',
+        'Sweet_Favour.mp3',
+        'Violet.mp3',
+        'Woodpecker.mp3',
       ];
-      final sesDosyasi = (ses != null && rawSes.contains(ses)) ? ses : 'ding_dong.mp3';
+      // Küçük harf ile eşleşme için normalize et
+      String? sesDosyasi;
+      if (ses != null) {
+        sesDosyasi = rawSes.firstWhere(
+          (element) => element.toLowerCase() == ses.toLowerCase(),
+          orElse: () => 'Ding_Dong.mp3',
+        );
+      } else {
+        sesDosyasi = 'Ding_Dong.mp3';
+      }
       if (bildirimAcik) {
         print('🔊 Bildirim gönderiliyor: Vakit Girdi - $yeniAktif vakti başladı (Ses: $sesDosyasi)');
         await NotificationService.showVakitNotification(

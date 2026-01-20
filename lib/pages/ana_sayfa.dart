@@ -13,6 +13,7 @@ import '../services/konum_service.dart';
 import '../services/tema_service.dart';
 import '../services/language_service.dart';
 import '../services/home_widget_service.dart';
+import '../services/diyanet_api_service.dart';
 import '../models/konum_model.dart';
 import 'imsakiye_sayfa.dart';
 import 'ayarlar_sayfa.dart';
@@ -23,6 +24,8 @@ import 'ibadet_sayfa.dart';
 import 'ozel_gunler_sayfa.dart';
 import 'kible_sayfa.dart';
 import 'yakin_camiler_sayfa.dart';
+import 'hakkinda_sayfa.dart';
+import 'il_ilce_sec_sayfa.dart';
 
 class AnaSayfa extends StatefulWidget {
   const AnaSayfa({super.key});
@@ -39,6 +42,9 @@ class _AnaSayfaState extends State<AnaSayfa> {
   int _currentSayacIndex = 0;
   bool _sayacYuklendi = false;
   
+  // Mevcut vakit bildirimi için
+  static bool _mevcutVakitBildirimGosterildi = false;
+  
   // Çoklu konum sistemi
   List<KonumModel> _konumlar = [];
   int _aktifKonumIndex = 0;
@@ -54,15 +60,84 @@ class _AnaSayfaState extends State<AnaSayfa> {
     _konumYukle();
     _temaService.addListener(_onTemaChanged);
     _languageService.addListener(_onTemaChanged);
-    // Özel gün popup kontrolü
+    // Özel gün popup kontrolü ve mevcut vakit bildirimi
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkOzelGun();
+      _showMevcutVakitBildirimi();
     });
   }
 
   Future<void> _checkOzelGun() async {
     if (mounted) {
       await checkAndShowOzelGunPopup(context);
+    }
+  }
+  
+  // Mevcut vakte girdiğini gösteren bildirim (sadece uygulama açıldığında bir kez)
+  Future<void> _showMevcutVakitBildirimi() async {
+    // Sadece bir kez göster
+    if (_mevcutVakitBildirimGosterildi) return;
+    _mevcutVakitBildirimGosterildi = true;
+    
+    final ilceId = await KonumService.getIlceId();
+    if (ilceId == null) return;
+    
+    try {
+      final vakitler = await DiyanetApiService.getBugunVakitler(ilceId);
+      if (vakitler == null || !mounted) return;
+      
+      final now = DateTime.now();
+      final nowMinutes = now.hour * 60 + now.minute;
+      
+      final vakitListesi = [
+        {'key': 'Imsak', 'adi': _languageService['imsak'] ?? 'İmsak'},
+        {'key': 'Gunes', 'adi': _languageService['gunes'] ?? 'Güneş'},
+        {'key': 'Ogle', 'adi': _languageService['ogle'] ?? 'Öğle'},
+        {'key': 'Ikindi', 'adi': _languageService['ikindi'] ?? 'İkindi'},
+        {'key': 'Aksam', 'adi': _languageService['aksam'] ?? 'Akşam'},
+        {'key': 'Yatsi', 'adi': _languageService['yatsi'] ?? 'Yatsı'},
+      ];
+      
+      String mevcutVakit = vakitListesi.last['adi']!;
+      
+      // Mevcut vakti bul
+      for (int i = vakitListesi.length - 1; i >= 0; i--) {
+        final saat = vakitler[vakitListesi[i]['key']] ?? '00:00';
+        final parts = saat.split(':');
+        final vakitMinutes = int.parse(parts[0]) * 60 + int.parse(parts[1]);
+        
+        if (nowMinutes >= vakitMinutes) {
+          mevcutVakit = vakitListesi[i]['adi']!;
+          break;
+        }
+      }
+      
+      // Kısa bir gecikme ile snackbar göster
+      await Future.delayed(const Duration(milliseconds: 800));
+      
+      if (!mounted) return;
+      
+      final renkler = _temaService.renkler;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.access_time, color: Colors.white, size: 20),
+              const SizedBox(width: 12),
+              Text(
+                '${_languageService['current_prayer'] ?? 'Mevcut Vakit'}: $mevcutVakit',
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+            ],
+          ),
+          backgroundColor: renkler.vurgu,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    } catch (e) {
+      print('Mevcut vakit bildirimi hatası: $e');
     }
   }
 
@@ -237,12 +312,118 @@ class _AnaSayfaState extends State<AnaSayfa> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Kapat', style: TextStyle(color: renkler.vurgu)),
+              child: Text(_languageService['close'] ?? 'Kapat', style: TextStyle(color: renkler.vurgu)),
             ),
           ],
         );
       },
     );
+  }
+  
+  // Uygulama bilgi popup'ı
+  void _showAppInfoDialog() {
+    final renkler = _temaService.renkler;
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: renkler.kartArkaPlan,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: renkler.vurgu,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: renkler.vurgu.withOpacity(0.4),
+                    blurRadius: 15,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.mosque,
+                size: 40,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _languageService['app_name'] ?? 'Huzur Vakti',
+              style: TextStyle(
+                color: renkler.yaziPrimary,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '${_languageService['version'] ?? 'Versiyon'}: 2.3.0',
+              style: TextStyle(
+                color: renkler.yaziSecondary,
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              _languageService['prayer_times_assistant'] ?? 'Namaz Vakitleri ve İbadet Asistanı',
+              style: TextStyle(
+                color: renkler.yaziSecondary,
+                fontSize: 12,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                TextButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const HakkindaSayfa()),
+                    );
+                  },
+                  icon: Icon(Icons.info_outline, color: renkler.vurgu, size: 18),
+                  label: Text(
+                    _languageService['about'] ?? 'Hakkında',
+                    style: TextStyle(color: renkler.vurgu),
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: () => Navigator.pop(context),
+                  icon: Icon(Icons.close, color: renkler.yaziSecondary, size: 18),
+                  label: Text(
+                    _languageService['close'] ?? 'Kapat',
+                    style: TextStyle(color: renkler.yaziSecondary),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  // Konum sola/sağa kaydırma
+  void _konumSolaSagaKaydir(bool sagaMi) {
+    if (_konumlar.isEmpty) return;
+    
+    int yeniIndex;
+    if (sagaMi) {
+      yeniIndex = (_aktifKonumIndex + 1) % _konumlar.length;
+    } else {
+      yeniIndex = (_aktifKonumIndex - 1 + _konumlar.length) % _konumlar.length;
+    }
+    
+    _konumDegistir(yeniIndex);
   }
 
   @override
@@ -252,46 +433,81 @@ class _AnaSayfaState extends State<AnaSayfa> {
     return Scaffold(
       backgroundColor: renkler.arkaPlan,
       appBar: AppBar(
-        title: Text(
-          konumBasligi.toUpperCase(),
-          style: TextStyle(
-            letterSpacing: 2, 
-            fontSize: 14,
-            color: renkler.yaziPrimary,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leadingWidth: 56,
+        leading: GestureDetector(
+          onTap: _showAppInfoDialog,
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Container(
+              decoration: BoxDecoration(
+                color: renkler.vurgu.withOpacity(0.15),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.mosque,
+                color: renkler.vurgu,
+                size: 24,
+              ),
+            ),
+          ),
+        ),
+        title: GestureDetector(
+          onHorizontalDragEnd: (details) {
+            if (_konumlar.length > 1) {
+              if (details.primaryVelocity! < 0) {
+                // Sola kaydırıldı - sonraki konum
+                _konumSolaSagaKaydir(true);
+              } else if (details.primaryVelocity! > 0) {
+                // Sağa kaydırıldı - önceki konum
+                _konumSolaSagaKaydir(false);
+              }
+            }
+          },
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (_konumlar.length > 1)
+                Icon(Icons.chevron_left, color: renkler.yaziSecondary.withOpacity(0.5), size: 20),
+              Flexible(
+                child: Text(
+                  konumBasligi.toUpperCase(),
+                  style: TextStyle(
+                    letterSpacing: 1.5, 
+                    fontSize: 13,
+                    color: renkler.yaziPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+              ),
+              if (_konumlar.length > 1)
+                Icon(Icons.chevron_right, color: renkler.yaziSecondary.withOpacity(0.5), size: 20),
+            ],
           ),
         ),
         centerTitle: true,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: _konumlar.isNotEmpty
-            ? IconButton(
-                icon: Badge(
-                  label: Text('${_konumlar.length}'),
-                  child: Icon(Icons.location_city, color: renkler.vurgu),
-                ),
-                tooltip: 'Kayıtlı Konumlar',
-                onPressed: () => _konumYonetimDialog(),
-              )
-            : null,
         actions: [
           // Konum ekle ikonu
           IconButton(
             icon: Icon(
               Icons.add_location_alt,
               color: renkler.vurgu,
-              size: 28,
+              size: 26,
             ),
-            tooltip: 'Konum Ekle',
+            tooltip: _languageService['add_location'] ?? 'Konum Ekle',
             onPressed: () async {
               final result = await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const AyarlarSayfa(),
+                  builder: (context) => const IlIlceSecSayfa(),
                 ),
               );
               if (result == true || result == null) {
                 await _konumYukle();
-                // Vakit listesini yenile
                 setState(() {
                   _vakitListesiKey = UniqueKey();
                 });

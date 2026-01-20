@@ -6,6 +6,7 @@ import 'il_ilce_sec_sayfa.dart';
 import 'dil_secim_sayfa.dart';
 import '../services/konum_service.dart';
 import '../services/permission_service.dart';
+import '../services/language_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -264,9 +265,9 @@ class IlIlceSecOnboarding extends StatelessWidget {
               const SizedBox(height: 40),
 
               // Hoşgeldin Başlık
-              const Text(
-                'Hoş Geldiniz',
-                style: TextStyle(
+              Text(
+                LanguageService().translate('welcome_title'),
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
@@ -279,8 +280,8 @@ class IlIlceSecOnboarding extends StatelessWidget {
               // Açıklama
               Text(
                 konumIzniVar
-                    ? 'Huzur Vakti uygulamasına hoş geldiniz!\n\nKonumunuz tespit edilecek veya manuel olarak il ve ilçenizi seçebilirsiniz.'
-                    : 'Huzur Vakti uygulamasına hoş geldiniz!\n\nKonum izni verilmedi. Lütfen il ve ilçenizi manuel olarak seçin.',
+                    ? LanguageService().translate('welcome_desc_location')
+                    : LanguageService().translate('welcome_desc_manual'),
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.8),
                   fontSize: 16,
@@ -325,7 +326,9 @@ class IlIlceSecOnboarding extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      konumIzniVar ? 'Otomatik Tespit Et' : 'Manuel Seç',
+                      konumIzniVar
+                          ? LanguageService().translate('auto_detect')
+                          : LanguageService().translate('manual_select'),
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -340,7 +343,7 @@ class IlIlceSecOnboarding extends StatelessWidget {
 
               // İpucu
               Text(
-                'İstediğiniz zaman ayarlardan değiştirebilirsiniz',
+                LanguageService().translate('settings_tip'),
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.5),
                   fontSize: 12,

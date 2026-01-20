@@ -172,7 +172,7 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
           ),
           const SizedBox(height: 4),
           Text(
-            'Versiyon 2.2.0',
+            'Versiyon 2.3.0',
             style: TextStyle(
               color: renkler.yaziSecondary.withValues(alpha: 0.7),
               fontSize: 12,
@@ -261,6 +261,18 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
         'aciklama': 'GPS ile konumunuzu otomatik tespit eder ve en doğru vakit bilgilerini sunar',
       },
       {
+        'ikon': Icons.menu_book,
+        'renk': Colors.deepOrange,
+        'baslik': '🆕 Namazda Okunan Dualar',
+        'aciklama': 'Sübhaneke, Fatiha, Tahiyyat, Salavat ve tüm namaz duaları Arapça ve okunuşlarıyla',
+      },
+      {
+        'ikon': Icons.checklist,
+        'renk': Colors.indigo,
+        'baslik': '🆕 32 ve 54 Farz',
+        'aciklama': 'İslam\'ın tüm farzları detaylı açıklamalarıyla',
+      },
+      {
         'ikon': Icons.brightness_3,
         'renk': Colors.indigo,
         'baslik': 'Özel Gün ve Geceler',
@@ -277,6 +289,12 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
         'renk': Colors.brown,
         'baslik': '40 Hadis-i Şerif',
         'aciklama': 'Peygamber Efendimiz (S.A.V)\'in hadislerinden seçilmiş 40 hadis koleksiyonu',
+      },
+      {
+        'ikon': Icons.library_books,
+        'renk': Colors.brown,
+        'baslik': '📿 Özel Zikir Ekleme',
+        'aciklama': 'Kendi zikirlerinizi ekleyin, düzenleyin ve silin',
       },
       {
         'ikon': Icons.blur_circular,
@@ -443,6 +461,20 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
               ),
             ],
           ),
+          const SizedBox(height: 16),
+          
+          // v2.3.0
+          _surumBaslik('v2.3.0', '21 Ocak 2026', renkler),
+          const SizedBox(height: 8),
+          _surumMaddesi('🔊 Bildirim sesi sorunu tamamen çözüldü (AudioPlayer optimizasyonu)', renkler, duzeltme: true),
+          _surumMaddesi('📿 Zikirmatik: Özel zikir ekleme/silme özelliği', renkler, yeni: true),
+          _surumMaddesi('🕌 Uygulama açılınca mevcut vakit bildirimi', renkler, yeni: true),
+          _surumMaddesi('📱 AppBar yenilendi: Logo ile versiyon popup, kaydırarak konum değiştirme', renkler, iyilestirme: true),
+          _surumMaddesi('🌙 Özel günler widget\'ta gösteriliyor', renkler, yeni: true),
+          _surumMaddesi('📖 İbadet rehberi tamamen yenilendi: 32 farz, 54 farz, Cuma ve Cenaze namazı', renkler, yeni: true),
+          _surumMaddesi('🤲 Namazda okunan sure ve dualar Arapça metinlerle eklendi', renkler, yeni: true),
+          _surumMaddesi('🌍 Tüm dil çevirileri tamamlandı (TR, EN, DE, FR)', renkler, iyilestirme: true),
+          
           const SizedBox(height: 16),
           
           // v2.2.0

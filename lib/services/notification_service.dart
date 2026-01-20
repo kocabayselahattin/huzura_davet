@@ -4,8 +4,18 @@ import 'package:audioplayers/audioplayers.dart';
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
-  static final AudioPlayer _audioPlayer = AudioPlayer();
+  static AudioPlayer? _audioPlayer;
   static bool _initialized = false;
+
+  static Future<AudioPlayer> _getAudioPlayer() async {
+    if (_audioPlayer == null) {
+      _audioPlayer = AudioPlayer();
+      // AudioPlayer ayarları
+      await _audioPlayer!.setReleaseMode(ReleaseMode.stop);
+      await _audioPlayer!.setPlayerMode(PlayerMode.mediaPlayer);
+    }
+    return _audioPlayer!;
+  }
 
   static Future<void> initialize([dynamic context]) async {
     if (_initialized) return;
@@ -50,6 +60,9 @@ class NotificationService {
       }
     }
     
+    // AudioPlayer'ı önceden başlat
+    await _getAudioPlayer();
+    
     _initialized = true;
   }
 
@@ -62,15 +75,25 @@ class NotificationService {
       // Önce sesi çal (asset'ten)
       if (soundAsset != null && soundAsset.isNotEmpty) {
         try {
-          await _audioPlayer.stop();
+          final player = await _getAudioPlayer();
+          await player.stop();
+          
           // Asset dosya adını düzelt
           String assetPath = soundAsset;
           if (!assetPath.startsWith('sounds/')) {
             assetPath = 'sounds/$soundAsset';
           }
-          await _audioPlayer.setVolume(1.0);
-          await _audioPlayer.play(AssetSource(assetPath));
-          debugPrint('🔊 Ses çalındı: $assetPath');
+          
+          // Ses ayarlarını yap
+          await player.setVolume(1.0);
+          await player.setPlayerMode(PlayerMode.mediaPlayer);
+          
+          // Sesi çal
+          await player.play(AssetSource(assetPath));
+          debugPrint('🔊 Ses çalınıyor: $assetPath');
+          
+          // Sesin çalması için kısa bir bekleme
+          await Future.delayed(const Duration(milliseconds: 100));
         } catch (e) {
           debugPrint('⚠️ Ses çalınamadı: $e');
         }
@@ -116,13 +139,17 @@ class NotificationService {
   /// Sesi test et
   static Future<void> testSound(String soundAsset) async {
     try {
-      await _audioPlayer.stop();
+      final player = await _getAudioPlayer();
+      await player.stop();
+      
       String assetPath = soundAsset;
       if (!assetPath.startsWith('sounds/')) {
         assetPath = 'sounds/$soundAsset';
       }
-      await _audioPlayer.setVolume(1.0);
-      await _audioPlayer.play(AssetSource(assetPath));
+      
+      await player.setVolume(1.0);
+      await player.setPlayerMode(PlayerMode.mediaPlayer);
+      await player.play(AssetSource(assetPath));
       debugPrint('🔊 Test sesi çalındı: $assetPath');
     } catch (e) {
       debugPrint('⚠️ Test sesi çalınamadı: $e');
@@ -131,6 +158,16 @@ class NotificationService {
   
   /// Sesi durdur
   static Future<void> stopSound() async {
-    await _audioPlayer.stop();
+    if (_audioPlayer != null) {
+      await _audioPlayer!.stop();
+    }
+  }
+  
+  /// Kaynakları temizle
+  static Future<void> dispose() async {
+    if (_audioPlayer != null) {
+      await _audioPlayer!.dispose();
+      _audioPlayer = null;
+    }
   }
 }
