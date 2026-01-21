@@ -6,7 +6,8 @@
     android:targetCellHeight="1"
     android:updatePeriodMillis="60000"
     android:initialLayout="@layout/widget_mini_sunset"
-    android:previewLayout="@layout/widget_mini_sunset"
+    android:previewImage="@drawable/preview_widget_mini"
+    android:previewLayout="@layout/widget_mini_sunset_preview"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen"
     android:description="@string/widget_mini_desc" />

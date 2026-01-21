@@ -453,5 +453,20 @@
   "calendar_page": "Gebetskalender",
   "select_city_district": "Stadt/Bezirk auswählen",
   "retry": "Erneut versuchen",
-  "kabe": "Kaaba"
+  "kabe": "Kaaba",
+  "compass_n": "N",
+  "compass_ne": "NO",
+  "compass_e": "O",
+  "compass_se": "SO",
+  "compass_s": "S",
+  "compass_sw": "SW",
+  "compass_w": "W",
+  "compass_nw": "NW",
+  "north": "Norden",
+  "east": "Osten",
+  "south": "Süden",
+  "west": "Westen",
+  "correct_direction": "Richtige Richtung",
+  "qibla_direction": "Qibla-Richtung",
+  "calibrating_compass": "Kompass wird kalibriert"
 }

@@ -1,10 +1,13 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:geomag/geomag.dart';
+import 'package:audioplayers/audioplayers.dart';
 import '../services/tema_service.dart';
+import '../services/language_service.dart';
 
 class KibleSayfa extends StatefulWidget {
   const KibleSayfa({super.key});
@@ -15,6 +18,7 @@ class KibleSayfa extends StatefulWidget {
 
 class _KibleSayfaState extends State<KibleSayfa> {
   final TemaService _temaService = TemaService();
+  final LanguageService _languageService = LanguageService();
   double? _kibleDerece;
   bool _yukleniyor = true;
   String? _hata;
@@ -26,6 +30,11 @@ class _KibleSayfaState extends State<KibleSayfa> {
   double? _declination;
   bool _pusulaDestegi = true;
 
+  // Doğru yön geri bildirimi için
+  bool _wasCorrectDirection = false;
+  AudioPlayer? _audioPlayer;
+  DateTime? _lastFeedbackTime;
+
   // Kabe koordinatları
   static const double kabeEnlem = 21.4225;
   static const double kabeBoylam = 39.8262;
@@ -34,6 +43,8 @@ class _KibleSayfaState extends State<KibleSayfa> {
   void initState() {
     super.initState();
     _temaService.addListener(_onTemaChanged);
+    _languageService.addListener(_onTemaChanged);
+    _audioPlayer = AudioPlayer();
     _startCompass();
     _konumuAl();
   }
@@ -41,7 +52,9 @@ class _KibleSayfaState extends State<KibleSayfa> {
   @override
   void dispose() {
     _temaService.removeListener(_onTemaChanged);
+    _languageService.removeListener(_onTemaChanged);
     _compassSub?.cancel();
+    _audioPlayer?.dispose();
     super.dispose();
   }
 
@@ -62,6 +75,9 @@ class _KibleSayfaState extends State<KibleSayfa> {
         setState(() {
           _heading = heading;
         });
+
+        // Doğru yön kontrolü ve geri bildirim
+        _checkCorrectDirection();
       },
       onError: (_) {
         if (!mounted) return;
@@ -70,6 +86,50 @@ class _KibleSayfaState extends State<KibleSayfa> {
         });
       },
     );
+  }
+
+  /// Doğru yönde olup olmadığını kontrol et ve geri bildirim ver
+  void _checkCorrectDirection() {
+    if (_kibleDerece == null || _heading == null || _declination == null)
+      return;
+
+    final trueHeading = _normalizeAngle(
+      (_heading ?? 0).toDouble() + (_declination ?? 0),
+    );
+    final relative = _normalizeAngle(_kibleDerece! - trueHeading);
+    final isCorrectDirection = relative.abs() < 3 || (360 - relative).abs() < 3;
+
+    // Yeni doğru yöne girdiğinde ses ve titreşim
+    if (isCorrectDirection && !_wasCorrectDirection) {
+      _playDirectionFeedback();
+    }
+
+    _wasCorrectDirection = isCorrectDirection;
+  }
+
+  /// Doğru yönde olunca ses çal ve titret
+  Future<void> _playDirectionFeedback() async {
+    // Rate limiting - en az 2 saniye arayla çalsın
+    final now = DateTime.now();
+    if (_lastFeedbackTime != null &&
+        now.difference(_lastFeedbackTime!).inMilliseconds < 2000) {
+      return;
+    }
+    _lastFeedbackTime = now;
+
+    try {
+      // Titreşim
+      HapticFeedback.vibrate();
+      await Future.delayed(const Duration(milliseconds: 100));
+      HapticFeedback.mediumImpact();
+      await Future.delayed(const Duration(milliseconds: 100));
+      HapticFeedback.mediumImpact();
+
+      // Ses efekti
+      await _audioPlayer?.play(AssetSource('sounds/Ding_Dong.mp3'));
+    } catch (e) {
+      print('⚠️ Kıble geri bildirim hatası: $e');
+    }
   }
 
   void _onTemaChanged() {
@@ -454,11 +514,11 @@ class _KibleSayfaState extends State<KibleSayfa> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text('🕋', style: TextStyle(fontSize: 38)),
-                        SizedBox(height: 4),
+                        const Text('🕋', style: TextStyle(fontSize: 38)),
+                        const SizedBox(height: 4),
                         Text(
-                          'Kabe',
-                          style: TextStyle(
+                          _languageService['kabe'],
+                          style: const TextStyle(
                             color: Colors.brown,
                             fontWeight: FontWeight.bold,
                           ),
@@ -493,16 +553,16 @@ class _KibleSayfaState extends State<KibleSayfa> {
                           ],
                         ),
                         child: Row(
-                          children: const [
-                            Icon(
+                          children: [
+                            const Icon(
                               Icons.check_circle,
                               color: Colors.white,
                               size: 20,
                             ),
-                            SizedBox(width: 8),
+                            const SizedBox(width: 8),
                             Text(
-                              'Doğru Yöndesiniz',
-                              style: TextStyle(
+                              _languageService['correct_direction'],
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 15,
@@ -529,7 +589,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'Pusula kalibre ediliyor',
+                          _languageService['calibrating_compass'],
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.8),
                             fontSize: 12,
@@ -608,14 +668,16 @@ class _KibleSayfaState extends State<KibleSayfa> {
   }
 
   String _getYonKisaltma(double derece) {
-    if (derece >= 337.5 || derece < 22.5) return 'N';
-    if (derece >= 22.5 && derece < 67.5) return 'NE';
-    if (derece >= 67.5 && derece < 112.5) return 'E';
-    if (derece >= 112.5 && derece < 157.5) return 'SE';
-    if (derece >= 157.5 && derece < 202.5) return 'S';
-    if (derece >= 202.5 && derece < 247.5) return 'SW';
-    if (derece >= 247.5 && derece < 292.5) return 'W';
-    return 'NW';
+    if (derece >= 337.5 || derece < 22.5) return _languageService['compass_n'];
+    if (derece >= 22.5 && derece < 67.5) return _languageService['compass_ne'];
+    if (derece >= 67.5 && derece < 112.5) return _languageService['compass_e'];
+    if (derece >= 112.5 && derece < 157.5)
+      return _languageService['compass_se'];
+    if (derece >= 157.5 && derece < 202.5) return _languageService['compass_s'];
+    if (derece >= 202.5 && derece < 247.5)
+      return _languageService['compass_sw'];
+    if (derece >= 247.5 && derece < 292.5) return _languageService['compass_w'];
+    return _languageService['compass_nw'];
   }
 
   Widget _compassFace(TemaRenkleri renkler) {

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Arka plan -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="20dp" />
+            <solid android:color="#1A1A2E" />
+        </shape>
+    </item>
+    
+    <!-- Dış halka -->
+    <item android:top="20dp" android:left="40dp" android:right="40dp" android:bottom="20dp">
+        <shape android:shape="oval">
+            <stroke
+                android:width="8dp"
+                android:color="#303050" />
+        </shape>
+    </item>
+    
+    <!-- Progress halka -->
+    <item android:top="20dp" android:left="40dp" android:right="40dp" android:bottom="20dp">
+        <rotate
+            android:fromDegrees="270"
+            android:toDegrees="270"
+            android:pivotX="50%"
+            android:pivotY="50%">
+            <shape android:shape="oval">
+                <stroke
+                    android:width="8dp"
+                    android:color="#4DA6FF" />
+            </shape>
+        </rotate>
+    </item>
+    
+    <!-- Merkez -->
+    <item android:top="35dp" android:left="55dp" android:right="55dp" android:bottom="35dp">
+        <shape android:shape="oval">
+            <solid android:color="#252545" />
+        </shape>
+    </item>
+</layer-list>

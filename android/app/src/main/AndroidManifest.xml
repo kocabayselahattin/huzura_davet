@@ -29,6 +29,7 @@
     <uses-permission android:name="android.permission.TURN_SCREEN_ON" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     
     <!-- Pil Optimizasyonu İzinleri -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
@@ -124,18 +125,18 @@
                 android:resource="@xml/widget_neon_glow_info" />
         </receiver>
 
-        <!-- Widget 5: Gradient Card (4x3) -->
+        <!-- Widget 5: Cosmic Galaxy (4x2) -->
         <receiver 
-            android:name=".widgets.GradientCardWidget"
+            android:name=".widgets.CosmicWidget"
             android:exported="true"
-            android:label="Gradient Card">
+            android:label="Cosmic Galaxy">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="com.example.huzur_vakti.UPDATE_WIDGETS" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/widget_gradient_card_info" />
+                android:resource="@xml/widget_cosmic_info" />
         </receiver>
 
         <!-- Widget 6: Timeline (4x5) -->
@@ -152,7 +153,7 @@
                 android:resource="@xml/widget_timeline_info" />
         </receiver>
 
-        <!-- Widget 7: Circular Progress (4x4) -->
+        <!-- Widget 7: Circular Progress (2x2) -->
         <receiver 
             android:name=".widgets.CircularProgressWidget"
             android:exported="true"
@@ -166,6 +167,34 @@
                 android:resource="@xml/widget_circular_progress_info" />
         </receiver>
 
+        <!-- Widget 8: Zen Minimalist (2x2) -->
+        <receiver 
+            android:name=".widgets.ZenWidget"
+            android:exported="true"
+            android:label="Zen Minimalist">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.example.huzur_vakti.UPDATE_WIDGETS" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_zen_info" />
+        </receiver>
+
+        <!-- Widget 9: Origami Paper (4x2) -->
+        <receiver 
+            android:name=".widgets.OrigamiWidget"
+            android:exported="true"
+            android:label="Origami Paper">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.example.huzur_vakti.UPDATE_WIDGETS" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_origami_info" />
+        </receiver>
+
         <!-- Widget Update Receiver - Arka planda widget'ları günceller -->
         <receiver
             android:name=".widgets.WidgetUpdateReceiver"
@@ -177,6 +206,35 @@
                 <action android:name="android.intent.action.USER_PRESENT" />
             </intent-filter>
         </receiver>
+
+        <!-- Alarm Receiver - Vakit alarmlarını alır -->
+        <receiver
+            android:name=".alarm.AlarmReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.example.huzur_vakti.PRAYER_ALARM" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Alarm Service - Foreground service olarak alarm çalar -->
+        <service
+            android:name=".alarm.AlarmService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
+
+        <!-- Kilit Ekranı Alarm Activity -->
+        <activity
+            android:name=".alarm.AlarmLockScreenActivity"
+            android:exported="false"
+            android:theme="@style/AlarmTheme"
+            android:showOnLockScreen="true"
+            android:turnScreenOn="true"
+            android:showWhenLocked="true"
+            android:excludeFromRecents="true"
+            android:launchMode="singleInstance"
+            android:taskAffinity=""
+            android:configChanges="orientation|keyboardHidden|screenSize" />
 
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->

@@ -6,18 +6,36 @@
     android:background="@drawable/widget_bg_glass"
     android:padding="10dp">
 
-    <!-- Üst Kısım: Mevcut Vakit -->
-    <TextView
-        android:id="@+id/tv_mevcut_vakit"
+    <!-- Üst Kısım: Mevcut Vakit + Hicri Tarih -->
+    <LinearLayout
+        android:id="@+id/layout_top"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:text="Şu an Güneş vaktinde"
-        android:textColor="#FFFFFF"
-        android:textSize="10sp"
-        android:alpha="0.8"
-        android:fontFamily="sans-serif-medium" />
+        android:orientation="vertical"
+        android:gravity="center">
+
+        <TextView
+            android:id="@+id/tv_mevcut_vakit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Şu an Güneş vaktinde"
+            android:textColor="#FFFFFF"
+            android:textSize="10sp"
+            android:fontFamily="sans-serif-medium" />
+
+        <TextView
+            android:id="@+id/tv_hicri"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="28 Recep 1447"
+            android:textColor="#FFFFFF"
+            android:textSize="9sp"
+            android:alpha="0.7"
+            android:layout_marginTop="2dp" />
+
+    </LinearLayout>
 
     <!-- Orta Kısım: Ana Bilgi -->
     <LinearLayout
@@ -82,40 +100,16 @@
 
     </LinearLayout>
 
-    <!-- Alt Kısım: Konum ve Tarih -->
-    <LinearLayout
-        android:layout_width="match_parent"
+    <!-- Alt Kısım: Konum -->
+    <TextView
+        android:id="@+id/tv_konum"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:orientation="horizontal"
-        android:gravity="center">
-
-        <TextView
-            android:id="@+id/tv_konum"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="İstanbul"
-            android:textColor="#FFFFFF"
-            android:textSize="9sp"
-            android:alpha="0.7" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text=" • "
-            android:textColor="#FFFFFF"
-            android:textSize="9sp"
-            android:alpha="0.5" />
-
-        <TextView
-            android:id="@+id/tv_hicri"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="28 Recep 1447"
-            android:textColor="#FFFFFF"
-            android:textSize="9sp"
-            android:alpha="0.7" />
-
-    </LinearLayout>
+        android:layout_centerHorizontal="true"
+        android:text="İstanbul"
+        android:textColor="#FFFFFF"
+        android:textSize="9sp"
+        android:alpha="0.7" />
 
 </RelativeLayout>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/widget_zen_description"
+    android:initialLayout="@layout/widget_zen"
+    android:minWidth="110dp"
+    android:minHeight="110dp"
+    android:previewImage="@drawable/preview_widget_zen"
+    android:previewLayout="@layout/widget_zen_preview"
+    android:resizeMode="horizontal|vertical"
+    android:targetCellWidth="2"
+    android:targetCellHeight="2"
+    android:updatePeriodMillis="60000"
+    android:widgetCategory="home_screen" />

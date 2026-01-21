@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'ana_sayfa.dart';
 import 'il_ilce_sec_sayfa.dart';
 import 'dil_secim_sayfa.dart';
+import 'onboarding_permissions_page.dart';
 import '../services/konum_service.dart';
 import '../services/permission_service.dart';
 import '../services/language_service.dart';
@@ -25,34 +26,21 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _kontrolVeYonlendir() async {
-    // İlk önce temel izinleri kontrol et
     if (!mounted) return;
 
-    setState(() => _durum = 'İzinler kontrol ediliyor...');
-
-    // Bildirim izinlerini iste (konum izninden önce) - timeout ile
-    try {
-      await PermissionService.requestAllPermissions().timeout(
-        const Duration(seconds: 5),
-        onTimeout: () {
-          print('⚠️ İzin isteği zaman aşımına uğradı');
-        },
-      );
-    } catch (e) {
-      print('⚠️ İzin isteği hatası: $e');
-    }
-
-    // 1 saniye splash screen göster (hız için kısaltıldı)
+    // 1 saniye splash screen göster
     await Future.delayed(const Duration(milliseconds: 800));
 
     if (!mounted) return;
 
-    // SharedPreferences'ı tek seferde al (performans için)
+    // SharedPreferences'ı tek seferde al
     final prefs = await SharedPreferences.getInstance();
     final dilSecildi = prefs.containsKey('language');
+    final onboardingCompleted = prefs.getBool('onboarding_completed') ?? false;
 
+    // İlk açılış kontrolü
     if (!dilSecildi) {
-      // İlk açılış - dil seçim ekranını göster
+      // 1. Dil seçimi
       final result = await Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const DilSecimSayfa()),
@@ -61,10 +49,27 @@ class _SplashScreenState extends State<SplashScreen> {
       if (result != true || !mounted) return;
     }
 
+    // 2. İzin onboarding (sadece ilk kurulumda)
+    if (!onboardingCompleted) {
+      setState(() => _durum = 'İzinler ayarlanıyor...');
+
+      final permissionResult = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const OnboardingPermissionsPage(),
+        ),
+      );
+
+      if (!mounted) return;
+
+      // Onboarding tamamlandı olarak işaretle
+      await prefs.setBool('onboarding_completed', true);
+    }
+
     // Önce kaydedilmiş konum var mı kontrol et
     setState(() => _durum = 'Konum kontrol ediliyor...');
 
-    // SharedPreferences'tan direkt oku (ayrı await'ler yerine)
+    // SharedPreferences'tan direkt oku
     final ilceId = prefs.getString('selected_ilce_id');
     final ilId = prefs.getString('selected_il_id');
 
@@ -98,8 +103,8 @@ class _SplashScreenState extends State<SplashScreen> {
     // Konum kaydedilmemişse (ilk açılış) konum iznini kontrol et
     setState(() => _durum = 'Konum izni kontrol ediliyor...');
 
-    // Konum iznini kontrol et (ancak zorla isteme)
-    final konumIzniVar = await _konumIzniKontrolEt();
+    // Konum iznini kontrol et
+    final konumIzniVar = await PermissionService.checkLocationPermission();
 
     if (!mounted) return;
 
@@ -115,40 +120,6 @@ class _SplashScreenState extends State<SplashScreen> {
         transitionDuration: const Duration(milliseconds: 800),
       ),
     );
-  }
-
-  Future<bool> _konumIzniKontrolEt() async {
-    try {
-      // Konum servisi açık mı kontrol et
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        print('⚠️ Konum servisi kapalı');
-        return false;
-      }
-
-      // İzin durumunu kontrol et
-      LocationPermission permission = await Geolocator.checkPermission();
-
-      if (permission == LocationPermission.denied) {
-        // İzin iste
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          print('⚠️ Konum izni reddedildi');
-          return false;
-        }
-      }
-
-      if (permission == LocationPermission.deniedForever) {
-        print('⚠️ Konum izni kalıcı olarak reddedildi');
-        return false;
-      }
-
-      print('✅ Konum izni verildi');
-      return true;
-    } catch (e) {
-      print('⚠️ Konum izni kontrolü hatası: $e');
-      return false;
-    }
   }
 
   // Hızlı ilçe ID validasyonu (async olmadan)

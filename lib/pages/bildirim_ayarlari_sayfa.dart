@@ -5,7 +5,6 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../services/dnd_service.dart';
 import '../services/scheduled_notification_service.dart';
-import '../services/permission_service.dart';
 
 class BildirimAyarlariSayfa extends StatefulWidget {
   const BildirimAyarlariSayfa({super.key});
@@ -29,6 +28,16 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
 
   // Vaktinde bildirim (tam vakitte göster)
   Map<String, bool> _vaktindeBildirim = {
+    'imsak': false,
+    'gunes': false,
+    'ogle': false,
+    'ikindi': false,
+    'aksam': false,
+    'yatsi': false,
+  };
+
+  // Alarm açık/kapalı durumları (kilit ekranında alarm çalar)
+  Map<String, bool> _alarmAcik = {
     'imsak': false,
     'gunes': false,
     'ogle': false,
@@ -101,6 +110,7 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
         _bildirimAcik[vakit] =
             prefs.getBool('bildirim_$vakit') ?? _bildirimAcik[vakit]!;
         _vaktindeBildirim[vakit] = prefs.getBool('vaktinde_$vakit') ?? false;
+        _alarmAcik[vakit] = prefs.getBool('alarm_$vakit') ?? false;
         _erkenBildirim[vakit] =
             prefs.getInt('erken_$vakit') ?? _erkenBildirim[vakit]!;
         _bildirimSesi[vakit] =
@@ -208,6 +218,7 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
     for (final vakit in _bildirimAcik.keys) {
       await prefs.setBool('bildirim_$vakit', _bildirimAcik[vakit]!);
       await prefs.setBool('vaktinde_$vakit', _vaktindeBildirim[vakit]!);
+      await prefs.setBool('alarm_$vakit', _alarmAcik[vakit]!);
       await prefs.setInt('erken_$vakit', _erkenBildirim[vakit]!);
       await prefs.setString('bildirim_sesi_$vakit', _bildirimSesi[vakit]!);
 
@@ -487,7 +498,7 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
             // Bilgilendirme kartı
             Container(
               padding: const EdgeInsets.all(16),
-              margin: const EdgeInsets.only(bottom: 24),
+              margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
                 color: Colors.cyanAccent.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
@@ -502,6 +513,38 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
                       'Her vakit için bildirimi açıp kapatabilir ve erken hatırlatma süresi belirleyebilirsiniz.',
                       style: TextStyle(color: Colors.white70, fontSize: 13),
                     ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Bilgilendirme
+            Container(
+              padding: const EdgeInsets.all(12),
+              margin: const EdgeInsets.only(bottom: 24),
+              decoration: BoxDecoration(
+                color: Colors.blue.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.blue.withOpacity(0.3)),
+              ),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '📱 Nasıl Çalışır?',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    '• Vakit girdiğinde her zaman bildirim alırsınız\n'
+                    '• "Vaktinde Hatırlat" açıksa kilit ekranında sesli alarm çalar\n'
+                    '• Alarmı ses/güç tuşuyla susturabilirsiniz\n'
+                    '• Erken hatırlatma ile vakitten önce de uyarı alabilirsiniz',
+                    style: TextStyle(color: Colors.white70, fontSize: 12),
                   ),
                 ],
               ),
@@ -655,7 +698,7 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
     String aciklama,
   ) {
     final acik = _bildirimAcik[key]!;
-    final vaktinde = _vaktindeBildirim[key]!;
+    final alarmAcik = _alarmAcik[key]!;
     final erkenDakika = _erkenBildirim[key]!;
     final seciliSes = _bildirimSesi[key]!;
 
@@ -714,32 +757,72 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
             ),
           ),
 
-          // Alt kısım - Vaktinde, erken bildirim ve ses seçimi
+          // Alt kısım - Alarm toggle, erken bildirim ve ses seçimi
           if (acik)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Column(
                 children: [
-                  // Vaktinde checkbox
-                  Row(
-                    children: [
-                      Checkbox(
-                        value: vaktinde,
-                        onChanged: (value) {
-                          setState(() {
-                            _vaktindeBildirim[key] = value ?? false;
-                            _degisiklikYapildi = true;
-                          });
-                        },
-                        activeColor: Colors.cyanAccent,
+                  // Vaktinde Hatırlat - Ana switch
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: alarmAcik
+                          ? Colors.orangeAccent.withOpacity(0.15)
+                          : Colors.white.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: alarmAcik
+                            ? Colors.orangeAccent.withOpacity(0.5)
+                            : Colors.white12,
                       ),
-                      const Text(
-                        'Vaktinde bildirim gönder',
-                        style: TextStyle(color: Colors.white70, fontSize: 14),
-                      ),
-                    ],
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.alarm,
+                          color: alarmAcik ? Colors.orangeAccent : Colors.white54,
+                          size: 24,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Vaktinde Hatırlat',
+                                style: TextStyle(
+                                  color: alarmAcik ? Colors.orangeAccent : Colors.white,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                alarmAcik
+                                    ? 'Kilit ekranında bile sesli uyarı alacaksınız'
+                                    : 'Açık olunca kilit ekranında alarm çalar',
+                                style: const TextStyle(
+                                  color: Colors.white54,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Switch(
+                          value: alarmAcik,
+                          onChanged: (value) {
+                            setState(() {
+                              _alarmAcik[key] = value;
+                              _degisiklikYapildi = true;
+                            });
+                          },
+                          activeColor: Colors.orangeAccent,
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   Row(
                     children: [
                       const Icon(Icons.timer, color: Colors.white54, size: 18),

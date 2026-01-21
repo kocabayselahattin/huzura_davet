@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Arka plan -->
+    <item android:id="@android:id/background">
+        <shape>
+            <corners android:radius="4dp" />
+            <solid android:color="#20FFFFFF" />
+        </shape>
+    </item>
+    <!-- İlerleme - Galaktik gradient -->
+    <item android:id="@android:id/progress">
+        <clip>
+            <shape>
+                <corners android:radius="4dp" />
+                <gradient
+                    android:angle="0"
+                    android:startColor="#E040FB"
+                    android:centerColor="#7C4DFF"
+                    android:endColor="#00BCD4" />
+            </shape>
+        </clip>
+    </item>
+</layer-list>

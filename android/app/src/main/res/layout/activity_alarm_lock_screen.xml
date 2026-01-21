@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 🌙 Modern Kilit Ekranı Alarm Tasarımı -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000">
+
+    <!-- Gradient Arka Plan -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/alarm_lock_bg_gradient" />
+
+    <!-- Parıltı Efekti - Üst -->
+    <View
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        android:layout_gravity="top|center"
+        android:layout_marginTop="-100dp"
+        android:background="@drawable/alarm_glow_top"
+        android:alpha="0.6" />
+
+    <!-- Parıltı Efekti - Alt -->
+    <View
+        android:layout_width="400dp"
+        android:layout_height="400dp"
+        android:layout_gravity="bottom|center"
+        android:layout_marginBottom="-150dp"
+        android:background="@drawable/alarm_glow_bottom"
+        android:alpha="0.4" />
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="24dp">
+
+        <!-- Üst: Konum ve Tarih -->
+        <LinearLayout
+            android:id="@+id/layout_top_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_marginTop="48dp"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/tv_location"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="İstanbul"
+                android:textColor="#80FFFFFF"
+                android:textSize="14sp"
+                android:letterSpacing="0.15" />
+
+            <TextView
+                android:id="@+id/tv_date"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="21 Ocak 2026 • 28 Recep 1447"
+                android:textColor="#60FFFFFF"
+                android:textSize="12sp" />
+
+        </LinearLayout>
+
+        <!-- Merkez: Ana İçerik -->
+        <LinearLayout
+            android:id="@+id/layout_center"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp">
+
+            <!-- Hilal İkonu -->
+            <TextView
+                android:id="@+id/tv_moon_icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="☪"
+                android:textSize="48sp"
+                android:textColor="#FFD700"
+                android:shadowColor="#FFD700"
+                android:shadowRadius="20"
+                android:shadowDx="0"
+                android:shadowDy="0" />
+
+            <!-- Vakit Adı -->
+            <TextView
+                android:id="@+id/tv_alarm_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="SABAH NAMAZİ"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                android:letterSpacing="0.3"
+                android:textStyle="bold" />
+
+            <!-- Vakit Girdi Yazısı -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Vakti Girdi"
+                android:textColor="#B0FFFFFF"
+                android:textSize="14sp" />
+
+            <!-- Büyük Saat -->
+            <TextView
+                android:id="@+id/tv_alarm_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="05:30"
+                android:textColor="#FFFFFF"
+                android:textSize="80sp"
+                android:fontFamily="sans-serif-thin"
+                android:letterSpacing="-0.02"
+                android:shadowColor="#FFD700"
+                android:shadowRadius="30"
+                android:shadowDx="0"
+                android:shadowDy="0" />
+
+            <!-- Motivasyon Mesajı -->
+            <TextView
+                android:id="@+id/tv_alarm_subtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="✨ Hayırlı ibadetler ✨"
+                android:textColor="#FFD700"
+                android:textSize="16sp"
+                android:alpha="0.9" />
+
+            <!-- Dini Söz -->
+            <TextView
+                android:id="@+id/tv_quote"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:layout_marginStart="32dp"
+                android:layout_marginEnd="32dp"
+                android:text="Namaz müminin miracıdır."
+                android:textColor="#80FFFFFF"
+                android:textSize="13sp"
+                android:textStyle="italic"
+                android:textAlignment="center"
+                android:gravity="center" />
+
+        </LinearLayout>
+
+        <!-- Alt: Butonlar -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="32dp"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp">
+
+            <!-- İpucu -->
+            <TextView
+                android:id="@+id/tv_hint"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                android:text="Ses veya kilit tuşuna basarak kapatabilirsiniz"
+                android:textColor="#60FFFFFF"
+                android:textSize="12sp"
+                android:textAlignment="center" />
+
+            <!-- Butonlar Container -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center">
+
+                <!-- Ertele Butonu -->
+                <Button
+                    android:id="@+id/btn_snooze"
+                    android:layout_width="0dp"
+                    android:layout_height="56dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="8dp"
+                    android:text="⏰ 5 dk Ertele"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp"
+                    android:textAllCaps="false"
+                    android:background="@drawable/btn_alarm_snooze"
+                    android:elevation="4dp" />
+
+                <!-- Kapat Butonu -->
+                <Button
+                    android:id="@+id/btn_dismiss"
+                    android:layout_width="0dp"
+                    android:layout_height="56dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:text="✓ Kapat"
+                    android:textColor="#1B2741"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textAllCaps="false"
+                    android:background="@drawable/btn_alarm_dismiss"
+                    android:elevation="8dp" />
+
+            </LinearLayout>
+
+            <!-- Swipe İndikatörü -->
+            <View
+                android:layout_width="40dp"
+                android:layout_height="4dp"
+                android:layout_marginTop="20dp"
+                android:background="@drawable/swipe_indicator"
+                android:alpha="0.5" />
+
+        </LinearLayout>
+
+    </RelativeLayout>
+
+</FrameLayout>

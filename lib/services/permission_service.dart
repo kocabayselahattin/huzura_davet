@@ -1,8 +1,86 @@
 import 'dart:io';
 import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class PermissionService {
-  static const MethodChannel _channel = MethodChannel('huzur_vakti/permissions');
+  static const MethodChannel _channel = MethodChannel(
+    'huzur_vakti/permissions',
+  );
+  static final FlutterLocalNotificationsPlugin _notificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+
+  /// Konum izni kontrolü
+  static Future<bool> checkLocationPermission() async {
+    if (!Platform.isAndroid) return false;
+    try {
+      final permission = await Geolocator.checkPermission();
+      return permission == LocationPermission.always ||
+          permission == LocationPermission.whileInUse;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Konum izni iste
+  static Future<bool> requestLocationPermission() async {
+    if (!Platform.isAndroid) return false;
+    try {
+      // Önce servis durumunu kontrol et
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        await Geolocator.openLocationSettings();
+        return false;
+      }
+
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      return permission == LocationPermission.always ||
+          permission == LocationPermission.whileInUse;
+    } catch (e) {
+      print('⚠️ Konum izni hatası: $e');
+      return false;
+    }
+  }
+
+  /// Bildirim izni kontrolü
+  static Future<bool> checkNotificationPermission() async {
+    if (!Platform.isAndroid) return true;
+    try {
+      final androidImpl = _notificationsPlugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
+      if (androidImpl != null) {
+        return await androidImpl.areNotificationsEnabled() ?? false;
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Bildirim izni iste
+  static Future<bool> requestNotificationPermission() async {
+    if (!Platform.isAndroid) return true;
+    try {
+      final androidImpl = _notificationsPlugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
+      if (androidImpl != null) {
+        final result = await androidImpl.requestNotificationsPermission();
+        return result ?? false;
+      }
+      return false;
+    } catch (e) {
+      print('⚠️ Bildirim izni hatası: $e');
+      return false;
+    }
+  }
 
   /// Tüm gerekli izinleri iste (sıralı olarak, çakışma önlemek için)
   static Future<void> requestAllPermissions() async {
@@ -10,24 +88,17 @@ class PermissionService {
 
     try {
       // Android 13+ için bildirim izni - timeout ile
-      final hasNotification = await _requestNotificationPermission()
-          .timeout(const Duration(seconds: 3), onTimeout: () => false);
-      print('📱 Bildirim izni: ${hasNotification ? "verildi" : "istendi/reddedildi"}');
-      
+      final hasNotification = await requestNotificationPermission().timeout(
+        const Duration(seconds: 3),
+        onTimeout: () => false,
+      );
+      print(
+        '📱 Bildirim izni: ${hasNotification ? "verildi" : "istendi/reddedildi"}',
+      );
+
       print('✅ İzinler kontrol edildi');
     } catch (e) {
       print('⚠️ İzin kontrolü hatası: $e');
-    }
-  }
-
-  /// Bildirim izni iste (Android 13+)
-  static Future<bool> _requestNotificationPermission() async {
-    try {
-      final result = await _channel.invokeMethod<bool>('requestNotificationPermission');
-      return result ?? false;
-    } catch (e) {
-      print('⚠️ Bildirim izni hatası: $e');
-      return false;
     }
   }
 
@@ -56,9 +127,34 @@ class PermissionService {
   static Future<bool> hasExactAlarmPermission() async {
     if (!Platform.isAndroid) return true;
     try {
-      final result = await _channel.invokeMethod<bool>('hasExactAlarmPermission');
-      return result ?? true;
+      final androidImpl = _notificationsPlugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
+      if (androidImpl != null) {
+        return await androidImpl.canScheduleExactNotifications() ?? true;
+      }
+      return true;
     } catch (e) {
+      return true;
+    }
+  }
+
+  /// Exact alarm izni iste
+  static Future<bool> requestExactAlarmPermission() async {
+    if (!Platform.isAndroid) return true;
+    try {
+      final androidImpl = _notificationsPlugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
+      if (androidImpl != null) {
+        await androidImpl.requestExactAlarmsPermission();
+        return await androidImpl.canScheduleExactNotifications() ?? true;
+      }
+      return true;
+    } catch (e) {
+      print('⚠️ Exact alarm izni hatası: $e');
       return true;
     }
   }
@@ -77,10 +173,22 @@ class PermissionService {
   static Future<bool> isBatteryOptimizationDisabled() async {
     if (!Platform.isAndroid) return true;
     try {
-      final result = await _channel.invokeMethod<bool>('isBatteryOptimizationDisabled');
+      final result = await _channel.invokeMethod<bool>(
+        'isBatteryOptimizationDisabled',
+      );
       return result ?? false;
     } catch (e) {
       return false;
+    }
+  }
+
+  /// Pil optimizasyonu muafiyeti iste
+  static Future<void> requestBatteryOptimizationExemption() async {
+    if (!Platform.isAndroid) return;
+    try {
+      await _channel.invokeMethod<void>('requestBatteryOptimizationExemption');
+    } catch (e) {
+      print('⚠️ Pil optimizasyonu muafiyeti istenemedi: $e');
     }
   }
 

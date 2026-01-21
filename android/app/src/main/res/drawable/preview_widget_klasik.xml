@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Arka plan -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="16dp" />
+            <gradient
+                android:startColor="#FF8C00"
+                android:centerColor="#FF6B00"
+                android:endColor="#FF4500"
+                android:angle="135" />
+        </shape>
+    </item>
+    
+    <!-- İç gölge efekti -->
+    <item android:top="2dp" android:left="2dp" android:right="2dp" android:bottom="2dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="14dp" />
+            <solid android:color="#20FFFFFF" />
+        </shape>
+    </item>
+    
+    <!-- Metin alanı simülasyonu - üst -->
+    <item android:top="16dp" android:left="16dp" android:right="100dp" android:bottom="60dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="4dp" />
+            <solid android:color="#40FFFFFF" />
+        </shape>
+    </item>
+    
+    <!-- Geri sayım kutusu -->
+    <item android:top="40dp" android:left="16dp" android:right="16dp" android:bottom="16dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="8dp" />
+            <solid android:color="#30FFFFFF" />
+        </shape>
+    </item>
+</layer-list>

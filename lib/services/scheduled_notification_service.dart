@@ -3,14 +3,18 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
+import 'dart:async';
 import 'konum_service.dart';
 import 'diyanet_api_service.dart';
+import 'alarm_service.dart';
 
 /// Zamanlanmış bildirim servisi - Uygulama kapalıyken bile vakit bildirimlerini gönderir
 class ScheduledNotificationService {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
   static bool _initialized = false;
+  static Timer? _dailyScheduleTimer;
+  static DateTime? _lastScheduleDate;
 
   // Vakit isimleri
   static const List<String> _vakitler = [
@@ -49,7 +53,7 @@ class ScheduledNotificationService {
     await _notificationsPlugin.initialize(
       initializationSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) {
-        debugPrint('Bildirime tıklandı: ${response.payload}');
+        debugPrint('🔔 Bildirime tıklandı: ${response.payload}');
       },
     );
 
@@ -90,11 +94,33 @@ class ScheduledNotificationService {
 
     _initialized = true;
     debugPrint('✅ Zamanlanmış bildirim servisi başlatıldı');
+
+    // Günlük zamanlama kontrolü başlat
+    _startDailyScheduleCheck();
+  }
+
+  /// Günlük bildirimleri kontrol eden timer başlat
+  static void _startDailyScheduleCheck() {
+    _dailyScheduleTimer?.cancel();
+    // Her dakika kontrol et
+    _dailyScheduleTimer = Timer.periodic(const Duration(minutes: 1), (_) async {
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+
+      // Gün değiştiyse veya hiç zamanlanmadıysa
+      if (_lastScheduleDate == null || _lastScheduleDate!.isBefore(today)) {
+        debugPrint('📅 Yeni gün başladı, bildirimler yeniden zamanlanıyor...');
+        await scheduleAllPrayerNotifications();
+        _lastScheduleDate = today;
+      }
+    });
   }
 
   /// Tüm vakit bildirimlerini zamanla
   static Future<void> scheduleAllPrayerNotifications() async {
     try {
+      debugPrint('🔔 Tüm vakit bildirimleri zamanlanıyor...');
+
       // Önce mevcut bildirimleri iptal et
       await cancelAllNotifications();
 
@@ -112,8 +138,11 @@ class ScheduledNotificationService {
         return;
       }
 
+      debugPrint('📋 Alınan vakitler: $vakitler');
+
       // Kullanıcı ayarlarını yükle
       final prefs = await SharedPreferences.getInstance();
+      int scheduledCount = 0;
 
       // Her vakit için bildirim zamanla
       for (int i = 0; i < _vakitler.length; i++) {
@@ -128,14 +157,13 @@ class ScheduledNotificationService {
         }
 
         final vakitSaati = vakitler[vakitKey];
-        if (vakitSaati == null || vakitSaati == '—:—') continue;
+        if (vakitSaati == null || vakitSaati == '—:—' || vakitSaati.isEmpty) {
+          debugPrint('⚠️ $vakitKey saati boş veya geçersiz: $vakitSaati');
+          continue;
+        }
 
         // Erken bildirim süresi (dakika)
         final erkenDakika = prefs.getInt('erken_$vakitKeyLower') ?? 0;
-
-        // Vaktinde bildirim
-        final vaktindeBildirim =
-            prefs.getBool('vaktinde_$vakitKeyLower') ?? false;
 
         // Ses dosyası
         final sesDosyasi =
@@ -143,11 +171,17 @@ class ScheduledNotificationService {
 
         // Vakit saatini parse et
         final parts = vakitSaati.split(':');
-        if (parts.length != 2) continue;
+        if (parts.length != 2) {
+          debugPrint('⚠️ $vakitKey saat formatı hatalı: $vakitSaati');
+          continue;
+        }
 
         final saat = int.tryParse(parts[0]);
         final dakika = int.tryParse(parts[1]);
-        if (saat == null || dakika == null) continue;
+        if (saat == null || dakika == null) {
+          debugPrint('⚠️ $vakitKey saat parse edilemedi: $vakitSaati');
+          continue;
+        }
 
         // Bildirim zamanını hesapla
         final now = DateTime.now();
@@ -166,10 +200,13 @@ class ScheduledNotificationService {
           );
         }
 
-        // Eğer zaman geçmişse, bildirimi atla
+        // Eğer zaman geçmişse, bildirimi atla (yarına zamanla)
         if (bildirimZamani.isBefore(now)) {
-          debugPrint('⏰ $vakitKey vakti geçmiş, atlanıyor');
-          continue;
+          // Yarın için zamanla
+          bildirimZamani = bildirimZamani.add(const Duration(days: 1));
+          debugPrint(
+            '⏰ $vakitKey vakti geçmiş, yarına zamanlanıyor: ${bildirimZamani.hour}:${bildirimZamani.minute.toString().padLeft(2, '0')}',
+          );
         }
 
         // Bildirimi zamanla
@@ -184,37 +221,76 @@ class ScheduledNotificationService {
           soundAsset: sesDosyasi,
         );
 
+        scheduledCount++;
         debugPrint(
-          '✅ $vakitKey bildirimi zamanlandı: ${bildirimZamani.hour}:${bildirimZamani.minute.toString().padLeft(2, '0')}',
+          '✅ $vakitKey bildirimi zamanlandı: ${bildirimZamani.day}/${bildirimZamani.month} ${bildirimZamani.hour}:${bildirimZamani.minute.toString().padLeft(2, '0')}',
         );
 
-        // Vaktinde bildirim de isteniyorsa ve erken bildirim varsa, ayrıca vaktinde de bildirim gönder
-        if (vaktindeBildirim && erkenDakika > 0) {
-          final tamVakitZamani = DateTime(
+        // 🔔 ALARM: Alarm her zaman TAM VAKİT zamanında çalmalı (erken bildirimden bağımsız)
+        final alarmAcik = prefs.getBool('alarm_$vakitKeyLower') ?? false;
+        if (alarmAcik) {
+          // Alarm için tam vakit zamanını hesapla
+          var alarmZamani = DateTime(
             now.year,
             now.month,
             now.day,
             saat,
             dakika,
           );
-          if (tamVakitZamani.isAfter(now)) {
-            await _scheduleNotification(
-              id: i + 10, // 10-16 arası ID (vaktinde bildirimler için)
-              title: '${_vakitTurkce[vakitKey]} Vakti Girdi',
-              body: '${_vakitTurkce[vakitKey]} vakti girdi. Hayırlı ibadetler!',
-              scheduledTime: tamVakitZamani,
-              soundAsset: sesDosyasi,
-            );
-            debugPrint(
-              '✅ $vakitKey TAM VAKİT bildirimi zamanlandı: $saat:${dakika.toString().padLeft(2, '0')}',
-            );
+          
+          // Eğer vakit geçtiyse yarına zamanla
+          if (alarmZamani.isBefore(now)) {
+            alarmZamani = alarmZamani.add(const Duration(days: 1));
           }
+          
+          final alarmId = AlarmService.generateAlarmId(
+            vakitKeyLower,
+            alarmZamani,
+          );
+          await AlarmService.scheduleAlarm(
+            prayerName: _vakitTurkce[vakitKey] ?? vakitKey,
+            triggerAtMillis: alarmZamani.millisecondsSinceEpoch,
+            soundPath: sesDosyasi,
+            useVibration: true,
+            alarmId: alarmId,
+          );
+          debugPrint(
+            '⏰ $vakitKey ALARMI zamanlandı: ${alarmZamani.day}/${alarmZamani.month} ${alarmZamani.hour}:${alarmZamani.minute.toString().padLeft(2, '0')}',
+          );
+        }
+
+        // Erken bildirim varsa, ayrıca vaktinde de bildirim gönder (vakit girdiğinde)
+        if (erkenDakika > 0) {
+          var tamVakitZamani = DateTime(
+            now.year,
+            now.month,
+            now.day,
+            saat,
+            dakika,
+          );
+
+          if (tamVakitZamani.isBefore(now)) {
+            tamVakitZamani = tamVakitZamani.add(const Duration(days: 1));
+          }
+
+          await _scheduleNotification(
+            id: i + 10, // 10-16 arası ID (vaktinde bildirimler için)
+            title: '${_vakitTurkce[vakitKey]} Vakti Girdi',
+            body: '${_vakitTurkce[vakitKey]} vakti girdi. Hayırlı ibadetler!',
+            scheduledTime: tamVakitZamani,
+            soundAsset: sesDosyasi,
+          );
+          scheduledCount++;
+          debugPrint(
+            '✅ $vakitKey TAM VAKİT bildirimi zamanlandı: ${tamVakitZamani.day}/${tamVakitZamani.month} $saat:${dakika.toString().padLeft(2, '0')}',
+          );
         }
       }
 
-      debugPrint('🔔 Tüm vakit bildirimleri zamanlandı');
-    } catch (e) {
+      debugPrint('🔔 Toplam $scheduledCount bildirim zamanlandı');
+    } catch (e, stackTrace) {
       debugPrint('❌ Bildirim zamanlama hatası: $e');
+      debugPrint('📋 Stack trace: $stackTrace');
     }
   }
 
@@ -226,80 +302,162 @@ class ScheduledNotificationService {
     required DateTime scheduledTime,
     String? soundAsset,
   }) async {
-    // Ses kaynağı adını al
-    final soundResourceName = _getSoundResourceName(soundAsset);
-    final channelId = 'vakit_scheduled_$soundResourceName';
+    try {
+      // Ses kaynağı adını al
+      final soundResourceName = _getSoundResourceName(soundAsset);
+      final channelId = 'vakit_notification_channel';
 
-    // Android implementation'ı al ve channel oluştur
-    final androidImplementation = _notificationsPlugin
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >();
+      // Android implementation'ı al ve channel oluştur
+      final androidImplementation = _notificationsPlugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
 
-    if (androidImplementation != null) {
-      // Her ses için ayrı channel oluştur (Android ses değişimi kısıtlaması)
-      final channel = AndroidNotificationChannel(
+      if (androidImplementation != null) {
+        // Ana bildirim kanalı oluştur (Android ses değişimi kısıtlaması nedeniyle tek kanal)
+        final channel = AndroidNotificationChannel(
+          channelId,
+          'Namaz Vakti Bildirimleri',
+          description: 'Namaz vakitleri için zamanlanmış bildirimler',
+          importance: Importance.max,
+          playSound: true,
+          sound: RawResourceAndroidNotificationSound(soundResourceName),
+          enableVibration: true,
+          enableLights: true,
+          showBadge: true,
+        );
+
+        await androidImplementation.createNotificationChannel(channel);
+      }
+
+      final androidDetails = AndroidNotificationDetails(
         channelId,
-        'Vakit Bildirimleri',
-        description: 'Namaz vakitleri için zamanlanmış bildirimler',
+        'Namaz Vakti Bildirimleri',
+        channelDescription: 'Namaz vakitleri için zamanlanmış bildirimler',
         importance: Importance.max,
+        priority: Priority.max,
         playSound: true,
         sound: RawResourceAndroidNotificationSound(soundResourceName),
         enableVibration: true,
         enableLights: true,
-        showBadge: true,
+        showWhen: true,
+        when: scheduledTime.millisecondsSinceEpoch,
+        category: AndroidNotificationCategory.alarm,
+        fullScreenIntent: true,
+        visibility: NotificationVisibility.public,
+        audioAttributesUsage: AudioAttributesUsage.alarm,
+        ongoing: false,
+        autoCancel: true,
+        styleInformation: BigTextStyleInformation(body),
       );
 
-      await androidImplementation.createNotificationChannel(channel);
+      final notificationDetails = NotificationDetails(android: androidDetails);
+
+      final tzScheduledTime = tz.TZDateTime.from(scheduledTime, tz.local);
+
+      await _notificationsPlugin.zonedSchedule(
+        id,
+        title,
+        body,
+        tzScheduledTime,
+        notificationDetails,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        payload: 'vakit_$id',
+      );
+
       debugPrint(
-        '🔊 Bildirim kanalı oluşturuldu: $channelId (Ses: $soundResourceName)',
+        '⏰ Bildirim zamanlandı: ID=$id, Zaman=${scheduledTime.day}/${scheduledTime.month} ${scheduledTime.hour}:${scheduledTime.minute.toString().padLeft(2, '0')}, Ses=$soundResourceName',
       );
+    } catch (e) {
+      debugPrint('❌ Bildirim zamanlama hatası (ID=$id): $e');
     }
-
-    final androidDetails = AndroidNotificationDetails(
-      channelId,
-      'Vakit Bildirimleri',
-      channelDescription: 'Namaz vakitleri için zamanlanmış bildirimler',
-      importance: Importance.max,
-      priority: Priority.high,
-      playSound: true,
-      sound: RawResourceAndroidNotificationSound(soundResourceName),
-      enableVibration: true,
-      enableLights: true,
-      showWhen: true,
-      when: scheduledTime.millisecondsSinceEpoch,
-      category: AndroidNotificationCategory.alarm,
-      fullScreenIntent: true,
-      visibility: NotificationVisibility.public,
-      audioAttributesUsage: AudioAttributesUsage.alarm,
-    );
-
-    final notificationDetails = NotificationDetails(android: androidDetails);
-
-    await _notificationsPlugin.zonedSchedule(
-      id,
-      title,
-      body,
-      tz.TZDateTime.from(scheduledTime, tz.local),
-      notificationDetails,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      payload: 'vakit_$id',
-    );
-
-    debugPrint(
-      '⏰ Bildirim zamanlandı: ID=$id, Zaman=${scheduledTime.hour}:${scheduledTime.minute}, Ses=$soundResourceName',
-    );
   }
 
-  /// Tüm zamanlanmış bildirimleri iptal et
+  /// Tüm zamanlanmış bildirimleri ve alarmları iptal et
   static Future<void> cancelAllNotifications() async {
     await _notificationsPlugin.cancelAll();
-    debugPrint('🗑️ Tüm zamanlanmış bildirimler iptal edildi');
+    await AlarmService.cancelAllAlarms();
+    debugPrint('🗑️ Tüm zamanlanmış bildirimler ve alarmlar iptal edildi');
   }
 
   /// Belirli bir vaktin bildirimini iptal et
   static Future<void> cancelNotification(int id) async {
     await _notificationsPlugin.cancel(id);
+  }
+
+  /// Zamanlanmış bildirimlerin listesini al (debug için)
+  static Future<List<PendingNotificationRequest>>
+  getPendingNotifications() async {
+    return await _notificationsPlugin.pendingNotificationRequests();
+  }
+
+  /// Hemen bir test bildirimi gönder
+  static Future<void> sendTestNotification() async {
+    try {
+      final androidDetails = AndroidNotificationDetails(
+        'test_channel',
+        'Test Bildirimleri',
+        channelDescription: 'Test amaçlı bildirimler',
+        importance: Importance.max,
+        priority: Priority.max,
+        playSound: true,
+        enableVibration: true,
+        category: AndroidNotificationCategory.alarm,
+        fullScreenIntent: true,
+      );
+
+      final notificationDetails = NotificationDetails(android: androidDetails);
+
+      await _notificationsPlugin.show(
+        999,
+        '🧪 Test Bildirimi',
+        'Bildirim sistemi çalışıyor! ${DateTime.now().toString().substring(11, 19)}',
+        notificationDetails,
+      );
+      debugPrint('✅ Test bildirimi gönderildi');
+    } catch (e) {
+      debugPrint('❌ Test bildirimi gönderilemedi: $e');
+    }
+  }
+
+  /// Kilit ekranı testi için 5 saniye sonra bildirim gönder
+  /// Bu sayede kullanıcı telefonu kilitleyip bildirimin gelip gelmediğini test edebilir
+  static Future<void> sendLockScreenTestNotification() async {
+    try {
+      final scheduledTime = tz.TZDateTime.now(
+        tz.local,
+      ).add(const Duration(seconds: 5));
+
+      final androidDetails = AndroidNotificationDetails(
+        'prayer_notifications',
+        'Vakit Bildirimleri',
+        channelDescription: 'Namaz vakti bildirimleri',
+        importance: Importance.max,
+        priority: Priority.max,
+        playSound: true,
+        enableVibration: true,
+        category: AndroidNotificationCategory.alarm,
+        fullScreenIntent: true,
+        visibility:
+            NotificationVisibility.public, // Kilit ekranında tam görünür
+        ticker: 'Kilit Ekranı Test Bildirimi',
+      );
+
+      final notificationDetails = NotificationDetails(android: androidDetails);
+
+      await _notificationsPlugin.zonedSchedule(
+        998,
+        '🔒 Kilit Ekranı Testi',
+        '5 saniye sonra zamanlandı - Kilit ekranında görüyorsan bildirimler çalışıyor!',
+        scheduledTime,
+        notificationDetails,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        matchDateTimeComponents: null,
+      );
+      debugPrint('✅ Kilit ekranı test bildirimi 5 saniye sonra zamanlandı');
+    } catch (e) {
+      debugPrint('❌ Kilit ekranı test bildirimi gönderilemedi: $e');
+    }
   }
 
   /// Ses dosyası adını Android raw kaynağı adına dönüştür

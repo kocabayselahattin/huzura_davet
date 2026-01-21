@@ -275,6 +275,21 @@ class HomeWidgetService {
         qualifiedAndroidName:
             'com.example.huzur_vakti.widgets.CircularProgressWidget',
       );
+      await HomeWidget.updateWidget(
+        name: 'CosmicWidget',
+        androidName: 'CosmicWidget',
+        qualifiedAndroidName: 'com.example.huzur_vakti.widgets.CosmicWidget',
+      );
+      await HomeWidget.updateWidget(
+        name: 'ZenWidget',
+        androidName: 'ZenWidget',
+        qualifiedAndroidName: 'com.example.huzur_vakti.widgets.ZenWidget',
+      );
+      await HomeWidget.updateWidget(
+        name: 'OrigamiWidget',
+        androidName: 'OrigamiWidget',
+        qualifiedAndroidName: 'com.example.huzur_vakti.widgets.OrigamiWidget',
+      );
     } catch (e) {
       // Widget güncellenemezse devam et
       print('Widget güncelleme hatası: $e');

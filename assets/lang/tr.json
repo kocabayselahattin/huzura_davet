@@ -453,5 +453,20 @@
   "calendar_page": "İmsakiye",
   "select_city_district": "İl/İlçe Seç",
   "retry": "Tekrar Dene",
-  "kabe": "Kabe"
+  "kabe": "Kabe",
+  "compass_n": "K",
+  "compass_ne": "KD",
+  "compass_e": "D",
+  "compass_se": "GD",
+  "compass_s": "G",
+  "compass_sw": "GB",
+  "compass_w": "B",
+  "compass_nw": "KB",
+  "north": "Kuzey",
+  "east": "Doğu",
+  "south": "Güney",
+  "west": "Batı",
+  "correct_direction": "Doğru Yöndesiniz",
+  "qibla_direction": "Kıble Yönü",
+  "calibrating_compass": "Pusula kalibre ediliyor"
 }

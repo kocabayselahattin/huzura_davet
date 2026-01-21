@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_bg_zen"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:gravity="center">
+
+    <!-- Üst: Konum - Minimal -->
+    <TextView
+        android:id="@+id/tv_konum"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="İstanbul"
+        android:textColor="#9E9E9E"
+        android:textSize="10sp"
+        android:letterSpacing="0.15"
+        android:textAllCaps="true" />
+
+    <!-- Orta: Büyük Geri Sayım -->
+    <TextView
+        android:id="@+id/tv_geri_sayim"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="02:30"
+        android:textColor="#212121"
+        android:textSize="36sp"
+        android:fontFamily="sans-serif-thin"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp" />
+
+    <!-- Sonraki Vakit -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <TextView
+            android:id="@+id/tv_sonraki_vakit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Öğle"
+            android:textColor="#2196F3"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=" vaktine"
+            android:textColor="#757575"
+            android:textSize="12sp" />
+
+    </LinearLayout>
+
+    <!-- Progress Bar - İnce ve Zarif -->
+    <ProgressBar
+        android:id="@+id/progress_ecir"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="80dp"
+        android:layout_height="2dp"
+        android:layout_marginTop="8dp"
+        android:progress="50"
+        android:max="100"
+        android:progressDrawable="@drawable/progress_zen" />
+
+</LinearLayout>

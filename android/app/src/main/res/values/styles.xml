@@ -43,4 +43,12 @@
     <style name="WidgetTextMono">
         <item name="android:fontFamily">monospace</item>
     </style>
+
+    <!-- Alarm Kilit Ekranı Teması -->
+    <style name="AlarmTheme" parent="@android:style/Theme.NoTitleBar.Fullscreen">
+        <item name="android:windowBackground">@android:color/black</item>
+        <item name="android:windowShowWallpaper">false</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowFullscreen">true</item>
+    </style>
 </resources>

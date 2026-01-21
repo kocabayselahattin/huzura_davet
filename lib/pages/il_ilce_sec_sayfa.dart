@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart' as http;
 import '../services/diyanet_api_service.dart';
 import '../services/konum_service.dart';
 import '../services/home_widget_service.dart';
@@ -10,7 +12,11 @@ class IlIlceSecSayfa extends StatefulWidget {
   final bool ilkKurulum;
   final bool otomatikKonumTespit;
 
-  const IlIlceSecSayfa({super.key, this.ilkKurulum = false, this.otomatikKonumTespit = false});
+  const IlIlceSecSayfa({
+    super.key,
+    this.ilkKurulum = false,
+    this.otomatikKonumTespit = false,
+  });
 
   @override
   State<IlIlceSecSayfa> createState() => _IlIlceSecSayfaState();
@@ -28,7 +34,7 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
   String? secilenIlceId;
   bool yukleniyor = false;
   bool konumTespit = false;
-  
+
   // Ülke seçimi
   String secilenUlke = '🇹🇷 Türkiye';
   final List<Map<String, String>> ulkeler = [
@@ -70,7 +76,7 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
     setState(() {
       yukleniyor = true;
     });
-    
+
     // Önce API'den dene (güncel ve doğru veriler için)
     try {
       final illerData = await DiyanetApiService.getIller();
@@ -86,7 +92,7 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
     } catch (e) {
       print('⚠️ API\'den il yüklenemedi, yerel veriye geçiliyor: $e');
     }
-    
+
     // API başarısız olursa yerel veriye fallback
     final yerelIller = IlIlceData.getIller();
     setState(() {
@@ -101,7 +107,7 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
     setState(() {
       yukleniyor = true;
     });
-    
+
     // Önce API'den dene (güncel ve doğru veriler için)
     try {
       final ilcelerData = await DiyanetApiService.getIlceler(ilId);
@@ -118,7 +124,7 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
     } catch (e) {
       print('⚠️ API\'den ilçe yüklenemedi, yerel veriye geçiliyor: $e');
     }
-    
+
     // API başarısız olursa yerel veriye fallback
     final yerelIlceler = IlIlceData.getIlceler(ilId);
     setState(() {
@@ -136,8 +142,9 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
         filtrelenmisIller = iller;
       } else {
         filtrelenmisIller = iller.where((il) {
-          final sehirAdi =
-              (il['SehirAdi'] ?? il['IlceAdi'] ?? '').toString().toLowerCase();
+          final sehirAdi = (il['SehirAdi'] ?? il['IlceAdi'] ?? '')
+              .toString()
+              .toLowerCase();
           return sehirAdi.contains(aranan.toLowerCase());
         }).toList();
       }
@@ -163,98 +170,170 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
     });
 
     try {
-      // Konum servisi izni kontrolü
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        _konumHatasi('Konum servisi kapalı. Lütfen manuel seçim yapın.');
-        return;
-      }
+      Position? position;
 
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
+      // Önce GPS ile dene
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+
+      if (serviceEnabled) {
+        LocationPermission permission = await Geolocator.checkPermission();
         if (permission == LocationPermission.denied) {
-          _konumHatasi('Konum izni reddedildi. Lütfen manuel seçim yapın.');
-          return;
+          permission = await Geolocator.requestPermission();
+        }
+
+        if (permission == LocationPermission.always ||
+            permission == LocationPermission.whileInUse) {
+          // Önce son bilinen konumu al (hızlı başlangıç için)
+          Position? lastKnown;
+          try {
+            lastKnown = await Geolocator.getLastKnownPosition();
+          } catch (e) {
+            print('⚠️ Son bilinen konum alınamadı: $e');
+          }
+
+          try {
+            // Konum al - önce düşük hassasiyetle hızlı sonuç al
+            position = await Geolocator.getCurrentPosition(
+              desiredAccuracy: LocationAccuracy.low,
+              timeLimit: const Duration(seconds: 10),
+            );
+            print(
+              '📍 GPS (düşük hassasiyet): ${position.latitude}, ${position.longitude}',
+            );
+          } catch (e) {
+            print('⚠️ Düşük hassasiyetli konum alınamadı: $e');
+            // Daha yüksek hassasiyetle tekrar dene
+            try {
+              position = await Geolocator.getCurrentPosition(
+                desiredAccuracy: LocationAccuracy.medium,
+                timeLimit: const Duration(seconds: 20),
+              );
+              print(
+                '📍 GPS (orta hassasiyet): ${position.latitude}, ${position.longitude}',
+              );
+            } catch (e2) {
+              print('⚠️ Orta hassasiyetli konum da alınamadı: $e2');
+              // Son bilinen konumu kullan
+              if (lastKnown != null) {
+                position = lastKnown;
+                print(
+                  '📍 Son bilinen konum: ${position.latitude}, ${position.longitude}',
+                );
+              }
+            }
+          }
         }
       }
 
-      if (permission == LocationPermission.deniedForever) {
-        _konumHatasi(
-            'Konum izni kalıcı olarak reddedildi. Ayarlardan izin verin veya manuel seçim yapın.');
-        return;
-      }
+      // GPS başarısız olduysa IP tabanlı konum dene (mobil veri için)
+      if (position == null) {
+        print('🌐 GPS başarısız, IP tabanlı konum deneniyor...');
+        position = await _getIpBasedLocation();
 
-      // Konum al
-      Position? position;
-      
-      // Önce son bilinen konumu al (hızlı başlangıç için)
-      Position? lastKnown = await Geolocator.getLastKnownPosition();
-      
-      try {
-        // Konum al (60 saniye timeout, daha düşük hassasiyet)
-        position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.medium,
-          timeLimit: const Duration(seconds: 60),
-        );
-      } catch (e) {
-        // getCurrentPosition başarısızsa son bilinen konumu kullan
-        if (lastKnown != null) {
-          position = lastKnown;
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Canlı konum alınamadı, son bilinen konum kullanıldı.'),
-                backgroundColor: Colors.orange,
+        if (position != null && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'GPS kapalı, internet üzerinden yaklaşık konum tespit edildi.',
               ),
-            );
-          }
-        } else {
-          _konumHatasi('Konum alınamadı. Lütfen GPS\'i açık alanda tekrar deneyin.');
-          return;
+              backgroundColor: Colors.blue,
+            ),
+          );
         }
       }
 
       if (position == null) {
-        _konumHatasi('Konum bilgisi alınamadı. Lütfen manuel seçim yapın.');
+        _konumHatasi(
+          'Konum alınamadı. Lütfen GPS\'i açın veya manuel seçim yapın.',
+        );
         return;
+      }
+
+      print('📍 Konum alındı: ${position.latitude}, ${position.longitude}');
+
+      // Önce il listesini yükle (eğer yüklü değilse)
+      if (iller.isEmpty) {
+        await _illeriYukle();
       }
 
       // Koordinatlara göre en yakın ili bul
       final enYakinIl = _enYakinIliBul(position.latitude, position.longitude);
 
-      if (enYakinIl != null) {
-        final ilId = enYakinIl['SehirID']?.toString() ??
+      if (enYakinIl != null && enYakinIl.isNotEmpty) {
+        final ilId =
+            enYakinIl['SehirID']?.toString() ??
             enYakinIl['IlceID']?.toString() ??
             '';
         final ilAdi = enYakinIl['SehirAdi'] ?? enYakinIl['IlceAdi'] ?? '';
 
+        print('🏙️ En yakın il bulundu: $ilAdi (ID: $ilId)');
+
         setState(() {
           secilenIlId = ilId;
           secilenIlAdi = ilAdi;
-          konumTespit = false;
         });
 
         await _ilceleriYukle(ilId);
 
-        // İlk ilçeyi otomatik seç (genelde merkez)
+        // En uygun ilçeyi bul
         if (ilceler.isNotEmpty) {
-          // Merkez ilçesini bulmaya çalış
-          final merkez = ilceler.firstWhere(
-            (ilce) =>
-                (ilce['IlceAdi'] ?? '').toString().toLowerCase() == 'merkez',
-            orElse: () => ilceler.first,
-          );
+          Map<String, dynamic>? secilenIlce;
+
+          // Önce "MERKEZ" adlı ilçeyi ara
+          try {
+            secilenIlce = ilceler.firstWhere((ilce) {
+              final ilceAdi = (ilce['IlceAdi'] ?? '').toString().toUpperCase();
+              return ilceAdi == 'MERKEZ';
+            });
+          } catch (_) {
+            secilenIlce = null;
+          }
+
+          // Merkez bulunamadıysa, il adını içeren ilçeyi ara
+          if (secilenIlce == null) {
+            try {
+              secilenIlce = ilceler.firstWhere((ilce) {
+                final ilceAdi = (ilce['IlceAdi'] ?? '')
+                    .toString()
+                    .toUpperCase();
+                return ilceAdi.contains(ilAdi.toUpperCase()) ||
+                    ilAdi.toUpperCase().contains(ilceAdi);
+              });
+            } catch (_) {
+              secilenIlce = null;
+            }
+          }
+
+          // Hala bulunamadıysa ilk ilçeyi seç
+          if (secilenIlce == null && ilceler.isNotEmpty) {
+            secilenIlce = ilceler.first;
+          }
+
+          if (secilenIlce != null) {
+            setState(() {
+              secilenIlceId = secilenIlce!['IlceID'].toString();
+              secilenIlceAdi = secilenIlce['IlceAdi'];
+              konumTespit = false;
+            });
+
+            print('🏘️ İlçe seçildi: $secilenIlceAdi (ID: $secilenIlceId)');
+          } else {
+            setState(() {
+              konumTespit = false;
+            });
+          }
+        } else {
           setState(() {
-            secilenIlceId = merkez['IlceID'].toString();
-            secilenIlceAdi = merkez['IlceAdi'];
+            konumTespit = false;
           });
         }
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Konumunuz tespit edildi: $ilAdi'),
+              content: Text(
+                'Konumunuz tespit edildi: $ilAdi${secilenIlceAdi != null ? " / $secilenIlceAdi" : ""}',
+              ),
               backgroundColor: Colors.green,
             ),
           );
@@ -263,8 +342,91 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
         _konumHatasi('Konum tespit edilemedi. Lütfen manuel seçim yapın.');
       }
     } catch (e) {
-      _konumHatasi('Konum alınırken hata oluştu. Lütfen manuel seçim yapın.');
+      print('❌ Konum tespit hatası: $e');
+      _konumHatasi(
+        'Konum alınırken hata oluştu: ${e.toString().substring(0, e.toString().length > 50 ? 50 : e.toString().length)}...',
+      );
     }
+  }
+
+  // IP tabanlı konum tespiti (mobil veri/WiFi için)
+  Future<Position?> _getIpBasedLocation() async {
+    try {
+      // ip-api.com ücretsiz API kullanarak IP tabanlı konum al
+      final response = await http
+          .get(
+            Uri.parse(
+              'http://ip-api.com/json/?fields=status,lat,lon,city,country',
+            ),
+          )
+          .timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+
+        if (data['status'] == 'success') {
+          final lat = data['lat'] as double;
+          final lon = data['lon'] as double;
+
+          print(
+            '🌐 IP tabanlı konum: $lat, $lon (${data['city']}, ${data['country']})',
+          );
+
+          // Geolocator Position nesnesi oluştur
+          return Position(
+            latitude: lat,
+            longitude: lon,
+            timestamp: DateTime.now(),
+            accuracy: 5000, // IP tabanlı konum ~5km hassasiyet
+            altitude: 0,
+            altitudeAccuracy: 0,
+            heading: 0,
+            headingAccuracy: 0,
+            speed: 0,
+            speedAccuracy: 0,
+          );
+        }
+      }
+
+      print('⚠️ IP-API yanıtı başarısız: ${response.statusCode}');
+    } catch (e) {
+      print('⚠️ IP tabanlı konum hatası: $e');
+    }
+
+    // Alternatif API dene
+    try {
+      final response = await http
+          .get(Uri.parse('https://ipwho.is/'))
+          .timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+
+        if (data['success'] == true) {
+          final lat = (data['latitude'] as num).toDouble();
+          final lon = (data['longitude'] as num).toDouble();
+
+          print('🌐 IP tabanlı konum (alternatif): $lat, $lon');
+
+          return Position(
+            latitude: lat,
+            longitude: lon,
+            timestamp: DateTime.now(),
+            accuracy: 5000,
+            altitude: 0,
+            altitudeAccuracy: 0,
+            heading: 0,
+            headingAccuracy: 0,
+            speed: 0,
+            speedAccuracy: 0,
+          );
+        }
+      }
+    } catch (e) {
+      print('⚠️ Alternatif IP konum hatası: $e');
+    }
+
+    return null;
   }
 
   void _konumHatasi(String mesaj) {
@@ -388,13 +550,16 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
     if (enYakinIlAdi != null) {
       // İl verisinde bul (büyük/küçük harf duyarsız)
       final aramaIlAdi = enYakinIlAdi.toUpperCase();
-      return iller.firstWhere(
-        (il) {
-          final sehirAdi = (il['SehirAdi'] ?? il['IlceAdi'] ?? '').toString().toUpperCase();
+      try {
+        return iller.firstWhere((il) {
+          final sehirAdi = (il['SehirAdi'] ?? il['IlceAdi'] ?? '')
+              .toString()
+              .toUpperCase();
           return sehirAdi.contains(aramaIlAdi) || aramaIlAdi.contains(sehirAdi);
-        },
-        orElse: () => <String, dynamic>{},
-      );
+        });
+      } catch (_) {
+        return null;
+      }
     }
 
     return null;
@@ -420,7 +585,7 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
 
       // Konumu listeye ekle (zaten varsa eklenmez)
       await KonumService.addKonum(yeniKonum);
-      
+
       // Eski sisteme de kaydet (uyumluluk için)
       await KonumService.setIl(secilenIlAdi!, secilenIlId!);
       await KonumService.setIlce(secilenIlceAdi!, secilenIlceId!);
@@ -428,7 +593,7 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
       // Widget'ları ve uygulama verilerini hemen güncelle
       print('🔄 Konum değişti, veriler güncelleniyor...');
       await HomeWidgetService.updateAllWidgets();
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Konum kaydedildi ve güncelleniyor...')),
@@ -452,10 +617,7 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
           automaticallyImplyLeading: !widget.ilkKurulum,
           actions: [
             if (secilenIlceId != null)
-              IconButton(
-                icon: const Icon(Icons.check),
-                onPressed: _kaydet,
-              ),
+              IconButton(icon: const Icon(Icons.check), onPressed: _kaydet),
           ],
         ),
         body: Column(
@@ -516,7 +678,7 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
                 ],
               ),
             ),
-            
+
             // Türkiye dışındaki ülkeler için şehir adı girişi
             if (!secilenUlke.contains('Türkiye'))
               Container(
@@ -532,7 +694,11 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.info_outline, color: Colors.cyanAccent, size: 20),
+                        Icon(
+                          Icons.info_outline,
+                          color: Colors.cyanAccent,
+                          size: 20,
+                        ),
                         const SizedBox(width: 8),
                         Text(
                           'Şehir Bilgisi',
@@ -556,7 +722,10 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
                       decoration: InputDecoration(
                         hintText: 'Örn: Berlin, London, Paris...',
                         hintStyle: const TextStyle(color: Colors.white54),
-                        prefixIcon: const Icon(Icons.location_city, color: Colors.white54),
+                        prefixIcon: const Icon(
+                          Icons.location_city,
+                          color: Colors.white54,
+                        ),
                         filled: true,
                         fillColor: const Color(0xFF1B2741),
                         border: OutlineInputBorder(
@@ -568,7 +737,9 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
                         if (value.isNotEmpty) {
                           setState(() {
                             secilenIlAdi = value;
-                            secilenIlceAdi = secilenUlke.split(' ')[1]; // Ülke adı
+                            secilenIlceAdi = secilenUlke.split(
+                              ' ',
+                            )[1]; // Ülke adı
                             // Koordinatlar GPS ile alınacak
                           });
                         }
@@ -580,7 +751,9 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
                       decoration: BoxDecoration(
                         color: Colors.orange.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                        border: Border.all(
+                          color: Colors.orange.withOpacity(0.3),
+                        ),
                       ),
                       child: Row(
                         children: [
@@ -589,7 +762,10 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
                           Expanded(
                             child: Text(
                               'Namaz vakitleri GPS koordinatlarınıza göre hesaplanacaktır.',
-                              style: TextStyle(color: Colors.orange, fontSize: 11),
+                              style: TextStyle(
+                                color: Colors.orange,
+                                fontSize: 11,
+                              ),
                             ),
                           ),
                         ],
@@ -598,7 +774,7 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
                   ],
                 ),
               ),
-            
+
             // GPS ile konum tespit butonu (her zaman göster)
             Container(
               width: double.infinity,
@@ -620,8 +796,9 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor:
-                                AlwaysStoppedAnimation(Colors.cyanAccent),
+                            valueColor: AlwaysStoppedAnimation(
+                              Colors.cyanAccent,
+                            ),
                           ),
                         ),
                         SizedBox(width: 12),
@@ -645,8 +822,11 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
                                 color: Colors.cyanAccent.withOpacity(0.2),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.my_location,
-                                  color: Colors.cyanAccent, size: 24),
+                              child: const Icon(
+                                Icons.my_location,
+                                color: Colors.cyanAccent,
+                                size: 24,
+                              ),
                             ),
                             const SizedBox(width: 16),
                             const Expanded(
@@ -672,8 +852,11 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
                                 ],
                               ),
                             ),
-                            const Icon(Icons.arrow_forward_ios,
-                                color: Colors.cyanAccent, size: 18),
+                            const Icon(
+                              Icons.arrow_forward_ios,
+                              color: Colors.cyanAccent,
+                              size: 18,
+                            ),
                           ],
                         ),
                       ),
@@ -685,35 +868,40 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
             // İl Arama ve Seçimi (sadece Türkiye için)
             if (secilenUlke.contains('Türkiye'))
               Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: TextField(
-                controller: _ilAramaController,
-                onChanged: _ilAra,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: 'İl ara...',
-                  hintStyle: const TextStyle(color: Colors.white54),
-                  prefixIcon: const Icon(Icons.search, color: Colors.white54),
-                  suffixIcon: _ilAramaController.text.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear, color: Colors.white54),
-                          onPressed: () {
-                            _ilAramaController.clear();
-                            _ilAra('');
-                          },
-                        )
-                      : null,
-                  filled: true,
-                  fillColor: Colors.white.withOpacity(0.1),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: TextField(
+                  controller: _ilAramaController,
+                  onChanged: _ilAra,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    hintText: 'İl ara...',
+                    hintStyle: const TextStyle(color: Colors.white54),
+                    prefixIcon: const Icon(Icons.search, color: Colors.white54),
+                    suffixIcon: _ilAramaController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(
+                              Icons.clear,
+                              color: Colors.white54,
+                            ),
+                            onPressed: () {
+                              _ilAramaController.clear();
+                              _ilAra('');
+                            },
+                          )
+                        : null,
+                    filled: true,
+                    fillColor: Colors.white.withOpacity(0.1),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
                   ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 ),
               ),
-            ),
 
             const SizedBox(height: 8),
 
@@ -734,19 +922,24 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
                           final il = filtrelenmisIller[index];
                           final sehirAdi =
                               il['SehirAdi'] ?? il['IlceAdi'] ?? '';
-                          final sehirId = il['SehirID']?.toString() ??
+                          final sehirId =
+                              il['SehirID']?.toString() ??
                               il['IlceID']?.toString() ??
                               '';
 
                           return ListTile(
-                            leading: const Icon(Icons.location_city,
-                                color: Colors.white54),
+                            leading: const Icon(
+                              Icons.location_city,
+                              color: Colors.white54,
+                            ),
                             title: Text(
                               sehirAdi,
                               style: const TextStyle(color: Colors.white),
                             ),
-                            trailing: const Icon(Icons.chevron_right,
-                                color: Colors.white54),
+                            trailing: const Icon(
+                              Icons.chevron_right,
+                              color: Colors.white54,
+                            ),
                             onTap: () {
                               setState(() {
                                 secilenIlId = sehirId;
@@ -767,8 +960,10 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
               // Seçili il
               Container(
                 margin: const EdgeInsets.all(16),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.cyanAccent.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(12),
@@ -815,12 +1010,13 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
                   decoration: InputDecoration(
                     hintText: 'İlçe ara...',
                     hintStyle: const TextStyle(color: Colors.white54),
-                    prefixIcon:
-                        const Icon(Icons.search, color: Colors.white54),
+                    prefixIcon: const Icon(Icons.search, color: Colors.white54),
                     suffixIcon: _ilceAramaController.text.isNotEmpty
                         ? IconButton(
-                            icon:
-                                const Icon(Icons.clear, color: Colors.white54),
+                            icon: const Icon(
+                              Icons.clear,
+                              color: Colors.white54,
+                            ),
                             onPressed: () {
                               _ilceAramaController.clear();
                               _ilceAra('');
@@ -834,7 +1030,9 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
                       borderSide: BorderSide.none,
                     ),
                     contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 14),
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
                   ),
                 ),
               ),
@@ -871,15 +1069,19 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
                             title: Text(
                               ilceAdi,
                               style: TextStyle(
-                                color:
-                                    isSelected ? Colors.cyanAccent : Colors.white,
+                                color: isSelected
+                                    ? Colors.cyanAccent
+                                    : Colors.white,
                                 fontWeight: isSelected
                                     ? FontWeight.bold
                                     : FontWeight.normal,
                               ),
                             ),
                             trailing: isSelected
-                                ? const Icon(Icons.check, color: Colors.cyanAccent)
+                                ? const Icon(
+                                    Icons.check,
+                                    color: Colors.cyanAccent,
+                                  )
                                 : null,
                             onTap: () {
                               setState(() {

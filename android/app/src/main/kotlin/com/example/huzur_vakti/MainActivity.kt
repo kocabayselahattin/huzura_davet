@@ -11,6 +11,7 @@ import android.os.PowerManager
 import android.provider.Settings
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.example.huzur_vakti.alarm.AlarmReceiver
 import com.example.huzur_vakti.dnd.PrayerDndScheduler
 import com.example.huzur_vakti.widgets.WidgetUpdateReceiver
 import io.flutter.embedding.android.FlutterActivity
@@ -21,6 +22,7 @@ class MainActivity : FlutterActivity() {
 	private val dndChannelName = "huzur_vakti/dnd"
 	private val permissionsChannelName = "huzur_vakti/permissions"
 	private val widgetsChannelName = "huzur_vakti/widgets"
+	private val alarmChannelName = "huzur_vakti/alarms"
 	private val NOTIFICATION_PERMISSION_CODE = 1001
 
 	override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -39,6 +41,53 @@ class MainActivity : FlutterActivity() {
 					}
 					"cancelWidgetUpdates" -> {
 						WidgetUpdateReceiver.cancelWidgetUpdates(this)
+						result.success(true)
+					}
+					else -> result.notImplemented()
+				}
+			}
+
+		// Alarm Channel - Vakit alarmları için
+		MethodChannel(flutterEngine.dartExecutor.binaryMessenger, alarmChannelName)
+			.setMethodCallHandler { call, result ->
+				when (call.method) {
+					"scheduleAlarm" -> {
+						val prayerName = call.argument<String>("prayerName") ?: ""
+						val triggerAtMillis = call.argument<Number>("triggerAtMillis")?.toLong() ?: 0L
+						val soundPath = call.argument<String>("soundPath")
+						val useVibration = call.argument<Boolean>("useVibration") ?: true
+						val alarmId = call.argument<Int>("alarmId") ?: prayerName.hashCode()
+
+						if (prayerName.isNotEmpty() && triggerAtMillis > System.currentTimeMillis()) {
+							AlarmReceiver.scheduleAlarm(
+								context = this,
+								alarmId = alarmId,
+								prayerName = prayerName,
+								triggerAtMillis = triggerAtMillis,
+								soundPath = soundPath,
+								useVibration = useVibration
+							)
+							result.success(true)
+						} else {
+							result.success(false)
+						}
+					}
+					"cancelAlarm" -> {
+						val alarmId = call.argument<Int>("alarmId") ?: 0
+						AlarmReceiver.cancelAlarm(this, alarmId)
+						result.success(true)
+					}
+					"cancelAllAlarms" -> {
+						AlarmReceiver.cancelAllAlarms(this)
+						result.success(true)
+					}
+					"isAlarmPlaying" -> {
+						result.success(com.example.huzur_vakti.alarm.AlarmService.isAlarmPlaying())
+					}
+					"stopAlarm" -> {
+						val stopIntent = Intent(this, com.example.huzur_vakti.alarm.AlarmService::class.java)
+						stopIntent.action = com.example.huzur_vakti.alarm.AlarmService.ACTION_STOP_ALARM
+						startService(stopIntent)
 						result.success(true)
 					}
 					else -> result.notImplemented()
@@ -136,6 +185,16 @@ class MainActivity : FlutterActivity() {
 					"isBatteryOptimizationDisabled" -> {
 						val powerManager = getSystemService(PowerManager::class.java)
 						result.success(powerManager.isIgnoringBatteryOptimizations(packageName))
+					}
+					"requestBatteryOptimizationExemption" -> {
+						val powerManager = getSystemService(PowerManager::class.java)
+						if (!powerManager.isIgnoringBatteryOptimizations(packageName)) {
+							val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+							intent.data = Uri.parse("package:$packageName")
+							intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+							startActivity(intent)
+						}
+						result.success(true)
 					}
 					"openBatteryOptimizationSettings" -> {
 						val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)

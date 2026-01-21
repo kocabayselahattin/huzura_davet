@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Ana arka plan -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="20dp" />
+            <solid android:color="#FFF8E7" />
+        </shape>
+    </item>
+    
+    <!-- Origami katı 1 -->
+    <item android:top="0dp" android:left="0dp" android:right="100dp" android:bottom="60dp">
+        <shape android:shape="rectangle">
+            <corners android:topLeftRadius="20dp" />
+            <solid android:color="#FFECCC" />
+        </shape>
+    </item>
+    
+    <!-- Origami katı 2 -->
+    <item android:top="60dp" android:left="100dp" android:right="0dp" android:bottom="0dp">
+        <shape android:shape="rectangle">
+            <corners android:bottomRightRadius="20dp" />
+            <solid android:color="#FFE4B5" />
+        </shape>
+    </item>
+    
+    <!-- Merkez içerik -->
+    <item android:top="25dp" android:left="25dp" android:right="25dp" android:bottom="25dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="12dp" />
+            <solid android:color="#20D4A574" />
+        </shape>
+    </item>
+</layer-list>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Kağıt gölge arka plan -->
+    <item android:id="@android:id/background">
+        <shape>
+            <corners android:radius="2dp" />
+            <solid android:color="#E0D5C0" />
+        </shape>
+    </item>
+    <!-- İlerleme - Mürekkep tarzı -->
+    <item android:id="@android:id/progress">
+        <clip>
+            <shape>
+                <corners android:radius="2dp" />
+                <gradient
+                    android:angle="0"
+                    android:startColor="#2D3436"
+                    android:centerColor="#636E72"
+                    android:endColor="#2D3436" />
+            </shape>
+        </clip>
+    </item>
+</layer-list>

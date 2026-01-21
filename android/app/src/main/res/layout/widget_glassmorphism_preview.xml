@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_bg_glass"
+    android:padding="10dp">
+
+    <!-- Üst Kısım: Mevcut Vakit -->
+    <TextView
+        android:id="@+id/tv_mevcut_vakit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:text="Şu an İkindi vaktinde"
+        android:textColor="#FFFFFF"
+        android:textSize="10sp"
+        android:alpha="0.8"
+        android:fontFamily="sans-serif-medium" />
+
+    <!-- Orta Kısım: Ana Bilgi -->
+    <LinearLayout
+        android:id="@+id/layout_center"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:orientation="vertical"
+        android:gravity="center">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Akşam'a"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:fontFamily="sans-serif-light" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="01:45:30"
+            android:textColor="#FFFFFF"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:fontFamily="sans-serif-thin"
+            android:letterSpacing="0.05" />
+
+    </LinearLayout>
+
+    <!-- Ecir Barı -->
+    <LinearLayout
+        android:id="@+id/layout_progress"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/layout_center"
+        android:layout_marginTop="8dp"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Vakit İlerlemesi"
+            android:textColor="#FFFFFF"
+            android:textSize="8sp"
+            android:alpha="0.7"
+            android:layout_marginBottom="2dp" />
+
+        <ProgressBar
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="6dp"
+            android:progress="70"
+            android:max="100"
+            android:progressDrawable="@drawable/progress_glass_gradient"
+            android:background="@drawable/progress_glass_bg" />
+
+    </LinearLayout>
+
+    <!-- Alt Kısım: Konum -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:text="İstanbul"
+        android:textColor="#FFFFFF"
+        android:textSize="9sp"
+        android:alpha="0.6" />
+
+</RelativeLayout>

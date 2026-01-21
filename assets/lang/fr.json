@@ -453,5 +453,20 @@
   "calendar_page": "Calendrier de prière",
   "select_city_district": "Sélectionner ville/district",
   "retry": "Réessayer",
-  "kabe": "Kaaba"
+  "kabe": "Kaaba",
+  "compass_n": "N",
+  "compass_ne": "NE",
+  "compass_e": "E",
+  "compass_se": "SE",
+  "compass_s": "S",
+  "compass_sw": "SO",
+  "compass_w": "O",
+  "compass_nw": "NO",
+  "north": "Nord",
+  "east": "Est",
+  "south": "Sud",
+  "west": "Ouest",
+  "correct_direction": "Bonne Direction",
+  "qibla_direction": "Direction de la Qibla",
+  "calibrating_compass": "Calibrage de la boussole"
 }

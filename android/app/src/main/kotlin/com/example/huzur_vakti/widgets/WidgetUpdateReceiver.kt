@@ -135,15 +135,17 @@ class WidgetUpdateReceiver : BroadcastReceiver() {
         val appWidgetManager = AppWidgetManager.getInstance(context)
         val updateIntent = Intent(ACTION_UPDATE_WIDGETS)
         
-        // Tüm widget'ları güncelle - 7 widget
+        // Tüm widget'ları güncelle - 9 widget
         val widgets = listOf(
             KlasikTuruncuWidget::class.java,
             MiniSunsetWidget::class.java,
             GlassmorphismWidget::class.java,
             NeonGlowWidget::class.java,
-            GradientCardWidget::class.java,
+            CosmicWidget::class.java,
             TimelineWidget::class.java,
-            CircularProgressWidget::class.java
+            CircularProgressWidget::class.java,
+            ZenWidget::class.java,
+            OrigamiWidget::class.java
         )
         
         widgets.forEach { widgetClass ->

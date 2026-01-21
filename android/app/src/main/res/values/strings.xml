@@ -11,9 +11,13 @@
     
     <string name="widget_glassmorphism_description">Buzlu cam efekti ile şık tasarım - Ecir barı ile ilerleme</string>
     <string name="widget_neon_glow_description">Parlayan neon efektli modern tasarım - Ecir barı ile ilerleme</string>
-    <string name="widget_gradient_card_description">Renkli gradient kartlar - Ecir barı ve yüzde göstergesi</string>
-    <string name="widget_timeline_description">Dikey timeline görünümü - Her vakit için ecir göstergesi</string>
+    <string name="widget_gradient_card_description">Aurora Gece Gökyüzü - Kuzey ışıkları efekti</string>
+    <string name="widget_timeline_description">Kompakt timeline görünümü - Tüm vakitler tek bakışta</string>
     <string name="widget_circular_progress_description">Dairesel ecir göstergesi - Modern minimalist tasarım</string>
+    <string name="widget_zen_description">Minimalist Zen tasarımı - Sade ve huzur verici</string>
+    <string name="widget_cosmic_description">Kozmik galaksi tasarımı - Yıldızlar ve nebula efekti</string>
+    <string name="widget_origami_description">Origami kağıt sanatı - Zarif Japon estetiği</string>
+    <string name="widget_retro_description">Retro Dijital LCD - Nostaljik yeşil terminal görünümü</string>
     
     <!-- Vakit Names -->
     <string name="imsak">İmsak</string>

@@ -4,9 +4,10 @@
     android:initialLayout="@layout/widget_glassmorphism"
     android:minWidth="110dp"
     android:minHeight="110dp"
-    android:previewLayout="@layout/widget_glassmorphism"
+    android:previewImage="@drawable/preview_widget_glass"
+    android:previewLayout="@layout/widget_glassmorphism_preview"
     android:resizeMode="horizontal|vertical"
     android:targetCellWidth="2"
     android:targetCellHeight="2"
-    android:updatePeriodMillis="0"
+    android:updatePeriodMillis="60000"
     android:widgetCategory="home_screen" />

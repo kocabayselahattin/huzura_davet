@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 📜 Origami Paper Widget - Japon kağıt sanatından ilham -->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_bg_origami"
+    android:padding="14dp">
+
+    <!-- Sol üst köşe katlama gölgesi -->
+    <View
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true"
+        android:background="@drawable/origami_fold"
+        android:alpha="0.4" />
+
+    <!-- Üst: Fırça yazısı tarzı başlık -->
+    <LinearLayout
+        android:id="@+id/layout_top"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="4dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_konum"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="İstanbul"
+                android:textColor="#2D3436"
+                android:textSize="12sp"
+                android:textStyle="italic"
+                android:fontFamily="serif"
+                android:maxLines="1" />
+
+            <TextView
+                android:id="@+id/tv_hicri"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="٢٨ رجب ١٤٤٧"
+                android:textColor="#636E72"
+                android:textSize="8sp"
+                android:fontFamily="serif" />
+
+        </LinearLayout>
+
+        <!-- Wabi-Sabi sembolü (dairesel ensō) -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="◯"
+            android:textColor="#2D3436"
+            android:textSize="18sp"
+            android:alpha="0.3" />
+
+    </LinearLayout>
+
+    <!-- Orta: Ana Geri Sayım - Kaligrafi tarzı -->
+    <LinearLayout
+        android:id="@+id/layout_center"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:orientation="vertical"
+        android:gravity="center">
+
+        <!-- Mevcut Vakit - İnce çizgi ile -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <View
+                android:layout_width="20dp"
+                android:layout_height="1dp"
+                android:background="#B2BEC3"
+                android:layout_marginEnd="8dp" />
+
+            <TextView
+                android:id="@+id/tv_mevcut_vakit"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Güneş Vakti"
+                android:textColor="#636E72"
+                android:textSize="10sp"
+                android:fontFamily="serif"
+                android:textStyle="italic" />
+
+            <View
+                android:layout_width="20dp"
+                android:layout_height="1dp"
+                android:background="#B2BEC3"
+                android:layout_marginStart="8dp" />
+
+        </LinearLayout>
+
+        <!-- Büyük Geri Sayım - Mürekkep yazısı -->
+        <TextView
+            android:id="@+id/tv_geri_sayim"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="02:30:45"
+            android:textColor="#2D3436"
+            android:textSize="32sp"
+            android:fontFamily="serif"
+            android:letterSpacing="0.08" />
+
+        <!-- Sonraki Vakit - Alt yazı -->
+        <TextView
+            android:id="@+id/tv_sonraki_vakit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="öğle vaktine"
+            android:textColor="#636E72"
+            android:textSize="9sp"
+            android:fontFamily="serif"
+            android:alpha="0.7" />
+
+    </LinearLayout>
+
+    <!-- Alt: Vakitler - Zarif yerleşim -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:orientation="vertical">
+
+        <!-- İnce çizgi ayracı -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#DDD5C8"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Mürekkep Progress Bar -->
+        <ProgressBar
+            android:id="@+id/progress_ecir"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:layout_marginBottom="6dp"
+            android:progress="50"
+            android:max="100"
+            android:progressDrawable="@drawable/progress_origami" />
+
+        <!-- Vakit Saatleri - Sıralı, zarif -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/tv_imsak"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="05:30"
+                android:textColor="#2D3436"
+                android:textSize="8sp"
+                android:fontFamily="serif"
+                android:gravity="center"
+                android:alpha="0.6" />
+
+            <TextView
+                android:id="@+id/tv_gunes"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="07:00"
+                android:textColor="#D35400"
+                android:textSize="8sp"
+                android:fontFamily="serif"
+                android:gravity="center"
+                android:alpha="0.8" />
+
+            <TextView
+                android:id="@+id/tv_ogle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="12:30"
+                android:textColor="#2D3436"
+                android:textSize="8sp"
+                android:fontFamily="serif"
+                android:gravity="center"
+                android:alpha="0.6" />
+
+            <TextView
+                android:id="@+id/tv_ikindi"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="15:30"
+                android:textColor="#8E44AD"
+                android:textSize="8sp"
+                android:fontFamily="serif"
+                android:gravity="center"
+                android:alpha="0.7" />
+
+            <TextView
+                android:id="@+id/tv_aksam"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="18:00"
+                android:textColor="#C0392B"
+                android:textSize="8sp"
+                android:fontFamily="serif"
+                android:gravity="center"
+                android:alpha="0.7" />
+
+            <TextView
+                android:id="@+id/tv_yatsi"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="19:30"
+                android:textColor="#2D3436"
+                android:textSize="8sp"
+                android:fontFamily="serif"
+                android:gravity="center"
+                android:alpha="0.6" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Sağ alt köşe katlama efekti -->
+    <View
+        android:layout_width="16dp"
+        android:layout_height="16dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:rotation="180"
+        android:background="@drawable/origami_fold"
+        android:alpha="0.3" />
+
+</RelativeLayout>
