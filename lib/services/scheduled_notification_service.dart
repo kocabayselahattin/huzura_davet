@@ -8,13 +8,20 @@ import 'diyanet_api_service.dart';
 
 /// Zamanlanmış bildirim servisi - Uygulama kapalıyken bile vakit bildirimlerini gönderir
 class ScheduledNotificationService {
-  static final FlutterLocalNotificationsPlugin _notificationsPlugin = 
+  static final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
   static bool _initialized = false;
 
   // Vakit isimleri
-  static const List<String> _vakitler = ['Imsak', 'Gunes', 'Ogle', 'Ikindi', 'Aksam', 'Yatsi'];
-  
+  static const List<String> _vakitler = [
+    'Imsak',
+    'Gunes',
+    'Ogle',
+    'Ikindi',
+    'Aksam',
+    'Yatsi',
+  ];
+
   // Vakit Türkçe isimleri
   static const Map<String, String> _vakitTurkce = {
     'Imsak': 'İmsak',
@@ -35,10 +42,9 @@ class ScheduledNotificationService {
 
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
-    
-    const InitializationSettings initializationSettings = InitializationSettings(
-      android: initializationSettingsAndroid,
-    );
+
+    const InitializationSettings initializationSettings =
+        InitializationSettings(android: initializationSettingsAndroid);
 
     await _notificationsPlugin.initialize(
       initializationSettings,
@@ -46,6 +52,41 @@ class ScheduledNotificationService {
         debugPrint('Bildirime tıklandı: ${response.payload}');
       },
     );
+
+    // Android 13+ için bildirim izni kontrolü
+    final androidImplementation = _notificationsPlugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+    if (androidImplementation != null) {
+      final hasPermission =
+          await androidImplementation.areNotificationsEnabled() ?? false;
+      debugPrint('📱 Bildirim izni durumu: $hasPermission');
+
+      if (!hasPermission) {
+        debugPrint('⚠️ Bildirim izni verilmemiş! İzin isteniyor...');
+        final granted =
+            await androidImplementation.requestNotificationsPermission() ??
+            false;
+        debugPrint('📱 Bildirim izni sonucu: $granted');
+
+        if (!granted) {
+          debugPrint('❌ Bildirim izni reddedildi! Bildirimler çalışmayacak.');
+        }
+      }
+
+      // Exact alarm izni kontrolü (Android 12+)
+      final canScheduleExact =
+          await androidImplementation.canScheduleExactNotifications() ?? false;
+      debugPrint('⏰ Exact alarm izni: $canScheduleExact');
+
+      if (!canScheduleExact) {
+        debugPrint('⚠️ Exact alarm izni yok! İzin isteniyor...');
+        final granted =
+            await androidImplementation.requestExactAlarmsPermission() ?? false;
+        debugPrint('⏰ Exact alarm izni sonucu: $granted');
+      }
+    }
 
     _initialized = true;
     debugPrint('✅ Zamanlanmış bildirim servisi başlatıldı');
@@ -78,7 +119,7 @@ class ScheduledNotificationService {
       for (int i = 0; i < _vakitler.length; i++) {
         final vakitKey = _vakitler[i];
         final vakitKeyLower = vakitKey.toLowerCase();
-        
+
         // Bildirim açık mı kontrol et
         final bildirimAcik = prefs.getBool('bildirim_$vakitKeyLower') ?? true;
         if (!bildirimAcik) {
@@ -91,28 +132,38 @@ class ScheduledNotificationService {
 
         // Erken bildirim süresi (dakika)
         final erkenDakika = prefs.getInt('erken_$vakitKeyLower') ?? 0;
-        
+
         // Vaktinde bildirim
-        final vaktindeBildirim = prefs.getBool('vaktinde_$vakitKeyLower') ?? false;
-        
+        final vaktindeBildirim =
+            prefs.getBool('vaktinde_$vakitKeyLower') ?? false;
+
         // Ses dosyası
-        final sesDosyasi = prefs.getString('bildirim_sesi_$vakitKeyLower') ?? 'Ding_Dong.mp3';
+        final sesDosyasi =
+            prefs.getString('bildirim_sesi_$vakitKeyLower') ?? 'Ding_Dong.mp3';
 
         // Vakit saatini parse et
         final parts = vakitSaati.split(':');
         if (parts.length != 2) continue;
-        
+
         final saat = int.tryParse(parts[0]);
         final dakika = int.tryParse(parts[1]);
         if (saat == null || dakika == null) continue;
 
         // Bildirim zamanını hesapla
         final now = DateTime.now();
-        var bildirimZamani = DateTime(now.year, now.month, now.day, saat, dakika);
-        
+        var bildirimZamani = DateTime(
+          now.year,
+          now.month,
+          now.day,
+          saat,
+          dakika,
+        );
+
         // Erken bildirim süresi varsa çıkar
         if (erkenDakika > 0) {
-          bildirimZamani = bildirimZamani.subtract(Duration(minutes: erkenDakika));
+          bildirimZamani = bildirimZamani.subtract(
+            Duration(minutes: erkenDakika),
+          );
         }
 
         // Eğer zaman geçmişse, bildirimi atla
@@ -124,19 +175,28 @@ class ScheduledNotificationService {
         // Bildirimi zamanla
         await _scheduleNotification(
           id: i + 1, // 1-6 arası ID
-          title: '${_vakitTurkce[vakitKey]} Vakti ${erkenDakika > 0 ? "Yaklaşıyor" : "Girdi"}',
-          body: erkenDakika > 0 
+          title:
+              '${_vakitTurkce[vakitKey]} Vakti ${erkenDakika > 0 ? "Yaklaşıyor" : "Girdi"}',
+          body: erkenDakika > 0
               ? '${_vakitTurkce[vakitKey]} vaktine $erkenDakika dakika kaldı'
               : '${_vakitTurkce[vakitKey]} vakti girdi. Hayırlı ibadetler!',
           scheduledTime: bildirimZamani,
           soundAsset: sesDosyasi,
         );
-        
-        debugPrint('✅ $vakitKey bildirimi zamanlandı: ${bildirimZamani.hour}:${bildirimZamani.minute.toString().padLeft(2, '0')}');
+
+        debugPrint(
+          '✅ $vakitKey bildirimi zamanlandı: ${bildirimZamani.hour}:${bildirimZamani.minute.toString().padLeft(2, '0')}',
+        );
 
         // Vaktinde bildirim de isteniyorsa ve erken bildirim varsa, ayrıca vaktinde de bildirim gönder
         if (vaktindeBildirim && erkenDakika > 0) {
-          final tamVakitZamani = DateTime(now.year, now.month, now.day, saat, dakika);
+          final tamVakitZamani = DateTime(
+            now.year,
+            now.month,
+            now.day,
+            saat,
+            dakika,
+          );
           if (tamVakitZamani.isAfter(now)) {
             await _scheduleNotification(
               id: i + 10, // 10-16 arası ID (vaktinde bildirimler için)
@@ -145,7 +205,9 @@ class ScheduledNotificationService {
               scheduledTime: tamVakitZamani,
               soundAsset: sesDosyasi,
             );
-            debugPrint('✅ $vakitKey TAM VAKİT bildirimi zamanlandı: $saat:${dakika.toString().padLeft(2, '0')}');
+            debugPrint(
+              '✅ $vakitKey TAM VAKİT bildirimi zamanlandı: $saat:${dakika.toString().padLeft(2, '0')}',
+            );
           }
         }
       }
@@ -168,6 +230,32 @@ class ScheduledNotificationService {
     final soundResourceName = _getSoundResourceName(soundAsset);
     final channelId = 'vakit_scheduled_$soundResourceName';
 
+    // Android implementation'ı al ve channel oluştur
+    final androidImplementation = _notificationsPlugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+
+    if (androidImplementation != null) {
+      // Her ses için ayrı channel oluştur (Android ses değişimi kısıtlaması)
+      final channel = AndroidNotificationChannel(
+        channelId,
+        'Vakit Bildirimleri',
+        description: 'Namaz vakitleri için zamanlanmış bildirimler',
+        importance: Importance.max,
+        playSound: true,
+        sound: RawResourceAndroidNotificationSound(soundResourceName),
+        enableVibration: true,
+        enableLights: true,
+        showBadge: true,
+      );
+
+      await androidImplementation.createNotificationChannel(channel);
+      debugPrint(
+        '🔊 Bildirim kanalı oluşturuldu: $channelId (Ses: $soundResourceName)',
+      );
+    }
+
     final androidDetails = AndroidNotificationDetails(
       channelId,
       'Vakit Bildirimleri',
@@ -183,6 +271,7 @@ class ScheduledNotificationService {
       category: AndroidNotificationCategory.alarm,
       fullScreenIntent: true,
       visibility: NotificationVisibility.public,
+      audioAttributesUsage: AudioAttributesUsage.alarm,
     );
 
     final notificationDetails = NotificationDetails(android: androidDetails);
@@ -195,6 +284,10 @@ class ScheduledNotificationService {
       notificationDetails,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       payload: 'vakit_$id',
+    );
+
+    debugPrint(
+      '⏰ Bildirim zamanlandı: ID=$id, Zaman=${scheduledTime.hour}:${scheduledTime.minute}, Ses=$soundResourceName',
     );
   }
 
@@ -212,7 +305,7 @@ class ScheduledNotificationService {
   /// Ses dosyası adını Android raw kaynağı adına dönüştür
   static String _getSoundResourceName(String? soundAsset) {
     if (soundAsset == null || soundAsset.isEmpty) return 'ding_dong';
-    
+
     String name = soundAsset.toLowerCase();
     if (name.contains('/')) {
       name = name.split('/').last;
@@ -220,13 +313,13 @@ class ScheduledNotificationService {
     if (name.endsWith('.mp3')) {
       name = name.substring(0, name.length - 4);
     }
-    
+
     // Android resource adı için geçersiz karakterleri temizle
     name = name.replaceAll(RegExp(r'[^a-z0-9_]'), '_');
-    
+
     // Özel eşlemeler
     if (name == '2015_best') name = 'best';
-    
+
     return name;
   }
 

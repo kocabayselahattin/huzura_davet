@@ -1,14 +1,75 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/tema_service.dart';
 import '../services/language_service.dart';
 
-class IbadetSayfa extends StatelessWidget {
+class IbadetSayfa extends StatefulWidget {
   const IbadetSayfa({super.key});
+
+  @override
+  State<IbadetSayfa> createState() => _IbadetSayfaState();
+}
+
+class _IbadetSayfaState extends State<IbadetSayfa> {
+  final TemaService _temaService = TemaService();
+  final LanguageService _languageService = LanguageService();
+  double _fontScale = 1.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _temaService.addListener(_onChanged);
+    _languageService.addListener(_onChanged);
+    _loadFontScale();
+  }
+
+  @override
+  void dispose() {
+    _temaService.removeListener(_onChanged);
+    _languageService.removeListener(_onChanged);
+    super.dispose();
+  }
+
+  void _onChanged() {
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _loadFontScale() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _fontScale = prefs.getDouble('ibadet_font_scale') ?? 1.0;
+    });
+  }
+
+  Future<void> _saveFontScale() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble('ibadet_font_scale', _fontScale);
+  }
+
+  void _increaseFontSize() {
+    if (_fontScale < 1.5) {
+      setState(() {
+        _fontScale += 0.1;
+      });
+      _saveFontScale();
+    }
+  }
+
+  void _decreaseFontSize() {
+    if (_fontScale > 0.7) {
+      setState(() {
+        _fontScale -= 0.1;
+      });
+      _saveFontScale();
+    }
+  }
 
   static List<_IbadetContent> _getIcerikler(LanguageService lang) => [
     _IbadetContent(
       title: lang['prayer'] ?? 'Namaz',
-      subtitle: lang['prayer_desc'] ?? 'Farzlar, vacipler, sünnetler ve kılınış şekilleri',
+      subtitle:
+          lang['prayer_desc'] ??
+          'Farzlar, vacipler, sünnetler ve kılınış şekilleri',
       icon: Icons.mosque,
       sections: [
         _IbadetSection(
@@ -113,7 +174,9 @@ class IbadetSayfa extends StatelessWidget {
     ),
     _IbadetContent(
       title: lang['32_farz'] ?? '32 Farz',
-      subtitle: lang['32_farz_desc'] ?? 'İslam\'ın temel farzları detaylı açıklamalarla',
+      subtitle:
+          lang['32_farz_desc'] ??
+          'İslam\'ın temel farzları detaylı açıklamalarla',
       icon: Icons.format_list_numbered,
       sections: [
         _IbadetSection(
@@ -185,7 +248,8 @@ class IbadetSayfa extends StatelessWidget {
     ),
     _IbadetContent(
       title: lang['54_farz'] ?? '54 Farz',
-      subtitle: lang['54_farz_desc'] ?? 'Günlük hayattaki farzlar ve sorumluluklar',
+      subtitle:
+          lang['54_farz_desc'] ?? 'Günlük hayattaki farzlar ve sorumluluklar',
       icon: Icons.checklist,
       sections: [
         _IbadetSection(
@@ -525,7 +589,8 @@ class IbadetSayfa extends StatelessWidget {
     ),
     _IbadetContent(
       title: lang['tayammum'] ?? 'Teyemmüm',
-      subtitle: lang['tayammum_desc'] ?? 'Su bulunmadığında veya kullanılamadığında',
+      subtitle:
+          lang['tayammum_desc'] ?? 'Su bulunmadığında veya kullanılamadığında',
       icon: Icons.landscape,
       sections: [
         _IbadetSection(
@@ -573,23 +638,14 @@ class IbadetSayfa extends StatelessWidget {
     ),
     _IbadetContent(
       title: lang['prayer_duas'] ?? 'Namazda Okunan Sure ve Dualar',
-      subtitle: lang['prayer_duas_desc'] ?? 'Namazda okunan sureler, dualar ve anlamları',
+      subtitle:
+          lang['prayer_duas_desc'] ??
+          'Namazda okunan sureler, dualar ve anlamları',
       icon: Icons.menu_book,
       sections: [
+        // SURELER (Kur'an sırasına göre)
         _IbadetSection(
-          title: 'Sübhaneke',
-          items: [
-            'سُبْحَانَكَ اللَّهُمَّ وَبِحَمْدِكَ وَتَبَارَكَ اسْمُكَ وَتَعَالَى جَدُّكَ وَلَا إِلَهَ غَيْرُكَ',
-            '',
-            'Okunuşu:',
-            'Sübhânekellahümme ve bihamdike ve tebârekesmüke ve teâlâ ceddüke ve lâ ilâhe gayrük.',
-            '',
-            'Anlamı:',
-            'Allah\'ım! Seni her türlü noksanlıktan tenzih ederim. Sana hamd ederim. Senin adın mübarektir. Senin şanın yücedir. Senden başka ilah yoktur.',
-          ],
-        ),
-        _IbadetSection(
-          title: 'Fatiha Suresi',
+          title: 'Fatiha Suresi (1)',
           items: [
             'بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ',
             'الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ',
@@ -607,7 +663,307 @@ class IbadetSayfa extends StatelessWidget {
           ],
         ),
         _IbadetSection(
-          title: 'İhlas Suresi',
+          title: 'İnşirah Suresi (94)',
+          items: [
+            'أَلَمْ نَشْرَحْ لَكَ صَدْرَكَ',
+            'وَوَضَعْنَا عَنْكَ وِزْرَكَ',
+            'الَّذِي أَنْقَضَ ظَهْرَكَ',
+            'وَرَفَعْنَا لَكَ ذِكْرَكَ',
+            'فَإِنَّ مَعَ الْعُسْرِ يُسْرًا',
+            'إِنَّ مَعَ الْعُسْرِ يُسْرًا',
+            'فَإِذَا فَرَغْتَ فَانْصَبْ',
+            'وَإِلَى رَبِّكَ فَارْغَبْ',
+            '',
+            'Okunuşu:',
+            'Elem neşrah leke sadrak. Ve veda\'nâ anke vizrak. Ellezî enkada zahrak. Ve refa\'nâ leke zikrak. Fe inne meal-\'usri yüsrâ. İnne meal-\'usri yüsrâ. Fe izâ farağte fensab. Ve ilâ rabbike ferğab.',
+            '',
+            'Anlamı:',
+            'Senin göğsünü açıp genişletmedik mi? Sırtını çökerten yükünü üzerinden kaldırmadık mı? Ve senin şânını yükseltmedik mi? Gerçekten zorluğun yanında bir kolaylık vardır. Evet, zorluğun yanında bir kolaylık vardır. Öyleyse bir işi bitirdiğin zaman diğerine koyul. Ve yalnız Rabbine yönel.',
+          ],
+        ),
+        _IbadetSection(
+          title: 'Tin Suresi (95)',
+          items: [
+            'وَالتِّينِ وَالزَّيْتُونِ',
+            'وَطُورِ سِينِينَ',
+            'وَهَذَا الْبَلَدِ الْأَمِينِ',
+            'لَقَدْ خَلَقْنَا الْإِنْسَانَ فِي أَحْسَنِ تَقْوِيمٍ',
+            'ثُمَّ رَدَدْنَاهُ أَسْفَلَ سَافِلِينَ',
+            'إِلَّا الَّذِينَ آمَنُوا وَعَمِلُوا الصَّالِحَاتِ فَلَهُمْ أَجْرٌ غَيْرُ مَمْنُونٍ',
+            'فَمَا يُكَذِّبُكَ بَعْدُ بِالدِّينِ',
+            'أَلَيْسَ اللَّهُ بِأَحْكَمِ الْحَاكِمِينَ',
+            '',
+            'Okunuşu:',
+            'Vet-tîni vez-zeytûn. Ve tûri sînîn. Ve hâzel-beledil-emîn. Lekad halaknâl-insâne fî ahseni takvîm. Summe radednâhu esfele sâfilîn. İllellezîne âmenû ve amilus-sâlihâti felehüm ecrun gayru memnûn. Femâ yükezzibüke ba\'du bid-dîn. Eleysel-lâhu bi-ahkemil-hâkimîn.',
+            '',
+            'Anlamı:',
+            'İncir ve zeytine, Sînâ (Tûr) dağına, bu güvenli beldeye (Mekke\'ye) andolsun ki, biz insanı en güzel biçimde yarattık. Sonra onu aşağıların aşağısına döndürdük. Ancak iman edip salih amel işleyenler başka; onlar için kesintisiz bir mükâfat vardır. Artık seni hesap gününü yalanlamaya iten nedir? Allah hâkimlerin en iyi hâkimi değil midir?',
+          ],
+        ),
+        _IbadetSection(
+          title: 'Alak Suresi (96)',
+          items: [
+            'اقْرَأْ بِاسْمِ رَبِّكَ الَّذِي خَلَقَ',
+            'خَلَقَ الْإِنْسَانَ مِنْ عَلَقٍ',
+            'اقْرَأْ وَرَبُّكَ الْأَكْرَمُ',
+            'الَّذِي عَلَّمَ بِالْقَلَمِ',
+            'عَلَّمَ الْإِنْسَانَ مَا لَمْ يَعْلَمْ',
+            'كَلَّا إِنَّ الْإِنْسَانَ لَيَطْغَى',
+            'أَنْ رَآهُ اسْتَغْنَى',
+            'إِنَّ إِلَى رَبِّكَ الرُّجْعَى',
+            '',
+            'Okunuşu:',
+            'İkra\' bismi rabbikel-lezî halak. Halakal-insâne min alak. İkra\' ve rabbukel-ekrem. Ellezî alleme bil-kalem. Allemel-insâne mâ lem ya\'lem. Kellâ innel-insâne le-yatğâ. Er re\'âhus-tağnâ. İnne ilâ rabbikar-ruc\'â.',
+            '',
+            'Anlamı:',
+            'Yaratan Rabbinin adıyla oku! O insanı bir aşıdan yarattı. Oku! Rabbin en cömerttir. Ki kalemle (yazmayı) öğretti. İnsana bilmediğini öğretti. Hayır, gerçekten insan taşkınlık eder. Çünkü kendini zengin görür. Şüphesiz dönüş Rabbinedir.',
+          ],
+        ),
+        _IbadetSection(
+          title: 'Kadir Suresi (97)',
+          items: [
+            'إِنَّا أَنْزَلْنَاهُ فِي لَيْلَةِ الْقَدْرِ',
+            'وَمَا أَدْرَاكَ مَا لَيْلَةُ الْقَدْرِ',
+            'لَيْلَةُ الْقَدْرِ خَيْرٌ مِنْ أَلْفِ شَهْرٍ',
+            'تَنَزَّلُ الْمَلَائِكَةُ وَالرُّوحُ فِيهَا بِإِذْنِ رَبِّهِمْ مِنْ كُلِّ أَمْرٍ',
+            'سَلَامٌ هِيَ حَتَّى مَطْلَعِ الْفَجْرِ',
+            '',
+            'Okunuşu:',
+            'İnnâ enzelnâhu fî leyletil-kadr. Ve mâ edrâke mâ leyletül-kadr. Leyletül-kadri hayrun min elfi şehr. Tenezzülül-melâiketü ver-rûhu fîhâ bi-izni rabbihim min külli emr. Selâmün hiye hattâ matla\'il-fecr.',
+            '',
+            'Anlamı:',
+            'Şüphesiz biz onu (Kur\'an\'ı) Kadir gecesinde indirdik. Kadir gecesinin ne olduğunu sen nereden bileceksin? Kadir gecesi bin aydan hayırlıdır. O gecede melekler ve Ruh, Rablerinin izniyle her iş için inerler. O gece, tan yeri ağarıncaya kadar bir selâmdır (esenlik ve güvenliktir).',
+          ],
+        ),
+        _IbadetSection(
+          title: 'Beyyine Suresi - İlk 5 Ayet (98)',
+          items: [
+            'لَمْ يَكُنِ الَّذِينَ كَفَرُوا مِنْ أَهْلِ الْكِتَابِ وَالْمُشْرِكِينَ مُنْفَكِّينَ حَتَّى تَأْتِيَهُمُ الْبَيِّنَةُ',
+            'رَسُولٌ مِنَ اللَّهِ يَتْلُو صُحُفًا مُطَهَّرَةً',
+            'فِيهَا كُتُبٌ قَيِّمَةٌ',
+            'وَمَا تَفَرَّقَ الَّذِينَ أُوتُوا الْكِتَابَ إِلَّا مِنْ بَعْدِ مَا جَاءَتْهُمُ الْبَيِّنَةُ',
+            'وَمَا أُمِرُوا إِلَّا لِيَعْبُدُوا اللَّهَ مُخْلِصِينَ لَهُ الدِّينَ حُنَفَاءَ وَيُقِيمُوا الصَّلَاةَ وَيُؤْتُوا الزَّكَاةَ وَذَلِكَ دِينُ الْقَيِّمَةِ',
+            '',
+            'Okunuşu:',
+            'Lem yekunillezîne keferû min ehlil-kitâbi vel-müşrikîne münfekkîne hattâ te\'tiyehumül-beyyineh. Resûlün minallâhi yetlû suhufem mutahherah. Fîhâ kütübün kayyimeh. Ve mâ teferrakallezîne ûtül-kitâbe illâ min ba\'di mâ câethumül-beyyineh. Ve mâ ümirû illâ liya\'büdüllâhe muhli sîne lehüd-dîne hunefâe ve yükîmüs-salâte ve yü\'tüz-zekâte ve zâlike dînül-kayyimeh.',
+            '',
+            'Anlamı:',
+            'Kendilerine apaçık bir delil gelinceye kadar, kitap ehlinden ve müşriklerden inkâr edenler, (küfürde) ayrılıp gitmiş değillerdi. (O delil,) Allah tarafından gönderilmiş, tertemiz sahifeler okuyan bir elçidir. Onlarda dosdoğru kitaplar vardır. Kendilerine kitap verilenler de ancak kendilerine apaçık delil geldikten sonra ayrılığa düştüler. Onlara, dini yalnız Allah\'a has kılarak, hakka yönelmiş olarak O\'na ibadet etmeleri, namazı dosdoğru kılmaları ve zekât vermeleri emredildi. İşte dosdoğru din budur.',
+          ],
+        ),
+        _IbadetSection(
+          title: 'Zilzal Suresi (99)',
+          items: [
+            'إِذَا زُلْزِلَتِ الْأَرْضُ زِلْزَالَهَا',
+            'وَأَخْرَجَتِ الْأَرْضُ أَثْقَالَهَا',
+            'وَقَالَ الْإِنْسَانُ مَا لَهَا',
+            'يَوْمَئِذٍ تُحَدِّثُ أَخْبَارَهَا',
+            'بِأَنَّ رَبَّكَ أَوْحَى لَهَا',
+            'يَوْمَئِذٍ يَصْدُرُ النَّاسُ أَشْتَاتًا لِيُرَوْا أَعْمَالَهُمْ',
+            'فَمَنْ يَعْمَلْ مِثْقَالَ ذَرَّةٍ خَيْرًا يَرَهُ',
+            'وَمَنْ يَعْمَلْ مِثْقَالَ ذَرَّةٍ شَرًّا يَرَهُ',
+            '',
+            'Okunuşu:',
+            'İzâ zülziletil-ardu zilzâlehâ. Ve ahracetil-ardu askâlehâ. Ve kâlel-insânü mâ lehâ. Yevme\'izin tühaddi sü ahbârehâ. Bi-enne rabbeke evhâ lehâ. Yevme\'izin yasdürun-nâsü eştâten li-yurev a\'mâlehüm. Fe men ya\'mel miskâle zerretin hayran yereh. Ve men ya\'mel miskâle zerretin şerren yereh.',
+            '',
+            'Anlamı:',
+            'Yer, büyük bir sarsıntı ile sarsıldığı zaman. Ve yer, ağırlıklarını dışarı attığı zaman. İnsan "Bu nasıl oldu?" diye şaştığı zaman. İşte o gün o, haberlerini anlatacaktır. Çünkü Rabbin ona (öyle yapmayı) vahyetmiştir. O gün insanlar, amellerinin karşılığını görmek için bölük bölük (kabirlerinden) çıkacaklardır. Artık kim zerre kadar hayır işlemişse onu görecektir. Ve kim de zerre kadar şer işlemişse onu görecektir.',
+          ],
+        ),
+        _IbadetSection(
+          title: 'Adiyat Suresi (100)',
+          items: [
+            'وَالْعَادِيَاتِ ضَبْحًا',
+            'فَالْمُورِيَاتِ قَدْحًا',
+            'فَالْمُغِيرَاتِ صُبْحًا',
+            'فَأَثَرْنَ بِهِ نَقْعًا',
+            'فَوَسَطْنَ بِهِ جَمْعًا',
+            'إِنَّ الْإِنْسَانَ لِرَبِّهِ لَكَنُودٌ',
+            'وَإِنَّهُ عَلَى ذَلِكَ لَشَهِيدٌ',
+            'وَإِنَّهُ لِحُبِّ الْخَيْرِ لَشَدِيدٌ',
+            'أَفَلَا يَعْلَمُ إِذَا بُعْثِرَ مَا فِي الْقُبُورِ',
+            'وَحُصِّلَ مَا فِي الصُّدُورِ',
+            'إِنَّ رَبَّهُمْ بِهِمْ يَوْمَئِذٍ لَخَبِيرٌ',
+            '',
+            'Okunuşu:',
+            'Vel-\'âdiyâti dabha. Fel-mûriyâti kadha. Fel-muğîrâti subha. Fe-eserne bihî nak\'a. Fe-vesatne bihî cem\'â. İnnel-insâne li-rabbihî le-kenûd. Ve innehû alâ zâlike le-şehîd. Ve innehû li-hubbil-hayri le-şedîd. E fe lâ ya\'lemü izâ bu\'sira mâ fil-kubûr. Ve hussıle mâ fis-sudûr. İnne rabbehüm bihim yevme\'izin le-habîr.',
+            '',
+            'Anlamı:',
+            'Soluk soluğa koşan atlara andolsun. Nal vuruşlarıyla ateş çıkaranlara. Sabah baskını yapanlara. Orada toz duman kaldıranlara. Oradan düşman ortasına dalanlara. Şüphesiz insan Rabbine karşı çok nankördür. Ve o, gerçekten buna şahittir. O, mal sevgisinde gerçekten çok şiddetlidir. Kabirlerde bulunanlar ortaya çıkarıldığı zaman. Ve göğüslerdekiler açığa vurulduğu zaman, (insan bunları) bilmez mi? Şüphesiz Rableri, o gün onlar hakkında her şeyi bilendir.',
+          ],
+        ),
+        _IbadetSection(
+          title: 'Karia Suresi (101)',
+          items: [
+            'الْقَارِعَةُ',
+            'مَا الْقَارِعَةُ',
+            'وَمَا أَدْرَاكَ مَا الْقَارِعَةُ',
+            'يَوْمَ يَكُونُ النَّاسُ كَالْفَرَاشِ الْمَبْثُوثِ',
+            'وَتَكُونُ الْجِبَالُ كَالْعِهْنِ الْمَنْفُوشِ',
+            'فَأَمَّا مَنْ ثَقُلَتْ مَوَازِينُهُ',
+            'فَهُوَ فِي عِيشَةٍ رَاضِيَةٍ',
+            'وَأَمَّا مَنْ خَفَّتْ مَوَازِينُهُ',
+            'فَأُمُّهُ هَاوِيَةٌ',
+            'وَمَا أَدْرَاكَ مَا هِيَهْ',
+            'نَارٌ حَامِيَةٌ',
+            '',
+            'Okunuşu:',
+            'El-kâri\'a. Mel-kâri\'a. Ve mâ edrâke mel-kâri\'a. Yevme yekûnun-nâsü kel-ferâşil-mesbûs. Ve tekûnül-cibâlü kel-\'ihnil-menfûş. Fe emmâ men sekulet mevâzînühû. Fe hüve fî \'îşetin râdıye. Ve emmâ men haffet mevâzînühû. Fe ümmühû hâviyeh. Ve mâ edrâke mâ hiyeh. Nârun hâmiyeh.',
+            '',
+            'Anlamı:',
+            'Karia! (Kulakları sağır eden büyük gürültü) Karia nedir? Karia\'nın ne olduğunu sen nereden bileceksin? O gün, insanlar etrafa saçılmış kelebekler gibi olacaklardır. Dağlar da atılmış renkli yün gibi olacaktır. Artık kimlerin tartıları ağır gelirse, o kimseler hoşnut bir hayat içindedir. Ama kimlerin tartıları hafif gelirse, onun anası hâviyedir. Onun ne olduğunu sen nereden bileceksin? Çok sıcak bir ateştir.',
+          ],
+        ),
+        _IbadetSection(
+          title: 'Tekasur Suresi (102)',
+          items: [
+            'أَلْهَاكُمُ التَّكَاثُرُ',
+            'حَتَّى زُرْتُمُ الْمَقَابِرَ',
+            'كَلَّا سَوْفَ تَعْلَمُونَ',
+            'ثُمَّ كَلَّا سَوْفَ تَعْلَمُونَ',
+            'كَلَّا لَوْ تَعْلَمُونَ عِلْمَ الْيَقِينِ',
+            'لَتَرَوُنَّ الْجَحِيمَ',
+            'ثُمَّ لَتَرَوُنَّهَا عَيْنَ الْيَقِينِ',
+            'ثُمَّ لَتُسْأَلُنَّ يَوْمَئِذٍ عَنِ النَّعِيمِ',
+            '',
+            'Okunuşu:',
+            'Elhâkümüt-tekâsür. Hattâ zürtümül-makâbir. Kellâ sevfe ta\'lemûn. Summe kellâ sevfe ta\'lemûn. Kellâ lev ta\'lemûne ılmel-yakîn. Le terevünnel-cahîm. Summe le terevünnehâ aynel-yakîn. Summe le tüs\'elünne yevme\'izin anil-na\'îm.',
+            '',
+            'Anlamı:',
+            'Çoğalma yarışı sizi oyaladı. Mezarları ziyaret edinceye kadar (oyaladı). Hayır, yakında anlayacaksınız! Sonra yine hayır, yakında anlayacaksınız! Hayır! Eğer kesin bir bilgiyle bilmiş olsaydınız. Cehennemi elbette göreceksiniz. Sonra onu elbette göz ile görürcesine kesin olarak göreceksiniz. Sonra o gün nimetlerden mutlaka sorulacaksınız.',
+          ],
+        ),
+        _IbadetSection(
+          title: 'Asr Suresi (103)',
+          items: [
+            'وَالْعَصْرِ',
+            'إِنَّ الْإِنْسَانَ لَفِي خُسْرٍ',
+            'إِلَّا الَّذِينَ آمَنُوا وَعَمِلُوا الصَّالِحَاتِ وَتَوَاصَوْا بِالْحَقِّ وَتَوَاصَوْا بِالصَّبْرِ',
+            '',
+            'Okunuşu:',
+            'Vel-\'asr. İnnel-insâne le-fî husr. İllellezîne âmenû ve amilüs-sâlihâti ve tevâsav bil-hakkı ve tevâsav bis-sabr.',
+            '',
+            'Anlamı:',
+            'Asra (zamana) andolsun ki, İnsan gerçekten ziyan içindedir. Ancak iman edip salih ameller işleyenler, birbirlerine hakkı tavsiye edenler ve birbirlerine sabrı tavsiye edenler başka.',
+          ],
+        ),
+        _IbadetSection(
+          title: 'Hümeze Suresi (104)',
+          items: [
+            'وَيْلٌ لِكُلِّ هُمَزَةٍ لُمَزَةٍ',
+            'الَّذِي جَمَعَ مَالًا وَعَدَّدَهُ',
+            'يَحْسَبُ أَنَّ مَالَهُ أَخْلَدَهُ',
+            'كَلَّا لَيُنْبَذَنَّ فِي الْحُطَمَةِ',
+            'وَمَا أَدْرَاكَ مَا الْحُطَمَةُ',
+            'نَارُ اللَّهِ الْمُوقَدَةُ',
+            'الَّتِي تَطَّلِعُ عَلَى الْأَفْئِدَةِ',
+            'إِنَّهَا عَلَيْهِمْ مُؤْصَدَةٌ',
+            'فِي عَمَدٍ مُمَدَّدَةٍ',
+            '',
+            'Okunuşu:',
+            'Veylün li-külli hümezetin lümezeh. Ellezî cemea mâlen ve \'addedeh. Yahsebü enne mâlehû ahledeh. Kellâ le-yünbezenne fil-hutameh. Ve mâ edrâke mel-hutameh. Nârullâhil-mûkadeh. Elletî tattali\'u alel-ef\'ideh. İnnehâ aleyhim mû\'sadeh. Fî amedin mumeddetdeh.',
+            '',
+            'Anlamı:',
+            'Vay haline her iftira edip alay edeni. O ki mal toplayıp sayar durur. Malının kendisini ebedi kıldığını sanır. Hayır! And olsun ki o, hutameye atılacaktır. Hutame\'nin ne olduğunu sen nereden bileceksin? Yakılmış Allah ateşidir. Kalplere yükselir. Şüphesiz o (ateş) onların üzerine kapanmıştır. Uzun uzun direkler halinde.',
+          ],
+        ),
+        _IbadetSection(
+          title: 'Fil Suresi (105)',
+          items: [
+            'أَلَمْ تَرَ كَيْفَ فَعَلَ رَبُّكَ بِأَصْحَابِ الْفِيلِ',
+            'أَلَمْ يَجْعَلْ كَيْدَهُمْ فِي تَضْلِيلٍ',
+            'وَأَرْسَلَ عَلَيْهِمْ طَيْرًا أَبَابِيلَ',
+            'تَرْمِيهِمْ بِحِجَارَةٍ مِنْ سِجِّيلٍ',
+            'فَجَعَلَهُمْ كَعَصْفٍ مَأْكُولٍ',
+            '',
+            'Okunuşu:',
+            'Elem tera keyfe fe\'ale rabbüke bi-ashâbil-fîl. Elem yec\'al keydehüm fî tadlîl. Ve ersele aleyhim tayran ebâbîl. Termîhim bi-hicâratin min siccîl. Fece\'alehüm ke\'asfin me\'kûl.',
+            '',
+            'Anlamı:',
+            'Rabbinin fil sahiplerine ne yaptığını görmedin mi? Onların tuzaklarını boşa çıkarmadı mı? Üzerlerine sürü sürü kuşlar gönderdi. Onlara pişmiş çamurdan taşlar atıyorlardı. Sonunda onları yenilmiş ekin yaprağı gibi yaptı.',
+          ],
+        ),
+        _IbadetSection(
+          title: 'Maun Suresi (107)',
+          items: [
+            'أَرَأَيْتَ الَّذِي يُكَذِّبُ بِالدِّينِ',
+            'فَذَلِكَ الَّذِي يَدُعُّ الْيَتِيمَ',
+            'وَلَا يَحُضُّ عَلَى طَعَامِ الْمِسْكِينِ',
+            'فَوَيْلٌ لِلْمُصَلِّينَ',
+            'الَّذِينَ هُمْ عَنْ صَلَاتِهِمْ سَاهُونَ',
+            'الَّذِينَ هُمْ يُرَاءُونَ',
+            'وَيَمْنَعُونَ الْمَاعُونَ',
+            '',
+            'Okunuşu:',
+            'E re\'eytelezî yükezzibü bid-dîn. Fe zâlkelezî yedu\'ul-yetîm. Ve lâ yahuddü alâ ta\'âmil-miskîn. Fe veylün lil-musallîn. Ellezîne hüm an salâtihim sâhûn. Ellezîne hüm yürâûn. Ve yemnaunûnel-mâ\'ûn.',
+            '',
+            'Anlamı:',
+            'Dini yalanlayanı gördün mü? İşte o, yetimi itip kakandır. Yoksulu doyurmayı teşvik etmez. Vay haline o namaz kılanların ki, onlar namazlarını ciddiye almazlar. Onlar (namazlarıyla) gösteriş yaparlar. Ve (insanlara) ufak tefek şeylerin yardımını bile esirgerler.',
+          ],
+        ),
+        _IbadetSection(
+          title: 'Kevser Suresi (108)',
+          items: [
+            'إِنَّا أَعْطَيْنَاكَ الْكَوْثَرَ',
+            'فَصَلِّ لِرَبِّكَ وَانْحَرْ',
+            'إِنَّ شَانِئَكَ هُوَ الْأَبْتَرُ',
+            '',
+            'Okunuşu:',
+            'İnnâ a\'taynâkel-kevser. Fesalli li-rabbike venhar. İnne şâni\'eke hüvel-ebter.',
+            '',
+            'Anlamı:',
+            'Muhakkak ki biz sana Kevser\'i verdik. Öyleyse Rabbin için namaz kıl ve kurban kes. Doğrusu asıl sonu kesik olan, sana buğzeden kimsedir.',
+          ],
+        ),
+        _IbadetSection(
+          title: 'Kafirun Suresi (109)',
+          items: [
+            'قُلْ يَا أَيُّهَا الْكَافِرُونَ',
+            'لَا أَعْبُدُ مَا تَعْبُدُونَ',
+            'وَلَا أَنْتُمْ عَابِدُونَ مَا أَعْبُدُ',
+            'وَلَا أَنَا عَابِدٌ مَا عَبَدْتُمْ',
+            'وَلَا أَنْتُمْ عَابِدُونَ مَا أَعْبُدُ',
+            'لَكُمْ دِينُكُمْ وَلِيَ دِينِ',
+            '',
+            'Okunuşu:',
+            'Kul yâ eyyühel-kâfirûn. Lâ a\'büdü mâ ta\'büdûn. Ve lâ entüm âbidûne mâ a\'büd. Ve lâ ene âbidün mâ abedtüm. Ve lâ entüm âbidûne mâ a\'büd. Leküm dînüküm ve liye dîn.',
+            '',
+            'Anlamı:',
+            'De ki: Ey kâfirler! Ben sizin taptıklarınıza tapmam. Siz de benim taptığıma tapmazsınız. Ben de sizin taptıklarınıza tapacak değilim. Siz de benim taptığıma tapacak değilsiniz. Sizin dininiz size, benim dinim bana.',
+          ],
+        ),
+        _IbadetSection(
+          title: 'Nasr Suresi (110)',
+          items: [
+            'إِذَا جَاءَ نَصْرُ اللَّهِ وَالْفَتْحُ',
+            'وَرَأَيْتَ النَّاسَ يَدْخُلُونَ فِي دِينِ اللَّهِ أَفْوَاجًا',
+            'فَسَبِّحْ بِحَمْدِ رَبِّكَ وَاسْتَغْفِرْهُ إِنَّهُ كَانَ تَوَّابًا',
+            '',
+            'Okunuşu:',
+            'İzâ câe nasrullâhi vel-feth. Ve re\'eyten-nâse yedh ulûne fî dînillâhi efvâcâ. Fe sebbih bi-hamdi rabbike vestagfirh, innehû kâne tevvâbâ.',
+            '',
+            'Anlamı:',
+            'Allah\'ın yardımı ve fetih geldiği zaman. Ve insanların bölük bölük Allah\'ın dinine girdiklerini gördüğün zaman. Sen de Rabbini hamd ile tesbih et ve O\'ndan mağfiret dile. Çünkü O, tövbeleri çok kabul edendir.',
+          ],
+        ),
+        _IbadetSection(
+          title: 'Tebbet (Mesed) Suresi (111)',
+          items: [
+            'تَبَّتْ يَدَا أَبِي لَهَبٍ وَتَبَّ',
+            'مَا أَغْنَى عَنْهُ مَالُهُ وَمَا كَسَبَ',
+            'سَيَصْلَى نَارًا ذَاتَ لَهَبٍ',
+            'وَامْرَأَتُهُ حَمَّالَةَ الْحَطَبِ',
+            'فِي جِيدِهَا حَبْلٌ مِنْ مَسَدٍ',
+            '',
+            'Okunuşu:',
+            'Tebbet yedâ ebî lehebin ve tebb. Mâ ağnâ anhü mâlühû ve mâ keseb. Se yaslâ nâran zâte leheb. Vemre\'etühû hammâletal-hatab. Fî cîdihâ hablün min mesed.',
+            '',
+            'Anlamı:',
+            'Ebu Leheb\'in elleri kurusun! Zaten kurudu da. Malı da kazandıkları da ona fayda vermedi. O, alevli bir ateşe girecektir. Karısı da odun taşıyandır. Boynunda hurma lifinden bükülmüş bir ip olduğu halde.',
+          ],
+        ),
+        _IbadetSection(
+          title: 'İhlas Suresi (112)',
           items: [
             'قُلْ هُوَ اللَّهُ أَحَدٌ',
             'اللَّهُ الصَّمَدُ',
@@ -622,7 +978,7 @@ class IbadetSayfa extends StatelessWidget {
           ],
         ),
         _IbadetSection(
-          title: 'Felak Suresi',
+          title: 'Felak Suresi (113)',
           items: [
             'قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ',
             'مِنْ شَرِّ مَا خَلَقَ',
@@ -638,7 +994,7 @@ class IbadetSayfa extends StatelessWidget {
           ],
         ),
         _IbadetSection(
-          title: 'Nas Suresi',
+          title: 'Nas Suresi (114)',
           items: [
             'قُلْ أَعُوذُ بِرَبِّ النَّاسِ',
             'مَلِكِ النَّاسِ',
@@ -654,34 +1010,17 @@ class IbadetSayfa extends StatelessWidget {
             'De ki: İnsanların Rabbine sığınırım. İnsanların Melikine, İnsanların İlahına. Sinsi vesvesecinin şerrinden. O ki insanların göğüslerine vesvese verir. Gerek cinlerden, gerek insanlardan.',
           ],
         ),
+        // DUALAR
         _IbadetSection(
-          title: 'Kevser Suresi',
+          title: 'Sübhaneke',
           items: [
-            'إِنَّا أَعْطَيْنَاكَ الْكَوْثَرَ',
-            'فَصَلِّ لِرَبِّكَ وَانْحَرْ',
-            'إِنَّ شَانِئَكَ هُوَ الْأَبْتَرُ',
+            'سُبْحَانَكَ اللَّهُمَّ وَبِحَمْدِكَ وَتَبَارَكَ اسْمُكَ وَتَعَالَى جَدُّكَ وَلَا إِلَهَ غَيْرُكَ',
             '',
             'Okunuşu:',
-            'İnnâ a\'taynâkel-kevser. Fesalli li-rabbike venhar. İnne şâni\'eke hüvel-ebter.',
+            'Sübhânekellahümme ve bihamdike ve tebârekesmüke ve teâlâ ceddüke ve lâ ilâhe gayrük.',
             '',
             'Anlamı:',
-            'Muhakkak ki biz sana Kevser\'i verdik. Öyleyse Rabbin için namaz kıl ve kurban kes. Doğrusu asıl sonu kesik olan, sana buğzeden kimsedir.',
-          ],
-        ),
-        _IbadetSection(
-          title: 'Fil Suresi',
-          items: [
-            'أَلَمْ تَرَ كَيْفَ فَعَلَ رَبُّكَ بِأَصْحَابِ الْفِيلِ',
-            'أَلَمْ يَجْعَلْ كَيْدَهُمْ فِي تَضْلِيلٍ',
-            'وَأَرْسَلَ عَلَيْهِمْ طَيْرًا أَبَابِيلَ',
-            'تَرْمِيهِمْ بِحِجَارَةٍ مِنْ سِجِّيلٍ',
-            'فَجَعَلَهُمْ كَعَصْفٍ مَأْكُولٍ',
-            '',
-            'Okunuşu:',
-            'Elem tera keyfe fe\'ale rabbüke bi-ashâbil-fîl. Elem yec\'al keydehüm fî tadlîl. Ve ersele aleyhim tayran ebâbîl. Termîhim bi-hicâratin min siccîl. Fece\'alehüm ke\'asfin me\'kûl.',
-            '',
-            'Anlamı:',
-            'Rabbinin fil sahiplerine ne yaptığını görmedin mi? Onların tuzaklarını boşa çıkarmadı mı? Üzerlerine sürü sürü kuşlar gönderdi. Onlara pişmiş çamurdan taşlar atıyorlardı. Sonunda onları yenilmiş ekin yaprağı gibi yaptı.',
+            'Allah\'ım! Seni her türlü noksanlıktan tenzih ederim. Sana hamd ederim. Senin adın mübarektir. Senin şanın yücedir. Senden başka ilah yoktur.',
           ],
         ),
         _IbadetSection(
@@ -714,28 +1053,6 @@ class IbadetSayfa extends StatelessWidget {
           ],
         ),
         _IbadetSection(
-          title: 'Rabbena Duaları',
-          items: [
-            'رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ',
-            '',
-            'Okunuşu:',
-            'Rabbenâ âtinâ fid-dünyâ haseneten ve fil-âhireti haseneten ve kınâ azâben-nâr.',
-            '',
-            'Anlamı:',
-            'Rabbimiz! Bize dünyada iyilik ver, ahirette de iyilik ver ve bizi ateş azabından koru.',
-            '',
-            '---',
-            '',
-            'رَبَّنَا لَا تُؤَاخِذْنَا إِنْ نَسِينَا أَوْ أَخْطَأْنَا',
-            '',
-            'Okunuşu:',
-            'Rabbenâ lâ tüâhiznâ in nesînâ ev ahta\'nâ.',
-            '',
-            'Anlamı:',
-            'Rabbimiz! Unutursak veya hata yaparsak bizi sorumlu tutma.',
-          ],
-        ),
-        _IbadetSection(
           title: 'Rükû ve Secde Tesbihleri',
           items: [
             'RÜKÛ TESBİHİ:',
@@ -759,6 +1076,28 @@ class IbadetSayfa extends StatelessWidget {
             'Okunuşu: Sübhâne rabbiye\'l-a\'lâ.',
             'Anlamı: En yüce Rabbimi tesbih ederim.',
             '(En az 3 kez okunur)',
+          ],
+        ),
+        _IbadetSection(
+          title: 'Rabbena Duaları',
+          items: [
+            'رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ',
+            '',
+            'Okunuşu:',
+            'Rabbenâ âtinâ fid-dünyâ haseneten ve fil-âhireti haseneten ve kınâ azâben-nâr.',
+            '',
+            'Anlamı:',
+            'Rabbimiz! Bize dünyada iyilik ver, ahirette de iyilik ver ve bizi ateş azabından koru.',
+            '',
+            '---',
+            '',
+            'رَبَّنَا لَا تُؤَاخِذْنَا إِنْ نَسِينَا أَوْ أَخْطَأْنَا',
+            '',
+            'Okunuşu:',
+            'Rabbenâ lâ tüâhiznâ in nesînâ ev ahta\'nâ.',
+            '',
+            'Anlamı:',
+            'Rabbimiz! Unutursak veya hata yaparsak bizi sorumlu tutma.',
           ],
         ),
         _IbadetSection(
@@ -786,28 +1125,41 @@ class IbadetSayfa extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final temaService = TemaService();
-    final renkler = temaService.renkler;
-    final languageService = LanguageService();
-    final icerikler = _getIcerikler(languageService);
+    final renkler = _temaService.renkler;
+    final icerikler = _getIcerikler(_languageService);
 
     return Scaffold(
       backgroundColor: renkler.arkaPlan,
       appBar: AppBar(
-        title: Text(
-          languageService['worship'] ?? 'İbadet',
-          style: TextStyle(color: renkler.yaziPrimary),
-        ),
+        title: const Text(''),
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: IconThemeData(color: renkler.yaziPrimary),
+        actions: [
+          // Font küçült
+          IconButton(
+            icon: const Icon(Icons.text_decrease),
+            onPressed: _decreaseFontSize,
+            tooltip: _languageService['decrease_font'] ?? 'Yazı Küçült',
+          ),
+          // Font büyüt
+          IconButton(
+            icon: const Icon(Icons.text_increase),
+            onPressed: _increaseFontSize,
+            tooltip: _languageService['increase_font'] ?? 'Yazı Büyüt',
+          ),
+        ],
       ),
       body: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: icerikler.length,
         itemBuilder: (context, index) {
           final content = icerikler[index];
-          return _IbadetCard(content: content, renkler: renkler);
+          return _IbadetCard(
+            content: content,
+            renkler: renkler,
+            fontScale: _fontScale,
+          );
         },
       ),
     );
@@ -817,10 +1169,12 @@ class IbadetSayfa extends StatelessWidget {
 class _IbadetCard extends StatelessWidget {
   final _IbadetContent content;
   final TemaRenkleri renkler;
+  final double fontScale;
 
   const _IbadetCard({
     required this.content,
     required this.renkler,
+    required this.fontScale,
   });
 
   @override
@@ -855,7 +1209,10 @@ class _IbadetCard extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => _IbadetDetaySayfa(content: content),
+              builder: (context) => _IbadetDetaySayfa(
+                content: content,
+                initialFontScale: fontScale,
+              ),
             ),
           );
         },
@@ -864,10 +1221,58 @@ class _IbadetCard extends StatelessWidget {
   }
 }
 
-class _IbadetDetaySayfa extends StatelessWidget {
+class _IbadetDetaySayfa extends StatefulWidget {
   final _IbadetContent content;
+  final double initialFontScale;
 
-  const _IbadetDetaySayfa({required this.content});
+  const _IbadetDetaySayfa({required this.content, this.initialFontScale = 1.0});
+
+  @override
+  State<_IbadetDetaySayfa> createState() => _IbadetDetaySayfaState();
+}
+
+class _IbadetDetaySayfaState extends State<_IbadetDetaySayfa> {
+  late double _fontScale;
+  final LanguageService _languageService = LanguageService();
+
+  @override
+  void initState() {
+    super.initState();
+    _fontScale = widget.initialFontScale;
+    _loadFontScale();
+  }
+
+  Future<void> _loadFontScale() async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = 'ibadet_detail_font_scale_${widget.content.title}';
+    setState(() {
+      _fontScale = prefs.getDouble(key) ?? 1.0;
+    });
+  }
+
+  Future<void> _saveFontScale() async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = 'ibadet_detail_font_scale_${widget.content.title}';
+    await prefs.setDouble(key, _fontScale);
+  }
+
+  void _increaseFontSize() {
+    if (_fontScale < 2.0) {
+      setState(() {
+        _fontScale += 0.1;
+      });
+      _saveFontScale();
+    }
+  }
+
+  void _decreaseFontSize() {
+    if (_fontScale > 0.7) {
+      setState(() {
+        _fontScale -= 0.1;
+      });
+      _saveFontScale();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -877,10 +1282,45 @@ class _IbadetDetaySayfa extends StatelessWidget {
     return Scaffold(
       backgroundColor: renkler.arkaPlan,
       appBar: AppBar(
-        title: Text(content.title, style: TextStyle(color: renkler.yaziPrimary)),
+        title: Text(
+          widget.content.title,
+          style: TextStyle(color: renkler.yaziPrimary),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: IconThemeData(color: renkler.yaziPrimary),
+        actions: [
+          // Font küçült
+          IconButton(
+            icon: const Icon(Icons.text_decrease),
+            onPressed: _decreaseFontSize,
+            tooltip: _languageService['decrease_font'] ?? 'Yazı Küçült',
+          ),
+          // Font ölçeği göstergesi
+          Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: renkler.vurgu.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                '${(_fontScale * 100).round()}%',
+                style: TextStyle(
+                  color: renkler.vurgu,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ),
+          // Font büyüt
+          IconButton(
+            icon: const Icon(Icons.text_increase),
+            onPressed: _increaseFontSize,
+            tooltip: _languageService['increase_font'] ?? 'Yazı Büyüt',
+          ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -898,22 +1338,26 @@ class _IbadetDetaySayfa extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(content.icon, color: renkler.vurgu, size: 32),
+                Icon(widget.content.icon, color: renkler.vurgu, size: 32),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    content.subtitle,
-                    style: TextStyle(color: renkler.yaziSecondary, fontSize: 14),
+                    widget.content.subtitle,
+                    style: TextStyle(
+                      color: renkler.yaziSecondary,
+                      fontSize: 14,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 16),
-          ...content.sections.map(
+          ...widget.content.sections.map(
             (section) => _IbadetSectionCard(
               section: section,
               renkler: renkler,
+              fontScale: _fontScale,
             ),
           ),
         ],
@@ -925,81 +1369,116 @@ class _IbadetDetaySayfa extends StatelessWidget {
 class _IbadetSectionCard extends StatelessWidget {
   final _IbadetSection section;
   final TemaRenkleri renkler;
+  final double fontScale;
 
   const _IbadetSectionCard({
     required this.section,
     required this.renkler,
+    required this.fontScale,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: renkler.kartArkaPlan,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: renkler.ayirac),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          childrenPadding: const EdgeInsets.only(
+            left: 16,
+            right: 16,
+            bottom: 16,
+          ),
+          iconColor: renkler.vurgu,
+          collapsedIconColor: renkler.vurgu,
+          title: Text(
             section.title,
             style: TextStyle(
               color: renkler.vurgu,
               fontWeight: FontWeight.bold,
-              fontSize: 16,
+              fontSize: 16 * fontScale,
             ),
           ),
-          const SizedBox(height: 12),
-          ...section.items.map(
-            (item) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: item.isEmpty
-                  ? const SizedBox(height: 8)
-                  : item.startsWith('---')
-                      ? Divider(color: renkler.ayirac, height: 24)
-                      : Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (!item.startsWith(' ') && 
-                                !item.startsWith('•') &&
-                                !RegExp(r'^\d+\.').hasMatch(item) &&
-                                !item.contains(':') &&
-                                item.length < 50)
-                              const SizedBox()
-                            else if (item.startsWith('•') || item.startsWith(' '))
-                              const SizedBox()
-                            else if (!RegExp(r'^\d+\.').hasMatch(item))
-                              Text('• ', style: TextStyle(color: renkler.vurgu)),
-                            Expanded(
-                              child: SelectableText(
-                                item,
-                                style: TextStyle(
-                                  color: item.contains(':') && !item.contains('Okunuşu:') && !item.contains('Anlamı:')
-                                      ? renkler.yaziPrimary.withOpacity(0.9)
-                                      : renkler.yaziPrimary,
-                                  fontWeight: (item.contains(':') && item.length < 40) || 
-                                              item.startsWith('Okunuşu:') || 
-                                              item.startsWith('Anlamı:')
-                                      ? FontWeight.w600
-                                      : FontWeight.normal,
-                                  height: 1.5,
-                                  fontSize: item.contains('سُبْ') || item.contains('الْ') || item.contains('قُلْ')
-                                      ? 18
-                                      : 14,
-                                ),
-                                textDirection: item.contains('سُبْ') || item.contains('الْ') || item.contains('قُلْ')
-                                    ? TextDirection.rtl
-                                    : TextDirection.ltr,
+          children: [
+            ...section.items.map(
+              (item) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: item.isEmpty
+                    ? const SizedBox(height: 8)
+                    : item.startsWith('---')
+                    ? Divider(color: renkler.ayirac, height: 24)
+                    : (item.contains('سُبْ') ||
+                          item.contains('الْ') ||
+                          item.contains('قُلْ') ||
+                          item.contains('بِسْمِ'))
+                    ? Container(
+                        width: double.infinity,
+                        alignment: Alignment.centerRight,
+                        child: SelectableText(
+                          item,
+                          style: TextStyle(
+                            color: renkler.yaziPrimary,
+                            fontWeight: FontWeight.normal,
+                            height: 1.5,
+                            fontSize: 18 * fontScale,
+                          ),
+                          textDirection: TextDirection.rtl,
+                          textAlign: TextAlign.right,
+                        ),
+                      )
+                    : Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (!item.startsWith(' ') &&
+                              !item.startsWith('•') &&
+                              !RegExp(r'^\d+\.').hasMatch(item) &&
+                              !item.contains(':') &&
+                              item.length < 50)
+                            const SizedBox()
+                          else if (item.startsWith('•') || item.startsWith(' '))
+                            const SizedBox()
+                          else if (!RegExp(r'^\d+\.').hasMatch(item))
+                            Text(
+                              '• ',
+                              style: TextStyle(
+                                color: renkler.vurgu,
+                                fontSize: 14 * fontScale,
                               ),
                             ),
-                          ],
-                        ),
+                          Expanded(
+                            child: SelectableText(
+                              item,
+                              style: TextStyle(
+                                color:
+                                    item.contains(':') &&
+                                        !item.contains('Okunuşu:') &&
+                                        !item.contains('Anlamı:')
+                                    ? renkler.yaziPrimary.withOpacity(0.9)
+                                    : renkler.yaziPrimary,
+                                fontWeight:
+                                    (item.contains(':') && item.length < 40) ||
+                                        item.startsWith('Okunuşu:') ||
+                                        item.startsWith('Anlamı:')
+                                    ? FontWeight.w600
+                                    : FontWeight.normal,
+                                height: 1.5,
+                                fontSize: 14 * fontScale,
+                              ),
+                              textAlign: TextAlign.left,
+                            ),
+                          ),
+                        ],
+                      ),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -1023,8 +1502,5 @@ class _IbadetSection {
   final String title;
   final List<String> items;
 
-  const _IbadetSection({
-    required this.title,
-    required this.items,
-  });
+  const _IbadetSection({required this.title, required this.items});
 }

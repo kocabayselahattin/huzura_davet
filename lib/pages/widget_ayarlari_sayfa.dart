@@ -12,31 +12,96 @@ class WidgetAyarlariSayfa extends StatefulWidget {
 class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa> {
   // Arka plan renkleri
   int _secilenArkaPlanIndex = 0;
-  
+
   // Yazı renkleri
   int _secilenYaziRengiIndex = 0;
 
   // Yazı tipi
   int _secilenFontIndex = 0;
-  
+
   // Şeffaflık
   double _seffaflik = 1.0;
   bool _seffafTema = false;
 
   final List<Map<String, dynamic>> _arkaPlanSecenekleri = [
-    {'isim': 'Turuncu Gradient', 'renk1': Color(0xFFFF8C42), 'renk2': Color(0xFFCC5522), 'key': 'orange'},
-    {'isim': 'Açık Krem', 'renk1': Color(0xFFFFF8F0), 'renk2': Color(0xFFFFE8D8), 'key': 'light'},
-    {'isim': 'Koyu Mavi', 'renk1': Color(0xFF1A3A5C), 'renk2': Color(0xFF051525), 'key': 'dark'},
-    {'isim': 'Gün Batımı', 'renk1': Color(0xFFFFE4B5), 'renk2': Color(0xFFFFD0A0), 'key': 'sunset'},
-    {'isim': 'Yeşil', 'renk1': Color(0xFF2E7D32), 'renk2': Color(0xFF1B5E20), 'key': 'green'},
-    {'isim': 'Mor', 'renk1': Color(0xFF7B1FA2), 'renk2': Color(0xFF4A148C), 'key': 'purple'},
-    {'isim': 'Kırmızı', 'renk1': Color(0xFFD32F2F), 'renk2': Color(0xFFB71C1C), 'key': 'red'},
-    {'isim': 'Mavi', 'renk1': Color(0xFF1976D2), 'renk2': Color(0xFF0D47A1), 'key': 'blue'},
-    {'isim': 'Turkuaz', 'renk1': Color(0xFF00ACC1), 'renk2': Color(0xFF006064), 'key': 'teal'},
-    {'isim': 'Pembe', 'renk1': Color(0xFFE91E63), 'renk2': Color(0xFFC2185B), 'key': 'pink'},
-    {'isim': 'Şeffaf', 'renk1': Colors.transparent, 'renk2': Colors.transparent, 'key': 'transparent'},
-    {'isim': 'Yarı Şeffaf Siyah', 'renk1': Color(0x88000000), 'renk2': Color(0x88000000), 'key': 'semi_black'},
-    {'isim': 'Yarı Şeffaf Beyaz', 'renk1': Color(0x88FFFFFF), 'renk2': Color(0x88FFFFFF), 'key': 'semi_white'},
+    {
+      'isim': 'Turuncu Gradient',
+      'renk1': Color(0xFFFF8C42),
+      'renk2': Color(0xFFCC5522),
+      'key': 'orange',
+    },
+    {
+      'isim': 'Açık Krem',
+      'renk1': Color(0xFFFFF8F0),
+      'renk2': Color(0xFFFFE8D8),
+      'key': 'light',
+    },
+    {
+      'isim': 'Koyu Mavi',
+      'renk1': Color(0xFF1A3A5C),
+      'renk2': Color(0xFF051525),
+      'key': 'dark',
+    },
+    {
+      'isim': 'Gün Batımı',
+      'renk1': Color(0xFFFFE4B5),
+      'renk2': Color(0xFFFFD0A0),
+      'key': 'sunset',
+    },
+    {
+      'isim': 'Yeşil',
+      'renk1': Color(0xFF2E7D32),
+      'renk2': Color(0xFF1B5E20),
+      'key': 'green',
+    },
+    {
+      'isim': 'Mor',
+      'renk1': Color(0xFF7B1FA2),
+      'renk2': Color(0xFF4A148C),
+      'key': 'purple',
+    },
+    {
+      'isim': 'Kırmızı',
+      'renk1': Color(0xFFD32F2F),
+      'renk2': Color(0xFFB71C1C),
+      'key': 'red',
+    },
+    {
+      'isim': 'Mavi',
+      'renk1': Color(0xFF1976D2),
+      'renk2': Color(0xFF0D47A1),
+      'key': 'blue',
+    },
+    {
+      'isim': 'Turkuaz',
+      'renk1': Color(0xFF00ACC1),
+      'renk2': Color(0xFF006064),
+      'key': 'teal',
+    },
+    {
+      'isim': 'Pembe',
+      'renk1': Color(0xFFE91E63),
+      'renk2': Color(0xFFC2185B),
+      'key': 'pink',
+    },
+    {
+      'isim': 'Şeffaf',
+      'renk1': Colors.transparent,
+      'renk2': Colors.transparent,
+      'key': 'transparent',
+    },
+    {
+      'isim': 'Yarı Şeffaf Siyah',
+      'renk1': Color(0x88000000),
+      'renk2': Color(0x88000000),
+      'key': 'semi_black',
+    },
+    {
+      'isim': 'Yarı Şeffaf Beyaz',
+      'renk1': Color(0x88FFFFFF),
+      'renk2': Color(0x88FFFFFF),
+      'key': 'semi_white',
+    },
   ];
 
   final List<Map<String, dynamic>> _yaziRengiSecenekleri = [
@@ -75,10 +140,13 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa> {
     setState(() {
       _secilenArkaPlanIndex = prefs.getInt('widget_arkaplan_index') ?? 0;
       _secilenYaziRengiIndex = prefs.getInt('widget_yazi_rengi_index') ?? 0;
-      _seffaflik = prefs.getDouble('widget_seffaflik') ?? 1.0;
+      final savedSeffaflik = prefs.getDouble('widget_seffaflik') ?? 1.0;
+      _seffaflik = savedSeffaflik.clamp(0.3, 1.0);
       _seffafTema = prefs.getBool('widget_seffaf_tema') ?? false;
       final fontKey = prefs.getString('widget_font_key') ?? 'condensed';
-      final fontIndex = _fontSecenekleri.indexWhere((item) => item['key'] == fontKey);
+      final fontIndex = _fontSecenekleri.indexWhere(
+        (item) => item['key'] == fontKey,
+      );
       _secilenFontIndex = fontIndex >= 0 ? fontIndex : 0;
     });
   }
@@ -89,24 +157,54 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa> {
     await prefs.setInt('widget_yazi_rengi_index', _secilenYaziRengiIndex);
     await prefs.setDouble('widget_seffaflik', _seffaflik);
     await prefs.setBool('widget_seffaf_tema', _seffafTema);
-    
+    await prefs.setString(
+      'widget_font_key',
+      _fontSecenekleri[_secilenFontIndex]['key'] ?? 'condensed',
+    );
+
     // Widget verilerini güncelle
     final arkaPlan = _arkaPlanSecenekleri[_secilenArkaPlanIndex];
     final yaziRengi = _yaziRengiSecenekleri[_secilenYaziRengiIndex];
     final fontKey = _fontSecenekleri[_secilenFontIndex]['key'] ?? 'condensed';
-    
+
     await HomeWidgetService.updateWidgetColors(
       arkaPlanKey: arkaPlan['key'],
       yaziRengiHex: yaziRengi['hex'],
       seffaflik: _seffafTema ? 0.0 : _seffaflik,
       fontKey: fontKey,
     );
-    
+
+    // Tüm widgetları güncelle
+    await HomeWidgetService.updateAllWidgets();
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Widget ayarları kaydedildi'),
+          content: Text('Widget ayarları tüm widgetlara uygulandı'),
           backgroundColor: Colors.green,
+        ),
+      );
+    }
+  }
+
+  Future<void> _varsayilanaGetir() async {
+    // Varsayılan değerler
+    setState(() {
+      _secilenArkaPlanIndex = 0; // Turuncu Gradient
+      _secilenYaziRengiIndex = 0; // Beyaz
+      _secilenFontIndex = 1; // Condensed
+      _seffaflik = 1.0;
+      _seffafTema = false;
+    });
+
+    // Ayarları kaydet ve uygula
+    await _ayarlariKaydet();
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Widget ayarları varsayılana döndürüldü'),
+          backgroundColor: Colors.orange,
         ),
       );
     }
@@ -116,7 +214,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Widget Ayarları'),
@@ -134,7 +232,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa> {
           // Önizleme
           _buildOnizleme(isDark),
           const SizedBox(height: 24),
-          
+
           // Şeffaf Tema Switch
           Card(
             child: SwitchListTile(
@@ -146,17 +244,19 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa> {
                   _seffafTema = value;
                   if (value) {
                     _secilenArkaPlanIndex = 10; // Şeffaf seçeneği
+                  } else {
+                    // Şeffaf tema kapatılınca şeffaflığı min değerine ayarla
+                    if (_seffaflik < 0.3) {
+                      _seffaflik = 1.0;
+                    }
                   }
                 });
               },
-              secondary: Icon(
-                Icons.opacity,
-                color: theme.colorScheme.primary,
-              ),
+              secondary: Icon(Icons.opacity, color: theme.colorScheme.primary),
             ),
           ),
           const SizedBox(height: 16),
-          
+
           // Arka Plan Rengi Seçimi
           if (!_seffafTema) ...[
             Text(
@@ -168,7 +268,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa> {
             const SizedBox(height: 12),
             _buildArkaPlanSecimi(),
             const SizedBox(height: 24),
-            
+
             // Şeffaflık Ayarı
             Text(
               'Şeffaflık: ${(_seffaflik * 100).toInt()}%',
@@ -177,7 +277,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa> {
               ),
             ),
             Slider(
-              value: _seffaflik,
+              value: _seffaflik.clamp(0.3, 1.0),
               min: 0.3,
               max: 1.0,
               divisions: 7,
@@ -190,7 +290,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa> {
             ),
             const SizedBox(height: 24),
           ],
-          
+
           // Yazı Rengi Seçimi
           Text(
             'Yazı Rengi',
@@ -212,18 +312,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa> {
           const SizedBox(height: 12),
           _buildFontSecimi(),
           const SizedBox(height: 32),
-          
-          // Kaydet Butonu
-          ElevatedButton.icon(
-            onPressed: _ayarlariKaydet,
-            icon: const Icon(Icons.save),
-            label: const Text('Ayarları Kaydet ve Uygula'),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-            ),
-          ),
-          const SizedBox(height: 16),
-          
+
           // Bilgi
           Card(
             color: Color.fromRGBO(
@@ -236,14 +325,11 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa> {
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  Icon(
-                    Icons.info_outline,
-                    color: theme.colorScheme.primary,
-                  ),
+                  Icon(Icons.info_outline, color: theme.colorScheme.primary),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Ayarları kaydettikten sonra widget\'ı ana ekranınızdan kaldırıp tekrar ekleyin.',
+                      'Bu ayarlar tüm widget türlerine uygulanır. Değişikliklerin görünmesi için widgetları ana ekranınızdan kaldırıp tekrar ekleyin.',
                       style: theme.textTheme.bodySmall,
                     ),
                   ),
@@ -251,6 +337,33 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa> {
               ),
             ),
           ),
+          const SizedBox(height: 24),
+
+          // Default Butonu
+          OutlinedButton.icon(
+            onPressed: _varsayilanaGetir,
+            icon: const Icon(Icons.restore),
+            label: const Text('Varsayılana Dön'),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              foregroundColor: Colors.orange,
+              side: const BorderSide(color: Colors.orange),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Kaydet Butonu
+          ElevatedButton.icon(
+            onPressed: _ayarlariKaydet,
+            icon: const Icon(Icons.save),
+            label: const Text('Ayarları Kaydet'),
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: theme.colorScheme.onPrimary,
+            ),
+          ),
+          const SizedBox(height: 16),
         ],
       ),
     );
@@ -258,31 +371,32 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa> {
 
   Widget _buildOnizleme(bool isDark) {
     final arkaPlan = _arkaPlanSecenekleri[_secilenArkaPlanIndex];
-    final yaziRengi = _yaziRengiSecenekleri[_secilenYaziRengiIndex]['renk'] as Color;
+    final yaziRengi =
+        _yaziRengiSecenekleri[_secilenYaziRengiIndex]['renk'] as Color;
     final previewFont = _getPreviewFontFamily();
-    
-    final Color renk1 = _seffafTema 
-        ? Colors.transparent 
+
+    final Color renk1 = _seffafTema
+        ? Colors.transparent
         : Color.fromRGBO(
             (arkaPlan['renk1'] as Color).red,
             (arkaPlan['renk1'] as Color).green,
             (arkaPlan['renk1'] as Color).blue,
             _seffaflik,
           );
-    final Color renk2 = _seffafTema 
-        ? Colors.transparent 
+    final Color renk2 = _seffafTema
+        ? Colors.transparent
         : Color.fromRGBO(
             (arkaPlan['renk2'] as Color).red,
             (arkaPlan['renk2'] as Color).green,
             (arkaPlan['renk2'] as Color).blue,
             _seffaflik,
           );
-    
+
     return Container(
-      height: 120,
+      height: 140,
       decoration: BoxDecoration(
-        gradient: _seffafTema 
-            ? null 
+        gradient: _seffafTema
+            ? null
             : LinearGradient(
                 colors: [renk1, renk2],
                 begin: Alignment.topLeft,
@@ -295,11 +409,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa> {
           width: 2,
         ),
         boxShadow: const [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 8,
-            offset: Offset(0, 4),
-          ),
+          BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 4)),
         ],
       ),
       child: Stack(
@@ -322,21 +432,29 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Önizleme',
+                  'Widget Önizlemesi',
                   style: TextStyle(
-                    color: Color.fromRGBO(yaziRengi.red, yaziRengi.green, yaziRengi.blue, 0.7),
-                    fontSize: 10,
+                    color: Color.fromRGBO(
+                      yaziRengi.red,
+                      yaziRengi.green,
+                      yaziRengi.blue,
+                      0.7,
+                    ),
+                    fontSize: 11,
                     fontFamily: previewFont,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 4),
                 Row(
                   children: [
+                    Icon(Icons.mosque, color: yaziRengi, size: 16),
+                    const SizedBox(width: 8),
                     Text(
                       'Öğle Namazına',
                       style: TextStyle(
                         color: yaziRengi,
-                        fontSize: 14,
+                        fontSize: 15,
                         fontWeight: FontWeight.bold,
                         fontFamily: previewFont,
                       ),
@@ -345,22 +463,59 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa> {
                     Text(
                       'İstanbul',
                       style: TextStyle(
-                        color: Color.fromRGBO(yaziRengi.red, yaziRengi.green, yaziRengi.blue, 0.8),
+                        color: Color.fromRGBO(
+                          yaziRengi.red,
+                          yaziRengi.green,
+                          yaziRengi.blue,
+                          0.8,
+                        ),
                         fontSize: 12,
                         fontFamily: previewFont,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 Text(
                   '02:30:45',
                   style: TextStyle(
                     color: yaziRengi,
-                    fontSize: 28,
+                    fontSize: 32,
                     fontWeight: FontWeight.bold,
                     fontFamily: previewFont,
                   ),
+                ),
+                const Spacer(),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '17 Ocak 2026',
+                      style: TextStyle(
+                        color: Color.fromRGBO(
+                          yaziRengi.red,
+                          yaziRengi.green,
+                          yaziRengi.blue,
+                          0.7,
+                        ),
+                        fontSize: 10,
+                        fontFamily: previewFont,
+                      ),
+                    ),
+                    Text(
+                      '28 Recep 1447',
+                      style: TextStyle(
+                        color: Color.fromRGBO(
+                          yaziRengi.red,
+                          yaziRengi.green,
+                          yaziRengi.blue,
+                          0.7,
+                        ),
+                        fontSize: 10,
+                        fontFamily: previewFont,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -406,7 +561,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa> {
         final secenek = _arkaPlanSecenekleri[index];
         final isSelected = _secilenArkaPlanIndex == index;
         final isTransparent = secenek['key'] == 'transparent';
-        
+
         return GestureDetector(
           onTap: () {
             setState(() {
@@ -442,7 +597,10 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa> {
                   child: Text(
                     secenek['isim'].split(' ').first,
                     style: TextStyle(
-                      color: isTransparent || (secenek['renk1'] as Color).computeLuminance() > 0.5
+                      color:
+                          isTransparent ||
+                              (secenek['renk1'] as Color).computeLuminance() >
+                                  0.5
                           ? Colors.black
                           : Colors.white,
                       fontSize: 10,
@@ -490,7 +648,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa> {
       itemBuilder: (context, index) {
         final secenek = _yaziRengiSecenekleri[index];
         final isSelected = _secilenYaziRengiIndex == index;
-        
+
         return GestureDetector(
           onTap: () {
             setState(() {
@@ -556,7 +714,7 @@ class CheckerboardPainter extends CustomPainter {
     const cellSize = 8.0;
     final paint1 = Paint()..color = Colors.grey.shade300;
     final paint2 = Paint()..color = Colors.grey.shade100;
-    
+
     for (double x = 0; x < size.width; x += cellSize) {
       for (double y = 0; y < size.height; y += cellSize) {
         final isEven = ((x / cellSize) + (y / cellSize)).toInt() % 2 == 0;

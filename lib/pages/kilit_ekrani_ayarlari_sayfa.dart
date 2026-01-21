@@ -11,19 +11,21 @@ class KilitEkraniAyarlariSayfa extends StatefulWidget {
   const KilitEkraniAyarlariSayfa({super.key});
 
   @override
-  State<KilitEkraniAyarlariSayfa> createState() => _KilitEkraniAyarlariSayfaState();
+  State<KilitEkraniAyarlariSayfa> createState() =>
+      _KilitEkraniAyarlariSayfaState();
 }
 
 class _KilitEkraniAyarlariSayfaState extends State<KilitEkraniAyarlariSayfa> {
   final TemaService _temaService = TemaService();
   final LanguageService _languageService = LanguageService();
-  final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
-  
+  final FlutterLocalNotificationsPlugin _notificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+
   bool _kilitEkraniBildirimiAktif = false;
   bool _ecirBariGoster = true;
   int _secilenStilIndex = 0;
   bool _yukleniyor = true;
-  
+
   // Stil seçenekleri
   final List<Map<String, dynamic>> _stilSecenekleri = [
     {
@@ -74,14 +76,17 @@ class _KilitEkraniAyarlariSayfaState extends State<KilitEkraniAyarlariSayfa> {
   Future<void> _ayarlariYukle() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _kilitEkraniBildirimiAktif = prefs.getBool('kilit_ekrani_bildirimi_aktif') ?? false;
+      _kilitEkraniBildirimiAktif =
+          prefs.getBool('kilit_ekrani_bildirimi_aktif') ?? false;
       _ecirBariGoster = prefs.getBool('kilit_ekrani_ecir_bari') ?? true;
       final stilKey = prefs.getString('kilit_ekrani_stili') ?? 'compact';
-      _secilenStilIndex = _stilSecenekleri.indexWhere((s) => s['key'] == stilKey);
+      _secilenStilIndex = _stilSecenekleri.indexWhere(
+        (s) => s['key'] == stilKey,
+      );
       if (_secilenStilIndex < 0) _secilenStilIndex = 0;
       _yukleniyor = false;
     });
-    
+
     // Aktifse bildirimi güncelle
     if (_kilitEkraniBildirimiAktif) {
       _bildirimiGuncelle();
@@ -90,10 +95,16 @@ class _KilitEkraniAyarlariSayfaState extends State<KilitEkraniAyarlariSayfa> {
 
   Future<void> _ayarlariKayDet() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('kilit_ekrani_bildirimi_aktif', _kilitEkraniBildirimiAktif);
+    await prefs.setBool(
+      'kilit_ekrani_bildirimi_aktif',
+      _kilitEkraniBildirimiAktif,
+    );
     await prefs.setBool('kilit_ekrani_ecir_bari', _ecirBariGoster);
-    await prefs.setString('kilit_ekrani_stili', _stilSecenekleri[_secilenStilIndex]['key']);
-    
+    await prefs.setString(
+      'kilit_ekrani_stili',
+      _stilSecenekleri[_secilenStilIndex]['key'],
+    );
+
     if (_kilitEkraniBildirimiAktif) {
       await _bildirimiGuncelle();
     } else {
@@ -107,25 +118,33 @@ class _KilitEkraniAyarlariSayfaState extends State<KilitEkraniAyarlariSayfa> {
       final ilceId = await KonumService.getIlceId();
       final il = await KonumService.getIl();
       final ilce = await KonumService.getIlce();
-      
+
       if (ilceId == null) {
-        _uyariGoster(_languageService['location_not_found'] ?? 'Konum bilgisi bulunamadı');
+        _uyariGoster(
+          _languageService['location_not_found'] ?? 'Konum bilgisi bulunamadı',
+        );
         return;
       }
-      
+
       final vakitler = await DiyanetApiService.getBugunVakitler(ilceId);
       if (vakitler == null) {
-        _uyariGoster(_languageService['prayer_times_not_found'] ?? 'Vakit bilgisi alınamadı');
+        _uyariGoster(
+          _languageService['prayer_times_not_found'] ??
+              'Vakit bilgisi alınamadı',
+        );
         return;
       }
-      
+
       // Bildirim içeriğini oluştur
       final stilKey = _stilSecenekleri[_secilenStilIndex]['key'];
       final baslik = _olustrBaslik(stilKey, il, ilce);
       final icerik = _olusturIcerik(stilKey, vakitler);
-      
+
       // Ongoing notification kanalı oluştur
-      final androidImplementation = _notificationsPlugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+      final androidImplementation = _notificationsPlugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
       if (androidImplementation != null) {
         const channel = AndroidNotificationChannel(
           'kilit_ekrani_channel',
@@ -138,7 +157,7 @@ class _KilitEkraniAyarlariSayfaState extends State<KilitEkraniAyarlariSayfa> {
         );
         await androidImplementation.createNotificationChannel(channel);
       }
-      
+
       // Bildirimi göster
       final androidDetails = AndroidNotificationDetails(
         'kilit_ekrani_channel',
@@ -153,16 +172,18 @@ class _KilitEkraniAyarlariSayfaState extends State<KilitEkraniAyarlariSayfa> {
         showWhen: false,
         visibility: NotificationVisibility.public, // Kilit ekranında görünür
         category: AndroidNotificationCategory.service,
-        styleInformation: _ecirBariGoster 
+        styleInformation: _ecirBariGoster
             ? BigTextStyleInformation(
                 icerik,
                 contentTitle: baslik,
-                summaryText: _languageService['lock_screen_widget'] ?? 'Kilit Ekranı Widget',
+                summaryText:
+                    _languageService['lock_screen_widget'] ??
+                    'Kilit Ekranı Widget',
               )
             : null,
         largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
       );
-      
+
       await _notificationsPlugin.show(
         9999, // Sabit ID
         baslik,
@@ -198,7 +219,7 @@ class _KilitEkraniAyarlariSayfaState extends State<KilitEkraniAyarlariSayfa> {
     final ikindi = vakitler['Ikindi'] ?? '-';
     final aksam = vakitler['Aksam'] ?? '-';
     final yatsi = vakitler['Yatsi'] ?? '-';
-    
+
     // Sonraki vakti hesapla
     final now = DateTime.now();
     final vakitMap = {
@@ -209,16 +230,22 @@ class _KilitEkraniAyarlariSayfaState extends State<KilitEkraniAyarlariSayfa> {
       _languageService['aksam'] ?? 'Akşam': aksam,
       _languageService['yatsi'] ?? 'Yatsı': yatsi,
     };
-    
+
     String sonrakiVakit = '';
     String sonrakiSaat = '';
-    
+
     for (final entry in vakitMap.entries) {
       final parts = entry.value.split(':');
       if (parts.length == 2) {
         final saat = int.tryParse(parts[0]) ?? 0;
         final dakika = int.tryParse(parts[1]) ?? 0;
-        final vakitZamani = DateTime(now.year, now.month, now.day, saat, dakika);
+        final vakitZamani = DateTime(
+          now.year,
+          now.month,
+          now.day,
+          saat,
+          dakika,
+        );
         if (vakitZamani.isAfter(now)) {
           sonrakiVakit = entry.key;
           sonrakiSaat = entry.value;
@@ -226,14 +253,14 @@ class _KilitEkraniAyarlariSayfaState extends State<KilitEkraniAyarlariSayfa> {
         }
       }
     }
-    
+
     if (sonrakiVakit.isEmpty) {
       sonrakiVakit = _languageService['imsak'] ?? 'İmsak';
       sonrakiSaat = imsak;
     }
-    
+
     final kalanSure = _hesaplaKalanSure(sonrakiSaat);
-    
+
     switch (stilKey) {
       case 'minimal':
         return '$sonrakiVakit: $sonrakiSaat ($kalanSure ${_languageService['remaining'] ?? 'kaldı'})';
@@ -241,13 +268,13 @@ class _KilitEkraniAyarlariSayfaState extends State<KilitEkraniAyarlariSayfa> {
         return '⏰ $sonrakiVakit $sonrakiSaat\n⏳ $kalanSure ${_languageService['remaining'] ?? 'kaldı'}';
       case 'detailed':
         return '⏰ $sonrakiVakit: $sonrakiSaat ($kalanSure)\n'
-               '🌅 ${_languageService['imsak'] ?? 'İmsak'}: $imsak  ☀️ ${_languageService['gunes'] ?? 'Güneş'}: $gunes\n'
-               '🌤️ ${_languageService['ogle'] ?? 'Öğle'}: $ogle  🌇 ${_languageService['ikindi'] ?? 'İkindi'}: $ikindi\n'
-               '🌆 ${_languageService['aksam'] ?? 'Akşam'}: $aksam  🌙 ${_languageService['yatsi'] ?? 'Yatsı'}: $yatsi';
+            '🌅 ${_languageService['imsak'] ?? 'İmsak'}: $imsak  ☀️ ${_languageService['gunes'] ?? 'Güneş'}: $gunes\n'
+            '🌤️ ${_languageService['ogle'] ?? 'Öğle'}: $ogle  🌇 ${_languageService['ikindi'] ?? 'İkindi'}: $ikindi\n'
+            '🌆 ${_languageService['aksam'] ?? 'Akşam'}: $aksam  🌙 ${_languageService['yatsi'] ?? 'Yatsı'}: $yatsi';
       case 'full':
         return '⏰ Sonraki: $sonrakiVakit $sonrakiSaat ($kalanSure)\n'
-               '${_languageService['imsak'] ?? 'İmsak'}: $imsak | ${_languageService['gunes'] ?? 'Güneş'}: $gunes | ${_languageService['ogle'] ?? 'Öğle'}: $ogle\n'
-               '${_languageService['ikindi'] ?? 'İkindi'}: $ikindi | ${_languageService['aksam'] ?? 'Akşam'}: $aksam | ${_languageService['yatsi'] ?? 'Yatsı'}: $yatsi';
+            '${_languageService['imsak'] ?? 'İmsak'}: $imsak | ${_languageService['gunes'] ?? 'Güneş'}: $gunes | ${_languageService['ogle'] ?? 'Öğle'}: $ogle\n'
+            '${_languageService['ikindi'] ?? 'İkindi'}: $ikindi | ${_languageService['aksam'] ?? 'Akşam'}: $aksam | ${_languageService['yatsi'] ?? 'Yatsı'}: $yatsi';
       default:
         return '$sonrakiVakit: $sonrakiSaat ($kalanSure)';
     }
@@ -256,23 +283,25 @@ class _KilitEkraniAyarlariSayfaState extends State<KilitEkraniAyarlariSayfa> {
   String _hesaplaKalanSure(String hedefSaat) {
     final parts = hedefSaat.split(':');
     if (parts.length != 2) return '-';
-    
+
     final now = DateTime.now();
     final hedef = DateTime(
-      now.year, now.month, now.day,
+      now.year,
+      now.month,
+      now.day,
       int.tryParse(parts[0]) ?? 0,
       int.tryParse(parts[1]) ?? 0,
     );
-    
+
     var fark = hedef.difference(now);
     if (fark.isNegative) {
       // Yarına
       fark = hedef.add(const Duration(days: 1)).difference(now);
     }
-    
+
     final saat = fark.inHours;
     final dakika = fark.inMinutes % 60;
-    
+
     if (saat > 0) {
       return '$saat ${_languageService['hour_short'] ?? 'sa'} $dakika ${_languageService['minute_short'] ?? 'dk'}';
     }
@@ -280,15 +309,15 @@ class _KilitEkraniAyarlariSayfaState extends State<KilitEkraniAyarlariSayfa> {
   }
 
   void _uyariGoster(String mesaj) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(mesaj), backgroundColor: Colors.red),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(mesaj), backgroundColor: Colors.red));
   }
 
   @override
   Widget build(BuildContext context) {
     final renkler = _temaService.renkler;
-    
+
     if (_yukleniyor) {
       return Scaffold(
         backgroundColor: renkler.arkaPlan,
@@ -304,7 +333,7 @@ class _KilitEkraniAyarlariSayfaState extends State<KilitEkraniAyarlariSayfa> {
         body: Center(child: CircularProgressIndicator(color: renkler.vurgu)),
       );
     }
-    
+
     return Scaffold(
       backgroundColor: renkler.arkaPlan,
       appBar: AppBar(
@@ -322,22 +351,18 @@ class _KilitEkraniAyarlariSayfaState extends State<KilitEkraniAyarlariSayfa> {
           // Açıklama kartı
           _bilgiKarti(renkler),
           const SizedBox(height: 20),
-          
+
           // Ana anahtar
           _anaAyarKarti(renkler),
           const SizedBox(height: 20),
-          
+
           // Önizleme (hemen ana ayarın altında)
           if (_kilitEkraniBildirimiAktif) ...[
             _onizlemeKarti(renkler),
             const SizedBox(height: 20),
-            
+
             // Stil seçimi
             _stilSecimKarti(renkler),
-            const SizedBox(height: 20),
-            
-            // Ecir barı
-            _ecirBariKarti(renkler),
           ],
         ],
       ),
@@ -358,8 +383,8 @@ class _KilitEkraniAyarlariSayfaState extends State<KilitEkraniAyarlariSayfa> {
           const SizedBox(width: 16),
           Expanded(
             child: Text(
-              _languageService['lock_screen_widget_info'] ?? 
-              'Kilit ekranında sürekli olarak namaz vakitlerini gösteren bir bildirim oluşturur. Telefonunuzu açmadan vakitleri görebilirsiniz.',
+              _languageService['lock_screen_widget_info'] ??
+                  'Kilit ekranında sürekli olarak namaz vakitlerini gösteren bir bildirim oluşturur. Telefonunuzu açmadan vakitleri görebilirsiniz.',
               style: TextStyle(color: renkler.yaziPrimary, fontSize: 14),
             ),
           ),
@@ -387,14 +412,16 @@ class _KilitEkraniAyarlariSayfaState extends State<KilitEkraniAyarlariSayfa> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: _kilitEkraniBildirimiAktif 
-                  ? renkler.vurgu.withValues(alpha: 0.15) 
+              color: _kilitEkraniBildirimiAktif
+                  ? renkler.vurgu.withValues(alpha: 0.15)
                   : renkler.arkaPlan,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
               Icons.lock_clock,
-              color: _kilitEkraniBildirimiAktif ? renkler.vurgu : renkler.yaziSecondary,
+              color: _kilitEkraniBildirimiAktif
+                  ? renkler.vurgu
+                  : renkler.yaziSecondary,
               size: 28,
             ),
           ),
@@ -404,7 +431,8 @@ class _KilitEkraniAyarlariSayfaState extends State<KilitEkraniAyarlariSayfa> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _languageService['lock_screen_notification'] ?? 'Kilit Ekranı Bildirimi',
+                  _languageService['lock_screen_notification'] ??
+                      'Kilit Ekranı Bildirimi',
                   style: TextStyle(
                     color: renkler.yaziPrimary,
                     fontSize: 16,
@@ -413,11 +441,13 @@ class _KilitEkraniAyarlariSayfaState extends State<KilitEkraniAyarlariSayfa> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  _kilitEkraniBildirimiAktif 
+                  _kilitEkraniBildirimiAktif
                       ? (_languageService['active'] ?? 'Aktif')
                       : (_languageService['inactive'] ?? 'Kapalı'),
                   style: TextStyle(
-                    color: _kilitEkraniBildirimiAktif ? renkler.vurgu : renkler.yaziSecondary,
+                    color: _kilitEkraniBildirimiAktif
+                        ? renkler.vurgu
+                        : renkler.yaziSecondary,
                     fontSize: 13,
                   ),
                 ),
@@ -468,7 +498,7 @@ class _KilitEkraniAyarlariSayfaState extends State<KilitEkraniAyarlariSayfa> {
           ...List.generate(_stilSecenekleri.length, (index) {
             final stil = _stilSecenekleri[index];
             final secili = index == _secilenStilIndex;
-            
+
             return GestureDetector(
               onTap: () {
                 setState(() {
@@ -480,10 +510,14 @@ class _KilitEkraniAyarlariSayfaState extends State<KilitEkraniAyarlariSayfa> {
                 margin: const EdgeInsets.only(bottom: 8),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: secili ? renkler.vurgu.withValues(alpha: 0.15) : renkler.arkaPlan,
+                  color: secili
+                      ? renkler.vurgu.withValues(alpha: 0.15)
+                      : renkler.arkaPlan,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: secili ? renkler.vurgu : renkler.ayirac.withValues(alpha: 0.3),
+                    color: secili
+                        ? renkler.vurgu
+                        : renkler.ayirac.withValues(alpha: 0.3),
                     width: secili ? 2 : 1,
                   ),
                 ),
@@ -502,7 +536,9 @@ class _KilitEkraniAyarlariSayfaState extends State<KilitEkraniAyarlariSayfa> {
                             stil['isim'] as String,
                             style: TextStyle(
                               color: renkler.yaziPrimary,
-                              fontWeight: secili ? FontWeight.bold : FontWeight.normal,
+                              fontWeight: secili
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
                             ),
                           ),
                           Text(
@@ -515,8 +551,7 @@ class _KilitEkraniAyarlariSayfaState extends State<KilitEkraniAyarlariSayfa> {
                         ],
                       ),
                     ),
-                    if (secili)
-                      Icon(Icons.check_circle, color: renkler.vurgu),
+                    if (secili) Icon(Icons.check_circle, color: renkler.vurgu),
                   ],
                 ),
               ),
@@ -558,11 +593,9 @@ class _KilitEkraniAyarlariSayfaState extends State<KilitEkraniAyarlariSayfa> {
                   ),
                 ),
                 Text(
-                  _languageService['reward_bar_desc'] ?? 'Detaylı bildirim içeriği göster',
-                  style: TextStyle(
-                    color: renkler.yaziSecondary,
-                    fontSize: 12,
-                  ),
+                  _languageService['reward_bar_desc'] ??
+                      'Detaylı bildirim içeriği göster',
+                  style: TextStyle(color: renkler.yaziSecondary, fontSize: 12),
                 ),
               ],
             ),
@@ -596,10 +629,7 @@ class _KilitEkraniAyarlariSayfaState extends State<KilitEkraniAyarlariSayfa> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(5),
         gradient: LinearGradient(
-          colors: [
-            calculateColor(progress),
-            calculateColor(progress * 0.8),
-          ],
+          colors: [calculateColor(progress), calculateColor(progress * 0.8)],
         ),
       ),
     );
@@ -610,7 +640,9 @@ class _KilitEkraniAyarlariSayfaState extends State<KilitEkraniAyarlariSayfa> {
     final now = DateTime.now();
     final nextPrayerTime = _getNextPrayerTime();
     final totalDuration = nextPrayerTime.difference(now).inSeconds;
-    final progress = totalDuration > 0 ? 1 - (totalDuration / (24 * 60 * 60)) : 0;
+    final progress = totalDuration > 0
+        ? 1 - (totalDuration / (24 * 60 * 60))
+        : 0;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -637,7 +669,7 @@ class _KilitEkraniAyarlariSayfaState extends State<KilitEkraniAyarlariSayfa> {
             ),
           ),
           const SizedBox(height: 16),
-          
+
           // Bildirim önizlemesi
           Container(
             padding: const EdgeInsets.all(12),
@@ -655,28 +687,24 @@ class _KilitEkraniAyarlariSayfaState extends State<KilitEkraniAyarlariSayfa> {
                     color: renkler.vurgu,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.mosque, color: Colors.white, size: 24),
+                  child: const Icon(
+                    Icons.mosque,
+                    color: Colors.white,
+                    size: 24,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              _getOnizlemeBaslik(stilKey),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          _buildEcirBar(progress.toDouble(), renkler),
-                        ],
+                      Text(
+                        _getOnizlemeBaslik(stilKey),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -718,13 +746,13 @@ class _KilitEkraniAyarlariSayfaState extends State<KilitEkraniAyarlariSayfa> {
         return '⏰ ${_languageService['ogle'] ?? 'Öğle'} 12:30\n⏳ $kalanSure ${_languageService['remaining'] ?? 'kaldı'}';
       case 'detailed':
         return '⏰ ${_languageService['ogle'] ?? 'Öğle'}: 12:30 ($kalanSure)\n'
-               '🌅 İmsak: 05:30  ☀️ Güneş: 07:00\n'
-               '🌤️ Öğle: 12:30  🌇 İkindi: 15:30\n'
-               '🌆 Akşam: 18:00  🌙 Yatsı: 19:30';
+            '🌅 İmsak: 05:30  ☀️ Güneş: 07:00\n'
+            '🌤️ Öğle: 12:30  🌇 İkindi: 15:30\n'
+            '🌆 Akşam: 18:00  🌙 Yatsı: 19:30';
       case 'full':
         return '⏰ Sonraki: ${_languageService['ogle'] ?? 'Öğle'} 12:30 ($kalanSure)\n'
-               'İmsak: 05:30 | Güneş: 07:00 | Öğle: 12:30\n'
-               'İkindi: 15:30 | Akşam: 18:00 | Yatsı: 19:30';
+            'İmsak: 05:30 | Güneş: 07:00 | Öğle: 12:30\n'
+            'İkindi: 15:30 | Akşam: 18:00 | Yatsı: 19:30';
       default:
         return '${_languageService['ogle'] ?? 'Öğle'}: 12:30 ($kalanSure)';
     }

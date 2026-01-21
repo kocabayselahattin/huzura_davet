@@ -42,12 +42,12 @@ class _AnaSayfaState extends State<AnaSayfa> {
   PageController? _sayacController;
   int _currentSayacIndex = 0;
   bool _sayacYuklendi = false;
-  
+
   // Çoklu konum sistemi
   List<KonumModel> _konumlar = [];
   int _aktifKonumIndex = 0;
   PageController? _konumPageController;
-  
+
   // Widget yenileme için key
   Key _vakitListesiKey = UniqueKey();
 
@@ -86,7 +86,10 @@ class _AnaSayfaState extends State<AnaSayfa> {
     if (mounted) {
       setState(() {
         _currentSayacIndex = index;
-        _sayacController = PageController(viewportFraction: 0.95, initialPage: index);
+        _sayacController = PageController(
+          viewportFraction: 0.95,
+          initialPage: index,
+        );
         _sayacYuklendi = true;
       });
     }
@@ -118,14 +121,14 @@ class _AnaSayfaState extends State<AnaSayfa> {
       setState(() {
         _konumlar = konumlar;
         _aktifKonumIndex = aktifIndex < konumlar.length ? aktifIndex : 0;
-        
+
         if (konumlar.isEmpty) {
           konumBasligi = "KONUM SEÇİLMEDİ";
         } else {
           final aktifKonum = konumlar[_aktifKonumIndex];
           konumBasligi = "${aktifKonum.ilAdi} / ${aktifKonum.ilceAdi}";
         }
-        
+
         _konumPageController = PageController(initialPage: _aktifKonumIndex);
       });
     }
@@ -140,15 +143,16 @@ class _AnaSayfaState extends State<AnaSayfa> {
         final aktifKonum = _konumlar[yeniIndex];
         konumBasligi = "${aktifKonum.ilAdi} / ${aktifKonum.ilceAdi}";
       });
-      
+
       // Widget'ları güncelle
       await HomeWidgetService.updateAllWidgets();
       print('✅ Aktif konum değiştirildi: ${_konumlar[yeniIndex].tamAd}');
-      
+
       // Vakit listesini ve tüm widgetları yenile
       if (mounted) {
         setState(() {
-          _vakitListesiKey = UniqueKey(); // Vakit listesini zorla yeniden oluştur
+          _vakitListesiKey =
+              UniqueKey(); // Vakit listesini zorla yeniden oluştur
         });
       }
     }
@@ -179,30 +183,42 @@ class _AnaSayfaState extends State<AnaSayfa> {
                     itemBuilder: (context, index) {
                       final konum = _konumlar[index];
                       final isAktif = index == _aktifKonumIndex;
-                      
+
                       return Card(
-                        color: isAktif ? renkler.vurgu.withValues(alpha: 0.2) : renkler.arkaPlan,
+                        color: isAktif
+                            ? renkler.vurgu.withValues(alpha: 0.2)
+                            : renkler.arkaPlan,
                         child: ListTile(
                           leading: Icon(
                             isAktif ? Icons.location_on : Icons.location_city,
-                            color: isAktif ? renkler.vurgu : renkler.yaziSecondary,
+                            color: isAktif
+                                ? renkler.vurgu
+                                : renkler.yaziSecondary,
                           ),
                           title: Text(
                             konum.tamAd,
                             style: TextStyle(
                               color: renkler.yaziPrimary,
-                              fontWeight: isAktif ? FontWeight.bold : FontWeight.normal,
+                              fontWeight: isAktif
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
                             ),
                           ),
                           subtitle: isAktif
                               ? Text(
                                   'Aktif Konum',
-                                  style: TextStyle(color: renkler.vurgu, fontSize: 12),
+                                  style: TextStyle(
+                                    color: renkler.vurgu,
+                                    fontSize: 12,
+                                  ),
                                 )
                               : null,
                           trailing: _konumlar.length > 1
                               ? IconButton(
-                                  icon: Icon(Icons.delete, color: Colors.red[400]),
+                                  icon: Icon(
+                                    Icons.delete,
+                                    color: Colors.red[400],
+                                  ),
                                   onPressed: () async {
                                     final onay = await showDialog<bool>(
                                       context: context,
@@ -210,25 +226,41 @@ class _AnaSayfaState extends State<AnaSayfa> {
                                         backgroundColor: renkler.kartArkaPlan,
                                         title: Text(
                                           'Konumu Sil',
-                                          style: TextStyle(color: renkler.yaziPrimary),
+                                          style: TextStyle(
+                                            color: renkler.yaziPrimary,
+                                          ),
                                         ),
                                         content: Text(
                                           '${konum.tamAd} konumunu silmek istediğinize emin misiniz?',
-                                          style: TextStyle(color: renkler.yaziSecondary),
+                                          style: TextStyle(
+                                            color: renkler.yaziSecondary,
+                                          ),
                                         ),
                                         actions: [
                                           TextButton(
-                                            onPressed: () => Navigator.pop(ctx, false),
-                                            child: Text('İptal', style: TextStyle(color: renkler.yaziSecondary)),
+                                            onPressed: () =>
+                                                Navigator.pop(ctx, false),
+                                            child: Text(
+                                              'İptal',
+                                              style: TextStyle(
+                                                color: renkler.yaziSecondary,
+                                              ),
+                                            ),
                                           ),
                                           TextButton(
-                                            onPressed: () => Navigator.pop(ctx, true),
-                                            child: const Text('Sil', style: TextStyle(color: Colors.red)),
+                                            onPressed: () =>
+                                                Navigator.pop(ctx, true),
+                                            child: const Text(
+                                              'Sil',
+                                              style: TextStyle(
+                                                color: Colors.red,
+                                              ),
+                                            ),
                                           ),
                                         ],
                                       ),
                                     );
-                                    
+
                                     if (onay == true) {
                                       await KonumService.removeKonum(index);
                                       Navigator.pop(context);
@@ -251,18 +283,21 @@ class _AnaSayfaState extends State<AnaSayfa> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text(_languageService['close'] ?? 'Kapat', style: TextStyle(color: renkler.vurgu)),
+              child: Text(
+                _languageService['close'] ?? 'Kapat',
+                style: TextStyle(color: renkler.vurgu),
+              ),
             ),
           ],
         );
       },
     );
   }
-  
+
   // Uygulama bilgi popup'ı
   void _showAppInfoDialog() {
     final renkler = _temaService.renkler;
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -285,10 +320,13 @@ class _AnaSayfaState extends State<AnaSayfa> {
                   ),
                 ],
               ),
-              child: const Icon(
-                Icons.mosque,
-                size: 40,
-                color: Colors.white,
+              child: ClipOval(
+                child: Image.asset(
+                  'assets/icon/app_icon.png',
+                  width: 40,
+                  height: 40,
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -303,18 +341,13 @@ class _AnaSayfaState extends State<AnaSayfa> {
             const SizedBox(height: 8),
             Text(
               '${_languageService['version'] ?? 'Versiyon'}: 2.3.0',
-              style: TextStyle(
-                color: renkler.yaziSecondary,
-                fontSize: 14,
-              ),
+              style: TextStyle(color: renkler.yaziSecondary, fontSize: 14),
             ),
             const SizedBox(height: 4),
             Text(
-              _languageService['prayer_times_assistant'] ?? 'Namaz Vakitleri ve İbadet Asistanı',
-              style: TextStyle(
-                color: renkler.yaziSecondary,
-                fontSize: 12,
-              ),
+              _languageService['prayer_times_assistant'] ??
+                  'Namaz Vakitleri ve İbadet Asistanı',
+              style: TextStyle(color: renkler.yaziSecondary, fontSize: 12),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
@@ -326,10 +359,16 @@ class _AnaSayfaState extends State<AnaSayfa> {
                     Navigator.pop(context);
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const HakkindaSayfa()),
+                      MaterialPageRoute(
+                        builder: (context) => const HakkindaSayfa(),
+                      ),
                     );
                   },
-                  icon: Icon(Icons.info_outline, color: renkler.vurgu, size: 18),
+                  icon: Icon(
+                    Icons.info_outline,
+                    color: renkler.vurgu,
+                    size: 18,
+                  ),
                   label: Text(
                     _languageService['about'] ?? 'Hakkında',
                     style: TextStyle(color: renkler.vurgu),
@@ -337,7 +376,11 @@ class _AnaSayfaState extends State<AnaSayfa> {
                 ),
                 TextButton.icon(
                   onPressed: () => Navigator.pop(context),
-                  icon: Icon(Icons.close, color: renkler.yaziSecondary, size: 18),
+                  icon: Icon(
+                    Icons.close,
+                    color: renkler.yaziSecondary,
+                    size: 18,
+                  ),
                   label: Text(
                     _languageService['close'] ?? 'Kapat',
                     style: TextStyle(color: renkler.yaziSecondary),
@@ -350,11 +393,11 @@ class _AnaSayfaState extends State<AnaSayfa> {
       ),
     );
   }
-  
+
   // Konum seçim popup dialogu
   void _showKonumSecimDialog() {
     final renkler = _temaService.renkler;
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -374,7 +417,8 @@ class _AnaSayfaState extends State<AnaSayfa> {
           width: double.maxFinite,
           child: _konumlar.isEmpty
               ? Text(
-                  _languageService['no_saved_locations'] ?? 'Henüz kayıtlı konum yok',
+                  _languageService['no_saved_locations'] ??
+                      'Henüz kayıtlı konum yok',
                   style: TextStyle(color: renkler.yaziSecondary),
                 )
               : ListView.builder(
@@ -383,14 +427,18 @@ class _AnaSayfaState extends State<AnaSayfa> {
                   itemBuilder: (context, index) {
                     final konum = _konumlar[index];
                     final isAktif = index == _aktifKonumIndex;
-                    
+
                     return Container(
                       margin: const EdgeInsets.only(bottom: 8),
                       decoration: BoxDecoration(
-                        color: isAktif ? renkler.vurgu.withValues(alpha: 0.15) : renkler.arkaPlan,
+                        color: isAktif
+                            ? renkler.vurgu.withValues(alpha: 0.15)
+                            : renkler.arkaPlan,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: isAktif ? renkler.vurgu : renkler.ayirac.withValues(alpha: 0.3),
+                          color: isAktif
+                              ? renkler.vurgu
+                              : renkler.ayirac.withValues(alpha: 0.3),
                           width: isAktif ? 2 : 1,
                         ),
                       ),
@@ -398,12 +446,16 @@ class _AnaSayfaState extends State<AnaSayfa> {
                         leading: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: isAktif ? renkler.vurgu.withValues(alpha: 0.2) : renkler.kartArkaPlan,
+                            color: isAktif
+                                ? renkler.vurgu.withValues(alpha: 0.2)
+                                : renkler.kartArkaPlan,
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
                             isAktif ? Icons.location_on : Icons.location_city,
-                            color: isAktif ? renkler.vurgu : renkler.yaziSecondary,
+                            color: isAktif
+                                ? renkler.vurgu
+                                : renkler.yaziSecondary,
                             size: 20,
                           ),
                         ),
@@ -411,19 +463,29 @@ class _AnaSayfaState extends State<AnaSayfa> {
                           konum.tamAd,
                           style: TextStyle(
                             color: renkler.yaziPrimary,
-                            fontWeight: isAktif ? FontWeight.bold : FontWeight.normal,
+                            fontWeight: isAktif
+                                ? FontWeight.bold
+                                : FontWeight.normal,
                             fontSize: 14,
                           ),
                         ),
                         subtitle: isAktif
                             ? Text(
-                                _languageService['active_location'] ?? 'Aktif Konum',
-                                style: TextStyle(color: renkler.vurgu, fontSize: 11),
+                                _languageService['active_location'] ??
+                                    'Aktif Konum',
+                                style: TextStyle(
+                                  color: renkler.vurgu,
+                                  fontSize: 11,
+                                ),
                               )
                             : null,
                         trailing: _konumlar.length > 1 && !isAktif
                             ? IconButton(
-                                icon: Icon(Icons.delete_outline, color: Colors.red[400], size: 20),
+                                icon: Icon(
+                                  Icons.delete_outline,
+                                  color: Colors.red[400],
+                                  size: 20,
+                                ),
                                 onPressed: () async {
                                   Navigator.pop(context);
                                   final onay = await showDialog<bool>(
@@ -431,26 +493,44 @@ class _AnaSayfaState extends State<AnaSayfa> {
                                     builder: (ctx) => AlertDialog(
                                       backgroundColor: renkler.kartArkaPlan,
                                       title: Text(
-                                        _languageService['delete_location'] ?? 'Konumu Sil',
-                                        style: TextStyle(color: renkler.yaziPrimary),
+                                        _languageService['delete_location'] ??
+                                            'Konumu Sil',
+                                        style: TextStyle(
+                                          color: renkler.yaziPrimary,
+                                        ),
                                       ),
                                       content: Text(
                                         '${konum.tamAd} ${_languageService['delete_location_confirm'] ?? 'konumunu silmek istediğinize emin misiniz?'}',
-                                        style: TextStyle(color: renkler.yaziSecondary),
+                                        style: TextStyle(
+                                          color: renkler.yaziSecondary,
+                                        ),
                                       ),
                                       actions: [
                                         TextButton(
-                                          onPressed: () => Navigator.pop(ctx, false),
-                                          child: Text(_languageService['cancel'] ?? 'İptal', style: TextStyle(color: renkler.yaziSecondary)),
+                                          onPressed: () =>
+                                              Navigator.pop(ctx, false),
+                                          child: Text(
+                                            _languageService['cancel'] ??
+                                                'İptal',
+                                            style: TextStyle(
+                                              color: renkler.yaziSecondary,
+                                            ),
+                                          ),
                                         ),
                                         TextButton(
-                                          onPressed: () => Navigator.pop(ctx, true),
-                                          child: Text(_languageService['delete'] ?? 'Sil', style: const TextStyle(color: Colors.red)),
+                                          onPressed: () =>
+                                              Navigator.pop(ctx, true),
+                                          child: Text(
+                                            _languageService['delete'] ?? 'Sil',
+                                            style: const TextStyle(
+                                              color: Colors.red,
+                                            ),
+                                          ),
                                         ),
                                       ],
                                     ),
                                   );
-                                  
+
                                   if (onay == true) {
                                     await KonumService.removeKonum(index);
                                     _konumYukle();
@@ -458,8 +538,12 @@ class _AnaSayfaState extends State<AnaSayfa> {
                                 },
                               )
                             : isAktif
-                                ? Icon(Icons.check_circle, color: renkler.vurgu, size: 20)
-                                : null,
+                            ? Icon(
+                                Icons.check_circle,
+                                color: renkler.vurgu,
+                                size: 20,
+                              )
+                            : null,
                         onTap: () {
                           if (!isAktif) {
                             _konumDegistir(index);
@@ -474,7 +558,10 @@ class _AnaSayfaState extends State<AnaSayfa> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(_languageService['close'] ?? 'Kapat', style: TextStyle(color: renkler.vurgu)),
+            child: Text(
+              _languageService['close'] ?? 'Kapat',
+              style: TextStyle(color: renkler.vurgu),
+            ),
           ),
         ],
       ),
@@ -500,10 +587,13 @@ class _AnaSayfaState extends State<AnaSayfa> {
                 color: renkler.vurgu.withOpacity(0.15),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                Icons.mosque,
-                color: renkler.vurgu,
-                size: 24,
+              child: ClipOval(
+                child: Image.asset(
+                  'assets/icon/app_icon.png',
+                  width: 24,
+                  height: 24,
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
           ),
@@ -519,13 +609,17 @@ class _AnaSayfaState extends State<AnaSayfa> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (_konumlar.length > 1)
-                Icon(Icons.unfold_more, color: renkler.yaziSecondary.withOpacity(0.5), size: 18),
+                Icon(
+                  Icons.unfold_more,
+                  color: renkler.yaziSecondary.withOpacity(0.5),
+                  size: 18,
+                ),
               const SizedBox(width: 4),
               Flexible(
                 child: Text(
                   konumBasligi.toUpperCase(),
                   style: TextStyle(
-                    letterSpacing: 1.5, 
+                    letterSpacing: 1.5,
                     fontSize: 13,
                     color: renkler.yaziPrimary,
                     fontWeight: FontWeight.w600,
@@ -536,7 +630,11 @@ class _AnaSayfaState extends State<AnaSayfa> {
               ),
               if (_konumlar.length > 1) ...[
                 const SizedBox(width: 4),
-                Icon(Icons.expand_more, color: renkler.yaziSecondary.withOpacity(0.5), size: 18),
+                Icon(
+                  Icons.expand_more,
+                  color: renkler.yaziSecondary.withOpacity(0.5),
+                  size: 18,
+                ),
               ],
             ],
           ),
@@ -545,35 +643,23 @@ class _AnaSayfaState extends State<AnaSayfa> {
         actions: [
           // Kıble Pusulası ikonu
           IconButton(
-            icon: Icon(
-              Icons.explore,
-              color: renkler.vurgu,
-              size: 26,
-            ),
+            icon: Icon(Icons.explore, color: renkler.vurgu, size: 26),
             tooltip: _languageService['qibla'] ?? 'Kıble Yönü',
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => const KibleSayfa(),
-                ),
+                MaterialPageRoute(builder: (context) => const KibleSayfa()),
               );
             },
           ),
           // Konum ekle ikonu
           IconButton(
-            icon: Icon(
-              Icons.add_location_alt,
-              color: renkler.vurgu,
-              size: 26,
-            ),
+            icon: Icon(Icons.add_location_alt, color: renkler.vurgu, size: 26),
             tooltip: _languageService['add_location'] ?? 'Konum Ekle',
             onPressed: () async {
               final result = await Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => const IlIlceSecSayfa(),
-                ),
+                MaterialPageRoute(builder: (context) => const IlIlceSecSayfa()),
               );
               if (result == true || result == null) {
                 await _konumYukle();
@@ -604,7 +690,11 @@ class _AnaSayfaState extends State<AnaSayfa> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 30),
+                      const Icon(
+                        Icons.warning_amber_rounded,
+                        color: Colors.orange,
+                        size: 30,
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -630,7 +720,10 @@ class _AnaSayfaState extends State<AnaSayfa> {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.arrow_forward, color: Colors.orange),
+                        icon: const Icon(
+                          Icons.arrow_forward,
+                          color: Colors.orange,
+                        ),
                         onPressed: () {
                           Navigator.push(
                             context,
@@ -643,7 +736,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
                     ],
                   ),
                 ),
-              
+
               // --- SAYAÇ SLIDER BÖLÜMÜ ---
               SizedBox(
                 height: 260,
@@ -723,8 +816,8 @@ class _AnaSayfaState extends State<AnaSayfa> {
           },
           child: Icon(
             Icons.chevron_left,
-            color: _currentSayacIndex > 0 
-                ? renkler.vurgu 
+            color: _currentSayacIndex > 0
+                ? renkler.vurgu
                 : renkler.yaziSecondary.withValues(alpha: 0.3),
             size: 24,
           ),
@@ -748,16 +841,18 @@ class _AnaSayfaState extends State<AnaSayfa> {
               height: 8,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(4),
-                color: isActive 
-                    ? renkler.vurgu 
+                color: isActive
+                    ? renkler.vurgu
                     : renkler.yaziSecondary.withValues(alpha: 0.3),
-                boxShadow: isActive ? [
-                  BoxShadow(
-                    color: renkler.vurgu.withValues(alpha: 0.4),
-                    blurRadius: 8,
-                    spreadRadius: 1,
-                  ),
-                ] : null,
+                boxShadow: isActive
+                    ? [
+                        BoxShadow(
+                          color: renkler.vurgu.withValues(alpha: 0.4),
+                          blurRadius: 8,
+                          spreadRadius: 1,
+                        ),
+                      ]
+                    : null,
               ),
             ),
           );
@@ -775,8 +870,8 @@ class _AnaSayfaState extends State<AnaSayfa> {
           },
           child: Icon(
             Icons.chevron_right,
-            color: _currentSayacIndex < 4 
-                ? renkler.vurgu 
+            color: _currentSayacIndex < 4
+                ? renkler.vurgu
                 : renkler.yaziSecondary.withValues(alpha: 0.3),
             size: 24,
           ),
@@ -801,158 +896,158 @@ class _AnaSayfaState extends State<AnaSayfa> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-              ListTile(
-                leading: Icon(Icons.schedule, color: renkler.vurgu),
-                title: Text(
-                  _languageService['calendar'] ?? 'İmsakiye',
-                  style: TextStyle(color: renkler.yaziPrimary),
+                ListTile(
+                  leading: Icon(Icons.schedule, color: renkler.vurgu),
+                  title: Text(
+                    _languageService['calendar'] ?? 'İmsakiye',
+                    style: TextStyle(color: renkler.yaziPrimary),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ImsakiyeSayfa(),
+                      ),
+                    );
+                  },
                 ),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ImsakiyeSayfa(),
-                    ),
-                  );
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.auto_awesome, color: renkler.vurgu),
-                title: Text(
-                  _languageService['dhikr'] ?? 'Zikir Matik',
-                  style: TextStyle(color: renkler.yaziPrimary),
+                ListTile(
+                  leading: Icon(Icons.auto_awesome, color: renkler.vurgu),
+                  title: Text(
+                    _languageService['dhikr'] ?? 'Zikir Matik',
+                    style: TextStyle(color: renkler.yaziPrimary),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ZikirMatikSayfa(),
+                      ),
+                    );
+                  },
                 ),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ZikirMatikSayfa(),
-                    ),
-                  );
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.mosque, color: renkler.vurgu),
-                title: Text(
-                  _languageService['worship'] ?? 'İbadet',
-                  style: TextStyle(color: renkler.yaziPrimary),
+                ListTile(
+                  leading: Icon(Icons.mosque, color: renkler.vurgu),
+                  title: Text(
+                    _languageService['worship'] ?? 'İbadet',
+                    style: TextStyle(color: renkler.yaziPrimary),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const IbadetSayfa(),
+                      ),
+                    );
+                  },
                 ),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const IbadetSayfa(),
-                    ),
-                  );
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.explore, color: renkler.vurgu),
-                title: Text(
-                  _languageService['qibla'] ?? 'Kıble Yönü',
-                  style: TextStyle(color: renkler.yaziPrimary),
+                ListTile(
+                  leading: Icon(Icons.explore, color: renkler.vurgu),
+                  title: Text(
+                    _languageService['qibla'] ?? 'Kıble Yönü',
+                    style: TextStyle(color: renkler.yaziPrimary),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const KibleSayfa(),
+                      ),
+                    );
+                  },
                 ),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const KibleSayfa(),
-                    ),
-                  );
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.place, color: renkler.vurgu),
-                title: Text(
-                  _languageService['nearby_mosques'] ?? 'Yakındaki Camiler',
-                  style: TextStyle(color: renkler.yaziPrimary),
+                ListTile(
+                  leading: Icon(Icons.place, color: renkler.vurgu),
+                  title: Text(
+                    _languageService['nearby_mosques'] ?? 'Yakındaki Camiler',
+                    style: TextStyle(color: renkler.yaziPrimary),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const YakinCamilerSayfa(),
+                      ),
+                    );
+                  },
                 ),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const YakinCamilerSayfa(),
-                    ),
-                  );
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.celebration, color: renkler.vurgu),
-                title: Text(
-                  _languageService['special_days'] ?? 'Özel Gün ve Geceler',
-                  style: TextStyle(color: renkler.yaziPrimary),
+                ListTile(
+                  leading: Icon(Icons.celebration, color: renkler.vurgu),
+                  title: Text(
+                    _languageService['special_days'] ?? 'Özel Gün ve Geceler',
+                    style: TextStyle(color: renkler.yaziPrimary),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const OzelGunlerSayfa(),
+                      ),
+                    );
+                  },
                 ),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const OzelGunlerSayfa(),
-                    ),
-                  );
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.menu_book, color: renkler.vurgu),
-                title: Text(
-                  _languageService['hadith'] ?? '40 Hadis',
-                  style: TextStyle(color: renkler.yaziPrimary),
+                ListTile(
+                  leading: Icon(Icons.menu_book, color: renkler.vurgu),
+                  title: Text(
+                    _languageService['hadith'] ?? '40 Hadis',
+                    style: TextStyle(color: renkler.yaziPrimary),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const KirkHadisSayfa(),
+                      ),
+                    );
+                  },
                 ),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const KirkHadisSayfa(),
-                    ),
-                  );
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.auto_stories, color: renkler.vurgu),
-                title: Text(
-                  _languageService['quran'] ?? 'Kur\'an-ı Kerim',
-                  style: TextStyle(color: renkler.yaziPrimary),
+                ListTile(
+                  leading: Icon(Icons.auto_stories, color: renkler.vurgu),
+                  title: Text(
+                    _languageService['quran'] ?? 'Kur\'an-ı Kerim',
+                    style: TextStyle(color: renkler.yaziPrimary),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const KuranSayfa(),
+                      ),
+                    );
+                  },
                 ),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const KuranSayfa(),
-                    ),
-                  );
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.settings, color: renkler.vurgu),
-                title: Text(
-                  _languageService['settings'] ?? 'Ayarlar',
-                  style: TextStyle(color: renkler.yaziPrimary),
+                ListTile(
+                  leading: Icon(Icons.settings, color: renkler.vurgu),
+                  title: Text(
+                    _languageService['settings'] ?? 'Ayarlar',
+                    style: TextStyle(color: renkler.yaziPrimary),
+                  ),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AyarlarSayfa(),
+                      ),
+                    );
+                    await _konumYukle();
+                    // Vakit listesini yenile
+                    setState(() {
+                      _vakitListesiKey = UniqueKey();
+                    });
+                  },
                 ),
-                onTap: () async {
-                  Navigator.pop(context);
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const AyarlarSayfa(),
-                    ),
-                  );
-                  await _konumYukle();
-                  // Vakit listesini yenile
-                  setState(() {
-                    _vakitListesiKey = UniqueKey();
-                  });
-                },
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
         );
       },
     );

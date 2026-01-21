@@ -22,6 +22,7 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
   int _hedef = 33;
   int _toplamTur = 0;
   bool _titresimAcik = true;
+  double _fontScale = 1.0;
 
   late AnimationController _pulseController;
   late AnimationController _rippleController;
@@ -96,6 +97,7 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
       _toplamTur = prefs.getInt('zikir_toplam_tur') ?? 0;
       _secilenZikirIndex = prefs.getInt('zikir_secilen_index') ?? 0;
       _titresimAcik = prefs.getBool('zikir_titresim') ?? true;
+      _fontScale = prefs.getDouble('zikir_font_scale') ?? 1.0;
       
       // Seçilen index geçerli mi kontrol et
       if (_secilenZikirIndex >= _zikirler.length) {
@@ -111,6 +113,7 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
     await prefs.setInt('zikir_toplam_tur', _toplamTur);
     await prefs.setInt('zikir_secilen_index', _secilenZikirIndex);
     await prefs.setBool('zikir_titresim', _titresimAcik);
+    await prefs.setDouble('zikir_font_scale', _fontScale);
   }
   
   Future<void> _ozelZikirleriKaydet() async {
@@ -339,6 +342,32 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
+          // Font küçült
+          IconButton(
+            icon: const Icon(Icons.text_decrease),
+            onPressed: () {
+              if (_fontScale > 0.7) {
+                setState(() {
+                  _fontScale -= 0.1;
+                });
+                _verileriKaydet();
+              }
+            },
+            tooltip: _languageService['decrease_font'] ?? 'Yazı Küçült',
+          ),
+          // Font büyüt
+          IconButton(
+            icon: const Icon(Icons.text_increase),
+            onPressed: () {
+              if (_fontScale < 1.5) {
+                setState(() {
+                  _fontScale += 0.1;
+                });
+                _verileriKaydet();
+              }
+            },
+            tooltip: _languageService['increase_font'] ?? 'Yazı Büyüt',
+          ),
           IconButton(
             icon: const Icon(Icons.add_circle_outline),
             onPressed: _zikirEkleDialog,
@@ -404,7 +433,7 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
                           const SizedBox(height: 4),
                           Text(
                             _languageService['add'] ?? 'Ekle',
-                            style: const TextStyle(color: Colors.cyanAccent, fontSize: 10),
+                            style: TextStyle(color: Colors.cyanAccent, fontSize: 10 * _fontScale),
                           ),
                         ],
                       ),
@@ -445,7 +474,7 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
                               style: TextStyle(
                                 color: isSelected ? Colors.cyanAccent : Colors.white,
                                 fontWeight: FontWeight.bold,
-                                fontSize: 14,
+                                fontSize: 14 * _fontScale,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -457,7 +486,7 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
                                 color: isSelected
                                     ? Colors.cyanAccent.withOpacity(0.7)
                                     : Colors.white54,
-                                fontSize: 10,
+                                fontSize: 10 * _fontScale,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -535,7 +564,7 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
                                 : (_languageService['vibration_off'] ?? 'Titreşim Kapalı'),
                             style: TextStyle(
                               color: _titresimAcik ? Colors.cyanAccent : Colors.white54,
-                              fontSize: 12,
+                              fontSize: 12 * _fontScale,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -611,9 +640,9 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
                               children: [
                                 Text(
                                   '$_sayac',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: Colors.cyanAccent,
-                                    fontSize: 72,
+                                    fontSize: 72 * _fontScale,
                                     fontWeight: FontWeight.bold,
                                     letterSpacing: 2,
                                   ),
@@ -622,7 +651,7 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
                                   padding: const EdgeInsets.symmetric(horizontal: 16),
                                   child: Text(
                                     _zikirler[_secilenZikirIndex]['isim']!,
-                                    style: const TextStyle(color: Colors.white70, fontSize: 14),
+                                    style: TextStyle(color: Colors.white70, fontSize: 14 * _fontScale),
                                     textAlign: TextAlign.center,
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,

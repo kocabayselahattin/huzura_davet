@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    
+    <!-- Koyu neon arka plan -->
+    <gradient
+        android:angle="135"
+        android:startColor="#1A0033"
+        android:centerColor="#0D001A"
+        android:endColor="#000033"
+        android:type="linear" />
+    
+    <!-- Neon kenarlık -->
+    <stroke
+        android:width="2dp"
+        android:color="#FF00FF" />
+    
+    <!-- Yuvarlatılmış köşeler -->
+    <corners android:radius="12dp" />
+    
+</shape>

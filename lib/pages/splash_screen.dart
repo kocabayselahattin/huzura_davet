@@ -27,19 +27,21 @@ class _SplashScreenState extends State<SplashScreen> {
   Future<void> _kontrolVeYonlendir() async {
     // İlk önce temel izinleri kontrol et
     if (!mounted) return;
-    
+
     setState(() => _durum = 'İzinler kontrol ediliyor...');
-    
+
     // Bildirim izinlerini iste (konum izninden önce) - timeout ile
     try {
-      await PermissionService.requestAllPermissions()
-          .timeout(const Duration(seconds: 5), onTimeout: () {
-        print('⚠️ İzin isteği zaman aşımına uğradı');
-      });
+      await PermissionService.requestAllPermissions().timeout(
+        const Duration(seconds: 5),
+        onTimeout: () {
+          print('⚠️ İzin isteği zaman aşımına uğradı');
+        },
+      );
     } catch (e) {
       print('⚠️ İzin isteği hatası: $e');
     }
-    
+
     // 1 saniye splash screen göster (hız için kısaltıldı)
     await Future.delayed(const Duration(milliseconds: 800));
 
@@ -48,35 +50,37 @@ class _SplashScreenState extends State<SplashScreen> {
     // SharedPreferences'ı tek seferde al (performans için)
     final prefs = await SharedPreferences.getInstance();
     final dilSecildi = prefs.containsKey('language');
-    
+
     if (!dilSecildi) {
       // İlk açılış - dil seçim ekranını göster
       final result = await Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (context) => const DilSecimSayfa(),
-        ),
+        MaterialPageRoute(builder: (context) => const DilSecimSayfa()),
       );
-      
+
       if (result != true || !mounted) return;
     }
 
     // Önce kaydedilmiş konum var mı kontrol et
     setState(() => _durum = 'Konum kontrol ediliyor...');
-    
+
     // SharedPreferences'tan direkt oku (ayrı await'ler yerine)
     final ilceId = prefs.getString('selected_ilce_id');
     final ilId = prefs.getString('selected_il_id');
-    
+
     // Hızlı validasyon (API çağrısı yapmadan)
     bool isValid = _hizliValidasyon(ilceId);
-    
+
     // Eğer geçerli konum varsa, direkt ana sayfaya git
-    if (isValid && ilceId != null && ilceId.isNotEmpty && ilId != null && ilId.isNotEmpty) {
+    if (isValid &&
+        ilceId != null &&
+        ilceId.isNotEmpty &&
+        ilId != null &&
+        ilId.isNotEmpty) {
       print('✅ Kayıtlı konum bulundu, ana sayfaya yönlendiriliyor...');
-      
+
       if (!mounted) return;
-      
+
       Navigator.pushReplacement(
         context,
         PageRouteBuilder(
@@ -124,7 +128,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
       // İzin durumunu kontrol et
       LocationPermission permission = await Geolocator.checkPermission();
-      
+
       if (permission == LocationPermission.denied) {
         // İzin iste
         permission = await Geolocator.requestPermission();
@@ -150,11 +154,23 @@ class _SplashScreenState extends State<SplashScreen> {
   // Hızlı ilçe ID validasyonu (async olmadan)
   bool _hizliValidasyon(String? ilceId) {
     if (ilceId == null || ilceId.isEmpty) return false;
-    
+
     // Bilinen geçersiz ID'ler
-    const invalidIds = ['1219', '1823', '1020', '1003', '1421', '1200', '1201', '1202', '1203', '1204', '1205'];
+    const invalidIds = [
+      '1219',
+      '1823',
+      '1020',
+      '1003',
+      '1421',
+      '1200',
+      '1201',
+      '1202',
+      '1203',
+      '1204',
+      '1205',
+    ];
     if (invalidIds.contains(ilceId)) return false;
-    
+
     // Geçerli ID'ler genelde 9000-18000 aralığında
     try {
       final idNum = int.parse(ilceId);
@@ -167,83 +183,102 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Arka plan: Derin petrol mavisi (Huzur veren koyu ton)
-      backgroundColor: const Color(0xFF0D1B2A),
+      // Arka plan: İkon ile uyumlu koyu mavi gradient
+      backgroundColor: const Color(0xFF1B2741),
       body: Container(
         width: double.infinity,
         decoration: const BoxDecoration(
-          // Hafif bir gradyan ekleyerek derinlik kazandırıyoruz
-          gradient: RadialGradient(
-            center: Alignment.center,
-            radius: 1.5,
+          // İkon renkleri ile uyumlu gradient (#1B2741 -> #2B3151)
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
             colors: [
-              Color(0xFF1B4332), // Merkeze yakın hafif yeşil dokunuş
-              Color(0xFF081C15), // Kenarlara doğru derinleşen koyu ton
+              Color(0xFF1B2741), // İkonun arka plan rengi
+              Color(0xFF2B3151), // Hafif açık ton
+              Color(0xFF1B2741), // Tekrar koyu ton
             ],
           ),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Modern Cami İkonu (Neon Efektli)
+            // Uygulama İkonu (PNG)
             Container(
-              padding: const EdgeInsets.all(20),
+              width: 150,
+              height: 150,
+              padding: const EdgeInsets.all(15),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.1),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF2D6A4F).withOpacity(0.3),
-                    blurRadius: 40,
-                    spreadRadius: 5,
+                    color: const Color(0xFF00BCD4).withOpacity(0.3),
+                    blurRadius: 30,
+                    spreadRadius: 10,
                   ),
                 ],
               ),
-              child: const Icon(
-                Icons.mosque_outlined,
-                size: 120,
-                color: Color(0xFF74C69D), // Tatlı nane yeşili neon
+              child: ClipOval(
+                child: Image.asset(
+                  'assets/icon/app_icon.png',
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    // Eğer icon yüklenemezse fallback olarak cami ikonu göster
+                    return const Icon(
+                      Icons.mosque_outlined,
+                      size: 90,
+                      color: Color(0xFF00BCD4),
+                    );
+                  },
+                ),
               ),
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 40),
             // Uygulama İsmi
             const Text(
               "HUZUR VAKTİ",
               style: TextStyle(
-                color: Color(0xFFD8F3DC), // Çok açık yeşil, beyaza yakın
-                fontSize: 32,
-                fontWeight: FontWeight.w300, // Modern ve ince yazı tipi
-                letterSpacing: 8, // Harf arası boşlukla ferahlık hissi
-                shadows: [Shadow(color: Color(0xFF40916C), blurRadius: 15)],
+                color: Color(0xFFFFFFFF), // Beyaz
+                fontSize: 34,
+                fontWeight: FontWeight.w300,
+                letterSpacing: 8,
+                shadows: [
+                  Shadow(
+                    color: Color(0xFF00BCD4),
+                    blurRadius: 20,
+                    offset: Offset(0, 2),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 10),
-            // Küçük bir alt yazı (Opsiyonel)
+            const SizedBox(height: 12),
+            // Alt yazı
             Text(
               "Vaktin huzuruna erişin",
               style: TextStyle(
-                color: const Color(0xFF95D5B2).withOpacity(0.6),
-                fontSize: 14,
+                color: const Color(0xFF00BCD4).withOpacity(0.7),
+                fontSize: 15,
                 fontStyle: FontStyle.italic,
-                letterSpacing: 1,
+                letterSpacing: 1.5,
               ),
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 40),
             // Durum göstergesi
             Text(
               _durum,
               style: TextStyle(
-                color: const Color(0xFF95D5B2).withOpacity(0.5),
-                fontSize: 12,
+                color: Colors.white.withOpacity(0.6),
+                fontSize: 13,
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 15),
             SizedBox(
-              width: 30,
-              height: 30,
+              width: 32,
+              height: 32,
               child: CircularProgressIndicator(
-                strokeWidth: 2,
+                strokeWidth: 2.5,
                 valueColor: AlwaysStoppedAnimation(
-                  const Color(0xFF74C69D).withOpacity(0.5),
+                  const Color(0xFF00BCD4).withOpacity(0.8),
                 ),
               ),
             ),
@@ -257,7 +292,7 @@ class _SplashScreenState extends State<SplashScreen> {
 // İlk kullanım için Onboarding Sayfası
 class IlIlceSecOnboarding extends StatelessWidget {
   final bool konumIzniVar;
-  
+
   const IlIlceSecOnboarding({super.key, this.konumIzniVar = false});
 
   @override
@@ -322,8 +357,10 @@ class IlIlceSecOnboarding extends StatelessWidget {
                   final result = await Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
-                          IlIlceSecSayfa(ilkKurulum: true, otomatikKonumTespit: konumIzniVar),
+                      builder: (context) => IlIlceSecSayfa(
+                        ilkKurulum: true,
+                        otomatikKonumTespit: konumIzniVar,
+                      ),
                     ),
                   );
 

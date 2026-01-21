@@ -87,10 +87,11 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
-  # Ses dosyaları ve dil dosyaları
+  # Ses dosyaları, dil dosyaları ve icon
   assets:
     - assets/sounds/
     - assets/lang/
+    - assets/icon/app_icon.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

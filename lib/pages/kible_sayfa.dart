@@ -125,7 +125,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
       // Önce son bilinen konumu al (hızlı başlangıç için)
       Position? lastKnown = await Geolocator.getLastKnownPosition();
       Position? position;
-      
+
       try {
         // Konum al (30 saniye timeout)
         position = await Geolocator.getCurrentPosition(
@@ -139,14 +139,17 @@ class _KibleSayfaState extends State<KibleSayfa> {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Canlı konum alınamadı, son bilinen konum kullanıldı.'),
+                content: Text(
+                  'Canlı konum alınamadı, son bilinen konum kullanıldı.',
+                ),
                 backgroundColor: Colors.orange,
               ),
             );
           }
         } else {
           setState(() {
-            _hata = 'Konum alınamadı. Lütfen GPS\'i açık alanda tekrar deneyin.\nHata: $e';
+            _hata =
+                'Konum alınamadı. Lütfen GPS\'i açık alanda tekrar deneyin.\nHata: $e';
             _hataAksiyon = _konumuAl;
             _hataAksiyonLabel = 'Tekrar Dene';
             _yukleniyor = false;
@@ -166,10 +169,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
       }
 
       // Kıble açısını hesapla
-      final kibleAcisi = _kibleHesapla(
-        position.latitude,
-        position.longitude,
-      );
+      final kibleAcisi = _kibleHesapla(position.latitude, position.longitude);
 
       final declination = _hesaplaManyetikSapma(
         position.latitude,
@@ -183,7 +183,6 @@ class _KibleSayfaState extends State<KibleSayfa> {
         _declination = declination;
         _yukleniyor = false;
       });
-
     } catch (e) {
       setState(() {
         _hata = 'Konum alınamadı: $e';
@@ -203,16 +202,16 @@ class _KibleSayfaState extends State<KibleSayfa> {
 
     // Kıble açısını hesapla (düzeltilmiş formül)
     final dLon = lon2 - lon1;
-    
+
     // Düzeltilmiş bearing hesaplaması
     final y = math.sin(dLon);
     final x = math.cos(lat1) * math.tan(lat2) - math.sin(lat1) * math.cos(dLon);
-    
+
     double derece = _toDegrees(math.atan2(y, x));
-    
+
     // 0-360 aralığına normalize et
     derece = (derece + 360) % 360;
-    
+
     return derece;
   }
 
@@ -228,12 +227,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
     try {
       final geoMag = GeoMag();
       final altitudeFeet = (alt ?? 0) * 3.28084;
-      final result = geoMag.calculate(
-        lat,
-        lon,
-        altitudeFeet,
-        DateTime.now(),
-      );
+      final result = geoMag.calculate(lat, lon, altitudeFeet, DateTime.now());
       return result.dec.toDouble();
     } catch (_) {
       return 0;
@@ -253,10 +247,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
     return Scaffold(
       backgroundColor: renkler.arkaPlan,
       appBar: AppBar(
-        title: Text(
-          'Kıble Yönü',
-          style: TextStyle(color: renkler.yaziPrimary),
-        ),
+        title: Text('Kıble Yönü', style: TextStyle(color: renkler.yaziPrimary)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: IconThemeData(color: renkler.yaziPrimary),
@@ -286,8 +277,8 @@ class _KibleSayfaState extends State<KibleSayfa> {
               ),
             )
           : _hata != null
-              ? _hataMesaji(renkler)
-              : _pusulaGoster(renkler),
+          ? _hataMesaji(renkler)
+          : _pusulaGoster(renkler),
     );
   }
 
@@ -307,10 +298,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
             Text(
               _hata!,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: renkler.yaziPrimary,
-                fontSize: 16,
-              ),
+              style: TextStyle(color: renkler.yaziPrimary, fontSize: 16),
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
@@ -341,10 +329,13 @@ class _KibleSayfaState extends State<KibleSayfa> {
     final hasHeading = heading != null;
     final qibla = _kibleDerece ?? 0;
     final double? trueHeading = hasHeading
-      ? _normalizeAngle((heading ?? 0).toDouble() + (_declination ?? 0)).toDouble()
-      : null;
-    final double? relative =
-      trueHeading != null ? _normalizeAngle(qibla - trueHeading) : null;
+        ? _normalizeAngle(
+            (heading ?? 0).toDouble() + (_declination ?? 0),
+          ).toDouble()
+        : null;
+    final double? relative = trueHeading != null
+        ? _normalizeAngle(qibla - trueHeading)
+        : null;
 
     return SingleChildScrollView(
       child: Column(
@@ -370,9 +361,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
       decoration: BoxDecoration(
         color: renkler.kartArkaPlan,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: renkler.ayirac.withValues(alpha: 0.5),
-        ),
+        border: Border.all(color: renkler.ayirac.withValues(alpha: 0.5)),
       ),
       child: Column(
         children: [
@@ -395,18 +384,12 @@ class _KibleSayfaState extends State<KibleSayfa> {
           if (_konum != null) ...[
             Text(
               'Enlem: ${_konum!.latitude.toStringAsFixed(4)}°',
-              style: TextStyle(
-                color: renkler.yaziSecondary,
-                fontSize: 14,
-              ),
+              style: TextStyle(color: renkler.yaziSecondary, fontSize: 14),
             ),
             const SizedBox(height: 4),
             Text(
               'Boylam: ${_konum!.longitude.toStringAsFixed(4)}°',
-              style: TextStyle(
-                color: renkler.yaziSecondary,
-                fontSize: 14,
-              ),
+              style: TextStyle(color: renkler.yaziSecondary, fontSize: 14),
             ),
           ],
         ],
@@ -470,10 +453,16 @@ class _KibleSayfaState extends State<KibleSayfa> {
                     alignment: Alignment.topCenter,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Icon(Icons.mosque, color: Colors.brown, size: 38),
+                      children: [
+                        Text('🕋', style: TextStyle(fontSize: 38)),
                         SizedBox(height: 4),
-                        Text('Kabe', style: TextStyle(color: Colors.brown, fontWeight: FontWeight.bold)),
+                        Text(
+                          'Kabe',
+                          style: TextStyle(
+                            color: Colors.brown,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -489,7 +478,10 @@ class _KibleSayfaState extends State<KibleSayfa> {
                       opacity: 1,
                       duration: const Duration(milliseconds: 400),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.green.withOpacity(0.85),
                           borderRadius: BorderRadius.circular(16),
@@ -502,7 +494,11 @@ class _KibleSayfaState extends State<KibleSayfa> {
                         ),
                         child: Row(
                           children: const [
-                            Icon(Icons.check_circle, color: Colors.white, size: 20),
+                            Icon(
+                              Icons.check_circle,
+                              color: Colors.white,
+                              size: 20,
+                            ),
                             SizedBox(width: 8),
                             Text(
                               'Doğru Yöndesiniz',
@@ -572,11 +568,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
           painter: _TrianglePainter(color: const Color(0xFF45D06E)),
         ),
         const SizedBox(height: 4),
-        const Icon(
-          Icons.mosque,
-          color: Colors.black,
-          size: 18,
-        ),
+        const Icon(Icons.mosque, color: Colors.black, size: 18),
       ],
     );
   }
@@ -600,11 +592,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
-            Icons.mosque,
-            color: Colors.black,
-            size: 16,
-          ),
+          const Icon(Icons.mosque, color: Colors.black, size: 16),
           const SizedBox(height: 2),
           Text(
             text,
@@ -659,7 +647,10 @@ class _KibleSayfaState extends State<KibleSayfa> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: renkler.kartArkaPlan.withValues(alpha: 0.8),
                     borderRadius: BorderRadius.circular(12),
@@ -695,10 +686,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [
-                Colors.greenAccent.shade200,
-                Colors.green.shade600,
-              ],
+              colors: [Colors.greenAccent.shade200, Colors.green.shade600],
             ),
             borderRadius: BorderRadius.circular(4),
             boxShadow: [
@@ -708,31 +696,6 @@ class _KibleSayfaState extends State<KibleSayfa> {
                 offset: const Offset(0, 8),
               ),
             ],
-          ),
-        ),
-        const SizedBox(height: 12),
-        Container(
-          width: 54,
-          height: 54,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Colors.green.shade500,
-                Colors.green.shade800,
-              ],
-            ),
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.green.withValues(alpha: 0.6),
-                blurRadius: 16,
-              ),
-            ],
-          ),
-          child: const Icon(
-            Icons.mosque,
-            color: Colors.white,
-            size: 26,
           ),
         ),
       ],
@@ -788,9 +751,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
             renkler.vurgu.withValues(alpha: 0.10),
           ],
         ),
-        border: Border.all(
-          color: renkler.ayirac.withValues(alpha: 0.25),
-        ),
+        border: Border.all(color: renkler.ayirac.withValues(alpha: 0.25)),
       ),
     );
   }
@@ -803,10 +764,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
         children: List.generate(8, (index) {
           final angle = _toRadians(index * 45.0);
           return Align(
-            alignment: Alignment(
-              math.cos(angle),
-              math.sin(angle),
-            ),
+            alignment: Alignment(math.cos(angle), math.sin(angle)),
             child: Container(
               width: 6,
               height: 6,
@@ -857,9 +815,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
       decoration: BoxDecoration(
         color: renkler.arkaPlan.withValues(alpha: 0.7),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: renkler.ayirac.withValues(alpha: 0.4),
-        ),
+        border: Border.all(color: renkler.ayirac.withValues(alpha: 0.4)),
       ),
       child: Row(
         children: [
@@ -867,10 +823,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
           const SizedBox(width: 6),
           Text(
             '$title: ',
-            style: TextStyle(
-              color: renkler.yaziSecondary,
-              fontSize: 12,
-            ),
+            style: TextStyle(color: renkler.yaziSecondary, fontSize: 12),
           ),
           Text(
             value,
@@ -901,10 +854,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
             Text(
               'Cihazda pusula sensörü bulunamadı.',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: renkler.yaziPrimary,
-                fontSize: 16,
-              ),
+              style: TextStyle(color: renkler.yaziPrimary, fontSize: 16),
             ),
           ],
         ),
@@ -918,11 +868,11 @@ class _KibleSayfaState extends State<KibleSayfa> {
         : '${_kibleDerece!.toStringAsFixed(1)}°';
     final yonText = _kibleDerece == null ? '-' : _getYonAdi(_kibleDerece!);
     final headingText = _heading == null
-      ? '--'
-      : '${_normalizeAngle(_heading!.toDouble() + (_declination ?? 0)).toStringAsFixed(0)}°';
+        ? '--'
+        : '${_normalizeAngle(_heading!.toDouble() + (_declination ?? 0)).toStringAsFixed(0)}°';
     final declinationText = _declination == null
-      ? '--'
-      : '${_declination!.toStringAsFixed(1)}°';
+        ? '--'
+        : '${_declination!.toStringAsFixed(1)}°';
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -935,18 +885,13 @@ class _KibleSayfaState extends State<KibleSayfa> {
           ],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: renkler.vurgu.withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: renkler.vurgu.withValues(alpha: 0.3)),
       ),
       child: Column(
         children: [
           Text(
             'Kıble Açısı',
-            style: TextStyle(
-              color: renkler.yaziSecondary,
-              fontSize: 14,
-            ),
+            style: TextStyle(color: renkler.yaziSecondary, fontSize: 14),
           ),
           const SizedBox(height: 8),
           Text(
@@ -960,26 +905,17 @@ class _KibleSayfaState extends State<KibleSayfa> {
           const SizedBox(height: 4),
           Text(
             yonText,
-            style: TextStyle(
-              color: renkler.yaziPrimary,
-              fontSize: 16,
-            ),
+            style: TextStyle(color: renkler.yaziPrimary, fontSize: 16),
           ),
           const SizedBox(height: 8),
           Text(
             'Pusula: $headingText',
-            style: TextStyle(
-              color: renkler.yaziSecondary,
-              fontSize: 12,
-            ),
+            style: TextStyle(color: renkler.yaziSecondary, fontSize: 12),
           ),
           const SizedBox(height: 4),
           Text(
             'Manyetik sapma: $declinationText',
-            style: TextStyle(
-              color: renkler.yaziSecondary,
-              fontSize: 12,
-            ),
+            style: TextStyle(color: renkler.yaziSecondary, fontSize: 12),
           ),
         ],
       ),
@@ -1004,17 +940,11 @@ class _KibleSayfaState extends State<KibleSayfa> {
       decoration: BoxDecoration(
         color: Colors.blue.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.blue.withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.info_outline,
-            color: Colors.blue[700],
-            size: 24,
-          ),
+          Icon(Icons.info_outline, color: Colors.blue[700], size: 24),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -1081,7 +1011,11 @@ class _CompassDialPainter extends CustomPainter {
       final angle = (i - 90) * math.pi / 180;
       final isMajor = i % 30 == 0;
       final isMedium = i % 10 == 0;
-      final tickLength = isMajor ? 16.0 : isMedium ? 10.0 : 6.0;
+      final tickLength = isMajor
+          ? 16.0
+          : isMedium
+          ? 10.0
+          : 6.0;
       final outer = Offset(
         center.dx + math.cos(angle) * (radius - 6),
         center.dy + math.sin(angle) * (radius - 6),

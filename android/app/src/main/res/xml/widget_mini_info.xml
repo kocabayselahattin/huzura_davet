@@ -9,5 +9,4 @@
     android:previewLayout="@layout/widget_mini_sunset"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen"
-    android:previewImage="@drawable/widget_bg_card_dark"
     android:description="@string/widget_mini_desc" />

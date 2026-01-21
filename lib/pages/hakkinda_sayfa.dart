@@ -64,11 +64,15 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
                     ],
                   ),
                 ),
-                child: const Center(
-                  child: Icon(
-                    Icons.mosque,
-                    size: 80,
-                    color: Colors.white38,
+                child: Center(
+                  child: Opacity(
+                    opacity: 0.3,
+                    child: Image.asset(
+                      'assets/icon/app_icon.png',
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.contain,
+                    ),
                   ),
                 ),
               ),
@@ -130,9 +134,7 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
           ],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: renkler.vurgu.withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: renkler.vurgu.withValues(alpha: 0.3)),
       ),
       child: Column(
         children: [
@@ -143,10 +145,13 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
               color: renkler.vurgu,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
-              Icons.mosque,
-              size: 40,
-              color: Colors.white,
+            child: ClipOval(
+              child: Image.asset(
+                'assets/icon/app_icon.png',
+                width: 40,
+                height: 40,
+                fit: BoxFit.cover,
+              ),
             ),
           ),
           const SizedBox(height: 16),
@@ -160,11 +165,9 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
           ),
           const SizedBox(height: 8),
           Text(
-            _languageService['prayer_times_assistant'] ?? 'Namaz Vakitleri ve İbadet Asistanı',
-            style: TextStyle(
-              color: renkler.yaziSecondary,
-              fontSize: 14,
-            ),
+            _languageService['prayer_times_assistant'] ??
+                'Namaz Vakitleri ve İbadet Asistanı',
+            style: TextStyle(color: renkler.yaziSecondary, fontSize: 14),
           ),
           const SizedBox(height: 4),
           Text(
@@ -209,104 +212,148 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
       {
         'ikon': Icons.location_city,
         'renk': Colors.blue,
-        'baslik': '🆕 Çoklu Konum',
-        'aciklama': 'Birden fazla konum ekleyin ve aralarında kolayca geçiş yapın',
+        'baslik':
+            '🆕 ${_languageService['feature_multiple_locations'] ?? 'Çoklu Konum'}',
+        'aciklama':
+            _languageService['feature_multiple_locations_desc'] ??
+            'Birden fazla konum ekleyin ve aralarında kolayca geçiş yapın',
       },
       {
         'ikon': Icons.public,
         'renk': Colors.green,
-        'baslik': '🆕 Ülke Desteği',
-        'aciklama': 'Türkiye dışındaki ülkeler için hazırlıklar devam ediyor',
+        'baslik':
+            '🆕 ${_languageService['feature_country_support'] ?? 'Ülke Desteği'}',
+        'aciklama':
+            _languageService['feature_country_support_desc'] ??
+            'Türkiye dışındaki ülkeler için hazırlıklar devam ediyor',
       },
       {
         'ikon': Icons.notifications_active,
         'renk': Colors.red,
-        'baslik': 'Akıllı Bildirimler',
-        'aciklama': 'Her vakit için özelleştirilebilir bildirimler, erken hatırlatma ve vaktinde bildirim seçenekleri',
+        'baslik':
+            _languageService['feature_smart_notifications'] ??
+            'Akıllı Bildirimler',
+        'aciklama':
+            _languageService['feature_smart_notifications_desc'] ??
+            'Her vakit için özelleştirilebilir bildirimler, erken hatırlatma ve vaktinde bildirim seçenekleri',
       },
       {
         'ikon': Icons.lock_open,
         'renk': Colors.purple,
-        'baslik': '🆕 Otomatik Widget Güncelleme',
-        'aciklama': 'Ekran kilidi açıldığında widget otomatik güncellenir',
+        'baslik':
+            '🆕 ${_languageService['feature_auto_widget_update'] ?? 'Otomatik Widget Güncelleme'}',
+        'aciklama':
+            _languageService['feature_auto_widget_update_desc'] ??
+            'Ekran kilidi açıldığında widget otomatik güncellenir',
       },
       {
         'ikon': Icons.location_on,
         'renk': Colors.teal,
-        'baslik': 'Konum Tabanlı',
-        'aciklama': 'GPS ile konumunuzu otomatik tespit eder ve en doğru vakit bilgilerini sunar',
+        'baslik': _languageService['feature_location_based'] ?? 'Konum Tabanlı',
+        'aciklama':
+            _languageService['feature_location_based_desc'] ??
+            'GPS ile konumunuzu otomatik tespit eder ve en doğru vakit bilgilerini sunar',
       },
       {
         'ikon': Icons.menu_book,
         'renk': Colors.deepOrange,
-        'baslik': '🆕 Namazda Okunan Dualar',
-        'aciklama': 'Sübhaneke, Fatiha, Tahiyyat, Salavat ve tüm namaz duaları Arapça ve okunuşlarıyla',
+        'baslik':
+            '🆕 ${_languageService['feature_prayer_duas'] ?? 'Namazda Okunan Dualar'}',
+        'aciklama':
+            _languageService['feature_prayer_duas_desc'] ??
+            'Sübhaneke, Fatiha, Tahiyyat, Salavat ve tüm namaz duaları Arapça ve okunuşlarıyla',
       },
       {
         'ikon': Icons.checklist,
         'renk': Colors.indigo,
-        'baslik': '🆕 32 ve 54 Farz',
-        'aciklama': 'İslam\'ın tüm farzları detaylı açıklamalarıyla',
+        'baslik': '🆕 ${_languageService['feature_farz'] ?? '32 ve 54 Farz'}',
+        'aciklama':
+            _languageService['feature_farz_desc'] ??
+            'İslam\'ın tüm farzları detaylı açıklamalarıyla',
       },
       {
         'ikon': Icons.brightness_3,
         'renk': Colors.indigo,
-        'baslik': 'Özel Gün ve Geceler',
-        'aciklama': 'Kandil geceleri, bayramlar ve önemli günler hakkında detaylı bilgi ve hatırlatmalar',
+        'baslik':
+            _languageService['feature_special_days'] ?? 'Özel Gün ve Geceler',
+        'aciklama':
+            _languageService['feature_special_days_desc'] ??
+            'Kandil geceleri, bayramlar ve önemli günler hakkında detaylı bilgi ve hatırlatmalar',
       },
       {
         'ikon': Icons.book,
         'renk': Colors.orange,
-        'baslik': 'Kur\'an-ı Kerim',
-        'aciklama': 'Günün ayeti, sureler ve meal ile Kur\'an-ı Kerim\'e kolay erişim',
+        'baslik': _languageService['feature_quran'] ?? 'Kur\'an-ı Kerim',
+        'aciklama':
+            _languageService['feature_quran_desc'] ??
+            'Günün ayeti, sureler ve meal ile Kur\'an-ı Kerim\'e kolay erişim',
       },
       {
         'ikon': Icons.library_books,
         'renk': Colors.brown,
-        'baslik': '40 Hadis-i Şerif',
-        'aciklama': 'Peygamber Efendimiz (S.A.V)\'in hadislerinden seçilmiş 40 hadis koleksiyonu',
+        'baslik':
+            _languageService['feature_forty_hadiths'] ?? '40 Hadis-i Şerif',
+        'aciklama':
+            _languageService['feature_forty_hadiths_desc'] ??
+            'Peygamber Efendimiz (S.A.V)\'in hadislerinden seçilmiş 40 hadis koleksiyonu',
       },
       {
         'ikon': Icons.library_books,
         'renk': Colors.brown,
-        'baslik': '📿 Özel Zikir Ekleme',
-        'aciklama': 'Kendi zikirlerinizi ekleyin, düzenleyin ve silin',
+        'baslik':
+            '📿 ${_languageService['feature_custom_dhikr'] ?? 'Özel Zikir Ekleme'}',
+        'aciklama':
+            _languageService['feature_custom_dhikr_desc'] ??
+            'Kendi zikirlerinizi ekleyin, düzenleyin ve silin',
       },
       {
         'ikon': Icons.blur_circular,
         'renk': Colors.cyan,
-        'baslik': 'Zikir Matik',
-        'aciklama': 'Dijital tesbih, sayaç ve titreşim özelliği ile zikirlerinizi takip edin',
+        'baslik': _languageService['feature_dhikr_counter'] ?? 'Zikir Matik',
+        'aciklama':
+            _languageService['feature_dhikr_counter_desc'] ??
+            'Dijital tesbih, sayaç ve titreşim özelliği ile zikirlerinizi takip edin',
       },
       {
         'ikon': Icons.star,
         'renk': Colors.amber,
-        'baslik': 'Esmaül Hüsna',
-        'aciklama': 'Allah\'ın 99 güzel ismi ve anlamları, günün esması özelliği',
+        'baslik': _languageService['feature_esmaul_husna'] ?? 'Esmaül Hüsna',
+        'aciklama':
+            _languageService['feature_esmaul_husna_desc'] ??
+            'Allah\'ın 99 güzel ismi ve anlamları, günün esması özelliği',
       },
       {
         'ikon': Icons.qr_code,
         'renk': Colors.deepPurple,
-        'baslik': 'Kıble Yönü',
-        'aciklama': 'Pusula ile Kıble yönünü kolayca bulun',
+        'baslik': _languageService['feature_qibla'] ?? 'Kıble Yönü',
+        'aciklama':
+            _languageService['feature_qibla_desc'] ??
+            'Pusula ile Kıble yönünü kolayca bulun',
       },
       {
         'ikon': Icons.mosque,
         'renk': Colors.lightGreen,
-        'baslik': '🆕 Yakındaki Camiler',
-        'aciklama': 'OpenStreetMap ile 2km yarıçapta camileri görüntüleyin',
+        'baslik':
+            '🆕 ${_languageService['feature_nearby_mosques'] ?? 'Yakındaki Camiler'}',
+        'aciklama':
+            _languageService['feature_nearby_mosques_desc'] ??
+            'OpenStreetMap ile 2km yarıçapta camileri görüntüleyin',
       },
       {
         'ikon': Icons.widgets,
         'renk': Colors.pink,
-        'baslik': 'Widget Desteği',
-        'aciklama': 'Ana ekranınızda vakit bilgilerini görüntüleyin',
+        'baslik': _languageService['feature_widgets'] ?? 'Widget Desteği',
+        'aciklama':
+            _languageService['feature_widgets_desc'] ??
+            'Ana ekranınızda vakit bilgilerini görüntüleyin',
       },
       {
         'ikon': Icons.dark_mode,
         'renk': Colors.blueGrey,
-        'baslik': 'Tema Seçenekleri',
-        'aciklama': 'Premium, Galaksi, Neon, Okyanus ve Dijital tema seçenekleri',
+        'baslik': _languageService['feature_themes'] ?? 'Tema Seçenekleri',
+        'aciklama':
+            _languageService['feature_themes_desc'] ??
+            'Premium, Galaksi, Neon, Okyanus ve Dijital tema seçenekleri',
       },
     ];
 
@@ -322,13 +369,15 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
           ),
         ),
         const SizedBox(height: 16),
-        ...ozellikler.map((ozellik) => _ozellikKarti(
-          renkler,
-          ozellik['ikon'] as IconData,
-          ozellik['renk'] as Color,
-          ozellik['baslik'] as String,
-          ozellik['aciklama'] as String,
-        )),
+        ...ozellikler.map(
+          (ozellik) => _ozellikKarti(
+            renkler,
+            ozellik['ikon'] as IconData,
+            ozellik['renk'] as Color,
+            ozellik['baslik'] as String,
+            ozellik['aciklama'] as String,
+          ),
+        ),
       ],
     );
   }
@@ -346,9 +395,7 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
       decoration: BoxDecoration(
         color: renkler.kartArkaPlan,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: renkler.ayirac.withValues(alpha: 0.5),
-        ),
+        border: Border.all(color: renkler.ayirac.withValues(alpha: 0.5)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -398,9 +445,7 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
       decoration: BoxDecoration(
         color: Colors.amber.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.amber.withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -474,15 +519,35 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
             ),
           ),
           const SizedBox(height: 12),
-          _iletisimSatiri(Icons.email, _languageService['email'] ?? 'E-posta', ' ', renkler),
-          _iletisimSatiri(Icons.web, _languageService['web'] ?? 'Web', ' ', renkler),
-          _iletisimSatiri(Icons.bug_report, _languageService['bug_report'] ?? 'Hata Bildirimi', ' ', renkler),
+          _iletisimSatiri(
+            Icons.email,
+            _languageService['email'] ?? 'E-posta',
+            ' ',
+            renkler,
+          ),
+          _iletisimSatiri(
+            Icons.web,
+            _languageService['web'] ?? 'Web',
+            ' ',
+            renkler,
+          ),
+          _iletisimSatiri(
+            Icons.bug_report,
+            _languageService['bug_report'] ?? 'Hata Bildirimi',
+            ' ',
+            renkler,
+          ),
         ],
       ),
     );
   }
 
-  Widget _iletisimSatiri(IconData ikon, String baslik, String deger, TemaRenkleri renkler) {
+  Widget _iletisimSatiri(
+    IconData ikon,
+    String baslik,
+    String deger,
+    TemaRenkleri renkler,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -495,17 +560,11 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
               children: [
                 Text(
                   baslik,
-                  style: TextStyle(
-                    color: renkler.yaziSecondary,
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: renkler.yaziSecondary, fontSize: 12),
                 ),
                 Text(
                   deger,
-                  style: TextStyle(
-                    color: renkler.yaziPrimary,
-                    fontSize: 14,
-                  ),
+                  style: TextStyle(color: renkler.yaziPrimary, fontSize: 14),
                 ),
               ],
             ),
@@ -520,7 +579,7 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
       children: [
         Divider(color: renkler.ayirac),
         const SizedBox(height: 16),
-        
+
         // Play Store düğmesi
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -529,13 +588,19 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
               // Play Store linki (şimdilik devre dışı)
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(_languageService['coming_soon_playstore'] ?? 'Yakında Play Store\'da!'),
+                  content: Text(
+                    _languageService['coming_soon_playstore'] ??
+                        'Yakında Play Store\'da!',
+                  ),
                   duration: const Duration(seconds: 2),
                 ),
               );
             },
             icon: const Icon(Icons.shop, size: 20),
-            label: Text(_languageService['rate_on_playstore'] ?? 'Play Store\'da Değerlendir'),
+            label: Text(
+              _languageService['rate_on_playstore'] ??
+                  'Play Store\'da Değerlendir',
+            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.green,
               foregroundColor: Colors.white,
@@ -546,7 +611,7 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
             ),
           ),
         ),
-        
+
         const SizedBox(height: 8),
         Text(
           '© 2026 ${_languageService['app_name'] ?? 'Huzur Vakti'}',
@@ -566,7 +631,8 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
         ),
         const SizedBox(height: 16),
         Text(
-          _languageService['for_allah'] ?? 'Allah\'ın (C.C) rızası için hazırlanmıştır.',
+          _languageService['for_allah'] ??
+              'Allah\'ın (C.C) rızası için hazırlanmıştır.',
           style: TextStyle(
             color: renkler.vurgu,
             fontSize: 13,
@@ -576,7 +642,8 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
         ),
         const SizedBox(height: 8),
         Text(
-          _languageService['developer_name'] ?? 'Geliştirici: Selahattin Kocabay',
+          _languageService['developer_name'] ??
+              'Geliştirici: Selahattin Kocabay',
           style: TextStyle(
             color: renkler.yaziSecondary.withValues(alpha: 0.6),
             fontSize: 11,

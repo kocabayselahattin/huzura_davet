@@ -82,21 +82,7 @@
                 android:resource="@xml/widget_klasik_info" />
         </receiver>
         
-        <!-- Widget 2: Kompakt Banner (4x1) -->
-        <receiver 
-            android:name=".widgets.KompaktBannerWidget"
-            android:exported="true"
-            android:label="@string/widget_kompakt_banner_name">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="com.example.huzur_vakti.UPDATE_WIDGETS" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/widget_kompakt_info" />
-        </receiver>
-        
-        <!-- Widget 4: Mini Sunset (3x1) -->
+        <!-- Widget 2: Mini Sunset (3x1) -->
         <receiver 
             android:name=".widgets.MiniSunsetWidget"
             android:exported="true"
@@ -109,19 +95,75 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_mini_info" />
         </receiver>
-        
-        <!-- Widget 5: Kompakt Vakit (örnek) -->
+
+        <!-- Widget 3: Glassmorphism (4x3) -->
         <receiver 
-            android:name=".widgets.KompaktVakitWidget"
+            android:name=".widgets.GlassmorphismWidget"
             android:exported="true"
-            android:label="@string/widget_kompakt_vakit_name">
+            android:label="Glassmorphism">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="com.example.huzur_vakti.UPDATE_WIDGETS" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/widget_kompakt_vakit_info" />
+                android:resource="@xml/widget_glassmorphism_info" />
+        </receiver>
+
+        <!-- Widget 4: Neon Glow (4x3) -->
+        <receiver 
+            android:name=".widgets.NeonGlowWidget"
+            android:exported="true"
+            android:label="Neon Glow">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.example.huzur_vakti.UPDATE_WIDGETS" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_neon_glow_info" />
+        </receiver>
+
+        <!-- Widget 5: Gradient Card (4x3) -->
+        <receiver 
+            android:name=".widgets.GradientCardWidget"
+            android:exported="true"
+            android:label="Gradient Card">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.example.huzur_vakti.UPDATE_WIDGETS" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_gradient_card_info" />
+        </receiver>
+
+        <!-- Widget 6: Timeline (4x5) -->
+        <receiver 
+            android:name=".widgets.TimelineWidget"
+            android:exported="true"
+            android:label="Timeline">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.example.huzur_vakti.UPDATE_WIDGETS" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_timeline_info" />
+        </receiver>
+
+        <!-- Widget 7: Circular Progress (4x4) -->
+        <receiver 
+            android:name=".widgets.CircularProgressWidget"
+            android:exported="true"
+            android:label="Circular Progress">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.example.huzur_vakti.UPDATE_WIDGETS" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_circular_progress_info" />
         </receiver>
 
         <!-- Widget Update Receiver - Arka planda widget'ları günceller -->
