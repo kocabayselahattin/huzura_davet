@@ -225,7 +225,7 @@ class _SplashScreenState extends State<SplashScreen> {
             const SizedBox(height: 12),
             // Alt yazı
             Text(
-              "Vaktin huzuruna erişin",
+              LanguageService()['splash_subtitle'] ?? "Vaktin huzuruna erişin",
               style: TextStyle(
                 color: const Color(0xFF00BCD4).withOpacity(0.7),
                 fontSize: 15,

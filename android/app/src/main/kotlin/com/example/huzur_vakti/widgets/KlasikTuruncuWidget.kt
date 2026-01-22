@@ -63,9 +63,11 @@ class KlasikTuruncuWidget : AppWidgetProvider() {
             
             // Geri sayımı Android tarafında hesapla (uygulama kapalıyken de çalışır)
             val vakitBilgisi = WidgetUtils.hesaplaVakitBilgisi(imsak, gunes, ogle, ikindi, aksam, yatsi)
-            val sonrakiVakit = vakitBilgisi["sonrakiVakit"] ?: "Öğle"
             val geriSayim = vakitBilgisi["geriSayim"] ?: "02:30:00"
-            val mevcutVakit = vakitBilgisi["mevcutVakit"] ?: "İmsak"
+            
+            // Flutter'dan gelen çevirilmiş vakit isimlerini kullan
+            val sonrakiVakit = widgetData.getString("sonraki_vakit", null) ?: vakitBilgisi["sonrakiVakit"] ?: "Öğle"
+            val mevcutVakit = widgetData.getString("mevcut_vakit", null) ?: vakitBilgisi["mevcutVakit"] ?: "İmsak"
             
             val hicriTarih = widgetData.getString("hicri_tarih", "1 Muharrem 1447") ?: "1 Muharrem 1447"
             val konum = widgetData.getString("konum", "İSTANBUL") ?: "İSTANBUL"

@@ -18,6 +18,8 @@ class LanguageService extends ChangeNotifier {
     {'code': 'en', 'name': 'English', 'flag': '🇬🇧'},
     {'code': 'de', 'name': 'Deutsch', 'flag': '🇩🇪'},
     {'code': 'fr', 'name': 'Français', 'flag': '🇫🇷'},
+    {'code': 'ar', 'name': 'العربية', 'flag': '🇸🇦'},
+    {'code': 'fa', 'name': 'فارسی', 'flag': '🇮🇷'},
   ];
 
   Future<void> load([String? languageCode]) async {

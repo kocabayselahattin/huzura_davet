@@ -9,6 +9,7 @@ import '../widgets/okyanus_sayac_widget.dart';
 import '../widgets/dijital_sayac_widget.dart';
 import '../widgets/esmaul_husna_widget.dart';
 import '../widgets/ozel_gun_popup.dart';
+import '../widgets/ozel_gun_banner_widget.dart';
 import '../services/konum_service.dart';
 import '../services/tema_service.dart';
 import '../services/language_service.dart';
@@ -773,6 +774,11 @@ class _AnaSayfaState extends State<AnaSayfa> {
 
               // --- ESMAUL HUSNA ---
               const EsmaulHusnaWidget(),
+
+              const SizedBox(height: 10),
+
+              // --- ÖZEL GÜN BANNER ---
+              const OzelGunBannerWidget(),
 
               const SizedBox(height: 10),
 

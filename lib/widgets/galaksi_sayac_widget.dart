@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../services/diyanet_api_service.dart';
 import '../services/konum_service.dart';
 import '../services/tema_service.dart';
+import '../services/language_service.dart';
 
 class GalaksiSayacWidget extends StatefulWidget {
   const GalaksiSayacWidget({super.key});
@@ -17,6 +18,7 @@ class GalaksiSayacWidget extends StatefulWidget {
 class _GalaksiSayacWidgetState extends State<GalaksiSayacWidget>
     with TickerProviderStateMixin {
   final TemaService _temaService = TemaService();
+  final LanguageService _languageService = LanguageService();
   Timer? _timer;
   Duration _kalanSure = Duration.zero;
   String _sonrakiVakit = '';
@@ -59,6 +61,7 @@ class _GalaksiSayacWidgetState extends State<GalaksiSayacWidget>
       _hesaplaKalanSure();
     });
     _temaService.addListener(_onTemaChanged);
+    _languageService.addListener(_onTemaChanged);
   }
 
   void _onTemaChanged() {
@@ -72,6 +75,7 @@ class _GalaksiSayacWidgetState extends State<GalaksiSayacWidget>
     _pulseController.dispose();
     _starController.dispose();
     _temaService.removeListener(_onTemaChanged);
+    _languageService.removeListener(_onTemaChanged);
     super.dispose();
   }
 
@@ -102,12 +106,12 @@ class _GalaksiSayacWidgetState extends State<GalaksiSayacWidget>
     final nowMinutes = now.hour * 60 + now.minute;
 
     final vakitListesi = [
-      {'adi': 'İmsak', 'saat': _vakitSaatleri['imsak']!},
-      {'adi': 'Güneş', 'saat': _vakitSaatleri['gunes']!},
-      {'adi': 'Öğle', 'saat': _vakitSaatleri['ogle']!},
-      {'adi': 'İkindi', 'saat': _vakitSaatleri['ikindi']!},
-      {'adi': 'Akşam', 'saat': _vakitSaatleri['aksam']!},
-      {'adi': 'Yatsı', 'saat': _vakitSaatleri['yatsi']!},
+      {'adi': _languageService['imsak'] ?? 'İmsak', 'saat': _vakitSaatleri['imsak']!},
+      {'adi': _languageService['gunes'] ?? 'Güneş', 'saat': _vakitSaatleri['gunes']!},
+      {'adi': _languageService['ogle'] ?? 'Öğle', 'saat': _vakitSaatleri['ogle']!},
+      {'adi': _languageService['ikindi'] ?? 'İkindi', 'saat': _vakitSaatleri['ikindi']!},
+      {'adi': _languageService['aksam'] ?? 'Akşam', 'saat': _vakitSaatleri['aksam']!},
+      {'adi': _languageService['yatsi'] ?? 'Yatsı', 'saat': _vakitSaatleri['yatsi']!},
     ];
 
     DateTime? sonrakiVakitZamani;
@@ -123,7 +127,7 @@ class _GalaksiSayacWidgetState extends State<GalaksiSayacWidget>
         sonrakiVakitZamani = DateTime(now.year, now.month, now.day,
             int.parse(parts[0]), int.parse(parts[1]));
         sonrakiVakitAdi = vakit['adi']!;
-        mevcutVakitAdi = i > 0 ? vakitListesi[i - 1]['adi']! : 'Yatsı';
+        mevcutVakitAdi = i > 0 ? vakitListesi[i - 1]['adi']! : (_languageService['yatsi'] ?? 'Yatsı');
         break;
       }
     }
@@ -133,8 +137,8 @@ class _GalaksiSayacWidgetState extends State<GalaksiSayacWidget>
       final imsakParts = _vakitSaatleri['imsak']!.split(':');
       sonrakiVakitZamani = DateTime(yarin.year, yarin.month, yarin.day,
           int.parse(imsakParts[0]), int.parse(imsakParts[1]));
-      sonrakiVakitAdi = 'İmsak';
-      mevcutVakitAdi = 'Yatsı';
+      sonrakiVakitAdi = _languageService['imsak'] ?? 'İmsak';
+      mevcutVakitAdi = _languageService['yatsi'] ?? 'Yatsı';
     }
 
     setState(() {
@@ -262,7 +266,7 @@ class _GalaksiSayacWidgetState extends State<GalaksiSayacWidget>
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              '$_sonrakiVakit vaktine kalan',
+                              '${_languageService['time_to'] ?? 'vaktine'} $_sonrakiVakit ${_languageService['remaining'] ?? 'Kalan'}',
                               style: TextStyle(
                                 color: renkler.yaziSecondary,
                                 fontSize: 13,

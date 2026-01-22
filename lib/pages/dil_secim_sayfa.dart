@@ -17,6 +17,8 @@ class _DilSecimSayfaState extends State<DilSecimSayfa> {
     'en': {'isim': 'English', 'bayrak': '🇬🇧'},
     'de': {'isim': 'Deutsch', 'bayrak': '🇩🇪'},
     'fr': {'isim': 'Français', 'bayrak': '🇫🇷'},
+    'ar': {'isim': 'العربية', 'bayrak': '🇸🇦'},
+    'fa': {'isim': 'فارسی', 'bayrak': '🇮🇷'},
   };
 
   @override

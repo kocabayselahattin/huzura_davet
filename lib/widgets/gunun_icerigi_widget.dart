@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/tema_service.dart';
+import '../services/language_service.dart';
 
 class GununIcerigiWidget extends StatefulWidget {
   const GununIcerigiWidget({super.key});
@@ -10,6 +11,7 @@ class GununIcerigiWidget extends StatefulWidget {
 
 class _GununIcerigiWidgetState extends State<GununIcerigiWidget> {
   final TemaService _temaService = TemaService();
+  final LanguageService _languageService = LanguageService();
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
@@ -119,6 +121,7 @@ class _GununIcerigiWidgetState extends State<GununIcerigiWidget> {
   void initState() {
     super.initState();
     _temaService.addListener(_onTemaChanged);
+    _languageService.addListener(_onTemaChanged);
   }
 
   void _onTemaChanged() {
@@ -129,6 +132,7 @@ class _GununIcerigiWidgetState extends State<GununIcerigiWidget> {
   void dispose() {
     _pageController.dispose();
     _temaService.removeListener(_onTemaChanged);
+    _languageService.removeListener(_onTemaChanged);
     super.dispose();
   }
 
@@ -169,7 +173,7 @@ class _GununIcerigiWidgetState extends State<GununIcerigiWidget> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'GÜNÜN İÇERİĞİ',
+                (_languageService['todays_content'] ?? 'GÜNÜN İÇERİĞİ').toUpperCase(),
                 style: TextStyle(
                   color: renkler.yaziSecondary,
                   fontSize: 12,
@@ -204,21 +208,21 @@ class _GununIcerigiWidgetState extends State<GununIcerigiWidget> {
             },
             children: [
               _buildIcerikKart(
-                baslik: 'GÜNÜN AYETİ',
+                baslik: (_languageService['todays_verse'] ?? 'GÜNÜN AYETİ').toUpperCase(),
                 icerik: gununAyeti['ayet']!,
                 kaynak: gununAyeti['kaynak']!,
                 ikon: Icons.menu_book_rounded,
                 renkler: renkler,
               ),
               _buildIcerikKart(
-                baslik: 'GÜNÜN HADİSİ',
+                baslik: (_languageService['todays_hadith'] ?? 'GÜNÜN HADİSİ').toUpperCase(),
                 icerik: gununHadisi['hadis']!,
                 kaynak: gununHadisi['kaynak']!,
                 ikon: Icons.star_rounded,
                 renkler: renkler,
               ),
               _buildIcerikKart(
-                baslik: 'GÜNÜN DUASI',
+                baslik: (_languageService['todays_dua'] ?? 'GÜNÜN DUASI').toUpperCase(),
                 icerik: gununDuasi['dua']!,
                 kaynak: gununDuasi['kaynak']!,
                 ikon: Icons.favorite_rounded,
@@ -241,7 +245,7 @@ class _GununIcerigiWidgetState extends State<GununIcerigiWidget> {
               ),
               const SizedBox(width: 4),
               Text(
-                'Kaydırarak diğer içeriği görün',
+                _languageService['swipe_for_more'] ?? 'Kaydırarak diğer içeriği görün',
                 style: TextStyle(
                   color: renkler.yaziSecondary.withValues(alpha: 0.5),
                   fontSize: 10,

@@ -61,12 +61,14 @@ class MiniSunsetWidget : AppWidgetProvider() {
             
             // Geri sayımı Android tarafında hesapla (uygulama kapalıyken de çalışır)
             val vakitBilgisi = WidgetUtils.hesaplaVakitBilgisi(imsak, gunes, ogle, ikindi, aksam, yatsi)
-            val sonrakiVakit = vakitBilgisi["sonrakiVakit"] ?: "Öğle"
             val geriSayim = vakitBilgisi["geriSayim"] ?: "02:30:00"
-            val mevcutVakit = vakitBilgisi["mevcutVakit"] ?: "İmsak"
             val mevcutSaat = vakitBilgisi["mevcutSaat"] ?: "05:30"
             val sonrakiSaat = vakitBilgisi["sonrakiSaat"] ?: "06:30"
             val ilerleme = vakitBilgisi["ilerleme"]?.toIntOrNull() ?: 0
+            
+            // Flutter'dan gelen çevirilmiş vakit isimlerini kullan
+            val sonrakiVakit = widgetData.getString("sonraki_vakit", null) ?: vakitBilgisi["sonrakiVakit"] ?: "Öğle"
+            val mevcutVakit = widgetData.getString("mevcut_vakit", null) ?: vakitBilgisi["mevcutVakit"] ?: "İmsak"
             
             // Diğer bilgiler
             val miladiTarih = widgetData.getString("miladi_tarih", "17 Ocak 2026") ?: "17 Ocak 2026"

@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../services/diyanet_api_service.dart';
 import '../services/konum_service.dart';
 import '../services/tema_service.dart';
+import '../services/language_service.dart';
 
 /// Okyanus/Su temalı sayaç widget'ı
 /// Dalga animasyonları, su damlaları ve ay ışığı efektleri
@@ -19,6 +20,7 @@ class OkyanusSayacWidget extends StatefulWidget {
 class _OkyanusSayacWidgetState extends State<OkyanusSayacWidget>
     with TickerProviderStateMixin {
   final TemaService _temaService = TemaService();
+  final LanguageService _languageService = LanguageService();
   Timer? _timer;
   Duration _kalanSure = Duration.zero;
   String _sonrakiVakit = '';
@@ -73,6 +75,7 @@ class _OkyanusSayacWidgetState extends State<OkyanusSayacWidget>
       _hesaplaKalanSure();
     });
     _temaService.addListener(_onTemaChanged);
+    _languageService.addListener(_onTemaChanged);
   }
   
   void _generateBubbles() {
@@ -99,6 +102,7 @@ class _OkyanusSayacWidgetState extends State<OkyanusSayacWidget>
     _bubbleController.dispose();
     _moonGlowController.dispose();
     _temaService.removeListener(_onTemaChanged);
+    _languageService.removeListener(_onTemaChanged);
     super.dispose();
   }
 
@@ -129,12 +133,12 @@ class _OkyanusSayacWidgetState extends State<OkyanusSayacWidget>
     final nowMinutes = now.hour * 60 + now.minute;
 
     final vakitListesi = [
-      {'adi': 'İmsak', 'saat': _vakitSaatleri['imsak']!},
-      {'adi': 'Güneş', 'saat': _vakitSaatleri['gunes']!},
-      {'adi': 'Öğle', 'saat': _vakitSaatleri['ogle']!},
-      {'adi': 'İkindi', 'saat': _vakitSaatleri['ikindi']!},
-      {'adi': 'Akşam', 'saat': _vakitSaatleri['aksam']!},
-      {'adi': 'Yatsı', 'saat': _vakitSaatleri['yatsi']!},
+      {'adi': _languageService['imsak'] ?? 'İmsak', 'saat': _vakitSaatleri['imsak']!},
+      {'adi': _languageService['gunes'] ?? 'Güneş', 'saat': _vakitSaatleri['gunes']!},
+      {'adi': _languageService['ogle'] ?? 'Öğle', 'saat': _vakitSaatleri['ogle']!},
+      {'adi': _languageService['ikindi'] ?? 'İkindi', 'saat': _vakitSaatleri['ikindi']!},
+      {'adi': _languageService['aksam'] ?? 'Akşam', 'saat': _vakitSaatleri['aksam']!},
+      {'adi': _languageService['yatsi'] ?? 'Yatsı', 'saat': _vakitSaatleri['yatsi']!},
     ];
 
     DateTime? sonrakiVakitZamani;
@@ -150,7 +154,7 @@ class _OkyanusSayacWidgetState extends State<OkyanusSayacWidget>
         sonrakiVakitZamani = DateTime(now.year, now.month, now.day,
             int.parse(parts[0]), int.parse(parts[1]));
         sonrakiVakitAdi = vakit['adi']!;
-        mevcutVakitAdi = i > 0 ? vakitListesi[i - 1]['adi']! : 'Yatsı';
+        mevcutVakitAdi = i > 0 ? vakitListesi[i - 1]['adi']! : (_languageService['yatsi'] ?? 'Yatsı');
         break;
       }
     }
@@ -160,8 +164,8 @@ class _OkyanusSayacWidgetState extends State<OkyanusSayacWidget>
       final imsakParts = _vakitSaatleri['imsak']!.split(':');
       sonrakiVakitZamani = DateTime(yarin.year, yarin.month, yarin.day,
           int.parse(imsakParts[0]), int.parse(imsakParts[1]));
-      sonrakiVakitAdi = 'İmsak';
-      mevcutVakitAdi = 'Yatsı';
+      sonrakiVakitAdi = _languageService['imsak'] ?? 'İmsak';
+      mevcutVakitAdi = _languageService['yatsi'] ?? 'Yatsı';
     }
 
     setState(() {
@@ -372,7 +376,7 @@ class _OkyanusSayacWidgetState extends State<OkyanusSayacWidget>
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          '$_sonrakiVakit vaktine',
+                          '$_sonrakiVakit ${_languageService['time_to'] ?? 'vaktine'}',
                           style: const TextStyle(
                             color: Color(0xFF5BC0BE),
                             fontSize: 12,

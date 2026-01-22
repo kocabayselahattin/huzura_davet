@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../services/konum_service.dart';
 import '../services/diyanet_api_service.dart';
 import '../services/tema_service.dart';
+import '../services/language_service.dart';
 
 class PremiumSayacWidget extends StatefulWidget {
   const PremiumSayacWidget({super.key});
@@ -29,15 +30,17 @@ class _PremiumSayacWidgetState extends State<PremiumSayacWidget>
   late Animation<double> _rotateAnimation;
   
   final TemaService _temaService = TemaService();
+  final LanguageService _languageService = LanguageService();
 
   final List<String> _vakitSirasi = ['Imsak', 'Gunes', 'Ogle', 'Ikindi', 'Aksam', 'Yatsi'];
-  final Map<String, String> _vakitAdlari = {
-    'Imsak': 'İMSAK',
-    'Gunes': 'GÜNEŞ',
-    'Ogle': 'ÖĞLE',
-    'Ikindi': 'İKİNDİ',
-    'Aksam': 'AKŞAM',
-    'Yatsi': 'YATSI',
+  
+  Map<String, String> get _vakitAdlari => {
+    'Imsak': (_languageService['imsak'] ?? 'İMSAK').toUpperCase(),
+    'Gunes': (_languageService['gunes'] ?? 'GÜNEŞ').toUpperCase(),
+    'Ogle': (_languageService['ogle'] ?? 'ÖĞLE').toUpperCase(),
+    'Ikindi': (_languageService['ikindi'] ?? 'İKİNDİ').toUpperCase(),
+    'Aksam': (_languageService['aksam'] ?? 'AKŞAM').toUpperCase(),
+    'Yatsi': (_languageService['yatsi'] ?? 'YATSI').toUpperCase(),
   };
 
   @override
@@ -68,6 +71,7 @@ class _PremiumSayacWidgetState extends State<PremiumSayacWidget>
     });
     
     _temaService.addListener(_onTemaChanged);
+    _languageService.addListener(_onTemaChanged);
   }
 
   void _onTemaChanged() {
@@ -80,6 +84,7 @@ class _PremiumSayacWidgetState extends State<PremiumSayacWidget>
     _breathController.dispose();
     _rotateController.dispose();
     _temaService.removeListener(_onTemaChanged);
+    _languageService.removeListener(_onTemaChanged);
     super.dispose();
   }
 

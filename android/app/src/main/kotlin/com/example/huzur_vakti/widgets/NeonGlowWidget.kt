@@ -54,10 +54,12 @@ class NeonGlowWidget : AppWidgetProvider() {
             
             // Geri sayımı Android tarafında hesapla
             val vakitBilgisi = WidgetUtils.hesaplaVakitBilgisi(imsak, gunes, ogle, ikindi, aksam, yatsi)
-            val sonrakiVakit = vakitBilgisi["sonrakiVakit"] ?: "Öğle"
             val geriSayim = vakitBilgisi["geriSayim"] ?: "02:30:00"
-            val mevcutVakit = vakitBilgisi["mevcutVakit"] ?: "Güneş"
             val ilerleme = vakitBilgisi["ilerleme"]?.toIntOrNull() ?: 50
+            
+            // Flutter'dan gelen çevirilmiş vakit isimlerini kullan
+            val sonrakiVakit = widgetData.getString("sonraki_vakit", null) ?: vakitBilgisi["sonrakiVakit"] ?: "Öğle"
+            val mevcutVakit = widgetData.getString("mevcut_vakit", null) ?: vakitBilgisi["mevcutVakit"] ?: "Güneş"
             
             val konum = widgetData.getString("konum", "İstanbul") ?: "İstanbul"
             val hicriTarih = widgetData.getString("hicri_tarih", "28 Recep 1447") ?: "28 Recep 1447"

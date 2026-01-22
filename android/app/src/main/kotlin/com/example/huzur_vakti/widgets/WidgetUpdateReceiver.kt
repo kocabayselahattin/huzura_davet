@@ -3,6 +3,7 @@ package com.example.huzur_vakti.widgets
 import android.app.AlarmManager
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
+import android.appwidget.AppWidgetProvider
 import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
@@ -135,15 +136,14 @@ class WidgetUpdateReceiver : BroadcastReceiver() {
         val appWidgetManager = AppWidgetManager.getInstance(context)
         val updateIntent = Intent(ACTION_UPDATE_WIDGETS)
         
-        // Tüm widget'ları güncelle - 9 widget
-        val widgets = listOf(
+        // Tüm widget'ları güncelle - 8 widget
+        val widgets = listOf<Class<out AppWidgetProvider>>(
             KlasikTuruncuWidget::class.java,
             MiniSunsetWidget::class.java,
             GlassmorphismWidget::class.java,
             NeonGlowWidget::class.java,
             CosmicWidget::class.java,
             TimelineWidget::class.java,
-            CircularProgressWidget::class.java,
             ZenWidget::class.java,
             OrigamiWidget::class.java
         )

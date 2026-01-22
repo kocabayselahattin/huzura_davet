@@ -20,9 +20,6 @@
     <string name="widget_timeline_name">Timeline Widget</string>
     <string name="widget_timeline_description">Kompakt timeline görünümü - Tüm vakitler tek bakışta</string>
     
-    <string name="widget_circular_name">Dairesel İlerleme</string>
-    <string name="widget_circular_progress_description">Dairesel ecir göstergesi - Modern minimalist tasarım</string>
-    
     <string name="widget_zen_name">Zen Minimalist</string>
     <string name="widget_zen_description">Minimalist Zen tasarımı - Sade ve huzur verici</string>
     

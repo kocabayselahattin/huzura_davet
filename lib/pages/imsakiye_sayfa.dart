@@ -33,6 +33,22 @@ class _ImsakiyeSayfaState extends State<ImsakiyeSayfa> {
     super.dispose();
   }
 
+  String _getLocale() {
+    final lang = _languageService.currentLanguage;
+    switch (lang) {
+      case 'tr':
+        return 'tr_TR';
+      case 'en':
+        return 'en_US';
+      case 'de':
+        return 'de_DE';
+      case 'fr':
+        return 'fr_FR';
+      default:
+        return 'tr_TR';
+    }
+  }
+
   Future<void> _konumBilgileriniYukle() async {
     final il = await KonumService.getIl();
     final ilce = await KonumService.getIlce();
@@ -207,7 +223,7 @@ class _ImsakiyeSayfaState extends State<ImsakiyeSayfa> {
     }
 
     final gunAdi = tarihObj != null
-        ? DateFormat('EEEE', 'tr_TR').format(tarihObj)
+        ? DateFormat('EEEE', _getLocale()).format(tarihObj)
         : '';
 
     return Container(

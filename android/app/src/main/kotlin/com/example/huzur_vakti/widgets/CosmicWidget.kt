@@ -54,22 +54,48 @@ class CosmicWidget : AppWidgetProvider() {
             
             // Geri sayımı Android tarafında hesapla
             val vakitBilgisi = WidgetUtils.hesaplaVakitBilgisi(imsak, gunes, ogle, ikindi, aksam, yatsi)
-            val sonrakiVakit = vakitBilgisi["sonrakiVakit"] ?: "Öğle"
             val geriSayim = vakitBilgisi["geriSayim"] ?: "02:30:00"
-            val mevcutVakit = vakitBilgisi["mevcutVakit"] ?: "Güneş"
             val ilerleme = vakitBilgisi["ilerleme"]?.toIntOrNull() ?: 50
+            
+            // Flutter'dan gelen çevirilmiş vakit isimlerini kullan
+            val sonrakiVakit = widgetData.getString("sonraki_vakit", null) ?: vakitBilgisi["sonrakiVakit"] ?: "Öğle"
+            val mevcutVakit = widgetData.getString("mevcut_vakit", null) ?: vakitBilgisi["mevcutVakit"] ?: "Güneş"
             
             val konum = widgetData.getString("konum", "İstanbul") ?: "İstanbul"
             val hicriTarih = widgetData.getString("hicri_tarih", "28 Recep 1447") ?: "28 Recep 1447"
             val miladiTarih = widgetData.getString("miladi_tarih", "21 Ocak 2026") ?: "21 Ocak 2026"
             
+            // Renk ayarlarını al
+            val arkaPlanKey = widgetData.getString("arkaplan_key", "purple") ?: "purple"
+            val yaziRengiHex = widgetData.getString("yazi_rengi_hex", "FFFFFF") ?: "FFFFFF"
+            val yaziRengi = WidgetUtils.parseColorSafe(yaziRengiHex, Color.WHITE)
+            val yaziRengiSecondary = Color.argb(180, Color.red(yaziRengi), Color.green(yaziRengi), Color.blue(yaziRengi))
+            
             val views = RemoteViews(context.packageName, R.layout.widget_cosmic)
             
-            // Galaktik renkler
+            // Arka plan ayarla
+            val bgDrawable = when(arkaPlanKey) {
+                "orange" -> R.drawable.widget_bg_orange
+                "light" -> R.drawable.widget_bg_card_light
+                "dark" -> R.drawable.widget_bg_card_dark
+                "sunset" -> R.drawable.widget_bg_sunset
+                "green" -> R.drawable.widget_bg_green
+                "purple" -> R.drawable.widget_bg_purple
+                "red" -> R.drawable.widget_bg_red
+                "blue" -> R.drawable.widget_bg_blue
+                "teal" -> R.drawable.widget_bg_teal
+                "pink" -> R.drawable.widget_bg_pink
+                "transparent" -> R.drawable.widget_bg_transparent
+                "semi_black" -> R.drawable.widget_bg_semi_black
+                "semi_white" -> R.drawable.widget_bg_semi_white
+                else -> R.drawable.widget_bg_purple
+            }
+            views.setInt(R.id.widget_root, "setBackgroundResource", bgDrawable)
+            
+            // Galaktik renkler (accent olarak kullanılır)
             val cosmicPink = Color.parseColor("#E040FB")
             val cosmicCyan = Color.parseColor("#00BCD4")
             val cosmicPurple = Color.parseColor("#7C4DFF")
-            val beyaz = Color.WHITE
             
             // Verileri set et
             views.setTextViewText(R.id.tv_konum, konum)
@@ -84,7 +110,7 @@ class CosmicWidget : AppWidgetProvider() {
             views.setTextColor(R.id.tv_mevcut_vakit, cosmicPurple)
             
             WidgetUtils.applyCountdown(views, R.id.tv_geri_sayim, geriSayim)
-            views.setTextColor(R.id.tv_geri_sayim, beyaz)
+            views.setTextColor(R.id.tv_geri_sayim, yaziRengi)
             
             views.setTextViewText(R.id.tv_sonraki_vakit, "$sonrakiVakit galaksisine")
             views.setTextColor(R.id.tv_sonraki_vakit, cosmicCyan)

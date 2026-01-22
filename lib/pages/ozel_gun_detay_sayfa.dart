@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/ozel_gunler_service.dart';
 import '../services/tema_service.dart';
+import '../services/language_service.dart';
 
 class OzelGunDetaySayfa extends StatefulWidget {
   final OzelGun ozelGun;
@@ -20,20 +21,27 @@ class OzelGunDetaySayfa extends StatefulWidget {
 
 class _OzelGunDetaySayfaState extends State<OzelGunDetaySayfa> {
   final TemaService _temaService = TemaService();
+  final LanguageService _languageService = LanguageService();
 
   @override
   void initState() {
     super.initState();
     _temaService.addListener(_onTemaChanged);
+    _languageService.addListener(_onLanguageChanged);
   }
 
   @override
   void dispose() {
     _temaService.removeListener(_onTemaChanged);
+    _languageService.removeListener(_onLanguageChanged);
     super.dispose();
   }
 
   void _onTemaChanged() {
+    if (mounted) setState(() {});
+  }
+
+  void _onLanguageChanged() {
     if (mounted) setState(() {});
   }
 
@@ -95,7 +103,7 @@ class _OzelGunDetaySayfaState extends State<OzelGunDetaySayfa> {
                   const SizedBox(height: 20),
 
                   // Açıklama
-                  _baslikVeMetin('Açıklama', widget.ozelGun.aciklama, renkler),
+                  _baslikVeMetin(_languageService['description'] ?? 'Açıklama', widget.ozelGun.aciklama, renkler),
                   const SizedBox(height: 20),
 
                   // Detaylar
@@ -134,7 +142,7 @@ class _OzelGunDetaySayfaState extends State<OzelGunDetaySayfa> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Miladi: ${widget.tarih.day}.${widget.tarih.month}.${widget.tarih.year}',
+                  '${_languageService['gregorian'] ?? 'Miladi'}: ${widget.tarih.day}.${widget.tarih.month}.${widget.tarih.year}',
                   style: TextStyle(
                     color: renkler.yaziPrimary,
                     fontSize: 16,
@@ -143,7 +151,7 @@ class _OzelGunDetaySayfaState extends State<OzelGunDetaySayfa> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Hicri: ${widget.hicriTarih}',
+                  '${_languageService['hijri'] ?? 'Hicri'}: ${widget.hicriTarih}',
                   style: TextStyle(
                     color: renkler.yaziSecondary,
                     fontSize: 14,
@@ -189,7 +197,7 @@ class _OzelGunDetaySayfaState extends State<OzelGunDetaySayfa> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Detaylar',
+          _languageService['details'] ?? 'Detaylar',
           style: TextStyle(
             color: renkler.yaziPrimary,
             fontSize: 20,
@@ -223,7 +231,7 @@ class _OzelGunDetaySayfaState extends State<OzelGunDetaySayfa> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Faziletleri',
+          _languageService['virtues'] ?? 'Faziletleri',
           style: TextStyle(
             color: renkler.yaziPrimary,
             fontSize: 20,
@@ -270,7 +278,7 @@ class _OzelGunDetaySayfaState extends State<OzelGunDetaySayfa> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Yapılması Gerekenler',
+          _languageService['what_to_do'] ?? 'Yapılması Gerekenler',
           style: TextStyle(
             color: renkler.yaziPrimary,
             fontSize: 20,

@@ -204,8 +204,13 @@ class AlarmService : Service() {
                 setAudioAttributes(audioAttributes)
                 
                 // Raw klasöründen ses dosyasını bul
-                val soundName = soundFile.replace(".mp3", "").lowercase()
+                var soundName = soundFile.replace(".mp3", "").lowercase()
                     .replace(" ", "_").replace("-", "_")
+                
+                // Özel eşlemeler (raw klasöründeki isimlerle uyumlu)
+                if (soundName == "2015_best") soundName = "best"
+                
+                Log.d(TAG, "🔊 Ses dosyası aranıyor: $soundName (orijinal: $soundFile)")
                 
                 val resId = resources.getIdentifier(soundName, "raw", packageName)
                 

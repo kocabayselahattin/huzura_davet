@@ -22,16 +22,22 @@ class _OzelGunlerSayfaState extends State<OzelGunlerSayfa> {
   void initState() {
     super.initState();
     _temaService.addListener(_onTemaChanged);
+    _languageService.addListener(_onLanguageChanged);
     _gunleriYukle();
   }
 
   @override
   void dispose() {
     _temaService.removeListener(_onTemaChanged);
+    _languageService.removeListener(_onLanguageChanged);
     super.dispose();
   }
 
   void _onTemaChanged() {
+    if (mounted) setState(() {});
+  }
+
+  void _onLanguageChanged() {
     if (mounted) setState(() {});
   }
 

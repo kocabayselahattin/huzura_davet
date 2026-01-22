@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'diyanet_api_service.dart';
 import 'konum_service.dart';
 import 'ozel_gunler_service.dart';
+import 'language_service.dart';
 
 /// Android Home Screen Widget'larını güncelleyen servis
 class HomeWidgetService {
@@ -15,6 +16,7 @@ class HomeWidgetService {
   static Map<String, String> _vakitSaatleri = {};
   static String? _lastGeriSayim; // Son gönderilen geri sayım değeri
   static int _lastMinute = -1; // Son güncellenen dakika
+  static String? _lastLanguage; // Son dil
 
   /// Servisi başlat
   static Future<void> initialize() async {
@@ -23,6 +25,9 @@ class HomeWidgetService {
     await _loadWidgetColors();
     await updateAllWidgets();
 
+    // Dil değişikliğinde widget'ları güncelle
+    LanguageService().addListener(_onLanguageChanged);
+
     // Her 30 saniyede bir güncelle (performans için artırıldı)
     _updateTimer?.cancel();
     _updateTimer = Timer.periodic(const Duration(seconds: 30), (_) {
@@ -30,10 +35,21 @@ class HomeWidgetService {
     });
   }
 
+  /// Dil değişikliğinde çağrılır
+  static void _onLanguageChanged() {
+    final currentLang = LanguageService().currentLanguage;
+    if (_lastLanguage != currentLang) {
+      _lastLanguage = currentLang;
+      _lastGeriSayim = null; // Cache'i temizle, widget güncellenmesi zorla
+      updateAllWidgets();
+    }
+  }
+
   /// Servisi durdur
   static void dispose() {
     _updateTimer?.cancel();
     _updateTimer = null;
+    LanguageService().removeListener(_onLanguageChanged);
   }
 
   /// Widget renk ayarlarını yükle
@@ -264,12 +280,6 @@ class HomeWidgetService {
         qualifiedAndroidName: 'com.example.huzur_vakti.widgets.TimelineWidget',
       );
       await HomeWidget.updateWidget(
-        name: 'CircularProgressWidget',
-        androidName: 'CircularProgressWidget',
-        qualifiedAndroidName:
-            'com.example.huzur_vakti.widgets.CircularProgressWidget',
-      );
-      await HomeWidget.updateWidget(
         name: 'CosmicWidget',
         androidName: 'CosmicWidget',
         qualifiedAndroidName: 'com.example.huzur_vakti.widgets.CosmicWidget',
@@ -292,11 +302,26 @@ class HomeWidgetService {
 
   /// Vakit bilgisini hesapla
   static Map<String, String> _hesaplaVakitBilgisi(DateTime now) {
+    final languageService = LanguageService();
+    
+    // Vakit isimlerinin çevirileri
+    String getVakitAdi(String key) {
+      switch (key) {
+        case 'Imsak': return languageService['fajr'] ?? 'İmsak';
+        case 'Gunes': return languageService['sunrise'] ?? 'Güneş';
+        case 'Ogle': return languageService['dhuhr'] ?? 'Öğle';
+        case 'Ikindi': return languageService['asr'] ?? 'İkindi';
+        case 'Aksam': return languageService['maghrib'] ?? 'Akşam';
+        case 'Yatsi': return languageService['isha'] ?? 'Yatsı';
+        default: return key;
+      }
+    }
+    
     if (_vakitSaatleri.isEmpty) {
       return {
-        'sonrakiVakit': 'Öğle',
+        'sonrakiVakit': getVakitAdi('Ogle'),
         'sonrakiSaat': '12:30',
-        'mevcutVakit': 'Güneş',
+        'mevcutVakit': getVakitAdi('Gunes'),
         'mevcutSaat': '07:00',
         'kalanSure': '2s 30dk kaldı',
         'kalanKisa': '2s 30dk',
@@ -308,12 +333,12 @@ class HomeWidgetService {
     final nowTotalSeconds = now.hour * 3600 + now.minute * 60 + now.second;
 
     final vakitListesi = [
-      {'key': 'Imsak', 'adi': 'İmsak'},
-      {'key': 'Gunes', 'adi': 'Güneş'},
-      {'key': 'Ogle', 'adi': 'Öğle'},
-      {'key': 'Ikindi', 'adi': 'İkindi'},
-      {'key': 'Aksam', 'adi': 'Akşam'},
-      {'key': 'Yatsi', 'adi': 'Yatsı'},
+      {'key': 'Imsak'},
+      {'key': 'Gunes'},
+      {'key': 'Ogle'},
+      {'key': 'Ikindi'},
+      {'key': 'Aksam'},
+      {'key': 'Yatsi'},
     ];
 
     // Vakit saniyelerini hesapla
@@ -326,9 +351,9 @@ class HomeWidgetService {
       );
     }
 
-    String sonrakiVakit = 'İmsak';
+    String sonrakiVakit = getVakitAdi('Imsak');
     String sonrakiSaat = _vakitSaatleri['Imsak'] ?? '05:30';
-    String mevcutVakit = 'Yatsı';
+    String mevcutVakit = getVakitAdi('Yatsi');
     String mevcutSaat = _vakitSaatleri['Yatsi'] ?? '19:30';
     int toplamSaniye = 1;
     int gecenSaniye = 0;
@@ -345,9 +370,9 @@ class HomeWidgetService {
 
     if (sonrakiIndex == -1) {
       // Tüm vakitler geçmiş, yarın imsak
-      sonrakiVakit = 'İmsak';
+      sonrakiVakit = getVakitAdi('Imsak');
       sonrakiSaat = _vakitSaatleri['Imsak'] ?? '05:30';
-      mevcutVakit = 'Yatsı';
+      mevcutVakit = getVakitAdi('Yatsi');
       mevcutSaat = _vakitSaatleri['Yatsi'] ?? '19:30';
 
       final yatsiSaniye = vakitSaniyeleri.last;
@@ -363,9 +388,9 @@ class HomeWidgetService {
       kalanToplamSaniye = (24 * 3600 - nowTotalSeconds) + imsakSaniye;
     } else if (sonrakiIndex == 0) {
       // İmsak henüz olmadı (gece yarısından sonra, imsak öncesi)
-      sonrakiVakit = 'İmsak';
+      sonrakiVakit = getVakitAdi('Imsak');
       sonrakiSaat = _vakitSaatleri['Imsak'] ?? '05:30';
-      mevcutVakit = 'Yatsı';
+      mevcutVakit = getVakitAdi('Yatsi');
       mevcutSaat = _vakitSaatleri['Yatsi'] ?? '19:30';
 
       final yatsiSaniye = vakitSaniyeleri.last;
@@ -379,10 +404,10 @@ class HomeWidgetService {
       kalanToplamSaniye = imsakSaniye - nowTotalSeconds;
     } else {
       // Normal durum: gündüz vakitleri
-      sonrakiVakit = vakitListesi[sonrakiIndex]['adi']!;
+      sonrakiVakit = getVakitAdi(vakitListesi[sonrakiIndex]['key']!);
       sonrakiSaat =
           _vakitSaatleri[vakitListesi[sonrakiIndex]['key']] ?? '00:00';
-      mevcutVakit = vakitListesi[sonrakiIndex - 1]['adi']!;
+      mevcutVakit = getVakitAdi(vakitListesi[sonrakiIndex - 1]['key']!);
       mevcutSaat =
           _vakitSaatleri[vakitListesi[sonrakiIndex - 1]['key']] ?? '00:00';
 
@@ -424,22 +449,11 @@ class HomeWidgetService {
   }
 
   static String _getHicriAyAdi(int ay) {
-    const aylar = [
-      '',
-      'Muharrem',
-      'Safer',
-      'Rebiülevvel',
-      'Rebiülahir',
-      'Cemaziyelevvel',
-      'Cemaziyelahir',
-      'Recep',
-      'Şaban',
-      'Ramazan',
-      'Şevval',
-      'Zilkade',
-      'Zilhicce',
-    ];
-    return aylar[ay];
+    final languageService = LanguageService();
+    if (ay >= 1 && ay <= 12) {
+      return languageService['hijri_month_$ay'] ?? '';
+    }
+    return '';
   }
 
   static Future<Map<String, String>> _getGununHadisi() async {

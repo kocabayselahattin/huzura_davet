@@ -831,22 +831,22 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
                               ),
                             ),
                             const SizedBox(width: 16),
-                            const Expanded(
+                            Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Konumu Otomatik Bul',
-                                    style: TextStyle(
+                                    _languageService['auto_find_location'] ?? 'Konumu Otomatik Bul',
+                                    style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                                  SizedBox(height: 4),
+                                  const SizedBox(height: 4),
                                   Text(
-                                    'GPS ile il ve ilçenizi tespit edin',
-                                    style: TextStyle(
+                                    _languageService['gps_detect_desc'] ?? 'GPS ile il ve ilçenizi tespit edin',
+                                    style: const TextStyle(
                                       color: Colors.white70,
                                       fontSize: 12,
                                     ),

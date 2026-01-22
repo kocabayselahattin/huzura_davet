@@ -153,20 +153,6 @@
                 android:resource="@xml/widget_timeline_info" />
         </receiver>
 
-        <!-- Widget 7: Circular Progress (2x2) -->
-        <receiver 
-            android:name=".widgets.CircularProgressWidget"
-            android:exported="true"
-            android:label="@string/widget_circular_name">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="com.example.huzur_vakti.UPDATE_WIDGETS" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/widget_circular_progress_info" />
-        </receiver>
-
         <!-- Widget 8: Zen Minimalist (2x2) -->
         <receiver 
             android:name=".widgets.ZenWidget"

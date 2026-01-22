@@ -1,5 +1,6 @@
 import 'package:hijri/hijri_calendar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'language_service.dart';
 
 /// Özel gün ve gece türleri
 enum OzelGunTuru {
@@ -9,35 +10,48 @@ enum OzelGunTuru {
   onemliGun,
 }
 
-/// Özel gün modeli
+/// Özel gün modeli - Çevirileri dinamik olarak alır
 class OzelGun {
-  final String ad;
-  final String aciklama;
+  final String adKey;
+  final String aciklamaKey;
   final OzelGunTuru tur;
   final int hicriAy;
   final int hicriGun;
   final bool geceOncesiMi; // Kandiller geceden başlar
 
   const OzelGun({
-    required this.ad,
-    required this.aciklama,
+    required this.adKey,
+    required this.aciklamaKey,
     required this.tur,
     required this.hicriAy,
     required this.hicriGun,
     this.geceOncesiMi = false,
   });
 
+  /// Çevirili ad döndürür
+  String get ad {
+    final langService = LanguageService();
+    return langService[adKey] ?? adKey;
+  }
+
+  /// Çevirili açıklama döndürür
+  String get aciklama {
+    final langService = LanguageService();
+    return langService[aciklamaKey] ?? aciklamaKey;
+  }
+
   /// Tebrik mesajını döndürür
   String get tebrikMesaji {
+    final langService = LanguageService();
     switch (tur) {
       case OzelGunTuru.bayram:
-        return 'Bayramınız Mübarek Olsun! 🌙';
+        return '${langService['eid_mubarak'] ?? 'Bayramınız Mübarek Olsun!'} 🌙';
       case OzelGunTuru.kandil:
-        return 'Kandiliniz Mübarek Olsun! ✨';
+        return '${langService['kandil_mubarak'] ?? 'Kandiliniz Mübarek Olsun!'} ✨';
       case OzelGunTuru.mubarekGece:
-        return '$ad Mübarek Olsun! 🤲';
+        return '$ad ${langService['blessed_night'] ?? 'Mübarek Olsun!'} 🤲';
       case OzelGunTuru.onemliGun:
-        return '$ad Hayırlı Olsun! 📿';
+        return '$ad ${langService['blessed_day'] ?? 'Hayırlı Olsun!'} 📿';
     }
   }
 
@@ -50,21 +64,37 @@ class OzelGun {
 class OzelGunlerService {
   static const String _sonGosterilenGunKey = 'son_gosterilen_ozel_gun';
   
+  /// Oturum bazlı popup gösterildi flag'i
+  /// Uygulama açık olduğu sürece true kalır, böylece aynı oturumda popup bir kez gösterilir
+  static bool _sessionPopupShown = false;
+  
+  /// TEST MODU - Geliştirme sırasında test için kullanılır
+  /// Production'da false olmalı!
+  static const bool _testModu = false;
+  static const OzelGun _testOzelGun = OzelGun(
+    adKey: 'barat',
+    aciklamaKey: 'barat_desc',
+    tur: OzelGunTuru.kandil,
+    hicriAy: 8,
+    hicriGun: 15,
+    geceOncesiMi: true,
+  );
+  
   /// Hicri takvime göre tüm özel günler
   /// Hicri aylar: 1-Muharrem, 2-Safer, 3-Rebiülevvel, 4-Rebiülahir, 5-Cemaziyelevvel,
   /// 6-Cemaziyelahir, 7-Recep, 8-Şaban, 9-Ramazan, 10-Şevval, 11-Zilkade, 12-Zilhicce
   static const List<OzelGun> ozelGunler = [
     // Muharrem Ayı (1)
     OzelGun(
-      ad: 'Hicri Yılbaşı',
-      aciklama: 'Yeni Hicri yılınız mübarek olsun',
+      adKey: 'hijri_new_year',
+      aciklamaKey: 'hijri_new_year_desc',
       tur: OzelGunTuru.onemliGun,
       hicriAy: 1,
       hicriGun: 1,
     ),
     OzelGun(
-      ad: 'Aşure Günü',
-      aciklama: 'Muharrem ayının 10. günü',
+      adKey: 'ashura',
+      aciklamaKey: 'ashura_desc',
       tur: OzelGunTuru.onemliGun,
       hicriAy: 1,
       hicriGun: 10,
@@ -72,8 +102,8 @@ class OzelGunlerService {
     
     // Rebiülevvel Ayı (3)
     OzelGun(
-      ad: 'Mevlid Kandili',
-      aciklama: 'Peygamber Efendimizin doğum günü',
+      adKey: 'mawlid',
+      aciklamaKey: 'mawlid_desc',
       tur: OzelGunTuru.kandil,
       hicriAy: 3,
       hicriGun: 12,
@@ -82,16 +112,16 @@ class OzelGunlerService {
     
     // Recep Ayı (7)
     OzelGun(
-      ad: 'Regaip Kandili',
-      aciklama: 'Recep ayının ilk Cuma gecesi',
+      adKey: 'ragaib',
+      aciklamaKey: 'ragaib_desc',
       tur: OzelGunTuru.kandil,
       hicriAy: 7,
-      hicriGun: 1, // İlk Cuma gecesi - dinamik hesaplanacak
+      hicriGun: 1,
       geceOncesiMi: true,
     ),
     OzelGun(
-      ad: 'Miraç Kandili',
-      aciklama: 'Peygamberimizin göklere yükselişi',
+      adKey: 'miraj',
+      aciklamaKey: 'miraj_desc',
       tur: OzelGunTuru.kandil,
       hicriAy: 7,
       hicriGun: 27,
@@ -100,8 +130,8 @@ class OzelGunlerService {
     
     // Şaban Ayı (8)
     OzelGun(
-      ad: 'Berat Kandili',
-      aciklama: 'Günahların affedildiği gece',
+      adKey: 'barat',
+      aciklamaKey: 'barat_desc',
       tur: OzelGunTuru.kandil,
       hicriAy: 8,
       hicriGun: 15,
@@ -110,15 +140,15 @@ class OzelGunlerService {
     
     // Ramazan Ayı (9)
     OzelGun(
-      ad: 'Ramazan Ayı Başlangıcı',
-      aciklama: 'On bir ayın sultanı Ramazan-ı Şerif',
+      adKey: 'ramadan_start',
+      aciklamaKey: 'ramadan_start_desc',
       tur: OzelGunTuru.onemliGun,
       hicriAy: 9,
       hicriGun: 1,
     ),
     OzelGun(
-      ad: 'Kadir Gecesi',
-      aciklama: 'Bin aydan hayırlı gece',
+      adKey: 'laylat_al_qadr',
+      aciklamaKey: 'laylat_al_qadr_desc',
       tur: OzelGunTuru.mubarekGece,
       hicriAy: 9,
       hicriGun: 27,
@@ -127,22 +157,22 @@ class OzelGunlerService {
     
     // Şevval Ayı (10)
     OzelGun(
-      ad: 'Ramazan Bayramı',
-      aciklama: 'Ramazan Bayramı 1. Gün',
+      adKey: 'eid_al_fitr',
+      aciklamaKey: 'eid_al_fitr_day1',
       tur: OzelGunTuru.bayram,
       hicriAy: 10,
       hicriGun: 1,
     ),
     OzelGun(
-      ad: 'Ramazan Bayramı',
-      aciklama: 'Ramazan Bayramı 2. Gün',
+      adKey: 'eid_al_fitr',
+      aciklamaKey: 'eid_al_fitr_day2',
       tur: OzelGunTuru.bayram,
       hicriAy: 10,
       hicriGun: 2,
     ),
     OzelGun(
-      ad: 'Ramazan Bayramı',
-      aciklama: 'Ramazan Bayramı 3. Gün',
+      adKey: 'eid_al_fitr',
+      aciklamaKey: 'eid_al_fitr_day3',
       tur: OzelGunTuru.bayram,
       hicriAy: 10,
       hicriGun: 3,
@@ -150,36 +180,36 @@ class OzelGunlerService {
     
     // Zilhicce Ayı (12)
     OzelGun(
-      ad: 'Arefe Günü',
-      aciklama: 'Kurban Bayramı arefesi',
+      adKey: 'arafa',
+      aciklamaKey: 'arafa_desc',
       tur: OzelGunTuru.onemliGun,
       hicriAy: 12,
       hicriGun: 9,
     ),
     OzelGun(
-      ad: 'Kurban Bayramı',
-      aciklama: 'Kurban Bayramı 1. Gün',
+      adKey: 'eid_al_adha',
+      aciklamaKey: 'eid_al_adha_day1',
       tur: OzelGunTuru.bayram,
       hicriAy: 12,
       hicriGun: 10,
     ),
     OzelGun(
-      ad: 'Kurban Bayramı',
-      aciklama: 'Kurban Bayramı 2. Gün',
+      adKey: 'eid_al_adha',
+      aciklamaKey: 'eid_al_adha_day2',
       tur: OzelGunTuru.bayram,
       hicriAy: 12,
       hicriGun: 11,
     ),
     OzelGun(
-      ad: 'Kurban Bayramı',
-      aciklama: 'Kurban Bayramı 3. Gün',
+      adKey: 'eid_al_adha',
+      aciklamaKey: 'eid_al_adha_day3',
       tur: OzelGunTuru.bayram,
       hicriAy: 12,
       hicriGun: 12,
     ),
     OzelGun(
-      ad: 'Kurban Bayramı',
-      aciklama: 'Kurban Bayramı 4. Gün',
+      adKey: 'eid_al_adha',
+      aciklamaKey: 'eid_al_adha_day4',
       tur: OzelGunTuru.bayram,
       hicriAy: 12,
       hicriGun: 13,
@@ -188,6 +218,11 @@ class OzelGunlerService {
 
   /// Bugün özel bir gün mü kontrol et
   static OzelGun? bugunOzelGunMu() {
+    // TEST MODU - Geliştirme sırasında test için
+    if (_testModu) {
+      return _testOzelGun;
+    }
+    
     final hicri = HijriCalendar.now();
     final hicriAy = hicri.hMonth;
     final hicriGun = hicri.hDay;
@@ -213,6 +248,11 @@ class OzelGunlerService {
 
   /// Bugün popup gösterilmeli mi kontrol et
   static Future<bool> popupGosterilmeliMi() async {
+    // Oturum içinde zaten gösterildiyse tekrar gösterme
+    if (_sessionPopupShown) {
+      return false;
+    }
+    
     final ozelGun = bugunOzelGunMu();
     if (ozelGun == null) return false;
     
@@ -232,6 +272,9 @@ class OzelGunlerService {
 
   /// Popup gösterildi olarak işaretle
   static Future<void> popupGosterildiIsaretle() async {
+    // Oturum flag'ini işaretle
+    _sessionPopupShown = true;
+    
     final ozelGun = bugunOzelGunMu();
     if (ozelGun == null) return;
     
@@ -291,23 +334,9 @@ class OzelGunlerService {
 
   /// Hicri ay adını döndür
   static String _getHicriAyAdi(int ay) {
-    const aylar = [
-      '',
-      'Muharrem',
-      'Safer',
-      'Rebiülevvel',
-      'Rebiülahir',
-      'Cemaziyelevvel',
-      'Cemaziyelahir',
-      'Recep',
-      'Şaban',
-      'Ramazan',
-      'Şevval',
-      'Zilkade',
-      'Zilhicce',
-    ];
+    final languageService = LanguageService();
     if (ay >= 1 && ay <= 12) {
-      return aylar[ay];
+      return languageService['hijri_month_$ay'] ?? '';
     }
     return '';
   }

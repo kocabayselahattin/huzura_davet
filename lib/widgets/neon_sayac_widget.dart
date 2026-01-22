@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../services/diyanet_api_service.dart';
 import '../services/konum_service.dart';
 import '../services/tema_service.dart';
+import '../services/language_service.dart';
 
 class NeonSayacWidget extends StatefulWidget {
   const NeonSayacWidget({super.key});
@@ -17,6 +18,7 @@ class NeonSayacWidget extends StatefulWidget {
 class _NeonSayacWidgetState extends State<NeonSayacWidget>
     with TickerProviderStateMixin {
   final TemaService _temaService = TemaService();
+  final LanguageService _languageService = LanguageService();
   Timer? _timer;
   Duration _kalanSure = Duration.zero;
   String _sonrakiVakit = '';
@@ -50,6 +52,7 @@ class _NeonSayacWidgetState extends State<NeonSayacWidget>
       _hesaplaKalanSure();
     });
     _temaService.addListener(_onTemaChanged);
+    _languageService.addListener(_onTemaChanged);
   }
 
   void _onTemaChanged() {
@@ -62,6 +65,7 @@ class _NeonSayacWidgetState extends State<NeonSayacWidget>
     _glowController.dispose();
     _waveController.dispose();
     _temaService.removeListener(_onTemaChanged);
+    _languageService.removeListener(_onTemaChanged);
     super.dispose();
   }
 
@@ -92,12 +96,12 @@ class _NeonSayacWidgetState extends State<NeonSayacWidget>
     final nowTotalSeconds = now.hour * 3600 + now.minute * 60 + now.second;
 
     final vakitListesi = [
-      {'adi': 'İmsak', 'saat': _vakitSaatleri['imsak']!},
-      {'adi': 'Güneş', 'saat': _vakitSaatleri['gunes']!},
-      {'adi': 'Öğle', 'saat': _vakitSaatleri['ogle']!},
-      {'adi': 'İkindi', 'saat': _vakitSaatleri['ikindi']!},
-      {'adi': 'Akşam', 'saat': _vakitSaatleri['aksam']!},
-      {'adi': 'Yatsı', 'saat': _vakitSaatleri['yatsi']!},
+      {'adi': _languageService['imsak'] ?? 'İmsak', 'saat': _vakitSaatleri['imsak']!},
+      {'adi': _languageService['gunes'] ?? 'Güneş', 'saat': _vakitSaatleri['gunes']!},
+      {'adi': _languageService['ogle'] ?? 'Öğle', 'saat': _vakitSaatleri['ogle']!},
+      {'adi': _languageService['ikindi'] ?? 'İkindi', 'saat': _vakitSaatleri['ikindi']!},
+      {'adi': _languageService['aksam'] ?? 'Akşam', 'saat': _vakitSaatleri['aksam']!},
+      {'adi': _languageService['yatsi'] ?? 'Yatsı', 'saat': _vakitSaatleri['yatsi']!},
     ];
 
     // Vakit saniyelerini hesapla
@@ -126,7 +130,7 @@ class _NeonSayacWidgetState extends State<NeonSayacWidget>
       final imsakParts = _vakitSaatleri['imsak']!.split(':');
       sonrakiVakitZamani = DateTime(yarin.year, yarin.month, yarin.day,
           int.parse(imsakParts[0]), int.parse(imsakParts[1]));
-      sonrakiVakitAdi = 'İmsak';
+      sonrakiVakitAdi = _languageService['imsak'] ?? 'İmsak';
       
       // Yatsıdan yarın imsaka kadar ilerleme
       final yatsiSaniye = vakitSaniyeleri.last;
@@ -139,7 +143,7 @@ class _NeonSayacWidgetState extends State<NeonSayacWidget>
       final imsakParts = _vakitSaatleri['imsak']!.split(':');
       sonrakiVakitZamani = DateTime(now.year, now.month, now.day,
           int.parse(imsakParts[0]), int.parse(imsakParts[1]));
-      sonrakiVakitAdi = 'İmsak';
+      sonrakiVakitAdi = _languageService['imsak'] ?? 'İmsak';
       
       // Dün yatsıdan bugün imsaka kadar ilerleme
       final yatsiSaniye = vakitSaniyeleri.last;
@@ -244,7 +248,7 @@ class _NeonSayacWidgetState extends State<NeonSayacWidget>
                           ],
                         ),
                         child: Text(
-                          '$_sonrakiVakit VAKTİNE',
+                          '$_sonrakiVakit ${(_languageService['time_to'] ?? 'VAKTİNE').toUpperCase()}',
                           style: TextStyle(
                             color: renkler.vurgu,
                             fontSize: 14,

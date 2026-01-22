@@ -54,10 +54,12 @@ class GlassmorphismWidget : AppWidgetProvider() {
             
             // Geri sayımı Android tarafında hesapla
             val vakitBilgisi = WidgetUtils.hesaplaVakitBilgisi(imsak, gunes, ogle, ikindi, aksam, yatsi)
-            val sonrakiVakit = vakitBilgisi["sonrakiVakit"] ?: "Öğle"
             val geriSayim = vakitBilgisi["geriSayim"] ?: "02:30:00"
-            val mevcutVakit = vakitBilgisi["mevcutVakit"] ?: "Güneş"
             val ilerleme = vakitBilgisi["ilerleme"]?.toIntOrNull() ?: 50
+            
+            // Flutter'dan gelen çevirilmiş vakit isimlerini kullan
+            val sonrakiVakit = widgetData.getString("sonraki_vakit", null) ?: vakitBilgisi["sonrakiVakit"] ?: "Öğle"
+            val mevcutVakit = widgetData.getString("mevcut_vakit", null) ?: vakitBilgisi["mevcutVakit"] ?: "Güneş"
             
             val konum = widgetData.getString("konum", "İstanbul") ?: "İstanbul"
             val hicriTarih = widgetData.getString("hicri_tarih", "28 Recep 1447") ?: "28 Recep 1447"
@@ -91,7 +93,7 @@ class GlassmorphismWidget : AppWidgetProvider() {
             views.setInt(R.id.widget_root, "setBackgroundResource", bgDrawable)
             
             // Verileri set et
-            views.setTextViewText(R.id.tv_sonraki_vakit, "$sonrakiVakit'e")
+            views.setTextViewText(R.id.tv_sonraki_vakit, sonrakiVakit)
             views.setTextColor(R.id.tv_sonraki_vakit, yaziRengi)
             
             WidgetUtils.applyCountdown(views, R.id.tv_geri_sayim, geriSayim)

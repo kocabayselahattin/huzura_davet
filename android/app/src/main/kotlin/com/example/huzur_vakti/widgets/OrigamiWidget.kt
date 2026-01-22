@@ -92,41 +92,64 @@ class OrigamiWidget : AppWidgetProvider() {
             
             // Geri sayımı Android tarafında hesapla
             val vakitBilgisi = WidgetUtils.hesaplaVakitBilgisi(imsak, gunes, ogle, ikindi, aksam, yatsi)
-            val sonrakiVakit = vakitBilgisi["sonrakiVakit"] ?: "Öğle"
             val geriSayim = vakitBilgisi["geriSayim"] ?: "02:30:00"
-            val mevcutVakit = vakitBilgisi["mevcutVakit"] ?: "Güneş"
             val ilerleme = vakitBilgisi["ilerleme"]?.toIntOrNull() ?: 50
+            
+            // Flutter'dan gelen çevirilmiş vakit isimlerini kullan
+            val sonrakiVakit = widgetData.getString("sonraki_vakit", null) ?: vakitBilgisi["sonrakiVakit"] ?: "Öğle"
+            val mevcutVakit = widgetData.getString("mevcut_vakit", null) ?: vakitBilgisi["mevcutVakit"] ?: "Güneş"
             
             val konum = widgetData.getString("konum", "İstanbul") ?: "İstanbul"
             val hicriTarih = widgetData.getString("hicri_tarih", "28 Recep 1447") ?: "28 Recep 1447"
             val miladiTarih = widgetData.getString("miladi_tarih", "21 Ocak 2026") ?: "21 Ocak 2026"
             
+            // Renk ayarlarını al
+            val arkaPlanKey = widgetData.getString("arkaplan_key", "light") ?: "light"
+            val yaziRengiHex = widgetData.getString("yazi_rengi_hex", "2D3436") ?: "2D3436"
+            val yaziRengi = WidgetUtils.parseColorSafe(yaziRengiHex, Color.parseColor("#2D3436"))
+            val yaziRengiSecondary = Color.argb(180, Color.red(yaziRengi), Color.green(yaziRengi), Color.blue(yaziRengi))
+            
             val views = RemoteViews(context.packageName, R.layout.widget_origami)
             
-            // Origami renkleri - mürekkep tarzı
-            val murekkep = Color.parseColor("#2D3436")
-            val murekkepLight = Color.parseColor("#636E72")
+            // Arka plan ayarla
+            val bgDrawable = when(arkaPlanKey) {
+                "orange" -> R.drawable.widget_bg_orange
+                "light" -> R.drawable.widget_bg_card_light
+                "dark" -> R.drawable.widget_bg_card_dark
+                "sunset" -> R.drawable.widget_bg_sunset
+                "green" -> R.drawable.widget_bg_green
+                "purple" -> R.drawable.widget_bg_purple
+                "red" -> R.drawable.widget_bg_red
+                "blue" -> R.drawable.widget_bg_blue
+                "teal" -> R.drawable.widget_bg_teal
+                "pink" -> R.drawable.widget_bg_pink
+                "transparent" -> R.drawable.widget_bg_transparent
+                "semi_black" -> R.drawable.widget_bg_semi_black
+                "semi_white" -> R.drawable.widget_bg_semi_white
+                else -> R.drawable.widget_bg_card_light
+            }
+            views.setInt(R.id.widget_root, "setBackgroundResource", bgDrawable)
             
             // Verileri set et
             views.setTextViewText(R.id.tv_konum, konum)
-            views.setTextColor(R.id.tv_konum, murekkep)
+            views.setTextColor(R.id.tv_konum, yaziRengi)
             
-            // Hicri tarihi Arapça olarak göster
-            views.setTextViewText(R.id.tv_hicri, toArabicHicri(hicriTarih))
-            views.setTextColor(R.id.tv_hicri, murekkepLight)
+            // Hicri tarihi seçili dilde göster (Flutter'dan gelen zaten çevirilmiş)
+            views.setTextViewText(R.id.tv_hicri, hicriTarih)
+            views.setTextColor(R.id.tv_hicri, yaziRengiSecondary)
             
             // Miladi tarih
             views.setTextViewText(R.id.tv_miladi, miladiTarih)
-            views.setTextColor(R.id.tv_miladi, murekkepLight)
+            views.setTextColor(R.id.tv_miladi, yaziRengiSecondary)
             
             views.setTextViewText(R.id.tv_mevcut_vakit, "$mevcutVakit Vakti")
-            views.setTextColor(R.id.tv_mevcut_vakit, murekkepLight)
+            views.setTextColor(R.id.tv_mevcut_vakit, yaziRengiSecondary)
             
             WidgetUtils.applyCountdown(views, R.id.tv_geri_sayim, geriSayim)
-            views.setTextColor(R.id.tv_geri_sayim, murekkep)
+            views.setTextColor(R.id.tv_geri_sayim, yaziRengi)
             
             views.setTextViewText(R.id.tv_sonraki_vakit, "${sonrakiVakit.lowercase()} vaktine")
-            views.setTextColor(R.id.tv_sonraki_vakit, murekkepLight)
+            views.setTextColor(R.id.tv_sonraki_vakit, yaziRengiSecondary)
             
             // Progress bar
             views.setProgressBar(R.id.progress_ecir, 100, ilerleme, false)

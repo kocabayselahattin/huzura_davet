@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../services/konum_service.dart';
 import '../services/diyanet_api_service.dart';
 import '../services/tema_service.dart';
+import '../services/language_service.dart';
 
 class DijitalSayacWidget extends StatefulWidget {
   const DijitalSayacWidget({super.key});
@@ -19,6 +20,7 @@ class _DijitalSayacWidgetState extends State<DijitalSayacWidget> {
   String _sonrakiVakit = '';
   Map<String, String> _vakitSaatleri = {};
   final TemaService _temaService = TemaService();
+  final LanguageService _languageService = LanguageService();
 
   @override
   void initState() {
@@ -28,6 +30,7 @@ class _DijitalSayacWidgetState extends State<DijitalSayacWidget> {
       _hesaplaKalanSure();
     });
     _temaService.addListener(_onTemaChanged);
+    _languageService.addListener(_onTemaChanged);
   }
 
   void _onTemaChanged() {
@@ -38,6 +41,7 @@ class _DijitalSayacWidgetState extends State<DijitalSayacWidget> {
   void dispose() {
     _timer?.cancel();
     _temaService.removeListener(_onTemaChanged);
+    _languageService.removeListener(_onTemaChanged);
     super.dispose();
   }
 
@@ -84,12 +88,12 @@ class _DijitalSayacWidgetState extends State<DijitalSayacWidget> {
     final nowMinutes = now.hour * 60 + now.minute;
 
     final vakitSaatleri = [
-      {'adi': 'İmsak', 'saat': _vakitSaatleri['Imsak']!},
-      {'adi': 'Güneş', 'saat': _vakitSaatleri['Gunes']!},
-      {'adi': 'Öğle', 'saat': _vakitSaatleri['Ogle']!},
-      {'adi': 'İkindi', 'saat': _vakitSaatleri['Ikindi']!},
-      {'adi': 'Akşam', 'saat': _vakitSaatleri['Aksam']!},
-      {'adi': 'Yatsı', 'saat': _vakitSaatleri['Yatsi']!},
+      {'adi': _languageService['imsak'] ?? 'İmsak', 'saat': _vakitSaatleri['Imsak']!},
+      {'adi': _languageService['gunes'] ?? 'Güneş', 'saat': _vakitSaatleri['Gunes']!},
+      {'adi': _languageService['ogle'] ?? 'Öğle', 'saat': _vakitSaatleri['Ogle']!},
+      {'adi': _languageService['ikindi'] ?? 'İkindi', 'saat': _vakitSaatleri['Ikindi']!},
+      {'adi': _languageService['aksam'] ?? 'Akşam', 'saat': _vakitSaatleri['Aksam']!},
+      {'adi': _languageService['yatsi'] ?? 'Yatsı', 'saat': _vakitSaatleri['Yatsi']!},
     ];
 
     DateTime? sonrakiVakitZamani;
@@ -127,7 +131,7 @@ class _DijitalSayacWidgetState extends State<DijitalSayacWidget> {
         int.parse(imsakSaat[0]),
         int.parse(imsakSaat[1]),
       );
-      sonrakiVakitAdi = 'İmsak';
+      sonrakiVakitAdi = _languageService['imsak'] ?? 'İmsak';
     }
 
     setState(() {
@@ -144,7 +148,8 @@ class _DijitalSayacWidgetState extends State<DijitalSayacWidget> {
     final seconds = _kalanSure.inSeconds % 60;
 
     final now = DateTime.now();
-    final miladiTarih = DateFormat('dd MMMM yyyy, EEEE', 'tr_TR').format(now);
+    final locale = _getLocale();
+    final miladiTarih = DateFormat('dd MMMM yyyy, EEEE', locale).format(now);
     final hicri = HijriCalendar.now();
     final hicriTarih =
         '${hicri.hDay} ${_getHicriAyAdi(hicri.hMonth)} ${hicri.hYear}';
@@ -179,7 +184,7 @@ class _DijitalSayacWidgetState extends State<DijitalSayacWidget> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            '$_sonrakiVakit Vaktine',
+            '$_sonrakiVakit ${_languageService['time_to'] ?? 'Vaktine'}',
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -213,7 +218,7 @@ class _DijitalSayacWidgetState extends State<DijitalSayacWidget> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Miladi',
+                      _languageService['gregorian_date'] ?? 'Miladi',
                       style: TextStyle(
                         color: renkler.yaziSecondary.withValues(alpha: 0.6),
                         fontSize: 10,
@@ -237,7 +242,7 @@ class _DijitalSayacWidgetState extends State<DijitalSayacWidget> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      'Hicri',
+                      _languageService['hijri_date'] ?? 'Hicri',
                       style: TextStyle(
                         color: renkler.yaziSecondary.withValues(alpha: 0.6),
                         fontSize: 10,
@@ -262,6 +267,22 @@ class _DijitalSayacWidgetState extends State<DijitalSayacWidget> {
         ],
       ),
     );
+  }
+
+  String _getLocale() {
+    final lang = _languageService.currentLanguage;
+    switch (lang) {
+      case 'tr':
+        return 'tr_TR';
+      case 'en':
+        return 'en_US';
+      case 'de':
+        return 'de_DE';
+      case 'fr':
+        return 'fr_FR';
+      default:
+        return 'tr_TR';
+    }
   }
 
   String _getHicriAyAdi(int ay) {
