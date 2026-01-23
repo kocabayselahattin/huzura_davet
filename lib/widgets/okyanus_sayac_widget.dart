@@ -336,119 +336,119 @@ class _OkyanusSayacWidgetState extends State<OkyanusSayacWidget>
                         const Color(0xFF5BC0BE),
                       ],
                     ).createShader(bounds),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SizedBox(
-                          width: 60,
-                          child: Text(
-                            hours.toString().padLeft(2, '0'),
-                            textAlign: TextAlign.right,
-                            maxLines: 1,
-                            softWrap: false,
-                            style: const TextStyle(
-                              fontSize: 50,
-                              fontWeight: FontWeight.w200,
-                              color: Colors.white,
-                              fontFeatures: [FontFeature.tabularFigures()],
-                              shadows: [
-                                Shadow(
-                                  color: Color(0xFF5BC0BE),
-                                  blurRadius: 20,
-                                ),
-                              ],
-                            ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 60,
+                        child: Text(
+                          hours.toString().padLeft(2, '0'),
+                          textAlign: TextAlign.right,
+                          maxLines: 1,
+                          softWrap: false,
+                          style: const TextStyle(
+                            fontSize: 50,
+                            fontWeight: FontWeight.w200,
+                            color: Colors.white,
+                            fontFeatures: [FontFeature.tabularFigures()],
+                            shadows: [
+                              Shadow(
+                                color: Color(0xFF5BC0BE),
+                                blurRadius: 20,
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(
-                          width: 20,
-                          child: Text(
-                            ':',
-                            textAlign: TextAlign.center,
-                            maxLines: 1,
-                            softWrap: false,
-                            style: TextStyle(
-                              fontSize: 50,
-                              fontWeight: FontWeight.w200,
-                              color: Colors.white,
-                              fontFeatures: [FontFeature.tabularFigures()],
-                              shadows: [
-                                Shadow(
-                                  color: Color(0xFF5BC0BE),
-                                  blurRadius: 20,
-                                ),
-                              ],
-                            ),
+                      ),
+                      const SizedBox(
+                        width: 20,
+                        child: Text(
+                          ':',
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          softWrap: false,
+                          style: TextStyle(
+                            fontSize: 50,
+                            fontWeight: FontWeight.w200,
+                            color: Colors.white,
+                            fontFeatures: [FontFeature.tabularFigures()],
+                            shadows: [
+                              Shadow(
+                                color: Color(0xFF5BC0BE),
+                                blurRadius: 20,
+                              ),
+                            ],
                           ),
                         ),
-                        SizedBox(
-                          width: 60,
-                          child: Text(
-                            minutes.toString().padLeft(2, '0'),
-                            textAlign: TextAlign.center,
-                            maxLines: 1,
-                            softWrap: false,
-                            style: const TextStyle(
-                              fontSize: 50,
-                              fontWeight: FontWeight.w200,
-                              color: Colors.white,
-                              fontFeatures: [FontFeature.tabularFigures()],
-                              shadows: [
-                                Shadow(
-                                  color: Color(0xFF5BC0BE),
-                                  blurRadius: 20,
-                                ),
-                              ],
-                            ),
+                      ),
+                      SizedBox(
+                        width: 60,
+                        child: Text(
+                          minutes.toString().padLeft(2, '0'),
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          softWrap: false,
+                          style: const TextStyle(
+                            fontSize: 50,
+                            fontWeight: FontWeight.w200,
+                            color: Colors.white,
+                            fontFeatures: [FontFeature.tabularFigures()],
+                            shadows: [
+                              Shadow(
+                                color: Color(0xFF5BC0BE),
+                                blurRadius: 20,
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(
-                          width: 20,
-                          child: Text(
-                            ':',
-                            textAlign: TextAlign.center,
-                            maxLines: 1,
-                            softWrap: false,
-                            style: TextStyle(
-                              fontSize: 50,
-                              fontWeight: FontWeight.w200,
-                              color: Colors.white,
-                              fontFeatures: [FontFeature.tabularFigures()],
-                              shadows: [
-                                Shadow(
-                                  color: Color(0xFF5BC0BE),
-                                  blurRadius: 20,
-                                ),
-                              ],
-                            ),
+                      ),
+                      const SizedBox(
+                        width: 20,
+                        child: Text(
+                          ':',
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          softWrap: false,
+                          style: TextStyle(
+                            fontSize: 50,
+                            fontWeight: FontWeight.w200,
+                            color: Colors.white,
+                            fontFeatures: [FontFeature.tabularFigures()],
+                            shadows: [
+                              Shadow(
+                                color: Color(0xFF5BC0BE),
+                                blurRadius: 20,
+                              ),
+                            ],
                           ),
                         ),
-                        SizedBox(
-                          width: 60,
-                          child: Text(
-                            seconds.toString().padLeft(2, '0'),
-                            textAlign: TextAlign.left,
-                            maxLines: 1,
-                            softWrap: false,
-                            style: const TextStyle(
-                              fontSize: 50,
-                              fontWeight: FontWeight.w200,
-                              color: Colors.white,
-                              fontFeatures: [FontFeature.tabularFigures()],
-                              shadows: [
-                                Shadow(
-                                  color: Color(0xFF5BC0BE),
-                                  blurRadius: 20,
-                                ),
-                              ],
-                            ),
+                      ),
+                      SizedBox(
+                        width: 60,
+                        child: Text(
+                          seconds.toString().padLeft(2, '0'),
+                          textAlign: TextAlign.left,
+                          maxLines: 1,
+                          softWrap: false,
+                          style: const TextStyle(
+                            fontSize: 50,
+                            fontWeight: FontWeight.w200,
+                            color: Colors.white,
+                            fontFeatures: [FontFeature.tabularFigures()],
+                            shadows: [
+                              Shadow(
+                                color: Color(0xFF5BC0BE),
+                                blurRadius: 20,
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
+                ),
                   
                   const SizedBox(height: 10),
                   

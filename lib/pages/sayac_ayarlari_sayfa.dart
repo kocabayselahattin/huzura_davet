@@ -28,7 +28,7 @@ class _SayacAyarlariSayfaState extends State<SayacAyarlariSayfa> {
   final LanguageService _languageService = LanguageService();
   int _seciliSayacIndex = 0;
   final PageController _previewController = PageController(
-    viewportFraction: 0.9,
+    viewportFraction: 1.0,
   );
 
   // Sayaç bilgileri
@@ -236,7 +236,7 @@ class _SayacAyarlariSayfaState extends State<SayacAyarlariSayfa> {
 
           // Sayaç Önizleme
           SizedBox(
-            height: 260,
+            height: 240,
             child: PageView.builder(
               controller: _previewController,
               itemCount: _sayaclar.length,
@@ -244,10 +244,7 @@ class _SayacAyarlariSayfaState extends State<SayacAyarlariSayfa> {
                 setState(() {});
               },
               itemBuilder: (context, index) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: _buildSayacWidget(index),
-                );
+                return _buildSayacWidget(index);
               },
             ),
           ),
