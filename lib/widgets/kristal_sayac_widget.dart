@@ -398,8 +398,9 @@ class _KristalSayacWidgetState extends State<KristalSayacWidget>
 
   Widget _buildCrystalTimeUnit(String value, String label, Color primaryColor, Color secondaryColor, Color textColor) {
     return Container(
-      width: 80,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      width: 85,
+      height: 85,
+      alignment: Alignment.center,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -429,15 +430,17 @@ class _KristalSayacWidgetState extends State<KristalSayacWidget>
         ],
       ),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
             value,
             textAlign: TextAlign.center,
+            maxLines: 1,
+            softWrap: false,
             style: TextStyle(
               fontSize: 38,
               fontWeight: FontWeight.w300,
               color: textColor,
-              letterSpacing: 2,
               fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
@@ -448,7 +451,6 @@ class _KristalSayacWidgetState extends State<KristalSayacWidget>
               fontSize: 10,
               fontWeight: FontWeight.w500,
               color: primaryColor.withOpacity(0.6),
-              letterSpacing: 1,
             ),
           ),
         ],

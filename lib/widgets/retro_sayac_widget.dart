@@ -254,43 +254,46 @@ class _RetroSayacWidgetState extends State<RetroSayacWidget>
                     AnimatedBuilder(
                       animation: _blinkAnimation,
                       builder: (context, child) {
-                        return Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            _buildLCDDigit(hours.toString().padLeft(2, '0'), lcdGreen),
-                            Opacity(
-                              opacity: _blinkAnimation.value,
-                              child: Text(
-                                ':',
-                                style: TextStyle(
-                                  color: lcdGreen,
-                                  fontSize: 52,
-                                  fontFamily: 'monospace',
-                                  fontWeight: FontWeight.bold,
-                                  shadows: [
-                                    Shadow(color: lcdGreen, blurRadius: 10),
-                                  ],
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 40),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              _buildLCDDigit(hours.toString().padLeft(2, '0'), lcdGreen),
+                              Opacity(
+                                opacity: _blinkAnimation.value,
+                                child: Text(
+                                  ':',
+                                  style: TextStyle(
+                                    color: lcdGreen,
+                                    fontSize: 46,
+                                    fontFamily: 'monospace',
+                                    fontWeight: FontWeight.bold,
+                                    shadows: [
+                                      Shadow(color: lcdGreen, blurRadius: 10),
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                            _buildLCDDigit(minutes.toString().padLeft(2, '0'), lcdGreen),
-                            Opacity(
-                              opacity: _blinkAnimation.value,
-                              child: Text(
-                                ':',
-                                style: TextStyle(
-                                  color: lcdGreen,
-                                  fontSize: 52,
-                                  fontFamily: 'monospace',
-                                  fontWeight: FontWeight.bold,
-                                  shadows: [
-                                    Shadow(color: lcdGreen, blurRadius: 10),
-                                  ],
+                              _buildLCDDigit(minutes.toString().padLeft(2, '0'), lcdGreen),
+                              Opacity(
+                                opacity: _blinkAnimation.value,
+                                child: Text(
+                                  ':',
+                                  style: TextStyle(
+                                    color: lcdGreen,
+                                    fontSize: 46,
+                                    fontFamily: 'monospace',
+                                    fontWeight: FontWeight.bold,
+                                    shadows: [
+                                      Shadow(color: lcdGreen, blurRadius: 10),
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                            _buildLCDDigit(seconds.toString().padLeft(2, '0'), lcdGreen),
-                          ],
+                              _buildLCDDigit(seconds.toString().padLeft(2, '0'), lcdGreen),
+                            ],
+                          ),
                         );
                       },
                     ),
@@ -363,16 +366,17 @@ class _RetroSayacWidgetState extends State<RetroSayacWidget>
 
   Widget _buildLCDDigit(String value, Color lcdGreen) {
     return SizedBox(
-      width: 70,
+      width: 62,
       child: Text(
         value,
         textAlign: TextAlign.center,
+        maxLines: 1,
+        softWrap: false,
         style: TextStyle(
           color: lcdGreen,
-          fontSize: 52,
+          fontSize: 46,
           fontFamily: 'monospace',
           fontWeight: FontWeight.bold,
-          letterSpacing: 2,
           fontFeatures: const [FontFeature.tabularFigures()],
           shadows: [
             Shadow(color: lcdGreen, blurRadius: 15),

@@ -334,11 +334,11 @@ class _VolkanikSayacWidgetState extends State<VolkanikSayacWidget>
                           children: [
                             _buildLavaTimeBox(hours.toString().padLeft(2, '0'), primaryColor, secondaryColor, bgColor2, textColor),
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                              padding: const EdgeInsets.symmetric(horizontal: 6),
                               child: Text(
                                 ':',
                                 style: TextStyle(
-                                  fontSize: 40,
+                                  fontSize: 34,
                                   fontWeight: FontWeight.bold,
                                   color: primaryColor.withOpacity(_glowAnimation.value),
                                   shadows: [
@@ -352,11 +352,11 @@ class _VolkanikSayacWidgetState extends State<VolkanikSayacWidget>
                             ),
                             _buildLavaTimeBox(minutes.toString().padLeft(2, '0'), primaryColor, secondaryColor, bgColor2, textColor),
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                              padding: const EdgeInsets.symmetric(horizontal: 6),
                               child: Text(
                                 ':',
                                 style: TextStyle(
-                                  fontSize: 40,
+                                  fontSize: 34,
                                   fontWeight: FontWeight.bold,
                                   color: primaryColor.withOpacity(_glowAnimation.value),
                                   shadows: [
@@ -416,8 +416,9 @@ class _VolkanikSayacWidgetState extends State<VolkanikSayacWidget>
 
   Widget _buildLavaTimeBox(String value, Color primaryColor, Color secondaryColor, Color bgColor2, Color textColor) {
     return Container(
-      width: 75,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      width: 80,
+      height: 70,
+      alignment: Alignment.center,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
@@ -459,11 +460,12 @@ class _VolkanikSayacWidgetState extends State<VolkanikSayacWidget>
         child: Text(
           value,
           textAlign: TextAlign.center,
+          maxLines: 1,
+          softWrap: false,
           style: const TextStyle(
-            fontSize: 40,
+            fontSize: 36,
             fontWeight: FontWeight.bold,
             color: Colors.white,
-            letterSpacing: 2,
             fontFeatures: [FontFeature.tabularFigures()],
           ),
         ),

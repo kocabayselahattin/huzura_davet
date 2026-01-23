@@ -202,12 +202,13 @@ class _DijitalSayacWidgetState extends State<DijitalSayacWidget> {
           const SizedBox(height: 5),
           Text(
             '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}',
+            maxLines: 1,
+            softWrap: false,
             style: TextStyle(
               fontSize: 66,
               fontWeight: FontWeight.bold,
               color: renkler.yaziPrimary,
               fontFamily: 'Digital-7',
-              letterSpacing: 2,
               fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),

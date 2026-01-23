@@ -310,7 +310,9 @@ class _NeonSayacWidgetState extends State<NeonSayacWidget>
 
   Widget _buildNeonDigit(String digit, TemaRenkleri renkler) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      width: 70,
+      height: 60,
+      alignment: Alignment.center,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
@@ -320,6 +322,8 @@ class _NeonSayacWidgetState extends State<NeonSayacWidget>
       ),
       child: Text(
         digit,
+        maxLines: 1,
+        softWrap: false,
         style: TextStyle(
           fontSize: 42,
           fontWeight: FontWeight.w300,

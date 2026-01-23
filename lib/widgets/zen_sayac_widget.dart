@@ -321,8 +321,9 @@ class _ZenSayacWidgetState extends State<ZenSayacWidget>
     return Column(
       children: [
         Container(
-          width: 75,
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+          width: 80,
+          height: 65,
+          alignment: Alignment.center,
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.6),
             borderRadius: BorderRadius.circular(12),
@@ -333,11 +334,12 @@ class _ZenSayacWidgetState extends State<ZenSayacWidget>
           child: Text(
             value,
             textAlign: TextAlign.center,
+            maxLines: 1,
+            softWrap: false,
             style: TextStyle(
               fontSize: 36,
               fontWeight: FontWeight.w300,
               color: textColor,
-              letterSpacing: 2,
               fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),

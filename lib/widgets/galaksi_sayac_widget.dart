@@ -245,11 +245,12 @@ class _GalaksiSayacWidgetState extends State<GalaksiSayacWidget>
                           ).createShader(bounds),
                           child: Text(
                             '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}',
+                            maxLines: 1,
+                            softWrap: false,
                             style: const TextStyle(
                               fontSize: 52,
                               fontWeight: FontWeight.w300,
                               color: Colors.white,
-                              letterSpacing: 4,
                               fontFeatures: [FontFeature.tabularFigures()],
                             ),
                           ),

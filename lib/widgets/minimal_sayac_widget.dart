@@ -293,15 +293,16 @@ class _MinimalSayacWidgetState extends State<MinimalSayacWidget> {
       textBaseline: TextBaseline.alphabetic,
       children: [
         SizedBox(
-          width: 60, // Sabit genişlik
+          width: 65,
           child: Text(
             value,
             textAlign: TextAlign.center,
+            maxLines: 1,
+            softWrap: false,
             style: TextStyle(
               fontSize: 48,
               fontWeight: FontWeight.w300,
               color: textColor,
-              letterSpacing: -2,
               fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),

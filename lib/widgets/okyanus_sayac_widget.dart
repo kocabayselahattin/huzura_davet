@@ -338,11 +338,12 @@ class _OkyanusSayacWidgetState extends State<OkyanusSayacWidget>
                     ).createShader(bounds),
                     child: Text(
                       '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}',
+                      maxLines: 1,
+                      softWrap: false,
                       style: const TextStyle(
                         fontSize: 50,
                         fontWeight: FontWeight.w200,
                         color: Colors.white,
-                        letterSpacing: 4,
                         fontFeatures: [FontFeature.tabularFigures()],
                         shadows: [
                           Shadow(

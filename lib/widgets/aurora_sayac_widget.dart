@@ -411,8 +411,9 @@ class _AuroraSayacWidgetState extends State<AuroraSayacWidget>
 
   Widget _buildTimeBox(String value, Color textColor) {
     return Container(
-      width: 75,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      width: 80,
+      height: 70,
+      alignment: Alignment.center,
       decoration: BoxDecoration(
         color: textColor.withOpacity(0.05),
         borderRadius: BorderRadius.circular(12),
@@ -424,11 +425,12 @@ class _AuroraSayacWidgetState extends State<AuroraSayacWidget>
       child: Text(
         value,
         textAlign: TextAlign.center,
+        maxLines: 1,
+        softWrap: false,
         style: TextStyle(
           fontSize: 42,
           fontWeight: FontWeight.w300,
           color: textColor,
-          letterSpacing: 2,
           fontFeatures: const [FontFeature.tabularFigures()],
         ),
       ),

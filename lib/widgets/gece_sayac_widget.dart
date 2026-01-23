@@ -378,15 +378,16 @@ class _GeceSayacWidgetState extends State<GeceSayacWidget>
 
   Widget _buildNightTimeUnit(String value, Color textColor, Color shadowColor) {
     return SizedBox(
-      width: 60,
+      width: 65,
       child: Text(
         value,
         textAlign: TextAlign.center,
+        maxLines: 1,
+        softWrap: false,
         style: TextStyle(
           fontSize: 44,
           fontWeight: FontWeight.w200,
           color: textColor,
-          letterSpacing: 2,
           fontFeatures: const [FontFeature.tabularFigures()],
           shadows: [
             Shadow(

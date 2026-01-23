@@ -393,58 +393,68 @@ class _SiberSayacWidgetState extends State<SiberSayacWidget>
   }
 
   Widget _buildCyberTimeUnit(String value, Color primaryColor, Color secondaryColor, Color textColor) {
-    return Stack(
-      children: [
-        // Glitch efekti - Primary
-        Transform.translate(
-          offset: const Offset(-2, 0),
-          child: Text(
+    return SizedBox(
+      width: 70,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Glitch efekti - Primary
+          Transform.translate(
+            offset: const Offset(-2, 0),
+            child: Text(
+              value,
+              maxLines: 1,
+              softWrap: false,
+              style: TextStyle(
+                fontSize: 44,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'monospace',
+                color: primaryColor.withOpacity(0.3),
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
+          ),
+          // Glitch efekti - Secondary
+          Transform.translate(
+            offset: const Offset(2, 0),
+            child: Text(
+              value,
+              maxLines: 1,
+              softWrap: false,
+              style: TextStyle(
+                fontSize: 44,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'monospace',
+                color: secondaryColor.withOpacity(0.3),
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
+          ),
+          // Ana metin
+          Text(
             value,
+            maxLines: 1,
+            softWrap: false,
             style: TextStyle(
               fontSize: 44,
               fontWeight: FontWeight.bold,
               fontFamily: 'monospace',
-              color: primaryColor.withOpacity(0.3),
+              color: textColor,
               fontFeatures: const [FontFeature.tabularFigures()],
+              shadows: [
+                Shadow(
+                  color: primaryColor.withOpacity(0.8),
+                  blurRadius: 10,
+                ),
+                Shadow(
+                  color: secondaryColor.withOpacity(0.8),
+                  blurRadius: 20,
+                ),
+              ],
             ),
           ),
-        ),
-        // Glitch efekti - Secondary
-        Transform.translate(
-          offset: const Offset(2, 0),
-          child: Text(
-            value,
-            style: TextStyle(
-              fontSize: 44,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'monospace',
-              color: secondaryColor.withOpacity(0.3),
-              fontFeatures: const [FontFeature.tabularFigures()],
-            ),
-          ),
-        ),
-        // Ana metin
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 44,
-            fontWeight: FontWeight.bold,
-            fontFamily: 'monospace',
-            color: textColor,
-            fontFeatures: const [FontFeature.tabularFigures()],
-            shadows: [
-              Shadow(
-                color: primaryColor.withOpacity(0.8),
-                blurRadius: 10,
-              ),
-              Shadow(
-                color: secondaryColor.withOpacity(0.8),
-                blurRadius: 20,
-              ),
-            ],
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

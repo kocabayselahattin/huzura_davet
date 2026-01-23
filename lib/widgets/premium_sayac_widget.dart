@@ -360,10 +360,11 @@ class _PremiumSayacWidgetState extends State<PremiumSayacWidget>
                               ).createShader(bounds),
                               child: Text(
                                 _formatDuration(_kalanSure),
+                                maxLines: 1,
+                                softWrap: false,
                                 style: TextStyle(
                                   fontSize: 48,
                                   fontWeight: FontWeight.w300,
-                                  letterSpacing: 6,
                                   color: Colors.white,
                                   fontFeatures: const [FontFeature.tabularFigures()],
                                   shadows: [
