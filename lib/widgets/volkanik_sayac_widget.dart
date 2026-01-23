@@ -327,47 +327,50 @@ class _VolkanikSayacWidgetState extends State<VolkanikSayacWidget>
                       const SizedBox(height: 20),
 
                       // Sayaç - Lav efektli
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          _buildLavaTimeBox(hours.toString().padLeft(2, '0'), primaryColor, secondaryColor, bgColor2, textColor),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 6),
-                            child: Text(
-                              ':',
-                              style: TextStyle(
-                                fontSize: 40,
-                                fontWeight: FontWeight.bold,
-                                color: primaryColor.withOpacity(_glowAnimation.value),
-                                shadows: [
-                                  Shadow(
-                                    color: secondaryColor,
-                                    blurRadius: 15,
-                                  ),
-                                ],
+                      Center(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _buildLavaTimeBox(hours.toString().padLeft(2, '0'), primaryColor, secondaryColor, bgColor2, textColor),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                              child: Text(
+                                ':',
+                                style: TextStyle(
+                                  fontSize: 40,
+                                  fontWeight: FontWeight.bold,
+                                  color: primaryColor.withOpacity(_glowAnimation.value),
+                                  shadows: [
+                                    Shadow(
+                                      color: secondaryColor,
+                                      blurRadius: 15,
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                          _buildLavaTimeBox(minutes.toString().padLeft(2, '0'), primaryColor, secondaryColor, bgColor2, textColor),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 6),
-                            child: Text(
-                              ':',
-                              style: TextStyle(
-                                fontSize: 40,
-                                fontWeight: FontWeight.bold,
-                                color: primaryColor.withOpacity(_glowAnimation.value),
-                                shadows: [
-                                  Shadow(
-                                    color: secondaryColor,
-                                    blurRadius: 15,
-                                  ),
-                                ],
+                            _buildLavaTimeBox(minutes.toString().padLeft(2, '0'), primaryColor, secondaryColor, bgColor2, textColor),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                              child: Text(
+                                ':',
+                                style: TextStyle(
+                                  fontSize: 40,
+                                  fontWeight: FontWeight.bold,
+                                  color: primaryColor.withOpacity(_glowAnimation.value),
+                                  shadows: [
+                                    Shadow(
+                                      color: secondaryColor,
+                                      blurRadius: 15,
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                          _buildLavaTimeBox(seconds.toString().padLeft(2, '0'), primaryColor, secondaryColor, bgColor2, textColor),
-                        ],
+                            _buildLavaTimeBox(seconds.toString().padLeft(2, '0'), primaryColor, secondaryColor, bgColor2, textColor),
+                          ],
+                        ),
                       ),
 
                       const SizedBox(height: 20),
