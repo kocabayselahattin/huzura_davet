@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:math' as math;
+import 'dart:ui';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:intl/intl.dart';
 import '../services/konum_service.dart';
@@ -320,7 +321,8 @@ class _ZenSayacWidgetState extends State<ZenSayacWidget>
     return Column(
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          width: 75,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.6),
             borderRadius: BorderRadius.circular(12),
@@ -330,11 +332,13 @@ class _ZenSayacWidgetState extends State<ZenSayacWidget>
           ),
           child: Text(
             value,
+            textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 36,
               fontWeight: FontWeight.w300,
               color: textColor,
               letterSpacing: 2,
+              fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
         ),

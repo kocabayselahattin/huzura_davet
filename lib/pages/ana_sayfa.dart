@@ -89,8 +89,8 @@ class _AnaSayfaState extends State<AnaSayfa> {
   }
 
   Future<void> _loadSayacIndex() async {
-    final prefs = await SharedPreferences.getInstance();
-    final index = prefs.getInt('secili_sayac_index') ?? 0;
+    // TemaService'den sayaç index'ini al
+    final index = _temaService.aktifSayacIndex;
     if (mounted) {
       setState(() {
         _currentSayacIndex = index;
@@ -113,7 +113,12 @@ class _AnaSayfaState extends State<AnaSayfa> {
   }
 
   void _onTemaChanged() {
-    if (mounted) setState(() {});
+    if (mounted) {
+      setState(() {
+        // Sayaç değiştiğinde güncelle
+        _currentSayacIndex = _temaService.aktifSayacIndex;
+      });
+    }
   }
 
   Future<void> _konumYukle() async {

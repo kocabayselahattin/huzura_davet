@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'dart:async';
+import 'dart:ui';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:intl/intl.dart';
 import '../services/konum_service.dart';
@@ -410,7 +411,8 @@ class _AuroraSayacWidgetState extends State<AuroraSayacWidget>
 
   Widget _buildTimeBox(String value, Color textColor) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      width: 75,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
         color: textColor.withOpacity(0.05),
         borderRadius: BorderRadius.circular(12),
@@ -421,11 +423,13 @@ class _AuroraSayacWidgetState extends State<AuroraSayacWidget>
       ),
       child: Text(
         value,
+        textAlign: TextAlign.center,
         style: TextStyle(
           fontSize: 42,
           fontWeight: FontWeight.w300,
           color: textColor,
           letterSpacing: 2,
+          fontFeatures: const [FontFeature.tabularFigures()],
         ),
       ),
     );

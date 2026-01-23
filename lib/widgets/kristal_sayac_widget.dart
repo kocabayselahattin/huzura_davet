@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:math' as math;
+import 'dart:ui';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:intl/intl.dart';
 import '../services/konum_service.dart';
@@ -397,7 +398,8 @@ class _KristalSayacWidgetState extends State<KristalSayacWidget>
 
   Widget _buildCrystalTimeUnit(String value, String label, Color primaryColor, Color secondaryColor, Color textColor) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      width: 80,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -430,11 +432,13 @@ class _KristalSayacWidgetState extends State<KristalSayacWidget>
         children: [
           Text(
             value,
+            textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 38,
               fontWeight: FontWeight.w300,
               color: textColor,
               letterSpacing: 2,
+              fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
           const SizedBox(height: 2),

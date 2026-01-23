@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:math' as math;
+import 'dart:ui';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:intl/intl.dart';
 import '../services/konum_service.dart';
@@ -404,6 +405,7 @@ class _SiberSayacWidgetState extends State<SiberSayacWidget>
               fontWeight: FontWeight.bold,
               fontFamily: 'monospace',
               color: primaryColor.withOpacity(0.3),
+              fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
         ),
@@ -417,6 +419,7 @@ class _SiberSayacWidgetState extends State<SiberSayacWidget>
               fontWeight: FontWeight.bold,
               fontFamily: 'monospace',
               color: secondaryColor.withOpacity(0.3),
+              fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
         ),
@@ -428,6 +431,7 @@ class _SiberSayacWidgetState extends State<SiberSayacWidget>
             fontWeight: FontWeight.bold,
             fontFamily: 'monospace',
             color: textColor,
+            fontFeatures: const [FontFeature.tabularFigures()],
             shadows: [
               Shadow(
                 color: primaryColor.withOpacity(0.8),

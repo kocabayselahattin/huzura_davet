@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'dart:ui';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:intl/intl.dart';
 import '../services/konum_service.dart';
@@ -207,6 +208,7 @@ class _DijitalSayacWidgetState extends State<DijitalSayacWidget> {
               color: renkler.yaziPrimary,
               fontFamily: 'Digital-7',
               letterSpacing: 2,
+              fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
           const SizedBox(height: 15),

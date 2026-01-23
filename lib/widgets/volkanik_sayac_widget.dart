@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:math' as math;
+import 'dart:ui';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:intl/intl.dart';
 import '../services/konum_service.dart';
@@ -412,7 +413,8 @@ class _VolkanikSayacWidgetState extends State<VolkanikSayacWidget>
 
   Widget _buildLavaTimeBox(String value, Color primaryColor, Color secondaryColor, Color bgColor2, Color textColor) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      width: 75,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
@@ -453,11 +455,13 @@ class _VolkanikSayacWidgetState extends State<VolkanikSayacWidget>
         },
         child: Text(
           value,
+          textAlign: TextAlign.center,
           style: const TextStyle(
             fontSize: 40,
             fontWeight: FontWeight.bold,
             color: Colors.white,
             letterSpacing: 2,
+            fontFeatures: [FontFeature.tabularFigures()],
           ),
         ),
       ),

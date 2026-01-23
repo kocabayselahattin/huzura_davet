@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'dart:async';
+import 'dart:ui';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:intl/intl.dart';
 import '../services/konum_service.dart';
@@ -364,6 +365,7 @@ class _PremiumSayacWidgetState extends State<PremiumSayacWidget>
                                   fontWeight: FontWeight.w300,
                                   letterSpacing: 6,
                                   color: Colors.white,
+                                  fontFeatures: const [FontFeature.tabularFigures()],
                                   shadows: [
                                     Shadow(
                                       color: renkler.vurgu.withValues(alpha: 0.5),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'dart:async';
+import 'dart:ui';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:intl/intl.dart';
 import '../services/diyanet_api_service.dart';
@@ -342,6 +343,7 @@ class _OkyanusSayacWidgetState extends State<OkyanusSayacWidget>
                         fontWeight: FontWeight.w200,
                         color: Colors.white,
                         letterSpacing: 4,
+                        fontFeatures: [FontFeature.tabularFigures()],
                         shadows: [
                           Shadow(
                             color: Color(0xFF5BC0BE),

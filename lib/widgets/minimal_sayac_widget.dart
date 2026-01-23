@@ -292,13 +292,18 @@ class _MinimalSayacWidgetState extends State<MinimalSayacWidget> {
       crossAxisAlignment: CrossAxisAlignment.baseline,
       textBaseline: TextBaseline.alphabetic,
       children: [
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 48,
-            fontWeight: FontWeight.w300,
-            color: textColor,
-            letterSpacing: -2,
+        SizedBox(
+          width: 60, // Sabit genişlik
+          child: Text(
+            value,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 48,
+              fontWeight: FontWeight.w300,
+              color: textColor,
+              letterSpacing: -2,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
           ),
         ),
         Text(

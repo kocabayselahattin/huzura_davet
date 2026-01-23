@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:math' as math;
+import 'dart:ui';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:intl/intl.dart';
 import '../services/konum_service.dart';
@@ -376,19 +377,24 @@ class _GeceSayacWidgetState extends State<GeceSayacWidget>
   }
 
   Widget _buildNightTimeUnit(String value, Color textColor, Color shadowColor) {
-    return Text(
-      value,
-      style: TextStyle(
-        fontSize: 44,
-        fontWeight: FontWeight.w200,
-        color: textColor,
-        letterSpacing: 2,
-        shadows: [
-          Shadow(
-            color: shadowColor.withOpacity(0.3),
-            blurRadius: 15,
-          ),
-        ],
+    return SizedBox(
+      width: 60,
+      child: Text(
+        value,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: 44,
+          fontWeight: FontWeight.w200,
+          color: textColor,
+          letterSpacing: 2,
+          fontFeatures: const [FontFeature.tabularFigures()],
+          shadows: [
+            Shadow(
+              color: shadowColor.withOpacity(0.3),
+              blurRadius: 15,
+            ),
+          ],
+        ),
       ),
     );
   }

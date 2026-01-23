@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'dart:ui';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:intl/intl.dart';
 import '../services/konum_service.dart';
@@ -361,18 +362,23 @@ class _RetroSayacWidgetState extends State<RetroSayacWidget>
   }
 
   Widget _buildLCDDigit(String value, Color lcdGreen) {
-    return Text(
-      value,
-      style: TextStyle(
-        color: lcdGreen,
-        fontSize: 52,
-        fontFamily: 'monospace',
-        fontWeight: FontWeight.bold,
-        letterSpacing: 2,
-        shadows: [
-          Shadow(color: lcdGreen, blurRadius: 15),
-          Shadow(color: lcdGreen, blurRadius: 30),
-        ],
+    return SizedBox(
+      width: 70,
+      child: Text(
+        value,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          color: lcdGreen,
+          fontSize: 52,
+          fontFamily: 'monospace',
+          fontWeight: FontWeight.bold,
+          letterSpacing: 2,
+          fontFeatures: const [FontFeature.tabularFigures()],
+          shadows: [
+            Shadow(color: lcdGreen, blurRadius: 15),
+            Shadow(color: lcdGreen, blurRadius: 30),
+          ],
+        ),
       ),
     );
   }
