@@ -15,6 +15,11 @@ import '../widgets/volkanik_sayac_widget.dart';
 import '../widgets/zen_sayac_widget.dart';
 import '../widgets/siber_sayac_widget.dart';
 import '../widgets/gece_sayac_widget.dart';
+import '../widgets/matrix_sayac_widget.dart';
+import '../widgets/nefes_sayac_widget.dart';
+import '../widgets/geometrik_sayac_widget.dart';
+import '../widgets/tesla_sayac_widget.dart';
+import '../widgets/islami_sayac_widget.dart';
 import '../widgets/esmaul_husna_widget.dart';
 import '../widgets/ozel_gun_popup.dart';
 import '../widgets/ozel_gun_banner_widget.dart';
@@ -826,6 +831,16 @@ class _AnaSayfaState extends State<AnaSayfa> {
         return const SiberSayacWidget();
       case 12:
         return const GeceSayacWidget();
+      case 13:
+        return const MatrixSayacWidget();
+      case 14:
+        return const NefesSayacWidget();
+      case 15:
+        return const GeometrikSayacWidget();
+      case 16:
+        return const TeslaSayacWidget();
+      case 17:
+        return const IslamiSayacWidget();
       default:
         return const DijitalSayacWidget();
     }

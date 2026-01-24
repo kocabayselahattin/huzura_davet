@@ -33,6 +33,11 @@ enum SayacTema {
   zen,
   siber,
   gece,
+  matrix,
+  nefes,
+  geometrik,
+  tesla,
+  islami,
 }
 
 class TemaRenkleri {
@@ -300,6 +305,71 @@ class TemaService extends ChangeNotifier {
       isim: 'Gece',
       aciklama: 'Ay ışığı tonları',
       ikon: Icons.nightlight_round,
+    ),
+    // 13: Matrix - Hacker yeşil
+    13: TemaRenkleri(
+      arkaPlan: Color(0xFF000000),
+      kartArkaPlan: Color(0xFF0A0A0A),
+      vurgu: Color(0xFF00FF00),
+      vurguSecondary: Color(0xFF00CC00),
+      yaziPrimary: Color(0xFF00FF00),
+      yaziSecondary: Color(0xFF009900),
+      ayirac: Color(0xFF003300),
+      isim: 'Matrix',
+      aciklama: 'Hacker yeşil tonları',
+      ikon: Icons.code,
+    ),
+    // 14: Nefes - Meditasyon mavisi
+    14: TemaRenkleri(
+      arkaPlan: Color(0xFF0A1628),
+      kartArkaPlan: Color(0xFF142238),
+      vurgu: Color(0xFF7EC8E3),
+      vurguSecondary: Color(0xFF4A90B8),
+      yaziPrimary: Colors.white,
+      yaziSecondary: Color(0xFFB0C4DE),
+      ayirac: Color(0xFF1E3A5F),
+      isim: 'Nefes',
+      aciklama: 'Huzurlu meditasyon tonları',
+      ikon: Icons.air,
+    ),
+    // 15: Geometrik - Sacred Geometry
+    15: TemaRenkleri(
+      arkaPlan: Color(0xFF1A0A2E),
+      kartArkaPlan: Color(0xFF2D1B4E),
+      vurgu: Color(0xFFD4AF37),
+      vurguSecondary: Color(0xFFFFD700),
+      yaziPrimary: Colors.white,
+      yaziSecondary: Color(0xFFDDA0DD),
+      ayirac: Color(0xFF3D2B5E),
+      isim: 'Geometrik',
+      aciklama: 'Kutsal geometri tonları',
+      ikon: Icons.hexagon_outlined,
+    ),
+    // 16: Tesla - Elektrik mavisi
+    16: TemaRenkleri(
+      arkaPlan: Color(0xFF030318),
+      kartArkaPlan: Color(0xFF0A0A28),
+      vurgu: Color(0xFF00BFFF),
+      vurguSecondary: Color(0xFF00FFFF),
+      yaziPrimary: Colors.white,
+      yaziSecondary: Color(0xFF87CEEB),
+      ayirac: Color(0xFF141438),
+      isim: 'Tesla',
+      aciklama: 'Elektrik enerji tonları',
+      ikon: Icons.bolt,
+    ),
+    // 17: İslami - Yeşil ve Altın
+    17: TemaRenkleri(
+      arkaPlan: Color(0xFF0D2818),
+      kartArkaPlan: Color(0xFF1A3D28),
+      vurgu: Color(0xFFD4AF37),
+      vurguSecondary: Color(0xFF00BFA5),
+      yaziPrimary: Colors.white,
+      yaziSecondary: Color(0xFFA5D6A7),
+      ayirac: Color(0xFF2E5238),
+      isim: 'İslami',
+      aciklama: 'İslami yeşil ve altın',
+      ikon: Icons.mosque,
     ),
   };
 

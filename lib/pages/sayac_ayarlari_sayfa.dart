@@ -15,11 +15,11 @@ import '../widgets/volkanik_sayac_widget.dart';
 import '../widgets/zen_sayac_widget.dart';
 import '../widgets/siber_sayac_widget.dart';
 import '../widgets/gece_sayac_widget.dart';
-import '../widgets/kumsaati_sayac_widget.dart';
-import '../widgets/nebula_sayac_widget.dart';
-import '../widgets/origami_sayac_widget.dart';
-import '../widgets/pulse_sayac_widget.dart';
-import '../widgets/hologram_sayac_widget.dart';
+import '../widgets/matrix_sayac_widget.dart';
+import '../widgets/nefes_sayac_widget.dart';
+import '../widgets/geometrik_sayac_widget.dart';
+import '../widgets/tesla_sayac_widget.dart';
+import '../widgets/islami_sayac_widget.dart';
 
 class SayacAyarlariSayfa extends StatefulWidget {
   const SayacAyarlariSayfa({super.key});
@@ -52,11 +52,11 @@ class _SayacAyarlariSayfaState extends State<SayacAyarlariSayfa> {
     {'id': 'zen', 'icon': Icons.spa, 'color': const Color(0xFF4A6741)},
     {'id': 'siber', 'icon': Icons.memory, 'color': const Color(0xFFFF00FF)},
     {'id': 'gece', 'icon': Icons.nightlight_round, 'color': const Color(0xFF1E3A5F)},
-    {'id': 'kumsaati', 'icon': Icons.hourglass_empty, 'color': const Color(0xFFD4A574)},
-    {'id': 'nebula', 'icon': Icons.blur_circular, 'color': const Color(0xFF9C27B0)},
-    {'id': 'origami', 'icon': Icons.change_history, 'color': const Color(0xFFE91E63)},
-    {'id': 'pulse', 'icon': Icons.favorite, 'color': const Color(0xFFFF1744)},
-    {'id': 'hologram', 'icon': Icons.view_in_ar, 'color': const Color(0xFF00BCD4)},
+    {'id': 'matrix', 'icon': Icons.terminal, 'color': const Color(0xFF00FF41)},
+    {'id': 'nefes', 'icon': Icons.air, 'color': const Color(0xFF6B5B95)},
+    {'id': 'geometrik', 'icon': Icons.hexagon_outlined, 'color': const Color(0xFFFFD700)},
+    {'id': 'tesla', 'icon': Icons.bolt, 'color': const Color(0xFF00D4FF)},
+    {'id': 'islami', 'icon': Icons.mosque, 'color': const Color(0xFF1B5E20)},
   ];
 
   @override
@@ -134,16 +134,16 @@ class _SayacAyarlariSayfaState extends State<SayacAyarlariSayfa> {
         return _languageService['counter_siber'] ?? 'Siber';
       case 'gece':
         return _languageService['counter_gece'] ?? 'Gece';
-      case 'kumsaati':
-        return _languageService['counter_kumsaati'] ?? 'Kum Saati';
-      case 'nebula':
-        return _languageService['counter_nebula'] ?? 'Nebula';
-      case 'origami':
-        return _languageService['counter_origami'] ?? 'Origami';
-      case 'pulse':
-        return _languageService['counter_pulse'] ?? 'Pulse';
-      case 'hologram':
-        return _languageService['counter_hologram'] ?? 'Hologram';
+      case 'matrix':
+        return _languageService['counter_matrix'] ?? 'Matrix';
+      case 'nefes':
+        return _languageService['counter_nefes'] ?? 'Nefes';
+      case 'geometrik':
+        return _languageService['counter_geometrik'] ?? 'Geometrik';
+      case 'tesla':
+        return _languageService['counter_tesla'] ?? 'Tesla';
+      case 'islami':
+        return _languageService['counter_islami'] ?? 'İslami';
       default:
         return id;
     }
@@ -190,21 +190,21 @@ class _SayacAyarlariSayfaState extends State<SayacAyarlariSayfa> {
       case 'gece':
         return _languageService['counter_gece_desc'] ??
             'Ay ve yıldızlı gece gökyüzü tasarımı';
-      case 'kumsaati':
-        return _languageService['counter_kumsaati_desc'] ??
-            '3D kum saati animasyonlu altın tasarım';
-      case 'nebula':
-        return _languageService['counter_nebula_desc'] ??
-            'Uzay bulutsusu efektli kozmik tasarım';
-      case 'origami':
-        return _languageService['counter_origami_desc'] ??
-            'Japon kağıt katlama sanatı temalı';
-      case 'pulse':
-        return _languageService['counter_pulse_desc'] ??
-            'Kalp atışı monitörü tarzı canlı tasarım';
-      case 'hologram':
-        return _languageService['counter_hologram_desc'] ??
-            'Futuristik holografik projeksiyon';
+      case 'matrix':
+        return _languageService['counter_matrix_desc'] ??
+            'Matrix filmi tarzı düşen kod efektli';
+      case 'nefes':
+        return _languageService['counter_nefes_desc'] ??
+            'Meditasyon temalı sakinleştirici tasarım';
+      case 'geometrik':
+        return _languageService['counter_geometrik_desc'] ??
+            'Sacred Geometry mistik desenler';
+      case 'tesla':
+        return _languageService['counter_tesla_desc'] ??
+            'Elektrik ve enerji temalı dinamik tasarım';
+      case 'islami':
+        return _languageService['counter_islami_desc'] ??
+            'Hilal, yıldız ve İslami geometrik desenler';
       default:
         return '';
     }
@@ -245,15 +245,15 @@ class _SayacAyarlariSayfaState extends State<SayacAyarlariSayfa> {
       case 12:
         return const GeceSayacWidget();
       case 13:
-        return const KumsaatiSayacWidget();
+        return const MatrixSayacWidget();
       case 14:
-        return const NebulaSayacWidget();
+        return const NefesSayacWidget();
       case 15:
-        return const OrigamiSayacWidget();
+        return const GeometrikSayacWidget();
       case 16:
-        return const PulseSayacWidget();
+        return const TeslaSayacWidget();
       case 17:
-        return const HologramSayacWidget();
+        return const IslamiSayacWidget();
       default:
         return const DijitalSayacWidget();
     }
