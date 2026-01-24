@@ -166,7 +166,7 @@ class _YakinCamilerSayfaState extends State<YakinCamilerSayfa> {
 
   Future<void> _yakinCamileriAra(double enlem, double boylam) async {
     try {
-      // Overpass API sorgusu (5km yarıçapında camiler)
+      // Overpass API sorgusu (2km yarıçapında camiler)
       final query =
           '''
         [out:json][timeout:25];

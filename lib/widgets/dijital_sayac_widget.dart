@@ -19,6 +19,7 @@ class _DijitalSayacWidgetState extends State<DijitalSayacWidget> {
   Timer? _timer;
   Duration _kalanSure = Duration.zero;
   String _sonrakiVakit = '';
+  double _ilerlemeOrani = 0.0;
   Map<String, String> _vakitSaatleri = {};
   final TemaService _temaService = TemaService();
   final LanguageService _languageService = LanguageService();
@@ -86,7 +87,7 @@ class _DijitalSayacWidgetState extends State<DijitalSayacWidget> {
     if (_vakitSaatleri.isEmpty) return;
 
     final now = DateTime.now();
-    final nowMinutes = now.hour * 60 + now.minute;
+    final nowTotalSeconds = now.hour * 3600 + now.minute * 60 + now.second;
 
     final vakitSaatleri = [
       {'adi': _languageService['imsak'] ?? 'İmsak', 'saat': _vakitSaatleri['Imsak']!},
@@ -97,32 +98,25 @@ class _DijitalSayacWidgetState extends State<DijitalSayacWidget> {
       {'adi': _languageService['yatsi'] ?? 'Yatsı', 'saat': _vakitSaatleri['Yatsi']!},
     ];
 
+    List<int> vakitSaniyeleri = [];
+    for (final vakit in vakitSaatleri) {
+      final parts = vakit['saat']!.split(':');
+      vakitSaniyeleri.add(int.parse(parts[0]) * 3600 + int.parse(parts[1]) * 60);
+    }
+
     DateTime? sonrakiVakitZamani;
     String sonrakiVakitAdi = '';
+    double oran = 0.0;
 
-    for (final vakit in vakitSaatleri) {
-      final saat = vakit['saat'] as String;
-      try {
-        final parts = saat.split(':');
-        final vakitMinutes = int.parse(parts[0]) * 60 + int.parse(parts[1]);
-
-        if (vakitMinutes > nowMinutes) {
-          sonrakiVakitZamani = DateTime(
-            now.year,
-            now.month,
-            now.day,
-            int.parse(parts[0]),
-            int.parse(parts[1]),
-          );
-          sonrakiVakitAdi = vakit['adi'] as String;
-          break;
-        }
-      } catch (e) {
-        // Parse error
+    int sonrakiIndex = -1;
+    for (int i = 0; i < vakitSaniyeleri.length; i++) {
+      if (vakitSaniyeleri[i] > nowTotalSeconds) {
+        sonrakiIndex = i;
+        break;
       }
     }
 
-    if (sonrakiVakitZamani == null) {
+    if (sonrakiIndex == -1) {
       final yarin = now.add(const Duration(days: 1));
       final imsakSaat = _vakitSaatleri['Imsak']!.split(':');
       sonrakiVakitZamani = DateTime(
@@ -133,11 +127,45 @@ class _DijitalSayacWidgetState extends State<DijitalSayacWidget> {
         int.parse(imsakSaat[1]),
       );
       sonrakiVakitAdi = _languageService['imsak'] ?? 'İmsak';
+      final yatsiSaniye = vakitSaniyeleri.last;
+      final imsakSaniye = vakitSaniyeleri.first;
+      final toplamSure = (24 * 3600 - yatsiSaniye) + imsakSaniye;
+      final gecenSure = nowTotalSeconds - yatsiSaniye;
+      oran = (gecenSure / toplamSure).clamp(0.0, 1.0);
+    } else if (sonrakiIndex == 0) {
+      final imsakSaat = _vakitSaatleri['Imsak']!.split(':');
+      sonrakiVakitZamani = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        int.parse(imsakSaat[0]),
+        int.parse(imsakSaat[1]),
+      );
+      sonrakiVakitAdi = _languageService['imsak'] ?? 'İmsak';
+      final yatsiSaniye = vakitSaniyeleri.last;
+      final imsakSaniye = vakitSaniyeleri.first;
+      final toplamSure = (24 * 3600 - yatsiSaniye) + imsakSaniye;
+      final gecenSure = nowTotalSeconds + (24 * 3600 - yatsiSaniye);
+      oran = (gecenSure / toplamSure).clamp(0.0, 1.0);
+    } else {
+      final parts = vakitSaatleri[sonrakiIndex]['saat']!.split(':');
+      sonrakiVakitZamani = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        int.parse(parts[0]),
+        int.parse(parts[1]),
+      );
+      sonrakiVakitAdi = vakitSaatleri[sonrakiIndex]['adi']!;
+      final toplamSure = vakitSaniyeleri[sonrakiIndex] - vakitSaniyeleri[sonrakiIndex - 1];
+      final gecenSure = nowTotalSeconds - vakitSaniyeleri[sonrakiIndex - 1];
+      oran = (gecenSure / toplamSure).clamp(0.0, 1.0);
     }
 
     setState(() {
       _kalanSure = sonrakiVakitZamani!.difference(now);
       _sonrakiVakit = sonrakiVakitAdi;
+      _ilerlemeOrani = oran;
     });
   }
 
@@ -342,6 +370,57 @@ class _DijitalSayacWidgetState extends State<DijitalSayacWidget> {
               ),
             ],
           ),
+          const SizedBox(height: 12),
+          _buildProgressBar(renkler.vurgu, renkler.yaziSecondary),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProgressBar(Color primaryColor, Color textColor) {
+    return Container(
+      height: 8,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(4),
+        color: textColor.withOpacity(0.15),
+        border: Border.all(
+          color: textColor.withOpacity(0.1),
+          width: 0.5,
+        ),
+      ),
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: CustomPaint(
+              size: const Size(double.infinity, 8),
+              painter: _ProgressBarLinesPainter(
+                lineColor: textColor.withOpacity(0.08),
+              ),
+            ),
+          ),
+          FractionallySizedBox(
+            widthFactor: _ilerlemeOrani.clamp(0.0, 1.0),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(4),
+                gradient: LinearGradient(
+                  colors: [
+                    primaryColor.withOpacity(0.7),
+                    primaryColor,
+                    Color.lerp(primaryColor, Colors.white, 0.2)!,
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: primaryColor.withOpacity(0.5),
+                    blurRadius: 6,
+                    spreadRadius: 0,
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -380,5 +459,27 @@ class _DijitalSayacWidgetState extends State<DijitalSayacWidget> {
       'Zilhicce',
     ];
     return aylar[ay];
+  }
+}
+
+class _ProgressBarLinesPainter extends CustomPainter {
+  final Color lineColor;
+
+  _ProgressBarLinesPainter({required this.lineColor});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = lineColor
+      ..strokeWidth = 1;
+
+    for (double x = 0; x < size.width; x += 8) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ProgressBarLinesPainter oldDelegate) {
+    return oldDelegate.lineColor != lineColor;
   }
 }

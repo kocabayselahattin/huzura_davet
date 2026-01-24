@@ -24,6 +24,7 @@ class _KristalSayacWidgetState extends State<KristalSayacWidget>
   Duration _kalanSure = Duration.zero;
   String _sonrakiVakit = '';
   String _mevcutVakit = '';
+  double _ilerlemeOrani = 0.0;
   Map<String, String> _vakitSaatleri = {};
   final TemaService _temaService = TemaService();
   final LanguageService _languageService = LanguageService();
@@ -100,7 +101,7 @@ class _KristalSayacWidgetState extends State<KristalSayacWidget>
     if (_vakitSaatleri.isEmpty) return;
 
     final now = DateTime.now();
-    final nowMinutes = now.hour * 60 + now.minute;
+    final nowTotalSeconds = now.hour * 3600 + now.minute * 60 + now.second;
 
     final vakitSaatleri = [
       {'adi': _languageService['imsak'] ?? 'İmsak', 'saat': _vakitSaatleri['Imsak']!},
@@ -111,35 +112,63 @@ class _KristalSayacWidgetState extends State<KristalSayacWidget>
       {'adi': _languageService['yatsi'] ?? 'Yatsı', 'saat': _vakitSaatleri['Yatsi']!},
     ];
 
+    List<int> vakitSaniyeleri = [];
+    for (final vakit in vakitSaatleri) {
+      final parts = vakit['saat']!.split(':');
+      vakitSaniyeleri.add(int.parse(parts[0]) * 3600 + int.parse(parts[1]) * 60);
+    }
+
     DateTime? sonrakiVakitZamani;
     String sonrakiVakitAdi = '';
     String mevcutVakitAdi = '';
+    double oran = 0.0;
 
-    for (int i = 0; i < vakitSaatleri.length; i++) {
-      final parts = vakitSaatleri[i]['saat']!.split(':');
-      final vakitMinutes = int.parse(parts[0]) * 60 + int.parse(parts[1]);
-
-      if (vakitMinutes > nowMinutes) {
-        sonrakiVakitZamani = DateTime(now.year, now.month, now.day,
-            int.parse(parts[0]), int.parse(parts[1]));
-        sonrakiVakitAdi = vakitSaatleri[i]['adi']!;
-        mevcutVakitAdi = i > 0 ? vakitSaatleri[i - 1]['adi']! : vakitSaatleri.last['adi']!;
+    int sonrakiIndex = -1;
+    for (int i = 0; i < vakitSaniyeleri.length; i++) {
+      if (vakitSaniyeleri[i] > nowTotalSeconds) {
+        sonrakiIndex = i;
         break;
       }
     }
 
-    if (sonrakiVakitZamani == null) {
+    if (sonrakiIndex == -1) {
       final parts = vakitSaatleri[0]['saat']!.split(':');
       sonrakiVakitZamani = DateTime(now.year, now.month, now.day + 1,
           int.parse(parts[0]), int.parse(parts[1]));
       sonrakiVakitAdi = vakitSaatleri[0]['adi']!;
       mevcutVakitAdi = vakitSaatleri.last['adi']!;
+      final yatsiSaniye = vakitSaniyeleri.last;
+      final imsakSaniye = vakitSaniyeleri.first;
+      final toplamSure = (24 * 3600 - yatsiSaniye) + imsakSaniye;
+      final gecenSure = nowTotalSeconds - yatsiSaniye;
+      oran = (gecenSure / toplamSure).clamp(0.0, 1.0);
+    } else if (sonrakiIndex == 0) {
+      final parts = vakitSaatleri[0]['saat']!.split(':');
+      sonrakiVakitZamani = DateTime(now.year, now.month, now.day,
+          int.parse(parts[0]), int.parse(parts[1]));
+      sonrakiVakitAdi = vakitSaatleri[0]['adi']!;
+      mevcutVakitAdi = vakitSaatleri.last['adi']!;
+      final yatsiSaniye = vakitSaniyeleri.last;
+      final imsakSaniye = vakitSaniyeleri.first;
+      final toplamSure = (24 * 3600 - yatsiSaniye) + imsakSaniye;
+      final gecenSure = nowTotalSeconds + (24 * 3600 - yatsiSaniye);
+      oran = (gecenSure / toplamSure).clamp(0.0, 1.0);
+    } else {
+      final parts = vakitSaatleri[sonrakiIndex]['saat']!.split(':');
+      sonrakiVakitZamani = DateTime(now.year, now.month, now.day,
+          int.parse(parts[0]), int.parse(parts[1]));
+      sonrakiVakitAdi = vakitSaatleri[sonrakiIndex]['adi']!;
+      mevcutVakitAdi = sonrakiIndex > 0 ? vakitSaatleri[sonrakiIndex - 1]['adi']! : vakitSaatleri.last['adi']!;
+      final toplamSure = vakitSaniyeleri[sonrakiIndex] - vakitSaniyeleri[sonrakiIndex - 1];
+      final gecenSure = nowTotalSeconds - vakitSaniyeleri[sonrakiIndex - 1];
+      oran = (gecenSure / toplamSure).clamp(0.0, 1.0);
     }
 
     setState(() {
       _kalanSure = sonrakiVakitZamani!.difference(now);
       _sonrakiVakit = sonrakiVakitAdi;
       _mevcutVakit = mevcutVakitAdi;
+      _ilerlemeOrani = oran;
     });
   }
 
@@ -387,11 +416,65 @@ class _KristalSayacWidgetState extends State<KristalSayacWidget>
                       ],
                     ),
                   ),
+                  
+                  const SizedBox(height: 12),
+                  
+                  // İlerleme Barı
+                  _buildProgressBar(primaryColor, secondaryColor, textColor),
                 ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildProgressBar(Color primaryColor, Color secondaryColor, Color textColor) {
+    return Container(
+      height: 8,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(4),
+        color: textColor.withOpacity(0.15),
+        border: Border.all(
+          color: textColor.withOpacity(0.1),
+          width: 0.5,
+        ),
+      ),
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: CustomPaint(
+              size: const Size(double.infinity, 8),
+              painter: _ProgressBarLinesPainter(
+                lineColor: textColor.withOpacity(0.08),
+              ),
+            ),
+          ),
+          FractionallySizedBox(
+            widthFactor: _ilerlemeOrani.clamp(0.0, 1.0),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(4),
+                gradient: LinearGradient(
+                  colors: [
+                    primaryColor.withOpacity(0.7),
+                    primaryColor,
+                    secondaryColor,
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: primaryColor.withOpacity(0.5),
+                    blurRadius: 6,
+                    spreadRadius: 0,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -538,5 +621,27 @@ class _SparklePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _SparklePainter oldDelegate) {
     return oldDelegate.progress != progress;
+  }
+}
+
+class _ProgressBarLinesPainter extends CustomPainter {
+  final Color lineColor;
+
+  _ProgressBarLinesPainter({required this.lineColor});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = lineColor
+      ..strokeWidth = 1;
+
+    for (double x = 0; x < size.width; x += 8) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ProgressBarLinesPainter oldDelegate) {
+    return oldDelegate.lineColor != lineColor;
   }
 }

@@ -268,7 +268,7 @@ class _NeonSayacWidgetState extends State<NeonSayacWidget>
                       const SizedBox(height: 10),
                       
                       // İlerleme çubuğu
-                      _buildProgressBar(renkler),
+                      _buildProgressBar(renkler.vurgu, renkler.yaziPrimary),
                       
                       const SizedBox(height: 8),
                       
@@ -365,108 +365,40 @@ class _NeonSayacWidgetState extends State<NeonSayacWidget>
     );
   }
 
-  Widget _buildProgressBar(TemaRenkleri renkler) {
-    // Yeşilden kırmızıya gradient renk hesapla
-    // 0% = Yeşil (#00C853), 50% = Sarı (#FFD600), 100% = Koyu Kırmızı (#B71C1C)
-    final Color ecirRengi = _getEcirRengi(_ilerlemeOrani);
-    
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'ECİR',
-              style: TextStyle(
-                color: ecirRengi,
-                fontSize: 10,
-                letterSpacing: 2,
-                fontWeight: FontWeight.bold,
-                shadows: [
-                  Shadow(
-                    color: ecirRengi.withValues(alpha: 0.5),
-                    blurRadius: 8,
-                  ),
-                ],
-              ),
+  Widget _buildProgressBar(Color primaryColor, Color textColor) {
+    return Container(
+      height: 8,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(4),
+        color: textColor.withOpacity(0.15),
+        border: Border.all(color: textColor.withOpacity(0.1), width: 0.5),
+      ),
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: CustomPaint(
+              size: const Size(double.infinity, 8),
+              painter: _ProgressBarLinesPainter(lineColor: textColor.withOpacity(0.08)),
             ),
-            Text(
-              '${(_ilerlemeOrani * 100).toInt()}%',
-              style: TextStyle(
-                color: ecirRengi,
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                shadows: [
-                  Shadow(
-                    color: ecirRengi.withValues(alpha: 0.5),
-                    blurRadius: 8,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        Container(
-          height: 6,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(3),
-            color: renkler.yaziSecondary.withValues(alpha: 0.2),
           ),
-          child: Stack(
-            children: [
-              FractionallySizedBox(
-                widthFactor: _ilerlemeOrani,
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(3),
-                    gradient: LinearGradient(
-                      colors: [
-                        const Color(0xFF00C853), // Yeşil başlangıç
-                        ecirRengi, // Mevcut renk
-                      ],
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: ecirRengi.withValues(alpha: 0.6),
-                        blurRadius: 8,
-                        spreadRadius: 1,
-                      ),
-                    ],
-                  ),
+          FractionallySizedBox(
+            widthFactor: _ilerlemeOrani.clamp(0.0, 1.0),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(4),
+                gradient: LinearGradient(
+                  colors: [primaryColor.withOpacity(0.7), primaryColor, Color.lerp(primaryColor, Colors.white, 0.2)!],
                 ),
+                boxShadow: [BoxShadow(color: primaryColor.withOpacity(0.5), blurRadius: 6, spreadRadius: 0)],
               ),
-            ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  /// İlerleme oranına göre yeşilden kırmızıya renk döndürür
-  Color _getEcirRengi(double oran) {
-    // 0.0 - 0.5 arası: Yeşilden Sarıya
-    // 0.5 - 1.0 arası: Sarıdan Koyu Kırmızıya
-    
-    if (oran <= 0.5) {
-      // Yeşil (#00C853) -> Sarı (#FFD600)
-      final t = oran * 2; // 0 -> 1
-      return Color.lerp(
-        const Color(0xFF00C853), // Yeşil
-        const Color(0xFFFFD600), // Sarı
-        t,
-      )!;
-    } else {
-      // Sarı (#FFD600) -> Koyu Kırmızı (#B71C1C)
-      final t = (oran - 0.5) * 2; // 0 -> 1
-      return Color.lerp(
-        const Color(0xFFFFD600), // Sarı
-        const Color(0xFFB71C1C), // Koyu Kırmızı
-        t,
-      )!;
-    }
-  }
-  
   Widget _buildTakvimRow(TemaRenkleri renkler) {
     final now = DateTime.now();
     final miladiTarih = DateFormat('dd MMM yyyy', 'tr_TR').format(now);
@@ -572,4 +504,20 @@ class _NeonGridPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _NeonGridPainter oldDelegate) =>
       waveValue != oldDelegate.waveValue;
+}
+
+class _ProgressBarLinesPainter extends CustomPainter {
+  final Color lineColor;
+  _ProgressBarLinesPainter({required this.lineColor});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = lineColor..strokeWidth = 1;
+    for (double x = 0; x < size.width; x += 8) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ProgressBarLinesPainter oldDelegate) => oldDelegate.lineColor != lineColor;
 }

@@ -475,36 +475,9 @@ class _PremiumSayacWidgetState extends State<PremiumSayacWidget>
                             const SizedBox(height: 8),
                             
                             // İlerleme çubuğu
-                            Container(
+                            SizedBox(
                               width: 200,
-                              height: 4,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(2),
-                                color: renkler.vurgu.withValues(alpha: 0.2),
-                              ),
-                              child: Align(
-                                alignment: Alignment.centerLeft,
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 500),
-                                  width: 200 * _ilerlemeYuzdesi,
-                                  height: 4,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(2),
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        renkler.vurgu,
-                                        renkler.vurgu.withValues(alpha: 0.6),
-                                      ],
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: renkler.vurgu.withValues(alpha: 0.5),
-                                        blurRadius: 6,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
+                              child: _buildProgressBar(renkler.vurgu, renkler.yaziPrimary),
                             ),
                           ],
                         ),
@@ -659,4 +632,54 @@ class _PremiumSayacWidgetState extends State<PremiumSayacWidget>
         return Icons.schedule;
     }
   }
+
+  Widget _buildProgressBar(Color primaryColor, Color textColor) {
+    return Container(
+      height: 8,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(4),
+        color: textColor.withOpacity(0.15),
+        border: Border.all(color: textColor.withOpacity(0.1), width: 0.5),
+      ),
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: CustomPaint(
+              size: const Size(double.infinity, 8),
+              painter: _ProgressBarLinesPainter(lineColor: textColor.withOpacity(0.08)),
+            ),
+          ),
+          FractionallySizedBox(
+            widthFactor: _ilerlemeYuzdesi.clamp(0.0, 1.0),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(4),
+                gradient: LinearGradient(
+                  colors: [primaryColor.withOpacity(0.7), primaryColor, Color.lerp(primaryColor, Colors.white, 0.2)!],
+                ),
+                boxShadow: [BoxShadow(color: primaryColor.withOpacity(0.5), blurRadius: 6, spreadRadius: 0)],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProgressBarLinesPainter extends CustomPainter {
+  final Color lineColor;
+  _ProgressBarLinesPainter({required this.lineColor});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = lineColor..strokeWidth = 1;
+    for (double x = 0; x < size.width; x += 8) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ProgressBarLinesPainter oldDelegate) => oldDelegate.lineColor != lineColor;
 }

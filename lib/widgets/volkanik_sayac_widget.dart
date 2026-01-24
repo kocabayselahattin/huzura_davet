@@ -27,6 +27,7 @@ class _VolkanikSayacWidgetState extends State<VolkanikSayacWidget>
   Map<String, String> _vakitSaatleri = {};
   final TemaService _temaService = TemaService();
   final LanguageService _languageService = LanguageService();
+  double _ilerlemeOrani = 0.0;
   
   late AnimationController _lavaController;
   late AnimationController _glowController;
@@ -112,7 +113,7 @@ class _VolkanikSayacWidgetState extends State<VolkanikSayacWidget>
     if (_vakitSaatleri.isEmpty) return;
 
     final now = DateTime.now();
-    final nowMinutes = now.hour * 60 + now.minute;
+    final nowTotalSeconds = now.hour * 3600 + now.minute * 60 + now.second;
 
     final vakitSaatleri = [
       {'adi': _languageService['imsak'] ?? 'İmsak', 'saat': _vakitSaatleri['Imsak']!},
@@ -123,19 +124,42 @@ class _VolkanikSayacWidgetState extends State<VolkanikSayacWidget>
       {'adi': _languageService['yatsi'] ?? 'Yatsı', 'saat': _vakitSaatleri['Yatsi']!},
     ];
 
+    // Vakitlerin saniye cinsinden değerlerini hesapla
+    List<int> vakitSaniyeleri = vakitSaatleri.map((v) {
+      final parts = v['saat']!.split(':');
+      return int.parse(parts[0]) * 3600 + int.parse(parts[1]) * 60;
+    }).toList();
+
     DateTime? sonrakiVakitZamani;
     String sonrakiVakitAdi = '';
     String mevcutVakitAdi = '';
+    double ilerlemeOrani = 0.0;
 
     for (int i = 0; i < vakitSaatleri.length; i++) {
       final parts = vakitSaatleri[i]['saat']!.split(':');
-      final vakitMinutes = int.parse(parts[0]) * 60 + int.parse(parts[1]);
+      final vakitSaniyelik = vakitSaniyeleri[i];
 
-      if (vakitMinutes > nowMinutes) {
+      if (vakitSaniyelik > nowTotalSeconds) {
         sonrakiVakitZamani = DateTime(now.year, now.month, now.day,
             int.parse(parts[0]), int.parse(parts[1]));
         sonrakiVakitAdi = vakitSaatleri[i]['adi']!;
         mevcutVakitAdi = i > 0 ? vakitSaatleri[i - 1]['adi']! : vakitSaatleri.last['adi']!;
+        
+        // İlerleme oranı hesapla
+        if (i > 0) {
+          // Normal gündüz vakitleri
+          final oncekiVakitSaniye = vakitSaniyeleri[i - 1];
+          final toplamSure = vakitSaniyelik - oncekiVakitSaniye;
+          final gecenSure = nowTotalSeconds - oncekiVakitSaniye;
+          ilerlemeOrani = (gecenSure / toplamSure).clamp(0.0, 1.0);
+        } else {
+          // Gece yarısından sonra imsak öncesi
+          final yatsiSaniye = vakitSaniyeleri.last;
+          final imsakSaniye = vakitSaniyeleri[0];
+          final toplamSure = (24 * 3600 - yatsiSaniye) + imsakSaniye;
+          final gecenSure = nowTotalSeconds + (24 * 3600 - yatsiSaniye);
+          ilerlemeOrani = (gecenSure / toplamSure).clamp(0.0, 1.0);
+        }
         break;
       }
     }
@@ -146,12 +170,20 @@ class _VolkanikSayacWidgetState extends State<VolkanikSayacWidget>
           int.parse(parts[0]), int.parse(parts[1]));
       sonrakiVakitAdi = vakitSaatleri[0]['adi']!;
       mevcutVakitAdi = vakitSaatleri.last['adi']!;
+      
+      // Yatsıdan sonrası için ilerleme oranı
+      final yatsiSaniye = vakitSaniyeleri.last;
+      final imsakSaniye = vakitSaniyeleri[0];
+      final toplamSure = (24 * 3600 - yatsiSaniye) + imsakSaniye;
+      final gecenSure = nowTotalSeconds - yatsiSaniye;
+      ilerlemeOrani = (gecenSure / toplamSure).clamp(0.0, 1.0);
     }
 
     setState(() {
       _kalanSure = sonrakiVakitZamani!.difference(now);
       _sonrakiVakit = sonrakiVakitAdi;
       _mevcutVakit = mevcutVakitAdi;
+      _ilerlemeOrani = ilerlemeOrani;
     });
   }
 
@@ -403,6 +435,11 @@ class _VolkanikSayacWidgetState extends State<VolkanikSayacWidget>
                           ),
                         ],
                       ),
+                      
+                      const SizedBox(height: 12),
+                      
+                      // Progress bar
+                      _buildProgressBar(primaryColor, textColor),
                     ],
                   ),
                 ),
@@ -411,6 +448,57 @@ class _VolkanikSayacWidgetState extends State<VolkanikSayacWidget>
           ),
         );
       },
+    );
+  }
+
+  Widget _buildProgressBar(Color primaryColor, Color textColor) {
+    return Container(
+      height: 8,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(4),
+        color: textColor.withOpacity(0.15),
+        border: Border.all(
+          color: textColor.withOpacity(0.1),
+          width: 0.5,
+        ),
+      ),
+      child: Stack(
+        children: [
+          // Arka plan çizgileri (bar olduğunu belli etmek için)
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: CustomPaint(
+              size: const Size(double.infinity, 8),
+              painter: _ProgressBarLinesPainter(
+                lineColor: textColor.withOpacity(0.08),
+              ),
+            ),
+          ),
+          // Dolu kısım - tema renkleriyle gradient
+          FractionallySizedBox(
+            widthFactor: _ilerlemeOrani.clamp(0.0, 1.0),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(4),
+                gradient: LinearGradient(
+                  colors: [
+                    primaryColor.withOpacity(0.7),
+                    primaryColor,
+                    Color.lerp(primaryColor, Colors.white, 0.2)!,
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: primaryColor.withOpacity(0.5),
+                    blurRadius: 6,
+                    spreadRadius: 0,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -526,5 +614,33 @@ class _LavaPainter extends CustomPainter {
     return oldDelegate.progress != progress ||
            oldDelegate.primaryColor != primaryColor ||
            oldDelegate.secondaryColor != secondaryColor;
+  }
+}
+
+/// Progress bar arka plan çizgileri için painter
+class _ProgressBarLinesPainter extends CustomPainter {
+  final Color lineColor;
+
+  _ProgressBarLinesPainter({required this.lineColor});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = lineColor
+      ..strokeWidth = 1;
+
+    // Dikey çizgiler çiz
+    for (double x = 0; x < size.width; x += 8) {
+      canvas.drawLine(
+        Offset(x, 0),
+        Offset(x, size.height),
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ProgressBarLinesPainter oldDelegate) {
+    return oldDelegate.lineColor != lineColor;
   }
 }

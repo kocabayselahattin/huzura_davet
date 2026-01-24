@@ -206,5 +206,20 @@ class KonumService {
     final jsonList = konumlar.map((k) => jsonEncode(k.toJson())).toList();
     await prefs.setStringList(_konumlarKey, jsonList);
   }
+
+  // ============ PUSULA STİLİ ============
+  static const String _pusulaStiliKey = 'compass_style';
+
+  // Pusula stilini kaydet
+  static Future<void> setPusulaStili(int styleIndex) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_pusulaStiliKey, styleIndex);
+  }
+
+  // Pusula stilini getir (varsayılan: 0 - Modern)
+  static Future<int> getPusulaStili() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(_pusulaStiliKey) ?? 0;
+  }
 }
 

@@ -27,6 +27,7 @@ class _ZenSayacWidgetState extends State<ZenSayacWidget>
   Map<String, String> _vakitSaatleri = {};
   final TemaService _temaService = TemaService();
   final LanguageService _languageService = LanguageService();
+  double _ilerlemeOrani = 0.0;
   
   late AnimationController _rippleController;
 
@@ -101,6 +102,7 @@ class _ZenSayacWidgetState extends State<ZenSayacWidget>
 
     final now = DateTime.now();
     final nowMinutes = now.hour * 60 + now.minute;
+    final nowTotalSeconds = now.hour * 3600 + now.minute * 60 + now.second;
 
     final vakitSaatleri = [
       {'adi': _languageService['imsak'] ?? 'İmsak', 'saat': _vakitSaatleri['Imsak']!},
@@ -114,6 +116,7 @@ class _ZenSayacWidgetState extends State<ZenSayacWidget>
     DateTime? sonrakiVakitZamani;
     String sonrakiVakitAdi = '';
     String mevcutVakitAdi = '';
+    int mevcutVakitIndex = -1;
 
     for (int i = 0; i < vakitSaatleri.length; i++) {
       final parts = vakitSaatleri[i]['saat']!.split(':');
@@ -124,6 +127,7 @@ class _ZenSayacWidgetState extends State<ZenSayacWidget>
             int.parse(parts[0]), int.parse(parts[1]));
         sonrakiVakitAdi = vakitSaatleri[i]['adi']!;
         mevcutVakitAdi = i > 0 ? vakitSaatleri[i - 1]['adi']! : vakitSaatleri.last['adi']!;
+        mevcutVakitIndex = i > 0 ? i - 1 : vakitSaatleri.length - 1;
         break;
       }
     }
@@ -134,12 +138,48 @@ class _ZenSayacWidgetState extends State<ZenSayacWidget>
           int.parse(parts[0]), int.parse(parts[1]));
       sonrakiVakitAdi = vakitSaatleri[0]['adi']!;
       mevcutVakitAdi = vakitSaatleri.last['adi']!;
+      mevcutVakitIndex = vakitSaatleri.length - 1;
+    }
+
+    // İlerleme oranı hesapla
+    double ilerlemeOrani = 0.0;
+    if (mevcutVakitIndex >= 0) {
+      final mevcutParts = vakitSaatleri[mevcutVakitIndex]['saat']!.split(':');
+      final mevcutVakitSeconds = int.parse(mevcutParts[0]) * 3600 + int.parse(mevcutParts[1]) * 60;
+      
+      int sonrakiVakitSeconds;
+      if (mevcutVakitIndex == vakitSaatleri.length - 1) {
+        // Yatsıdan sonra - gece yarısından sonra imsak öncesi veya normal gündüz vakitleri
+        final imsakParts = vakitSaatleri[0]['saat']!.split(':');
+        final imsakSeconds = int.parse(imsakParts[0]) * 3600 + int.parse(imsakParts[1]) * 60;
+        
+        if (nowTotalSeconds < imsakSeconds) {
+          // Gece yarısından sonra, imsak öncesi
+          final toplamSure = imsakSeconds;
+          final gecenSure = nowTotalSeconds;
+          ilerlemeOrani = (gecenSure / toplamSure).clamp(0.0, 1.0);
+        } else {
+          // Yatsıdan gece yarısına kadar
+          final toplamSure = (24 * 3600 - mevcutVakitSeconds) + imsakSeconds;
+          final gecenSure = nowTotalSeconds - mevcutVakitSeconds;
+          ilerlemeOrani = (gecenSure / toplamSure).clamp(0.0, 1.0);
+        }
+      } else {
+        // Normal gündüz vakitleri
+        final sonrakiParts = vakitSaatleri[mevcutVakitIndex + 1]['saat']!.split(':');
+        sonrakiVakitSeconds = int.parse(sonrakiParts[0]) * 3600 + int.parse(sonrakiParts[1]) * 60;
+        
+        final toplamSure = sonrakiVakitSeconds - mevcutVakitSeconds;
+        final gecenSure = nowTotalSeconds - mevcutVakitSeconds;
+        ilerlemeOrani = (gecenSure / toplamSure).clamp(0.0, 1.0);
+      }
     }
 
     setState(() {
       _kalanSure = sonrakiVakitZamani!.difference(now);
       _sonrakiVakit = sonrakiVakitAdi;
       _mevcutVakit = mevcutVakitAdi;
+      _ilerlemeOrani = ilerlemeOrani;
     });
   }
 
@@ -311,6 +351,11 @@ class _ZenSayacWidgetState extends State<ZenSayacWidget>
                       ),
                     ),
                   ),
+
+                  const SizedBox(height: 16),
+
+                  // İlerleme barı
+                  _buildProgressBar(primaryColor, textColor),
                 ],
               ),
             ),
@@ -356,6 +401,40 @@ class _ZenSayacWidgetState extends State<ZenSayacWidget>
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildProgressBar(Color primaryColor, Color textColor) {
+    return Container(
+      height: 8,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(4),
+        color: textColor.withOpacity(0.15),
+        border: Border.all(color: textColor.withOpacity(0.1), width: 0.5),
+      ),
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: CustomPaint(
+              size: const Size(double.infinity, 8),
+              painter: _ProgressBarLinesPainter(lineColor: textColor.withOpacity(0.08)),
+            ),
+          ),
+          FractionallySizedBox(
+            widthFactor: _ilerlemeOrani.clamp(0.0, 1.0),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(4),
+                gradient: LinearGradient(
+                  colors: [primaryColor.withOpacity(0.7), primaryColor, Color.lerp(primaryColor, Colors.white, 0.2)!],
+                ),
+                boxShadow: [BoxShadow(color: primaryColor.withOpacity(0.5), blurRadius: 6, spreadRadius: 0)],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -431,4 +510,20 @@ class _BambooPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _BambooPainter oldDelegate) => oldDelegate.color != color;
+}
+
+class _ProgressBarLinesPainter extends CustomPainter {
+  final Color lineColor;
+  _ProgressBarLinesPainter({required this.lineColor});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = lineColor..strokeWidth = 1;
+    for (double x = 0; x < size.width; x += 8) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ProgressBarLinesPainter oldDelegate) => oldDelegate.lineColor != lineColor;
 }

@@ -383,36 +383,8 @@ class _NefesSayacWidgetState extends State<NefesSayacWidget>
 
                   const SizedBox(height: 12),
 
-                  // İlerleme çubuğu - Açıktan koyu renge gradient
-                  Container(
-                    height: 8,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(4),
-                      color: Colors.white.withOpacity(0.1),
-                    ),
-                    child: Stack(
-                      children: [
-                        FractionallySizedBox(
-                          alignment: Alignment.centerLeft,
-                          widthFactor: _ilerlemeOrani,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(4),
-                              gradient: LinearGradient(
-                                colors: [
-                                  const Color(0xFF00E676), // Açık yeşil
-                                  const Color(0xFFFFEB3B), // Sarı
-                                  const Color(0xFFFF5722), // Turuncu
-                                  const Color(0xFFB71C1C), // Koyu kırmızı
-                                ],
-                                stops: const [0.0, 0.33, 0.66, 1.0],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  // İlerleme çubuğu
+                  _buildProgressBar(primaryColor, Colors.white),
 
                   const SizedBox(height: 8),
 
@@ -529,6 +501,40 @@ class _NefesSayacWidgetState extends State<NefesSayacWidget>
       ),
     );
   }
+
+  Widget _buildProgressBar(Color primaryColor, Color textColor) {
+    return Container(
+      height: 8,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(4),
+        color: textColor.withOpacity(0.15),
+        border: Border.all(color: textColor.withOpacity(0.1), width: 0.5),
+      ),
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: CustomPaint(
+              size: const Size(double.infinity, 8),
+              painter: _ProgressBarLinesPainter(lineColor: textColor.withOpacity(0.08)),
+            ),
+          ),
+          FractionallySizedBox(
+            widthFactor: _ilerlemeOrani.clamp(0.0, 1.0),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(4),
+                gradient: LinearGradient(
+                  colors: [primaryColor.withOpacity(0.7), primaryColor, Color.lerp(primaryColor, Colors.white, 0.2)!],
+                ),
+                boxShadow: [BoxShadow(color: primaryColor.withOpacity(0.5), blurRadius: 6, spreadRadius: 0)],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 // Dalga çizici
@@ -606,4 +612,20 @@ class _FloatingParticlesPainter extends CustomPainter {
   bool shouldRepaint(covariant _FloatingParticlesPainter oldDelegate) {
     return oldDelegate.progress != progress;
   }
+}
+
+class _ProgressBarLinesPainter extends CustomPainter {
+  final Color lineColor;
+  _ProgressBarLinesPainter({required this.lineColor});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = lineColor..strokeWidth = 1;
+    for (double x = 0; x < size.width; x += 8) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ProgressBarLinesPainter oldDelegate) => oldDelegate.lineColor != lineColor;
 }

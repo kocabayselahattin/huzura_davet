@@ -414,41 +414,13 @@ class _TeslaSayacWidgetState extends State<TeslaSayacWidget>
 
                   const SizedBox(height: 12),
 
-                  // İlerleme çubuğu - Enerji seviyesi (açıktan koyu renge)
+                  // İlerleme çubuğu - Enerji seviyesi
                   Row(
                     children: [
                       Icon(Icons.battery_charging_full, color: primaryColor, size: 18),
                       const SizedBox(width: 8),
                       Expanded(
-                        child: Container(
-                          height: 12,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(6),
-                            color: primaryColor.withOpacity(0.1),
-                            border: Border.all(
-                              color: primaryColor.withOpacity(0.3),
-                              width: 1,
-                            ),
-                          ),
-                          child: FractionallySizedBox(
-                            alignment: Alignment.centerLeft,
-                            widthFactor: _ilerlemeOrani,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(5),
-                                gradient: const LinearGradient(
-                                  colors: [
-                                    Color(0xFF00E5FF), // Açık cyan
-                                    Color(0xFF00BCD4), // Cyan
-                                    Color(0xFF0097A7), // Koyu cyan
-                                    Color(0xFF006064), // Çok koyu cyan
-                                  ],
-                                  stops: [0.0, 0.33, 0.66, 1.0],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
+                        child: _buildProgressBar(primaryColor, accentColor),
                       ),
                       const SizedBox(width: 8),
                       Text(
@@ -578,6 +550,40 @@ class _TeslaSayacWidgetState extends State<TeslaSayacWidget>
       },
     );
   }
+
+  Widget _buildProgressBar(Color primaryColor, Color textColor) {
+    return Container(
+      height: 8,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(4),
+        color: textColor.withOpacity(0.15),
+        border: Border.all(color: textColor.withOpacity(0.1), width: 0.5),
+      ),
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: CustomPaint(
+              size: const Size(double.infinity, 8),
+              painter: _ProgressBarLinesPainter(lineColor: textColor.withOpacity(0.08)),
+            ),
+          ),
+          FractionallySizedBox(
+            widthFactor: _ilerlemeOrani.clamp(0.0, 1.0),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(4),
+                gradient: LinearGradient(
+                  colors: [primaryColor.withOpacity(0.7), primaryColor, Color.lerp(primaryColor, Colors.white, 0.2)!],
+                ),
+                boxShadow: [BoxShadow(color: primaryColor.withOpacity(0.5), blurRadius: 6, spreadRadius: 0)],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _ElectricArc {
@@ -675,4 +681,20 @@ class _ElectricArcPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _ElectricArcPainter oldDelegate) => true;
+}
+
+class _ProgressBarLinesPainter extends CustomPainter {
+  final Color lineColor;
+  _ProgressBarLinesPainter({required this.lineColor});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = lineColor..strokeWidth = 1;
+    for (double x = 0; x < size.width; x += 8) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ProgressBarLinesPainter oldDelegate) => oldDelegate.lineColor != lineColor;
 }

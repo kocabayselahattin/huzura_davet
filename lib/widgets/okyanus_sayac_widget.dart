@@ -26,6 +26,7 @@ class _OkyanusSayacWidgetState extends State<OkyanusSayacWidget>
   Duration _kalanSure = Duration.zero;
   String _sonrakiVakit = '';
   String _mevcutVakit = '';
+  double _ilerlemeOrani = 0.0;
   Map<String, String> _vakitSaatleri = {};
   
   late AnimationController _waveController1;
@@ -131,7 +132,7 @@ class _OkyanusSayacWidgetState extends State<OkyanusSayacWidget>
     if (_vakitSaatleri.isEmpty) return;
     
     final now = DateTime.now();
-    final nowMinutes = now.hour * 60 + now.minute;
+    final nowTotalSeconds = now.hour * 3600 + now.minute * 60 + now.second;
 
     final vakitListesi = [
       {'adi': _languageService['imsak'] ?? 'İmsak', 'saat': _vakitSaatleri['imsak']!},
@@ -142,37 +143,74 @@ class _OkyanusSayacWidgetState extends State<OkyanusSayacWidget>
       {'adi': _languageService['yatsi'] ?? 'Yatsı', 'saat': _vakitSaatleri['yatsi']!},
     ];
 
+    // Vakit saniyelerini hesapla
+    List<int> vakitSaniyeleri = [];
+    for (final vakit in vakitListesi) {
+      final parts = vakit['saat']!.split(':');
+      vakitSaniyeleri.add(int.parse(parts[0]) * 3600 + int.parse(parts[1]) * 60);
+    }
+
     DateTime? sonrakiVakitZamani;
     String sonrakiVakitAdi = '';
     String mevcutVakitAdi = '';
+    double oran = 0.0;
 
-    for (int i = 0; i < vakitListesi.length; i++) {
-      final vakit = vakitListesi[i];
-      final parts = vakit['saat']!.split(':');
-      final vakitMinutes = int.parse(parts[0]) * 60 + int.parse(parts[1]);
-      
-      if (vakitMinutes > nowMinutes) {
-        sonrakiVakitZamani = DateTime(now.year, now.month, now.day,
-            int.parse(parts[0]), int.parse(parts[1]));
-        sonrakiVakitAdi = vakit['adi']!;
-        mevcutVakitAdi = i > 0 ? vakitListesi[i - 1]['adi']! : (_languageService['yatsi'] ?? 'Yatsı');
+    // Sonraki vakti bul
+    int sonrakiIndex = -1;
+    for (int i = 0; i < vakitSaniyeleri.length; i++) {
+      if (vakitSaniyeleri[i] > nowTotalSeconds) {
+        sonrakiIndex = i;
         break;
       }
     }
 
-    if (sonrakiVakitZamani == null) {
+    if (sonrakiIndex == -1) {
+      // Tüm vakitler geçmiş, yarın imsak
       final yarin = now.add(const Duration(days: 1));
       final imsakParts = _vakitSaatleri['imsak']!.split(':');
       sonrakiVakitZamani = DateTime(yarin.year, yarin.month, yarin.day,
           int.parse(imsakParts[0]), int.parse(imsakParts[1]));
       sonrakiVakitAdi = _languageService['imsak'] ?? 'İmsak';
       mevcutVakitAdi = _languageService['yatsi'] ?? 'Yatsı';
+      
+      // Yatsıdan yarın imsaka kadar ilerleme
+      final yatsiSaniye = vakitSaniyeleri.last;
+      final imsakSaniye = vakitSaniyeleri.first;
+      final toplamSure = (24 * 3600 - yatsiSaniye) + imsakSaniye;
+      final gecenSure = nowTotalSeconds - yatsiSaniye;
+      oran = (gecenSure / toplamSure).clamp(0.0, 1.0);
+    } else if (sonrakiIndex == 0) {
+      // İmsak henüz olmadı (gece yarısından sonra, imsak öncesi)
+      final imsakParts = _vakitSaatleri['imsak']!.split(':');
+      sonrakiVakitZamani = DateTime(now.year, now.month, now.day,
+          int.parse(imsakParts[0]), int.parse(imsakParts[1]));
+      sonrakiVakitAdi = _languageService['imsak'] ?? 'İmsak';
+      mevcutVakitAdi = _languageService['yatsi'] ?? 'Yatsı';
+      
+      // Dün yatsıdan bugün imsaka kadar ilerleme
+      final yatsiSaniye = vakitSaniyeleri.last;
+      final imsakSaniye = vakitSaniyeleri.first;
+      final toplamSure = (24 * 3600 - yatsiSaniye) + imsakSaniye;
+      final gecenSure = nowTotalSeconds + (24 * 3600 - yatsiSaniye);
+      oran = (gecenSure / toplamSure).clamp(0.0, 1.0);
+    } else {
+      // Normal durum: gündüz vakitleri
+      final parts = vakitListesi[sonrakiIndex]['saat']!.split(':');
+      sonrakiVakitZamani = DateTime(now.year, now.month, now.day,
+          int.parse(parts[0]), int.parse(parts[1]));
+      sonrakiVakitAdi = vakitListesi[sonrakiIndex]['adi']!;
+      mevcutVakitAdi = vakitListesi[sonrakiIndex - 1]['adi']!;
+      
+      final toplamSure = vakitSaniyeleri[sonrakiIndex] - vakitSaniyeleri[sonrakiIndex - 1];
+      final gecenSure = nowTotalSeconds - vakitSaniyeleri[sonrakiIndex - 1];
+      oran = (gecenSure / toplamSure).clamp(0.0, 1.0);
     }
 
     setState(() {
       _kalanSure = sonrakiVakitZamani!.difference(now);
       _sonrakiVakit = sonrakiVakitAdi;
       _mevcutVakit = mevcutVakitAdi;
+      _ilerlemeOrani = oran;
     });
   }
 
@@ -494,6 +532,14 @@ class _OkyanusSayacWidgetState extends State<OkyanusSayacWidget>
                   
                   // Miladi ve Hicri Takvim
                   _buildTakvimRow(renkler),
+                  
+                  const SizedBox(height: 12),
+                  
+                  // İlerleme barı
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 30),
+                    child: _buildProgressBar(renkler.vurgu, Colors.white),
+                  ),
                 ],
               ),
             ),
@@ -582,6 +628,40 @@ class _OkyanusSayacWidgetState extends State<OkyanusSayacWidget>
     );
   }
   
+  Widget _buildProgressBar(Color primaryColor, Color textColor) {
+    return Container(
+      height: 8,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(4),
+        color: textColor.withOpacity(0.15),
+        border: Border.all(color: textColor.withOpacity(0.1), width: 0.5),
+      ),
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: CustomPaint(
+              size: const Size(double.infinity, 8),
+              painter: _ProgressBarLinesPainter(lineColor: textColor.withOpacity(0.08)),
+            ),
+          ),
+          FractionallySizedBox(
+            widthFactor: _ilerlemeOrani.clamp(0.0, 1.0),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(4),
+                gradient: LinearGradient(
+                  colors: [primaryColor.withOpacity(0.7), primaryColor, Color.lerp(primaryColor, Colors.white, 0.2)!],
+                ),
+                boxShadow: [BoxShadow(color: primaryColor.withOpacity(0.5), blurRadius: 6, spreadRadius: 0)],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildTakvimRow(TemaRenkleri renkler) {
     final now = DateTime.now();
     final miladiTarih = DateFormat('dd MMM yyyy', 'tr_TR').format(now);
@@ -787,4 +867,20 @@ class _BubblePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _BubblePainter oldDelegate) =>
       animationValue != oldDelegate.animationValue;
+}
+
+class _ProgressBarLinesPainter extends CustomPainter {
+  final Color lineColor;
+  _ProgressBarLinesPainter({required this.lineColor});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = lineColor..strokeWidth = 1;
+    for (double x = 0; x < size.width; x += 8) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ProgressBarLinesPainter oldDelegate) => oldDelegate.lineColor != lineColor;
 }

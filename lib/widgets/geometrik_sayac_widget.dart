@@ -320,32 +320,8 @@ class _GeometrikSayacWidgetState extends State<GeometrikSayacWidget>
 
                   const SizedBox(height: 12),
 
-                  // İlerleme çubuğu - Açıktan koyu renge gradient
-                  Container(
-                    height: 8,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(4),
-                      color: primaryColor.withOpacity(0.1),
-                    ),
-                    child: FractionallySizedBox(
-                      alignment: Alignment.centerLeft,
-                      widthFactor: _ilerlemeOrani,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(4),
-                          gradient: const LinearGradient(
-                            colors: [
-                              Color(0xFFFFD700), // Altın - açık
-                              Color(0xFFFFB300), // Turuncu altın
-                              Color(0xFFFF8F00), // Koyu turuncu
-                              Color(0xFFB71C1C), // Koyu kırmızı
-                            ],
-                            stops: [0.0, 0.33, 0.66, 1.0],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
+                  // İlerleme çubuğu
+                  _buildProgressBar(primaryColor, primaryColor),
 
                   const SizedBox(height: 10),
 
@@ -448,6 +424,40 @@ class _GeometrikSayacWidgetState extends State<GeometrikSayacWidget>
           fontSize: 34,
           fontWeight: FontWeight.w300,
         ),
+      ),
+    );
+  }
+
+  Widget _buildProgressBar(Color primaryColor, Color textColor) {
+    return Container(
+      height: 8,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(4),
+        color: textColor.withOpacity(0.15),
+        border: Border.all(color: textColor.withOpacity(0.1), width: 0.5),
+      ),
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: CustomPaint(
+              size: const Size(double.infinity, 8),
+              painter: _ProgressBarLinesPainter(lineColor: textColor.withOpacity(0.08)),
+            ),
+          ),
+          FractionallySizedBox(
+            widthFactor: _ilerlemeOrani.clamp(0.0, 1.0),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(4),
+                gradient: LinearGradient(
+                  colors: [primaryColor.withOpacity(0.7), primaryColor, Color.lerp(primaryColor, Colors.white, 0.2)!],
+                ),
+                boxShadow: [BoxShadow(color: primaryColor.withOpacity(0.5), blurRadius: 6, spreadRadius: 0)],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -612,4 +622,20 @@ class _FlowerOfLifeMiniPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _ProgressBarLinesPainter extends CustomPainter {
+  final Color lineColor;
+  _ProgressBarLinesPainter({required this.lineColor});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = lineColor..strokeWidth = 1;
+    for (double x = 0; x < size.width; x += 8) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ProgressBarLinesPainter oldDelegate) => oldDelegate.lineColor != lineColor;
 }

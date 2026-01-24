@@ -368,24 +368,34 @@ class DiyanetApiService {
     ];
   }
 
-  // Vakit saatlerini getir (önce canlı veri, gerekirse cache ya da lokal)
+  // Vakit saatlerini getir (önce cache, gerekirse API)
+  // Cache süresi: 7 gün - Kullanıcı yenile butonu ile manuel güncelleme yapabilir
   static Future<Map<String, dynamic>?> getVakitler(String ilceId) async {
     final now = DateTime.now();
+    
+    // 1. RAM cache'i kontrol et (hızlı erişim için)
     final cached = _vakitCache[ilceId];
     final cachedTime = _vakitCacheTimes[ilceId];
-
-    // 1. RAM cache'i kontrol et - sadece aynı gün ve 30 dakikadan az ise kullan
     if (cached != null && cachedTime != null) {
-      final sameDay = cachedTime.year == now.year &&
-          cachedTime.month == now.month &&
-          cachedTime.day == now.day;
-      if (sameDay && now.difference(cachedTime) < const Duration(minutes: 30)) {
-        print('📦 RAM cache kullanılıyor ($ilceId) - ${now.difference(cachedTime).inMinutes} dk önce');
+      // RAM cache 7 günden yeni ise kullan
+      if (now.difference(cachedTime).inDays < 7) {
+        print('📦 RAM cache kullanılıyor ($ilceId) - ${now.difference(cachedTime).inDays} gün önce');
         return cached;
       }
     }
 
-    // 2. İnternetten yeni veri almayı dene
+    // 2. SharedPreferences'tan kaydedilmiş veriyi kontrol et (7 gün cache)
+    final savedData = await _loadVakitFromPrefs(ilceId);
+    if (savedData != null) {
+      // Cache'i RAM'e de yükle (hızlı erişim için)
+      _vakitCache[ilceId] = savedData;
+      _vakitCacheTimes[ilceId] = now;
+      print('💾 Kaydedilmiş veriler kullanılıyor (7 gün cache): $ilceId');
+      return savedData;
+    }
+
+    // 3. Cache yoksa veya eskiyse - İnternetten yeni veri al
+    print('🌐 Cache yok veya eski, API\'den veri çekiliyor: $ilceId');
     try {
       final remote = await _fetchRemoteVakitler(ilceId);
       if (remote != null) {
@@ -399,19 +409,10 @@ class DiyanetApiService {
       print('⚠️ Canlı vakit alınamadı ($ilceId): $e');
     }
 
-    // 3. RAM cache'de eski veri varsa onu kullan
+    // 4. İnternet yoksa ve RAM cache'de eski veri varsa onu kullan
     if (cached != null) {
-      print('ℹ️ İnternet yok, RAM cache kullanılıyor: $ilceId');
+      print('ℹ️ İnternet yok, eski RAM cache kullanılıyor: $ilceId');
       return cached;
-    }
-
-    // 4. SharedPreferences'tan kaydedilmiş veriyi yükle
-    final savedData = await _loadVakitFromPrefs(ilceId);
-    if (savedData != null) {
-      _vakitCache[ilceId] = savedData;
-      _vakitCacheTimes[ilceId] = now;
-      print('💾 Kaydedilmiş offline veriler kullanılıyor: $ilceId');
-      return savedData;
     }
 
     print('❌ API\'den veri alınamadı ve hiçbir cache yok: $ilceId');
