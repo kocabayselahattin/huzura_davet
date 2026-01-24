@@ -397,17 +397,6 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
 
       // En uygun ilçeyi bul
       await _enUygunIlceyiBul(ilAdi);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Konumunuz tespit edildi: $ilAdi${secilenIlceAdi != null ? " / $secilenIlceAdi" : ""}',
-            ),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
     } else {
       _konumHatasi('Konum tespit edilemedi. Lütfen manuel seçim yapın.');
     }
@@ -452,17 +441,6 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
 
         await _ilceleriYukle(ilId);
         await _enUygunIlceyiBul(ilAdi);
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Konum: $_ipCity, $_ipCountry${secilenIlceAdi != null ? " ($secilenIlceAdi)" : ""}',
-              ),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
       } else {
         // Diğer ülke için şehir bulunamadı - kullanıcıya bilgi ver
         setState(() {
@@ -1532,38 +1510,41 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
               
               // İlçe seçildiyse Tamam butonu göster
               if (secilenIlceId != null)
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2A3F5F),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
-                        blurRadius: 10,
-                        offset: const Offset(0, -5),
-                      ),
-                    ],
-                  ),
-                  child: SafeArea(
-                    top: false,
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: _kaydet,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.cyanAccent,
-                          foregroundColor: const Color(0xFF1B2741),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                Transform.translate(
+                  offset: const Offset(0, -20),
+                  child: Container(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2A3F5F),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.3),
+                          blurRadius: 10,
+                          offset: const Offset(0, -5),
                         ),
-                        icon: const Icon(Icons.check),
-                        label: Text(
-                          _languageService['ok'] ?? 'Tamam',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                      ],
+                    ),
+                    child: SafeArea(
+                      top: false,
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: _kaydet,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.cyanAccent,
+                            foregroundColor: const Color(0xFF1B2741),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          icon: const Icon(Icons.check),
+                          label: Text(
+                            _languageService['ok'] ?? 'Tamam',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),

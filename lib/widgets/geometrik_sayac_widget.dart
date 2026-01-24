@@ -167,6 +167,7 @@ class _GeometrikSayacWidgetState extends State<GeometrikSayacWidget>
 
   @override
   Widget build(BuildContext context) {
+    final renkler = _temaService.renkler;
     final hours = _kalanSure.inHours;
     final minutes = _kalanSure.inMinutes % 60;
     final seconds = _kalanSure.inSeconds % 60;
@@ -177,22 +178,23 @@ class _GeometrikSayacWidgetState extends State<GeometrikSayacWidget>
     final hicri = HijriCalendar.now();
     final hicriTarih = '${hicri.hDay} ${_getHicriAyAdi(hicri.hMonth)} ${hicri.hYear}';
 
-    // Altın ve mistik renkler
-    const primaryColor = Color(0xFFFFD700);
-    const secondaryColor = Color(0xFFC9A227);
-    const bgColor = Color(0xFF1A0A2E);
+    // Tema renklerini kullan
+    final primaryColor = renkler.vurgu;
+    final secondaryColor = renkler.vurguSecondary;
+    final bgColor = renkler.arkaPlan;
+    final cardBg = renkler.kartArkaPlan;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        gradient: const RadialGradient(
+        gradient: RadialGradient(
           center: Alignment.center,
           radius: 1.2,
           colors: [
-            Color(0xFF2D1B4E),
+            cardBg,
             bgColor,
-            Color(0xFF0D0618),
+            bgColor.withOpacity(0.8),
           ],
         ),
       ),
@@ -229,7 +231,7 @@ class _GeometrikSayacWidgetState extends State<GeometrikSayacWidget>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           ShaderMask(
-                            shaderCallback: (bounds) => const LinearGradient(
+                            shaderCallback: (bounds) => LinearGradient(
                               colors: [primaryColor, secondaryColor],
                             ).createShader(bounds),
                             child: Text(

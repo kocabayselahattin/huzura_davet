@@ -198,6 +198,7 @@ class _MatrixSayacWidgetState extends State<MatrixSayacWidget>
 
   @override
   Widget build(BuildContext context) {
+    final renkler = _temaService.renkler;
     final hours = _kalanSure.inHours;
     final minutes = _kalanSure.inMinutes % 60;
     final seconds = _kalanSure.inSeconds % 60;
@@ -208,14 +209,17 @@ class _MatrixSayacWidgetState extends State<MatrixSayacWidget>
     final hicri = HijriCalendar.now();
     final hicriTarih = '${hicri.hDay} ${_getHicriAyAdi(hicri.hMonth)} ${hicri.hYear}';
 
-    const matrixGreen = Color(0xFF00FF41);
-    const darkGreen = Color(0xFF003B00);
+    // Tema renklerini kullan
+    final matrixGreen = renkler.vurgu;
+    final darkGreen = renkler.vurguSecondary.withOpacity(0.5);
+    final bgColor = renkler.arkaPlan;
+    final cardBg = renkler.kartArkaPlan;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        color: Colors.black,
+        color: bgColor,
         border: Border.all(color: matrixGreen.withOpacity(0.3), width: 1),
       ),
       child: ClipRRect(
@@ -236,7 +240,7 @@ class _MatrixSayacWidgetState extends State<MatrixSayacWidget>
                       column.chars[charIndex],
                       style: TextStyle(
                         color: isHead 
-                            ? Colors.white 
+                            ? renkler.yaziPrimary 
                             : matrixGreen.withOpacity(opacity * 0.8),
                         fontSize: 12,
                         fontFamily: 'monospace',
@@ -258,9 +262,9 @@ class _MatrixSayacWidgetState extends State<MatrixSayacWidget>
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.black.withOpacity(0.7),
-                    Colors.black.withOpacity(0.5),
-                    Colors.black.withOpacity(0.7),
+                    bgColor.withOpacity(0.7),
+                    bgColor.withOpacity(0.5),
+                    bgColor.withOpacity(0.7),
                   ],
                 ),
               ),
@@ -321,18 +325,20 @@ class _MatrixSayacWidgetState extends State<MatrixSayacWidget>
                     ],
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 6),
 
-                  // Zaman göstergesi - Terminal stili
+                  // Zaman göstergesi - Terminal stili (yukarı kaydırıldı)
                   Expanded(
-                    child: Center(
+                    child: Transform.translate(
+                      offset: const Offset(0, -10),
+                      child: Center(
                       child: AnimatedBuilder(
                         animation: _glowController,
                         builder: (context, child) {
                           return Container(
                             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                             decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.8),
+                              color: cardBg.withOpacity(0.8),
                               border: Border.all(
                                 color: matrixGreen.withOpacity(0.3),
                                 width: 1,
@@ -375,9 +381,10 @@ class _MatrixSayacWidgetState extends State<MatrixSayacWidget>
                         },
                       ),
                     ),
+                    ),
                   ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 4),
 
                   // İlerleme çubuğu - ASCII style
                   Row(

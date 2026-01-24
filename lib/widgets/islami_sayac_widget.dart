@@ -167,6 +167,7 @@ class _IslamiSayacWidgetState extends State<IslamiSayacWidget>
 
   @override
   Widget build(BuildContext context) {
+    final renkler = _temaService.renkler;
     final hours = _kalanSure.inHours;
     final minutes = _kalanSure.inMinutes % 60;
     final seconds = _kalanSure.inSeconds % 60;
@@ -177,26 +178,28 @@ class _IslamiSayacWidgetState extends State<IslamiSayacWidget>
     final hicri = HijriCalendar.now();
     final hicriTarih = '${hicri.hDay} ${_getHicriAyAdi(hicri.hMonth)} ${hicri.hYear}';
 
-    // İslami renkler - Yeşil ve altın
-    const primaryColor = Color(0xFF1B5E20);
-    const secondaryColor = Color(0xFFFFD700);
-    const accentColor = Color(0xFF4CAF50);
+    // Tema renklerini kullan
+    final primaryColor = renkler.vurgu;
+    final secondaryColor = renkler.vurguSecondary;
+    final accentColor = renkler.yaziPrimary;
+    final bgColor = renkler.arkaPlan;
+    final cardBg = renkler.kartArkaPlan;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Color(0xFF0D2818),
-            Color(0xFF1B4332),
-            Color(0xFF0D2818),
+            bgColor,
+            cardBg,
+            bgColor,
           ],
         ),
         border: Border.all(
-          color: secondaryColor.withOpacity(0.3),
+          color: primaryColor.withOpacity(0.3),
           width: 2,
         ),
       ),
@@ -246,7 +249,7 @@ class _IslamiSayacWidgetState extends State<IslamiSayacWidget>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           ShaderMask(
-                            shaderCallback: (bounds) => const LinearGradient(
+                            shaderCallback: (bounds) => LinearGradient(
                               colors: [secondaryColor, accentColor],
                             ).createShader(bounds),
                             child: Text(

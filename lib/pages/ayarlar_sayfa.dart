@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'bildirim_ayarlari_sayfa.dart';
 import 'il_ilce_sec_sayfa.dart';
 import 'tema_ayarlari_sayfa.dart';
@@ -19,7 +18,6 @@ class AyarlarSayfa extends StatefulWidget {
 class _AyarlarSayfaState extends State<AyarlarSayfa> {
   final TemaService _temaService = TemaService();
   final LanguageService _languageService = LanguageService();
-  static const platform = MethodChannel('huzur_vakti/permissions');
 
   @override
   void initState() {
@@ -191,20 +189,6 @@ class _AyarlarSayfaState extends State<AyarlarSayfa> {
           ),
           Divider(color: renkler.ayirac),
 
-          // Pil Optimizasyonu
-          _ayarSatiri(
-            icon: Icons.battery_saver,
-            iconColor: Colors.green,
-            baslik:
-                _languageService['battery_optimization'] ?? 'Pil Optimizasyonu',
-            altBaslik:
-                _languageService['battery_optimization_desc'] ??
-                'Arka plan işlemleri için izin ver',
-            onTap: () => _pilOptimizasyonuAc(),
-            renkler: renkler,
-          ),
-          Divider(color: renkler.ayirac),
-
           // Hakkında
           _ayarSatiri(
             icon: Icons.info,
@@ -318,22 +302,5 @@ class _AyarlarSayfaState extends State<AyarlarSayfa> {
           trailing ?? Icon(Icons.chevron_right, color: renkler.yaziSecondary),
       onTap: onTap,
     );
-  }
-
-  Future<void> _pilOptimizasyonuAc() async {
-    try {
-      await platform.invokeMethod('openBatteryOptimizationSettings');
-    } on PlatformException catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '${_languageService['battery_settings_error'] ?? 'Pil ayarları açılamadı'}: ${e.message}',
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
   }
 }

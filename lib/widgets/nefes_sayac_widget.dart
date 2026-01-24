@@ -168,6 +168,7 @@ class _NefesSayacWidgetState extends State<NefesSayacWidget>
 
   @override
   Widget build(BuildContext context) {
+    final renkler = _temaService.renkler;
     final hours = _kalanSure.inHours;
     final minutes = _kalanSure.inMinutes % 60;
     final seconds = _kalanSure.inSeconds % 60;
@@ -178,22 +179,24 @@ class _NefesSayacWidgetState extends State<NefesSayacWidget>
     final hicri = HijriCalendar.now();
     final hicriTarih = '${hicri.hDay} ${_getHicriAyAdi(hicri.hMonth)} ${hicri.hYear}';
 
-    // Sakin mavi-mor tonları
-    const primaryColor = Color(0xFF6B5B95);
-    const secondaryColor = Color(0xFF88B7D5);
-    const accentColor = Color(0xFFB4A7D6);
+    // Tema renklerini kullan
+    final primaryColor = renkler.vurgu;
+    final secondaryColor = renkler.vurguSecondary;
+    final accentColor = renkler.yaziPrimary;
+    final bgColor = renkler.arkaPlan;
+    final cardBg = renkler.kartArkaPlan;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Color(0xFF1A1A2E),
-            Color(0xFF16213E),
-            Color(0xFF0F3460),
+            bgColor,
+            cardBg,
+            bgColor.withOpacity(0.8),
           ],
         ),
       ),

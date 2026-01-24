@@ -203,6 +203,7 @@ class _TeslaSayacWidgetState extends State<TeslaSayacWidget>
 
   @override
   Widget build(BuildContext context) {
+    final renkler = _temaService.renkler;
     final hours = _kalanSure.inHours;
     final minutes = _kalanSure.inMinutes % 60;
     final seconds = _kalanSure.inSeconds % 60;
@@ -213,22 +214,24 @@ class _TeslaSayacWidgetState extends State<TeslaSayacWidget>
     final hicri = HijriCalendar.now();
     final hicriTarih = '${hicri.hDay} ${_getHicriAyAdi(hicri.hMonth)} ${hicri.hYear}';
 
-    // Elektrik mavisi
-    const primaryColor = Color(0xFF00D4FF);
-    const secondaryColor = Color(0xFF7B68EE);
-    const accentColor = Color(0xFFFFFFFF);
+    // Tema renklerini kullan
+    final primaryColor = renkler.vurgu;
+    final secondaryColor = renkler.vurguSecondary;
+    final accentColor = renkler.yaziPrimary;
+    final bgColor = renkler.arkaPlan;
+    final cardBg = renkler.kartArkaPlan;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        gradient: const RadialGradient(
+        gradient: RadialGradient(
           center: Alignment.center,
           radius: 1.0,
           colors: [
-            Color(0xFF1A1A2E),
-            Color(0xFF0D0D1A),
-            Color(0xFF000005),
+            cardBg,
+            bgColor,
+            bgColor.withOpacity(0.9),
           ],
         ),
         border: Border.all(
@@ -272,7 +275,7 @@ class _TeslaSayacWidgetState extends State<TeslaSayacWidget>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           ShaderMask(
-                            shaderCallback: (bounds) => const LinearGradient(
+                            shaderCallback: (bounds) => LinearGradient(
                               colors: [primaryColor, accentColor],
                             ).createShader(bounds),
                             child: Text(
