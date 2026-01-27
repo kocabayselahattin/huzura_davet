@@ -76,12 +76,12 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
 
   // Bildirim sesi seçimi (her vakit için) - default: Best
   Map<String, String> _bildirimSesi = {
-    'imsak': 'best_2015.mp3',
-    'gunes': 'best_2015.mp3',
-    'ogle': 'best_2015.mp3',
-    'ikindi': 'best_2015.mp3',
-    'aksam': 'best_2015.mp3',
-    'yatsi': 'best_2015.mp3',
+    'imsak': 'best.mp3',
+    'gunes': 'best.mp3',
+    'ogle': 'best.mp3',
+    'ikindi': 'best.mp3',
+    'aksam': 'best.mp3',
+    'yatsi': 'best.mp3',
   };
 
   final List<int> _erkenSureler = [0, 5, 10, 15, 20, 30, 45, 60];

@@ -34,7 +34,6 @@ import 'ayarlar_sayfa.dart';
 import 'zikir_matik_sayfa.dart';
 import 'kirk_hadis_sayfa.dart';
 import 'kuran_sayfa.dart';
-import 'elif_ba_sayfa.dart';
 import 'ibadet_sayfa.dart';
 import 'ozel_gunler_sayfa.dart';
 import 'kible_sayfa.dart';
@@ -990,22 +989,6 @@ class _AnaSayfaState extends State<AnaSayfa> {
                       context,
                       MaterialPageRoute(
                         builder: (context) => const KuranSayfa(),
-                      ),
-                    );
-                  },
-                ),
-                ListTile(
-                  leading: Icon(Icons.school, color: renkler.vurgu),
-                  title: Text(
-                    _languageService['elif_ba'] ?? 'Elif-Ba Öğren',
-                    style: TextStyle(color: renkler.yaziPrimary),
-                  ),
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ElifBaSayfa(),
                       ),
                     );
                   },

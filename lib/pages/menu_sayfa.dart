@@ -9,8 +9,6 @@ import 'yakin_camiler_sayfa.dart';
 import 'ozel_gunler_sayfa.dart';
 import 'kirk_hadis_sayfa.dart';
 import 'kuran_sayfa.dart';
-import 'elif_ba_sayfa.dart';
-import 'ilmihal_sayfa.dart';
 import 'ayarlar_sayfa.dart';
 import 'hakkinda_sayfa.dart';
 
@@ -172,24 +170,6 @@ class _MenuSayfaState extends State<MenuSayfa> {
                   onTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => const KuranSayfa()),
-                  ),
-                ),
-                _buildMenuCard(
-                  icon: Icons.school,
-                  title: _languageService['elif_ba'] ?? 'Elif-Ba',
-                  color: Colors.cyan,
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const ElifBaSayfa()),
-                  ),
-                ),
-                _buildMenuCard(
-                  icon: Icons.library_books,
-                  title: 'İslam İlmihali',
-                  color: Colors.deepPurple,
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const IlmihalSayfa()),
                   ),
                 ),
                 _buildMenuCard(
