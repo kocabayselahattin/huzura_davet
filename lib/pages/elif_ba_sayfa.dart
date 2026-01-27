@@ -4,7 +4,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:math' as math;
 import '../services/tema_service.dart';
 import '../services/language_service.dart';
-import 'elif_ba_test_sayfa.dart';
 
 class ElifBaSayfa extends StatefulWidget {
   const ElifBaSayfa({super.key});

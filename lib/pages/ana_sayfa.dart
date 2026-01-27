@@ -27,7 +27,6 @@ import '../services/konum_service.dart';
 import '../services/tema_service.dart';
 import '../services/language_service.dart';
 import '../services/home_widget_service.dart';
-import '../services/diyanet_api_service.dart';
 import '../services/scheduled_notification_service.dart';
 import '../models/konum_model.dart';
 import 'imsakiye_sayfa.dart';

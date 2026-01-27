@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'ana_sayfa.dart';
 import 'il_ilce_sec_sayfa.dart';
 import 'dil_secim_sayfa.dart';
 import 'onboarding_permissions_page.dart';
-import '../services/konum_service.dart';
 import '../services/permission_service.dart';
 import '../services/language_service.dart';
 

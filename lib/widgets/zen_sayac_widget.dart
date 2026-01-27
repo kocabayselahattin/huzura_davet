@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'dart:math' as math;
 import 'dart:ui';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:intl/intl.dart';
