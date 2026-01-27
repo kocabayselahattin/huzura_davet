@@ -838,6 +838,26 @@
     {"text": "Allah'ım! Ömrümü hayırla tamamla.", "source": "Hadis"}
   ],
   
+  "voice_selection": "Ses Seçimi",
+  "male_voice": "Erkek Ses",
+  "female_voice": "Kadın Ses",
+  "islamic_fiqh": "İslam İlmihali",
+  "download_required": "İçerik İndirmesi Gerekli",
+  "download_content_message": "İslam İlmihali içeriğini kullanmak için\nönce indirmeniz gerekmektedir.",
+  "content_size": "Boyut: ~2 MB",
+  "download": "İndir",
+  "downloading": "İndiriliyor...",
+  "download_failed": "İndirme başarısız",
+  "faith": "İman",
+  "worship": "İbadet",
+  "ablution": "Abdest",
+  "prayer": "Namaz",
+  "fasting": "Oruç",
+  "zakat": "Zekat",
+  "hajj": "Hac",
+  "morality": "Ahlak",
+  "loading_content": "İçerik yükleniyor...",
+  
   "hadiths": [
     {"text": "Ameller niyetlere göredir. Herkesin niyeti ne ise eline geçecek odur.", "source": "Buhârî, Müslim"},
     {"text": "Müslüman, elinden ve dilinden Müslümanların emin olduğu kimsedir.", "source": "Buhârî, Müslim"},

@@ -837,8 +837,26 @@
     {"text": "My Lord, who forgives sins except You?", "source": "Ali 'Imran, 135"},
     {"text": "O Allah, let my life end in goodness.", "source": "Hadith"}
   ],
-  
-  "hadiths": [
+    "voice_selection": "Voice Selection",
+  "male_voice": "Male Voice",
+  "female_voice": "Female Voice",
+  "islamic_fiqh": "Islamic Fiqh",
+  "download_required": "Download Required",
+  "download_content_message": "You need to download the Islamic Fiqh\ncontent to use it.",
+  "content_size": "Size: ~2 MB",
+  "download": "Download",
+  "downloading": "Downloading...",
+  "download_failed": "Download failed",
+  "faith": "Faith",
+  "worship": "Worship",
+  "ablution": "Ablution",
+  "prayer": "Prayer",
+  "fasting": "Fasting",
+  "zakat": "Zakat",
+  "hajj": "Hajj",
+  "morality": "Morality",
+  "loading_content": "Loading content...",
+    "hadiths": [
     {"text": "Actions are judged by intentions, and everyone will get what they intended.", "source": "Bukhari, Muslim"},
     {"text": "A Muslim is one from whose tongue and hand other Muslims are safe.", "source": "Bukhari, Muslim"},
     {"text": "Make things easy and do not make them difficult. Give glad tidings and do not repel people.", "source": "Bukhari, Muslim"},

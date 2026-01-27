@@ -808,6 +808,26 @@
     {"text": "Ô Allah, termine ma vie dans le bien.", "source": "Hadith"}
   ],
   
+  "voice_selection": "Sélection de la voix",
+  "male_voice": "Voix masculine",
+  "female_voice": "Voix féminine",
+  "islamic_fiqh": "Fiqh islamique",
+  "download_required": "Téléchargement requis",
+  "download_content_message": "Vous devez télécharger le contenu\ndu Fiqh islamique pour l'utiliser.",
+  "content_size": "Taille: ~2 Mo",
+  "download": "Télécharger",
+  "downloading": "Téléchargement en cours...",
+  "download_failed": "Échec du téléchargement",
+  "faith": "Foi",
+  "worship": "Culte",
+  "ablution": "Ablution",
+  "prayer": "Prière",
+  "fasting": "Jeûne",
+  "zakat": "Zakat",
+  "hajj": "Hajj",
+  "morality": "Moralité",
+  "loading_content": "Chargement du contenu...",
+  
   "hadiths": [
     {"text": "Les actes ne valent que par leurs intentions, et chacun n'aura que ce qu'il a voulu.", "source": "Bukhari, Muslim"},
     {"text": "Le musulman est celui dont les autres musulmans sont à l'abri de sa langue et de sa main.", "source": "Bukhari, Muslim"},

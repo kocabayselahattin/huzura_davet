@@ -346,11 +346,11 @@ class _KuranSayfaState extends State<KuranSayfa>
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: () {
-            // Cüz detay sayfasına git (gelecekte implement edilecek)
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('${cuz.no}. Cüz: ${cuz.baslangicSure} - ${cuz.bitisSure}'),
-                backgroundColor: renkler.vurgu,
+            // Cüz detay sayfasına git
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => CuzDetaySayfa(cuz: cuz),
               ),
             );
           },
@@ -2196,4 +2196,233 @@ class Ayet {
     required this.okunus,
     required this.meal,
   });
+}
+
+// Cüz Detay Sayfası
+class CuzDetaySayfa extends StatefulWidget {
+  final Cuz cuz;
+
+  const CuzDetaySayfa({
+    super.key,
+    required this.cuz,
+  });
+
+  @override
+  State<CuzDetaySayfa> createState() => _CuzDetaySayfaState();
+}
+
+class _CuzDetaySayfaState extends State<CuzDetaySayfa> {
+  final TemaService _temaService = TemaService();
+  final LanguageService _languageService = LanguageService();
+  bool _yukleniyor = false;
+
+  // Cüzdeki sureleri al
+  List<Sure> _getCuzSureleri() {
+    // Cüzün başlangıç ve bitiş surelerini parse et
+    final baslangic = widget.cuz.baslangicSure.split(' ')[0];
+    final bitis = widget.cuz.bitisSure.split(' ')[0];
+    
+    // Tüm sureleri al
+    final tumSureler = _KuranSayfaState()._tumSureler;
+    
+    // Başlangıç ve bitiş sure indexlerini bul
+    int baslangicIndex = tumSureler.indexWhere((s) => s.turkceAd == baslangic);
+    int bitisIndex = tumSureler.indexWhere((s) => s.turkceAd == bitis);
+    
+    if (baslangicIndex == -1) baslangicIndex = 0;
+    if (bitisIndex == -1) bitisIndex = tumSureler.length - 1;
+    
+    // Cüzdeki sureleri döndür
+    return tumSureler.sublist(baslangicIndex, bitisIndex + 1);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final renkler = _temaService.renkler;
+    final cuzSureleri = _getCuzSureleri();
+
+    return Scaffold(
+      backgroundColor: renkler.arkaPlan,
+      appBar: AppBar(
+        title: Text(
+          'CÜZ ${widget.cuz.no}',
+          style: TextStyle(
+            letterSpacing: 2,
+            fontSize: 14,
+            color: renkler.yaziPrimary,
+          ),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: renkler.yaziPrimary),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: Container(
+        decoration: renkler.arkaPlanGradient != null
+            ? BoxDecoration(gradient: renkler.arkaPlanGradient)
+            : null,
+        child: Column(
+          children: [
+            // Cüz bilgi kartı
+            Container(
+              margin: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    renkler.vurgu.withOpacity(0.3),
+                    renkler.vurgu.withOpacity(0.1),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    'جُزْءُ ${_getArabicNumber(widget.cuz.no)}',
+                    style: TextStyle(
+                      color: renkler.vurgu,
+                      fontSize: 32,
+                      fontFamily: 'Amiri',
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    '${widget.cuz.baslangicSure} - ${widget.cuz.bitisSure}',
+                    style: TextStyle(
+                      color: renkler.yaziPrimary,
+                      fontSize: 14,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${cuzSureleri.length} Sure',
+                    style: TextStyle(
+                      color: renkler.yaziSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            // Sureler listesi
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                itemCount: cuzSureleri.length,
+                itemBuilder: (context, index) {
+                  final sure = cuzSureleri[index];
+                  return _buildSureKarti(sure, renkler);
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSureKarti(Sure sure, TemaRenkleri renkler) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: renkler.kartArkaPlan,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: renkler.vurgu.withOpacity(0.1), blurRadius: 8),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => SureDetaySayfa(sure: sure),
+              ),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                // Sure numarası
+                Container(
+                  width: 45,
+                  height: 45,
+                  decoration: BoxDecoration(
+                    color: renkler.vurgu.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    '${sure.no}',
+                    style: TextStyle(
+                      color: renkler.vurgu,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                // Sure bilgisi
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        sure.turkceAd,
+                        style: TextStyle(
+                          color: renkler.yaziPrimary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${sure.indirildigiYer} • ${sure.ayetSayisi} Ayet',
+                        style: TextStyle(
+                          color: renkler.yaziSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Arapça
+                Text(
+                  sure.arapca,
+                  style: TextStyle(
+                    color: renkler.vurgu,
+                    fontSize: 20,
+                    fontFamily: 'Amiri',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _getArabicNumber(int number) {
+    final arabicNumbers = {
+      1: '١', 2: '٢', 3: '٣', 4: '٤', 5: '٥',
+      6: '٦', 7: '٧', 8: '٨', 9: '٩', 10: '١٠',
+      11: '١١', 12: '١٢', 13: '١٣', 14: '١٤', 15: '١٥',
+      16: '١٦', 17: '١٧', 18: '١٨', 19: '١٩', 20: '٢٠',
+      21: '٢١', 22: '٢٢', 23: '٢٣', 24: '٢٤', 25: '٢٥',
+      26: '٢٦', 27: '٢٧', 28: '٢٨', 29: '٢٩', 30: '٣٠',
+    };
+    return arabicNumbers[number] ?? '$number';
+  }
 }

@@ -189,6 +189,16 @@ class MainActivity : FlutterActivity() {
 							result.success(true)
 						}
 					}
+					"hasDoNotDisturbPermission" -> {
+						val manager = getSystemService(NotificationManager::class.java)
+						result.success(manager.isNotificationPolicyAccessGranted)
+					}
+					"requestDoNotDisturbPermission" -> {
+						val intent = Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
+						intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+						startActivity(intent)
+						result.success(true)
+					}
 					"hasOverlayPermission" -> {
 						result.success(Settings.canDrawOverlays(this))
 					}

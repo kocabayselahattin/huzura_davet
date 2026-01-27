@@ -42,6 +42,7 @@ import 'kible_sayfa.dart';
 import 'yakin_camiler_sayfa.dart';
 import 'hakkinda_sayfa.dart';
 import 'il_ilce_sec_sayfa.dart';
+import 'menu_sayfa.dart';
 
 class AnaSayfa extends StatefulWidget {
   const AnaSayfa({super.key});
@@ -795,7 +796,10 @@ class _AnaSayfaState extends State<AnaSayfa> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          _showMenu(context);
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const MenuSayfa()),
+          );
         },
         backgroundColor: renkler.kartArkaPlan,
         child: Icon(Icons.menu, color: renkler.yaziPrimary),

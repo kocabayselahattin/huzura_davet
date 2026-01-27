@@ -810,6 +810,26 @@
     {"text": "O Allah, lass mein Leben im Guten enden.", "source": "Hadith"}
   ],
   
+  "voice_selection": "Sprachauswahl",
+  "male_voice": "Männliche Stimme",
+  "female_voice": "Weibliche Stimme",
+  "islamic_fiqh": "Islamisches Fiqh",
+  "download_required": "Download erforderlich",
+  "download_content_message": "Sie müssen den islamischen Fiqh-Inhalt\nherunterladen, um ihn zu verwenden.",
+  "content_size": "Größe: ~2 MB",
+  "download": "Herunterladen",
+  "downloading": "Wird heruntergeladen...",
+  "download_failed": "Download fehlgeschlagen",
+  "faith": "Glaube",
+  "worship": "Anbetung",
+  "ablution": "Waschung",
+  "prayer": "Gebet",
+  "fasting": "Fasten",
+  "zakat": "Zakat",
+  "hajj": "Hadsch",
+  "morality": "Moral",
+  "loading_content": "Inhalt wird geladen...",
+  
   "hadiths": [
     {"text": "Die Taten werden nach den Absichten beurteilt, und jeder wird bekommen, was er beabsichtigt.", "source": "Bukhari, Muslim"},
     {"text": "Ein Muslim ist jemand, vor dessen Zunge und Hand andere Muslime sicher sind.", "source": "Bukhari, Muslim"},

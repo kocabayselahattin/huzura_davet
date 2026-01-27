@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:math' as math;
 import '../services/tema_service.dart';
 import '../services/language_service.dart';
-import 'elif_ba_test_sayfa.dart';
 
 class ElifBaSayfa extends StatefulWidget {
   const ElifBaSayfa({super.key});
@@ -24,7 +22,6 @@ class _ElifBaSayfaState extends State<ElifBaSayfa>
   int _selectedLetterIndex = 0;
   bool _isPlaying = false;
   int _currentCategory = 0; // 0: Tümü, 1: Temel, 2: Boğaz, 3: Dudak
-  bool _isMaleVoice = true; // true: erkek, false: kadın
 
   final List<Color> _categoryColors = [
     Colors.blue,
@@ -39,7 +36,7 @@ class _ElifBaSayfaState extends State<ElifBaSayfa>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    _loadVoicePreference();
+    _configureTts();
     
     // Pulse animasyonu
     _pulseController = AnimationController(
@@ -54,25 +51,11 @@ class _ElifBaSayfaState extends State<ElifBaSayfa>
     );
   }
 
-  Future<void> _loadVoicePreference() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _isMaleVoice = prefs.getBool('tts_male_voice') ?? true;
-    });
-    await _configureTts();
-  }
-
-  Future<void> _saveVoicePreference(bool isMale) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('tts_male_voice', isMale);
-  }
-
   Future<void> _configureTts() async {
     await _flutterTts.setLanguage("ar-SA");
     await _flutterTts.setSpeechRate(0.35);
     await _flutterTts.setVolume(1.0);
-    // Erkek ses için pitch 0.8-1.0, kadın ses için 1.2-1.4
-    await _flutterTts.setPitch(_isMaleVoice ? 0.9 : 1.3);
+    await _flutterTts.setPitch(1.0);
     await _flutterTts.setSharedInstance(true);
     
     _flutterTts.setCompletionHandler(() {
@@ -112,7 +95,7 @@ class _ElifBaSayfaState extends State<ElifBaSayfa>
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
-                  letterSpacing: 0.5,
+                  letterSpacing: 1,
                 ),
               ),
               background: Container(
@@ -172,16 +155,6 @@ class _ElifBaSayfaState extends State<ElifBaSayfa>
               icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
               onPressed: () => Navigator.pop(context),
             ),
-            actions: [
-              IconButton(
-                icon: Icon(
-                  _isMaleVoice ? Icons.person : Icons.person_outline,
-                  color: Colors.white,
-                ),
-                onPressed: () => _showVoiceSettings(context),
-                tooltip: _isMaleVoice ? 'Erkek Ses' : 'Kadın Ses',
-              ),
-            ],
             bottom: TabBar(
               controller: _tabController,
               indicatorColor: Colors.white,
@@ -191,7 +164,6 @@ class _ElifBaSayfaState extends State<ElifBaSayfa>
               labelStyle: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
-                letterSpacing: 0.3,
               ),
               tabs: const [
                 Tab(icon: Icon(Icons.abc), text: 'Harfler'),
@@ -960,99 +932,6 @@ class _ElifBaSayfaState extends State<ElifBaSayfa>
     }
 
     if (mounted) setState(() => _isPlaying = false);
-  }
-
-  void _showVoiceSettings(BuildContext context) {
-    final renkler = _temaService.renkler;
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: renkler.kartArkaPlan,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Icon(Icons.record_voice_over, color: renkler.vurgu),
-            const SizedBox(width: 12),
-            Text(
-              'Ses Seçimi',
-              style: TextStyle(color: renkler.yaziPrimary, fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: Radio<bool>(
-                value: true,
-                groupValue: _isMaleVoice,
-                onChanged: (value) async {
-                  setState(() => _isMaleVoice = true);
-                  await _saveVoicePreference(true);
-                  await _configureTts();
-                  Navigator.pop(context);
-                },
-                activeColor: renkler.vurgu,
-              ),
-              title: Row(
-                children: [
-                  Icon(Icons.person, color: renkler.yaziPrimary),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Erkek Ses',
-                    style: TextStyle(
-                      color: renkler.yaziPrimary,
-                      fontWeight: _isMaleVoice ? FontWeight.bold : FontWeight.normal,
-                    ),
-                  ),
-                ],
-              ),
-              onTap: () async {
-                setState(() => _isMaleVoice = true);
-                await _saveVoicePreference(true);
-                await _configureTts();
-                Navigator.pop(context);
-              },
-            ),
-            const Divider(),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: Radio<bool>(
-                value: false,
-                groupValue: _isMaleVoice,
-                onChanged: (value) async {
-                  setState(() => _isMaleVoice = false);
-                  await _saveVoicePreference(false);
-                  await _configureTts();
-                  Navigator.pop(context);
-                },
-                activeColor: renkler.vurgu,
-              ),
-              title: Row(
-                children: [
-                  Icon(Icons.person_outline, color: renkler.yaziPrimary),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Kadın Ses',
-                    style: TextStyle(
-                      color: renkler.yaziPrimary,
-                      fontWeight: !_isMaleVoice ? FontWeight.bold : FontWeight.normal,
-                    ),
-                  ),
-                ],
-              ),
-              onTap: () async {
-                setState(() => _isMaleVoice = false);
-                await _saveVoicePreference(false);
-                await _configureTts();
-                Navigator.pop(context);
-              },
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   void _startTest(BuildContext context) {
