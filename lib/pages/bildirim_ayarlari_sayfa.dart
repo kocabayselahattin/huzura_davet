@@ -88,7 +88,16 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
 
   // Ses seçenekleri - getter olarak tanımlanıyor çünkü languageService'e ihtiyaç var
   List<Map<String, String>> get _sesSecenekleri => [
-    {'ad': 'Best', 'dosya': 'best_2015.mp3'},
+    {'ad': 'Arriving', 'dosya': 'arriving.mp3'},
+    {'ad': 'Best', 'dosya': 'best.mp3'},
+    {'ad': 'Corner', 'dosya': 'corner.mp3'},
+    {'ad': 'Ding Dong', 'dosya': 'ding_dong.mp3'},
+    {'ad': 'Echo', 'dosya': 'echo.mp3'},
+    {'ad': 'iPhone SMS Original', 'dosya': 'iphone_sms_original.mp3'},
+    {'ad': 'Snaps', 'dosya': 'snaps.mp3'},
+    {'ad': 'Sweet Favour', 'dosya': 'sweet_favour.mp3'},
+    {'ad': 'Violet', 'dosya': 'violet.mp3'},
+    {'ad': 'Woodpecker', 'dosya': 'woodpecker.mp3'},
     {
       'ad': _languageService['custom_sound'] ?? 'Özel Ses Seç',
       'dosya': 'custom',
