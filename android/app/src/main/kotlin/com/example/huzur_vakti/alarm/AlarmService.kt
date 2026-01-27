@@ -263,6 +263,9 @@ class AlarmService : Service() {
                     this@AlarmService.stopVibration()
                     // Bildirim kalır ama ses biter
                     this@AlarmService.isPlaying = false
+                    
+                    // Vakitlerde sessize al ayarı açıksa telefonu sessize al
+                    this@AlarmService.checkAndSetSilentMode()
                 }
                 
                 prepare()
@@ -284,6 +287,9 @@ class AlarmService : Service() {
                         Log.d(TAG, "🔊 Fallback alarm sesi tamamlandı")
                         this@AlarmService.stopVibration()
                         this@AlarmService.isPlaying = false
+                        
+                        // Vakitlerde sessize al ayarı açıksa telefonu sessize al
+                        this@AlarmService.checkAndSetSilentMode()
                     }
                     prepare()
                     start()
@@ -477,5 +483,33 @@ class AlarmService : Service() {
         instance = null
         super.onDestroy()
         Log.d(TAG, "🔔 AlarmService sonlandırıldı")
+    }
+    
+    /**
+     * Vakitlerde sessize al ayarı açıksa telefonu sessize alır
+     */
+    private fun checkAndSetSilentMode() {
+        try {
+            // SharedPreferences'tan ayarı kontrol et
+            val prefs = getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+            val sessizeAl = prefs.getBoolean("flutter.sessize_al", false)
+            
+            if (!sessizeAl) {
+                Log.d(TAG, "ℹ️ Vakitlerde sessize al ayarı kapalı")
+                return
+            }
+            
+            Log.d(TAG, "🔇 Vakitlerde sessize al aktif - telefon sessize alınıyor...")
+            
+            val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            
+            // Telefonu sessize al (RINGER_MODE_SILENT)
+            audioManager.ringerMode = AudioManager.RINGER_MODE_SILENT
+            
+            Log.d(TAG, "✅ Telefon sessize alındı (alarm sesi bittikten sonra)")
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Telefonu sessize alma hatası: ${e.message}")
+        }
     }
 }

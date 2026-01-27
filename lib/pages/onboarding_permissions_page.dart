@@ -106,48 +106,90 @@ class _OnboardingPermissionsPageState extends State<OnboardingPermissionsPage> {
       switch (_currentStep) {
         case 0: // Konum
           granted = await PermissionService.requestLocationPermission();
-          _locationGranted = granted;
+          if (mounted) {
+            _locationGranted = await PermissionService.checkLocationPermission();
+            granted = _locationGranted;
+          }
           break;
         case 1: // Bildirim
           granted = await PermissionService.requestNotificationPermission();
-          _notificationGranted = granted;
+          if (mounted) {
+            _notificationGranted = await PermissionService.checkNotificationPermission();
+            granted = _notificationGranted;
+          }
           break;
         case 2: // Exact Alarm
           granted = await PermissionService.requestExactAlarmPermission();
-          _exactAlarmGranted = granted;
+          if (mounted) {
+            _exactAlarmGranted = await PermissionService.hasExactAlarmPermission();
+            granted = _exactAlarmGranted;
+          }
           break;
         case 3: // Overlay
           await PermissionService.openOverlaySettings();
-          // Ayarlardan döndükten sonra kontrol et
-          await Future.delayed(const Duration(milliseconds: 500));
-          _overlayGranted = await PermissionService.hasOverlayPermission();
-          granted = _overlayGranted;
+          // Ayarlardan döndükten sonra kontrol et - daha uzun bekleme
+          await Future.delayed(const Duration(seconds: 1));
+          if (mounted) {
+            _overlayGranted = await PermissionService.hasOverlayPermission();
+            granted = _overlayGranted;
+          }
           break;
         case 4: // Pil
           await PermissionService.requestBatteryOptimizationExemption();
-          await Future.delayed(const Duration(milliseconds: 500));
-          _batteryOptDisabled =
-              await PermissionService.isBatteryOptimizationDisabled();
-          granted = _batteryOptDisabled;
+          await Future.delayed(const Duration(seconds: 1));
+          if (mounted) {
+            _batteryOptDisabled =
+                await PermissionService.isBatteryOptimizationDisabled();
+            granted = _batteryOptDisabled;
+          }
           break;
       }
 
       if (mounted) {
         setState(() {});
 
-        if (granted || _currentStep >= _steps.length - 1) {
+        // İzin verildi veya son adımsa devam et
+        if (granted) {
           _nextStep();
         } else {
-          // İzin verilmedi uyarısı
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                '${_steps[_currentStep].title} ${_languageService['permission_not_granted_continue'] ?? 'verilmedi. Yine de devam edebilirsiniz.'}',
+          // İzin verilmedi - kullanıcıya seçenek sun
+          if (!mounted) return;
+          
+          final shouldContinue = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              backgroundColor: const Color(0xFF2B3151),
+              title: Text(
+                _languageService['permission_not_granted'] ?? 'İzin Verilmedi',
+                style: const TextStyle(color: Colors.white),
               ),
-              action: SnackBarAction(label: _languageService['continue_btn'] ?? 'Devam', onPressed: _nextStep),
-              backgroundColor: Colors.orange,
+              content: Text(
+                '${_steps[_currentStep].title} ${_languageService['permission_not_granted_message'] ?? 'verilmedi. Bazı özellikler düzgün çalışmayabilir. Devam etmek istiyor musunuz?'}',
+                style: const TextStyle(color: Colors.white70),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: Text(
+                    _languageService['try_again'] ?? 'Tekrar Dene',
+                    style: const TextStyle(color: Colors.orange),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: Text(
+                    _languageService['continue'] ?? 'Devam Et',
+                    style: const TextStyle(color: Colors.blue),
+                  ),
+                ),
+              ],
             ),
           );
+          
+          if (shouldContinue == true && mounted) {
+            _nextStep();
+          }
+          // false ise aynı adımda kal, kullanıcı tekrar deneyebilir
         }
       }
     } finally {
