@@ -20,6 +20,10 @@ import '../widgets/nefes_sayac_widget.dart';
 import '../widgets/geometrik_sayac_widget.dart';
 import '../widgets/tesla_sayac_widget.dart';
 import '../widgets/islami_sayac_widget.dart';
+import '../widgets/kalem_sayac_widget.dart';
+import '../widgets/nur_sayac_widget.dart';
+import '../widgets/hilal_sayac_widget.dart';
+import '../widgets/mihrap_sayac_widget.dart';
 
 class SayacAyarlariSayfa extends StatefulWidget {
   const SayacAyarlariSayfa({super.key});
@@ -37,8 +41,13 @@ class _SayacAyarlariSayfaState extends State<SayacAyarlariSayfa> {
     viewportFraction: 1.0,
   );
 
-  // Sayaç bilgileri
+  // Sayaç bilgileri - İslami sayaçlar en başta
   final List<Map<String, dynamic>> _sayaclar = [
+    {'id': 'islami', 'icon': Icons.mosque, 'color': const Color(0xFF1B5E20)},
+    {'id': 'kalem', 'icon': Icons.edit, 'color': const Color(0xFF2D6A4F)},
+    {'id': 'nur', 'icon': Icons.wb_sunny, 'color': const Color(0xFF3949AB)},
+    {'id': 'hilal', 'icon': Icons.nights_stay, 'color': const Color(0xFF415A77)},
+    {'id': 'mihrap', 'icon': Icons.architecture, 'color': const Color(0xFF5D4037)},
     {'id': 'dijital', 'icon': Icons.access_time, 'color': Colors.cyan},
     {'id': 'premium', 'icon': Icons.star, 'color': Colors.amber},
     {'id': 'galaksi', 'icon': Icons.auto_awesome, 'color': Colors.purple},
@@ -56,7 +65,6 @@ class _SayacAyarlariSayfaState extends State<SayacAyarlariSayfa> {
     {'id': 'nefes', 'icon': Icons.air, 'color': const Color(0xFF6B5B95)},
     {'id': 'geometrik', 'icon': Icons.hexagon_outlined, 'color': const Color(0xFFFFD700)},
     {'id': 'tesla', 'icon': Icons.bolt, 'color': const Color(0xFF00D4FF)},
-    {'id': 'islami', 'icon': Icons.mosque, 'color': const Color(0xFF1B5E20)},
   ];
 
   @override
@@ -144,6 +152,14 @@ class _SayacAyarlariSayfaState extends State<SayacAyarlariSayfa> {
         return _languageService['counter_tesla'] ?? 'Tesla';
       case 'islami':
         return _languageService['counter_islami'] ?? 'İslami';
+      case 'kalem':
+        return 'Kalem';
+      case 'nur':
+        return 'Nur';
+      case 'hilal':
+        return 'Hilal';
+      case 'mihrap':
+        return 'Mihrap';
       default:
         return id;
     }
@@ -205,6 +221,14 @@ class _SayacAyarlariSayfaState extends State<SayacAyarlariSayfa> {
       case 'islami':
         return _languageService['counter_islami_desc'] ??
             'Hilal, yıldız ve İslami geometrik desenler';
+      case 'kalem':
+        return 'İlim ve bereket temalı, Hicri/Miladi takvimli';
+      case 'nur':
+        return 'Işık efektli, Hicri/Miladi takvimli';
+      case 'hilal':
+        return 'Yıldızlı gece, Hicri/Miladi takvimli';
+      case 'mihrap':
+        return 'Cami mimarisi temalı, Hicri/Miladi takvimli';
       default:
         return '';
     }
@@ -219,43 +243,51 @@ class _SayacAyarlariSayfaState extends State<SayacAyarlariSayfa> {
     
     switch (index) {
       case 0:
-        return const DijitalSayacWidget();
-      case 1:
-        return const PremiumSayacWidget();
-      case 2:
-        return const GalaksiSayacWidget();
-      case 3:
-        return const NeonSayacWidget();
-      case 4:
-        return const OkyanusSayacWidget();
-      case 5:
-        return const MinimalSayacWidget();
-      case 6:
-        return const RetroSayacWidget();
-      case 7:
-        return const AuroraSayacWidget();
-      case 8:
-        return const KristalSayacWidget();
-      case 9:
-        return const VolkanikSayacWidget();
-      case 10:
-        return const ZenSayacWidget();
-      case 11:
-        return const SiberSayacWidget();
-      case 12:
-        return const GeceSayacWidget();
-      case 13:
-        return const MatrixSayacWidget();
-      case 14:
-        return const NefesSayacWidget();
-      case 15:
-        return const GeometrikSayacWidget();
-      case 16:
-        return const TeslaSayacWidget();
-      case 17:
         return const IslamiSayacWidget();
-      default:
+      case 1:
+        return const KalemSayacWidget();
+      case 2:
+        return const NurSayacWidget();
+      case 3:
+        return const HilalSayacWidget();
+      case 4:
+        return const MihrapSayacWidget();
+      case 5:
         return const DijitalSayacWidget();
+      case 6:
+        return const PremiumSayacWidget();
+      case 7:
+        return const GalaksiSayacWidget();
+      case 8:
+        return const NeonSayacWidget();
+      case 9:
+        return const OkyanusSayacWidget();
+      case 10:
+        return const MinimalSayacWidget();
+      case 11:
+        return const RetroSayacWidget();
+      case 12:
+        return const AuroraSayacWidget();
+      case 13:
+        return const KristalSayacWidget();
+      case 14:
+        return const VolkanikSayacWidget();
+      case 15:
+        return const ZenSayacWidget();
+      case 16:
+        return const SiberSayacWidget();
+      case 17:
+        return const GeceSayacWidget();
+      case 18:
+        return const MatrixSayacWidget();
+      case 19:
+        return const NefesSayacWidget();
+      case 20:
+        return const GeometrikSayacWidget();
+      case 21:
+        return const TeslaSayacWidget();
+      default:
+        return const IslamiSayacWidget();
     }
   }
 

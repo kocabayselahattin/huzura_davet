@@ -8,6 +8,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:path_provider/path_provider.dart';
 import '../services/dnd_service.dart';
 import '../services/scheduled_notification_service.dart';
+import '../services/daily_content_notification_service.dart';
 import '../services/language_service.dart';
 
 class BildirimAyarlariSayfa extends StatefulWidget {
@@ -56,6 +57,9 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
 
   // Kilit ekranı bildirimi
   bool _kilitEkraniBildirimi = false;
+
+  // Günlük içerik bildirimleri
+  bool _gunlukIcerikBildirimleri = true;
 
   // Kilit ekranı servisi için MethodChannel
   static const _lockScreenChannel = MethodChannel('huzur_vakti/lockscreen');
@@ -232,6 +236,8 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
           _ozelSesDosyalari[vakit] = ozelSes;
         }
       }
+      _gunlukIcerikBildirimleri = 
+          prefs.getBool('daily_content_notifications_enabled') ?? true;
       _sessizeAl = prefs.getBool('sessize_al') ?? false;
       _kilitEkraniBildirimi =
           prefs.getBool('kilit_ekrani_bildirimi_aktif') ?? false;
@@ -349,6 +355,7 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
       }
     }
     await prefs.setBool('sessize_al', _sessizeAl);
+    await prefs.setBool('gunluk_icerik_bildirimleri', _gunlukIcerikBildirimleri);
 
     if (_sessizeAl) {
       await DndService.schedulePrayerDnd();
@@ -358,6 +365,7 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
 
     // Zamanlanmış bildirimleri yeniden ayarla
     await ScheduledNotificationService.scheduleAllPrayerNotifications();
+    await DailyContentNotificationService.setDailyContentNotificationsEnabled(_gunlukIcerikBildirimleri);
 
     setState(() {
       _degisiklikYapildi = false;
@@ -844,6 +852,264 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
                         color: Colors.white54,
                         fontSize: 12,
                       ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Günlük içerik bildirimleri
+            Container(
+              margin: const EdgeInsets.only(bottom: 24),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white12),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.calendar_today, color: Colors.tealAccent),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          _languageService['daily_content_notifications'] ??
+                              'Günlük İçerik Bildirimleri',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      Switch(
+                        value: _gunlukIcerikBildirimleri,
+                        onChanged: (value) async {
+                          setState(() {
+                            _gunlukIcerikBildirimleri = value;
+                            _degisiklikYapildi = true;
+                          });
+                          await DailyContentNotificationService
+                              .setDailyContentNotificationsEnabled(value);
+                        },
+                        activeColor: Colors.tealAccent,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Padding(
+                    padding: const EdgeInsets.only(
+                      left: 36,
+                      right: 12,
+                      bottom: 6,
+                    ),
+                    child: Text(
+                      _languageService['daily_content_notifications_desc'] ??
+                          'Her gün farklı saatlerde günün ayeti, hadisi ve duası bildirim olarak gönderilir.',
+                      style: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // Bildirim zamanları
+                  Padding(
+                    padding: const EdgeInsets.only(left: 36, right: 12),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            const Text('📖', style: TextStyle(fontSize: 16)),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Günün Ayeti:',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 13,
+                              ),
+                            ),
+                            const Spacer(),
+                            const Text(
+                              '08:00',
+                              style: TextStyle(
+                                color: Colors.tealAccent,
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            const Text('📿', style: TextStyle(fontSize: 16)),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Günün Hadisi:',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 13,
+                              ),
+                            ),
+                            const Spacer(),
+                            const Text(
+                              '13:00',
+                              style: TextStyle(
+                                color: Colors.tealAccent,
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            const Text('🤲', style: TextStyle(fontSize: 16)),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Günün Duası:',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 13,
+                              ),
+                            ),
+                            const Spacer(),
+                            const Text(
+                              '20:00',
+                              style: TextStyle(
+                                color: Colors.tealAccent,
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            const Icon(Icons.volume_up, size: 14, color: Colors.white54),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Bildirim Sesi:',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 13,
+                              ),
+                            ),
+                            const Spacer(),
+                            const Text(
+                              'Ding Dong',
+                              style: TextStyle(
+                                color: Colors.white54,
+                                fontSize: 13,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  // Test butonları
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () async {
+                              await DailyContentNotificationService
+                                  .sendTestNotification('verse');
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Test bildirimi gönderildi!'),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              }
+                            },
+                            icon: const Text('📖', style: TextStyle(fontSize: 14)),
+                            label: const Text(
+                              'Test',
+                              style: TextStyle(fontSize: 11),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.tealAccent.withOpacity(0.2),
+                              foregroundColor: Colors.tealAccent,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 8,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () async {
+                              await DailyContentNotificationService
+                                  .sendTestNotification('hadith');
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Test bildirimi gönderildi!'),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              }
+                            },
+                            icon: const Text('📿', style: TextStyle(fontSize: 14)),
+                            label: const Text(
+                              'Test',
+                              style: TextStyle(fontSize: 11),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.tealAccent.withOpacity(0.2),
+                              foregroundColor: Colors.tealAccent,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 8,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () async {
+                              await DailyContentNotificationService
+                                  .sendTestNotification('prayer');
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Test bildirimi gönderildi!'),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              }
+                            },
+                            icon: const Text('🤲', style: TextStyle(fontSize: 14)),
+                            label: const Text(
+                              'Test',
+                              style: TextStyle(fontSize: 11),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.tealAccent.withOpacity(0.2),
+                              foregroundColor: Colors.tealAccent,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 8,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],

@@ -44,6 +44,16 @@
   "todays_verse": "Günün Ayeti",
   "todays_dua": "Günün Duası",
   "swipe_for_more": "Kaydırarak diğer içeriği görün",
+  "daily_content_notifications": "Günlük İçerik Bildirimleri",
+  "daily_content_notifications_desc": "Her gün günün ayeti, hadisi ve duasını bildir",
+  "daily_verse_notification_desc": "Bugünün ayetini okumak için tıklayın",
+  "daily_hadith_notification_desc": "Bugünün hadisini okumak için tıklayın",
+  "daily_prayer_notification_desc": "Bugünün duasını okumak için tıklayın",
+  "notification_times": "Bildirim Saatleri",
+  "verse_time": "Ayet Bildirimi",
+  "hadith_time": "Hadis Bildirimi",
+  "prayer_time": "Dua Bildirimi",
+  "test_notification": "Test Bildirimi Gönder",
   "esmaul_husna": "Esmaül Hüsna",
   "remaining": "Kalan",
   "hours": "saat",
@@ -676,6 +686,14 @@
   "counter_tesla_desc": "Elektrik ve enerji temalı dinamik yıldırım efektli tasarım",
   "counter_islami": "İslami",
   "counter_islami_desc": "Hilal, yıldız ve İslami geometrik desenli geleneksel tasarım",
+  "counter_kalem": "Kalem",
+  "counter_kalem_desc": "İlim ve bereket temalı, Hicri/Miladi takvimli İslami tasarım",
+  "counter_nur": "Nur",
+  "counter_nur_desc": "Işık efektli, Hicri/Miladi takvimli parlak tasarım",
+  "counter_hilal": "Hilal",
+  "counter_hilal_desc": "Yıldızlı gece gökyüzü, Hicri/Miladi takvimli hilal tasarımı",
+  "counter_mihrap": "Mihrap",
+  "counter_mihrap_desc": "Cami mimarisi ve mihrap kemeri temalı, Hicri/Miladi takvimli",
   
   "hijri_new_year": "Hicri Yılbaşı",
   "hijri_new_year_desc": "Yeni Hicri yılınız mübarek olsun",
@@ -770,7 +788,17 @@
     {"text": "Allah'tan korkun ve doğru söz söyleyin.", "source": "Ahzâb, 70"},
     {"text": "Her nefis ölümü tadacaktır.", "source": "Âl-i İmrân, 185"},
     {"text": "Sana ölüm gelinceye kadar Rabbine ibadet et.", "source": "Hicr, 99"},
-    {"text": "O, bağışlayandır, çok sevendir.", "source": "Burûc, 14"}
+    {"text": "O, bağışlayandır, çok sevendir.", "source": "Burûc, 14"},
+    {"text": "Allah, iman edenleri karanlıklardan aydınlığa çıkarır.", "source": "Bakara, 257"},
+    {"text": "Kim Allah yolunda infak ederse, kat kat karşılık görür.", "source": "Bakara, 261"},
+    {"text": "O'ndan başka hiçbir güç ve kuvvet yoktur.", "source": "Kehf, 39"},
+    {"text": "Gerçekten Allah her şeye Kadirdir.", "source": "Bakara, 20"},
+    {"text": "Allah'ın vaadi haktır.", "source": "Yûnus, 55"},
+    {"text": "O, her şeyi yerli yerince yaratandır.", "source": "Secde, 7"},
+    {"text": "Allah kendisine ibadet edenlerin yanındadır.", "source": "Bakara, 186"},
+    {"text": "O'nun katında gece ve gündüz birdir.", "source": "Hac, 61"},
+    {"text": "Allah dilediğini doğru yola iletir.", "source": "Bakara, 213"},
+    {"text": "Müminler ancak kardeştirler.", "source": "Hucurât, 10"}
   ],
   
   "prayers": [
@@ -803,7 +831,17 @@
     {"text": "Rabbim! Bana sabır ver, müslüman olarak canımı al.", "source": "A'râf, 126"},
     {"text": "Allah'ım! Sen afiyettesin, afiyet Sendendir.", "source": "Hadis"},
     {"text": "Rabbim! Senden başka günahları kim bağışlar?", "source": "Âl-i İmrân, 135"},
-    {"text": "Allah'ım! Ömrümü hayırla tamamla.", "source": "Hadis"}
+    {"text": "Allah'ım! Ömrümü hayırla tamamla.", "source": "Hadis"},
+    {"text": "Rabbim! Bana doğru yolu göster, beni doğru yolda sabit kıl.", "source": "Hadis"},
+    {"text": "Allah'ım! Kalbime nur, gözüme nur, kulağıma nur ver.", "source": "Hadis"},
+    {"text": "Rabbim! Beni azaptan koru, cehennem ateşinden uzak tut.", "source": "Hadis"},
+    {"text": "Allah'ım! Gördüklerim, duyduklarım ve yaptıklarımda beni hayırla muvaffak kıl.", "source": "Hadis"},
+    {"text": "Rabbim! Benim ve ailem için helal rızık ihsan eyle.", "source": "Hadis"},
+    {"text": "Allah'ım! Beni zalimlere karşı güçlü kıl, mazlumlara karşı merhametli kıl.", "source": "Hadis"},
+    {"text": "Rabbim! Dünya ve ahiret sıkıntılarından beni kurtar.", "source": "Hadis"},
+    {"text": "Allah'ım! Kötü ahlaktan, kötü amellerden Sana sığınırım.", "source": "Hadis"},
+    {"text": "Rabbim! Beni fitne ve fesattan koru.", "source": "Hadis"},
+    {"text": "Allah'ım! Sevdiğim kullarınla haşreyle beni.", "source": "Hadis"}
   ],
   
   "hadiths": [
@@ -836,6 +874,16 @@
     {"text": "Namaz müminin miracıdır.", "source": "Hadis-i Şerif"},
     {"text": "En faziletli cihad, zalim sultanın yanında hak söz söylemektir.", "source": "Ebû Dâvûd"},
     {"text": "Utanmadıktan sonra dilediğini yap.", "source": "Buhârî"},
-    {"text": "Vera (şüphelilerden kaçınmak), dinin başıdır.", "source": "Hadis-i Şerif"}
+    {"text": "Vera (şüphelilerden kaçınmak), dinin başıdır.", "source": "Hadis-i Şerif"},
+    {"text": "Sizden biriniz, kardeşine tebessüm etmesi sadakadır.", "source": "Tirmizî"},
+    {"text": "En sevimli amel, az da olsa devamlı olanıdır.", "source": "Buhârî, Müslim"},
+    {"text": "Fakirliği seven ve ona rıza gösteren kimse, benim sevgilimdir.", "source": "Tirmizî"},
+    {"text": "Size iki şey bırakıyorum, onlara sarıldıkça sapmazsınız: Allah'ın kitabı ve Peygamberinin sünneti.", "source": "Mâlik"},
+    {"text": "İnsanların iyisi, insanlara en faydalı olanıdır.", "source": "Dârimî"},
+    {"text": "Mü'min, mü'minin aynasıdır.", "source": "Ebû Dâvûd"},
+    {"text": "Kibirlenmek hakkı reddetmek ve insanları küçümsemektir.", "source": "Müslim"},
+    {"text": "Kim Allah için bir şey bırakırsa, Allah ona daha iyisini verir.", "source": "Ahmed"},
+    {"text": "Sevdiğin şeyleri infak etmedikçe iyiliğe eremezsiniz.", "source": "Âl-i İmrân, 92"},
+    {"text": "Haramdan sakınmak, farz ibadetlerin en faziletlisidir.", "source": "Beyhakî"}
   ]
 }

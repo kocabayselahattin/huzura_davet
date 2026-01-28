@@ -20,6 +20,10 @@ import '../widgets/nefes_sayac_widget.dart';
 import '../widgets/geometrik_sayac_widget.dart';
 import '../widgets/tesla_sayac_widget.dart';
 import '../widgets/islami_sayac_widget.dart';
+import '../widgets/kalem_sayac_widget.dart';
+import '../widgets/nur_sayac_widget.dart';
+import '../widgets/hilal_sayac_widget.dart';
+import '../widgets/mihrap_sayac_widget.dart';
 import '../widgets/esmaul_husna_widget.dart';
 import '../widgets/ozel_gun_popup.dart';
 import '../widgets/ozel_gun_banner_widget.dart';
@@ -40,7 +44,6 @@ import 'kible_sayfa.dart';
 import 'yakin_camiler_sayfa.dart';
 import 'hakkinda_sayfa.dart';
 import 'il_ilce_sec_sayfa.dart';
-import 'menu_sayfa.dart';
 
 class AnaSayfa extends StatefulWidget {
   const AnaSayfa({super.key});
@@ -794,10 +797,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const MenuSayfa()),
-          );
+          _showMenuBottomSheet(context, renkler);
         },
         backgroundColor: renkler.kartArkaPlan,
         child: Icon(Icons.menu, color: renkler.yaziPrimary),
@@ -809,43 +809,51 @@ class _AnaSayfaState extends State<AnaSayfa> {
   Widget _buildSelectedCounter() {
     switch (_currentSayacIndex) {
       case 0:
-        return const DijitalSayacWidget();
-      case 1:
-        return const PremiumSayacWidget();
-      case 2:
-        return const GalaksiSayacWidget();
-      case 3:
-        return const NeonSayacWidget();
-      case 4:
-        return const OkyanusSayacWidget();
-      case 5:
-        return const MinimalSayacWidget();
-      case 6:
-        return const RetroSayacWidget();
-      case 7:
-        return const AuroraSayacWidget();
-      case 8:
-        return const KristalSayacWidget();
-      case 9:
-        return const VolkanikSayacWidget();
-      case 10:
-        return const ZenSayacWidget();
-      case 11:
-        return const SiberSayacWidget();
-      case 12:
-        return const GeceSayacWidget();
-      case 13:
-        return const MatrixSayacWidget();
-      case 14:
-        return const NefesSayacWidget();
-      case 15:
-        return const GeometrikSayacWidget();
-      case 16:
-        return const TeslaSayacWidget();
-      case 17:
         return const IslamiSayacWidget();
-      default:
+      case 1:
+        return const KalemSayacWidget();
+      case 2:
+        return const NurSayacWidget();
+      case 3:
+        return const HilalSayacWidget();
+      case 4:
+        return const MihrapSayacWidget();
+      case 5:
         return const DijitalSayacWidget();
+      case 6:
+        return const PremiumSayacWidget();
+      case 7:
+        return const GalaksiSayacWidget();
+      case 8:
+        return const NeonSayacWidget();
+      case 9:
+        return const OkyanusSayacWidget();
+      case 10:
+        return const MinimalSayacWidget();
+      case 11:
+        return const RetroSayacWidget();
+      case 12:
+        return const AuroraSayacWidget();
+      case 13:
+        return const KristalSayacWidget();
+      case 14:
+        return const VolkanikSayacWidget();
+      case 15:
+        return const ZenSayacWidget();
+      case 16:
+        return const SiberSayacWidget();
+      case 17:
+        return const GeceSayacWidget();
+      case 18:
+        return const MatrixSayacWidget();
+      case 19:
+        return const NefesSayacWidget();
+      case 20:
+        return const GeometrikSayacWidget();
+      case 21:
+        return const TeslaSayacWidget();
+      default:
+        return const IslamiSayacWidget();
     }
   }
 
@@ -1019,6 +1027,96 @@ class _AnaSayfaState extends State<AnaSayfa> {
           ),
         );
       },
+    );
+  }
+
+  void _showMenuBottomSheet(BuildContext context, renkler) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.85,
+        decoration: BoxDecoration(
+          color: renkler.arkaPlan,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [renkler.vurgu, renkler.vurgu.withOpacity(0.7)],
+                ),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.apps, color: Colors.white.withOpacity(0.8), size: 28),
+                  const SizedBox(width: 12),
+                  const Text('MENÜ', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 2)),
+                  const Spacer(),
+                  IconButton(icon: const Icon(Icons.close, color: Colors.white), onPressed: () => Navigator.pop(context)),
+                ],
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: GridView.count(
+                  crossAxisCount: 2,
+                  childAspectRatio: 1.1,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  children: [
+                    _buildMenuCard(icon: Icons.schedule, title: _languageService['calendar'] ?? 'İmsakiye', color: Colors.blue, onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (context) => const ImsakiyeSayfa())); }),
+                    _buildMenuCard(icon: Icons.auto_awesome, title: _languageService['dhikr'] ?? 'Zikir Matik', color: Colors.purple, onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (context) => const ZikirMatikSayfa())); }),
+                    _buildMenuCard(icon: Icons.mosque, title: _languageService['worship'] ?? 'İbadet', color: Colors.green, onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (context) => const IbadetSayfa())); }),
+                    _buildMenuCard(icon: Icons.explore, title: _languageService['qibla'] ?? 'Kıble Yönü', color: Colors.orange, onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (context) => const KibleSayfa())); }),
+                    _buildMenuCard(icon: Icons.place, title: _languageService['nearby_mosques'] ?? 'Yakın Camiler', color: Colors.red, onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (context) => const YakinCamilerSayfa())); }),
+                    _buildMenuCard(icon: Icons.celebration, title: _languageService['special_days'] ?? 'Özel Günler', color: Colors.pink, onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (context) => const OzelGunlerSayfa())); }),
+                    _buildMenuCard(icon: Icons.menu_book, title: _languageService['hadith'] ?? '40 Hadis', color: Colors.teal, onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (context) => const KirkHadisSayfa())); }),
+                    _buildMenuCard(icon: Icons.auto_stories, title: _languageService['quran'] ?? 'Kur\'an-ı Kerim', color: Colors.indigo, onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (context) => const KuranSayfa())); }),
+                    _buildMenuCard(icon: Icons.settings, title: _languageService['settings'] ?? 'Ayarlar', color: Colors.blueGrey, onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (context) => const AyarlarSayfa())); }),
+                    _buildMenuCard(icon: Icons.info, title: _languageService['about'] ?? 'Hakkında', color: Colors.amber, onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (context) => const HakkindaSayfa())); }),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMenuCard({required IconData icon, required String title, required Color color, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [color.withOpacity(0.8), color.withOpacity(0.6)]),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [BoxShadow(color: color.withOpacity(0.4), blurRadius: 10, offset: const Offset(0, 4))],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
+              child: Icon(icon, size: 36, color: Colors.white),
+            ),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Text(title, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

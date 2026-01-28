@@ -11,6 +11,7 @@ import 'services/language_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'services/notification_service.dart';
 import 'services/scheduled_notification_service.dart';
+import 'services/daily_content_notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -56,6 +57,10 @@ void main() async {
   
   // Zamanlanmış bildirim servisini başlat
   await ScheduledNotificationService.initialize();
+  
+  // Günlük içerik bildirimleri servisini başlat
+  await DailyContentNotificationService.initialize();
+  await DailyContentNotificationService.scheduleDailyContentNotifications();
   
   // 🔔 Uygulama başlatıldığında alarmları yeniden zamanla
   // Bu boot sonrası veya uygulama güncellemesi sonrası alarmları geri yükler

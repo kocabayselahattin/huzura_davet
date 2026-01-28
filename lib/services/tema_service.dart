@@ -135,10 +135,75 @@ class TemaService extends ChangeNotifier {
   bool get sayacTemasiKullan => _sayacTemasiKullan;
   int get aktifSayacIndex => _aktifSayacIndex;
 
-  /// Sayaç bazlı tema renkleri
+  /// Sayaç bazlı tema renkleri (Yeni sıra: İslami temalar önce)
   static const Map<int, TemaRenkleri> sayacTemalari = {
-    // 0: Dijital - Cyan tonları
+    // 0: İslami - Yeşil ve Altın
     0: TemaRenkleri(
+      arkaPlan: Color(0xFF0D2818),
+      kartArkaPlan: Color(0xFF1A3D28),
+      vurgu: Color(0xFFD4AF37),
+      vurguSecondary: Color(0xFF00BFA5),
+      yaziPrimary: Colors.white,
+      yaziSecondary: Color(0xFFA5D6A7),
+      ayirac: Color(0xFF2E5238),
+      isim: 'İslami',
+      aciklama: 'İslami yeşil ve altın',
+      ikon: Icons.mosque,
+    ),
+    // 1: Kalem - Koyu Yeşil tonları
+    1: TemaRenkleri(
+      arkaPlan: Color(0xFF1B4332),
+      kartArkaPlan: Color(0xFF2D6A4F),
+      vurgu: Color(0xFF40916C),
+      vurguSecondary: Color(0xFF52B788),
+      yaziPrimary: Colors.white,
+      yaziSecondary: Color(0xFFB7E4C7),
+      ayirac: Color(0xFF40916C),
+      isim: 'Kalem',
+      aciklama: 'İlim ve bereket yeşili',
+      ikon: Icons.edit,
+    ),
+    // 2: Nur - Mavi tonları
+    2: TemaRenkleri(
+      arkaPlan: Color(0xFF1A237E),
+      kartArkaPlan: Color(0xFF283593),
+      vurgu: Color(0xFF3949AB),
+      vurguSecondary: Color(0xFF5C6BC0),
+      yaziPrimary: Colors.white,
+      yaziSecondary: Color(0xFFC5CAE9),
+      ayirac: Color(0xFF3949AB),
+      isim: 'Nur',
+      aciklama: 'Işık temalı mavi',
+      ikon: Icons.wb_sunny,
+    ),
+    // 3: Hilal - Gece mavisi
+    3: TemaRenkleri(
+      arkaPlan: Color(0xFF0D1B2A),
+      kartArkaPlan: Color(0xFF1B263B),
+      vurgu: Color(0xFF415A77),
+      vurguSecondary: Color(0xFF778DA9),
+      yaziPrimary: Colors.white,
+      yaziSecondary: Color(0xFFE0E1DD),
+      ayirac: Color(0xFF415A77),
+      isim: 'Hilal',
+      aciklama: 'Yıldızlı gece',
+      ikon: Icons.nights_stay,
+    ),
+    // 4: Mihrap - Kahverengi tonları
+    4: TemaRenkleri(
+      arkaPlan: Color(0xFF2C1810),
+      kartArkaPlan: Color(0xFF5D4037),
+      vurgu: Color(0xFF8D6E63),
+      vurguSecondary: Color(0xFFA1887F),
+      yaziPrimary: Colors.white,
+      yaziSecondary: Color(0xFFD7CCC8),
+      ayirac: Color(0xFF6D4C41),
+      isim: 'Mihrap',
+      aciklama: 'Ahşap ve cami mimarisi',
+      ikon: Icons.architecture,
+    ),
+    // 5: Dijital - Cyan tonları
+    5: TemaRenkleri(
       arkaPlan: Color(0xFF1B2741),
       kartArkaPlan: Color(0xFF2B3151),
       vurgu: Color(0xFF00BCD4),
@@ -150,60 +215,60 @@ class TemaService extends ChangeNotifier {
       aciklama: 'Cyan dijital tonları',
       ikon: Icons.access_time,
     ),
-    // 1: Premium - Altın tonları
-    1: TemaRenkleri(
-      arkaPlan: Color(0xFF1A1A2E),
-      kartArkaPlan: Color(0xFF252540),
+    // 6: Premium - Altın tonları
+    6: TemaRenkleri(
+      arkaPlan: Color(0xFF1A1A1A),
+      kartArkaPlan: Color(0xFF242424),
       vurgu: Color(0xFFFFD700),
-      vurguSecondary: Color(0xFFFFC107),
+      vurguSecondary: Color(0xFFDAA520),
       yaziPrimary: Colors.white,
-      yaziSecondary: Color(0xFFE0E0E0),
-      ayirac: Color(0xFF3D3D5C),
+      yaziSecondary: Color(0xFFC0C0C0),
+      ayirac: Color(0xFF3A3A3A),
       isim: 'Premium',
-      aciklama: 'Altın lüks tonları',
+      aciklama: 'Lüks altın tonları',
       ikon: Icons.star,
     ),
-    // 2: Galaksi - Mor tonları
-    2: TemaRenkleri(
-      arkaPlan: Color(0xFF0B0B1A),
-      kartArkaPlan: Color(0xFF1A1A2E),
-      vurgu: Color(0xFF7C4DFF),
-      vurguSecondary: Color(0xFFB388FF),
+    // 7: Galaksi - Mor tonları
+    7: TemaRenkleri(
+      arkaPlan: Color(0xFF0F0326),
+      kartArkaPlan: Color(0xFF1A0B2E),
+      vurgu: Color(0xFF9D4EDD),
+      vurguSecondary: Color(0xFF7B2CBF),
       yaziPrimary: Colors.white,
-      yaziSecondary: Color(0xFF9E9E9E),
-      ayirac: Color(0xFF252540),
+      yaziSecondary: Color(0xFFB8B8FF),
+      ayirac: Color(0xFF2D1450),
       isim: 'Galaksi',
       aciklama: 'Uzay mor tonları',
-      ikon: Icons.auto_awesome,
+      ikon: Icons.blur_circular,
     ),
-    // 3: Neon - Yeşil tonları
-    3: TemaRenkleri(
-      arkaPlan: Color(0xFF0D1F0D),
-      kartArkaPlan: Color(0xFF1A2E1A),
-      vurgu: Color(0xFF00FF41),
-      vurguSecondary: Color(0xFF76FF03),
+    // 8: Neon - Elektrik pembe
+    8: TemaRenkleri(
+      arkaPlan: Color(0xFF0D0D0D),
+      kartArkaPlan: Color(0xFF1A1A1A),
+      vurgu: Color(0xFFFF006E),
+      vurguSecondary: Color(0xFFFF69B4),
       yaziPrimary: Colors.white,
-      yaziSecondary: Color(0xFFA5D6A7),
-      ayirac: Color(0xFF2E4A2E),
+      yaziSecondary: Color(0xFFFFB3D9),
+      ayirac: Color(0xFF2D0D1F),
       isim: 'Neon',
-      aciklama: 'Neon yeşil tonları',
-      ikon: Icons.lightbulb,
+      aciklama: 'Canlı neon tonları',
+      ikon: Icons.flashlight_on,
     ),
-    // 4: Okyanus - Mavi tonları
-    4: TemaRenkleri(
-      arkaPlan: Color(0xFF0D2137),
-      kartArkaPlan: Color(0xFF163354),
-      vurgu: Color(0xFF4DD0E1),
-      vurguSecondary: Color(0xFF80DEEA),
+    // 9: Okyanus - Mavi derinlik
+    9: TemaRenkleri(
+      arkaPlan: Color(0xFF0B3954),
+      kartArkaPlan: Color(0xFF154360),
+      vurgu: Color(0xFF5DADE2),
+      vurguSecondary: Color(0xFF3498DB),
       yaziPrimary: Colors.white,
-      yaziSecondary: Color(0xFFB2EBF2),
+      yaziSecondary: Color(0xFFAED6F1),
       ayirac: Color(0xFF1A5276),
       isim: 'Okyanus',
       aciklama: 'Derin mavi tonları',
       ikon: Icons.water,
     ),
-    // 5: Minimal - Beyaz tonları
-    5: TemaRenkleri(
+    // 10: Minimal - Beyaz tonları
+    10: TemaRenkleri(
       arkaPlan: Color(0xFFF5F5F5),
       kartArkaPlan: Color(0xFFFFFFFF),
       vurgu: Color(0xFF424242),
@@ -215,8 +280,8 @@ class TemaService extends ChangeNotifier {
       aciklama: 'Sade beyaz tonları',
       ikon: Icons.crop_square,
     ),
-    // 6: Retro - LCD yeşil
-    6: TemaRenkleri(
+    // 11: Retro - LCD yeşil
+    11: TemaRenkleri(
       arkaPlan: Color(0xFF0D1F0D),
       kartArkaPlan: Color(0xFF142414),
       vurgu: Color(0xFF00FF41),
@@ -228,8 +293,8 @@ class TemaService extends ChangeNotifier {
       aciklama: 'Nostaljik LCD yeşili',
       ikon: Icons.tv,
     ),
-    // 7: Aurora - Kuzey ışıkları
-    7: TemaRenkleri(
+    // 12: Aurora - Kuzey ışıkları
+    12: TemaRenkleri(
       arkaPlan: Color(0xFF0A0A1A),
       kartArkaPlan: Color(0xFF0D1B2A),
       vurgu: Color(0xFF00D4AA),
@@ -241,8 +306,8 @@ class TemaService extends ChangeNotifier {
       aciklama: 'Kuzey ışıkları tonları',
       ikon: Icons.nights_stay,
     ),
-    // 8: Kristal - Cam efekti
-    8: TemaRenkleri(
+    // 13: Kristal - Cam efekti
+    13: TemaRenkleri(
       arkaPlan: Color(0xFFE8EDF2),
       kartArkaPlan: Color(0xFFF5F7FA),
       vurgu: Color(0xFF5C6BC0),
@@ -254,8 +319,8 @@ class TemaService extends ChangeNotifier {
       aciklama: 'Cam kristal tonları',
       ikon: Icons.diamond_outlined,
     ),
-    // 9: Volkanik - Ateş tonları
-    9: TemaRenkleri(
+    // 14: Volkanik - Ateş tonları
+    14: TemaRenkleri(
       arkaPlan: Color(0xFF1A0A00),
       kartArkaPlan: Color(0xFF2D1810),
       vurgu: Color(0xFFFF6B35),
@@ -267,8 +332,8 @@ class TemaService extends ChangeNotifier {
       aciklama: 'Ateş ve lav tonları',
       ikon: Icons.local_fire_department,
     ),
-    // 10: Zen - Doğa tonları
-    10: TemaRenkleri(
+    // 15: Zen - Doğa tonları
+    15: TemaRenkleri(
       arkaPlan: Color(0xFFE8E4D9),
       kartArkaPlan: Color(0xFFF5F5DC),
       vurgu: Color(0xFF4A6741),
@@ -280,8 +345,8 @@ class TemaService extends ChangeNotifier {
       aciklama: 'Huzurlu doğa tonları',
       ikon: Icons.spa,
     ),
-    // 11: Siber - Cyberpunk
-    11: TemaRenkleri(
+    // 16: Siber - Cyberpunk
+    16: TemaRenkleri(
       arkaPlan: Color(0xFF0D0221),
       kartArkaPlan: Color(0xFF1A0533),
       vurgu: Color(0xFFFF00FF),
@@ -293,8 +358,8 @@ class TemaService extends ChangeNotifier {
       aciklama: 'Cyberpunk neon tonları',
       ikon: Icons.memory,
     ),
-    // 12: Gece - Ay ışığı
-    12: TemaRenkleri(
+    // 17: Gece - Ay ışığı
+    17: TemaRenkleri(
       arkaPlan: Color(0xFF0A1628),
       kartArkaPlan: Color(0xFF1E3A5F),
       vurgu: Color(0xFFFFF8DC),
@@ -306,8 +371,8 @@ class TemaService extends ChangeNotifier {
       aciklama: 'Ay ışığı tonları',
       ikon: Icons.nightlight_round,
     ),
-    // 13: Matrix - Hacker yeşil
-    13: TemaRenkleri(
+    // 18: Matrix - Hacker yeşil
+    18: TemaRenkleri(
       arkaPlan: Color(0xFF000000),
       kartArkaPlan: Color(0xFF0A0A0A),
       vurgu: Color(0xFF00FF00),
@@ -319,8 +384,8 @@ class TemaService extends ChangeNotifier {
       aciklama: 'Hacker yeşil tonları',
       ikon: Icons.code,
     ),
-    // 14: Nefes - Meditasyon mavisi
-    14: TemaRenkleri(
+    // 19: Nefes - Meditasyon mavisi
+    19: TemaRenkleri(
       arkaPlan: Color(0xFF0A1628),
       kartArkaPlan: Color(0xFF142238),
       vurgu: Color(0xFF7EC8E3),
@@ -332,8 +397,8 @@ class TemaService extends ChangeNotifier {
       aciklama: 'Huzurlu meditasyon tonları',
       ikon: Icons.air,
     ),
-    // 15: Geometrik - Sacred Geometry
-    15: TemaRenkleri(
+    // 20: Geometrik - Sacred Geometry
+    20: TemaRenkleri(
       arkaPlan: Color(0xFF1A0A2E),
       kartArkaPlan: Color(0xFF2D1B4E),
       vurgu: Color(0xFFD4AF37),
@@ -345,8 +410,8 @@ class TemaService extends ChangeNotifier {
       aciklama: 'Kutsal geometri tonları',
       ikon: Icons.hexagon_outlined,
     ),
-    // 16: Tesla - Elektrik mavisi
-    16: TemaRenkleri(
+    // 21: Tesla - Elektrik mavisi
+    21: TemaRenkleri(
       arkaPlan: Color(0xFF030318),
       kartArkaPlan: Color(0xFF0A0A28),
       vurgu: Color(0xFF00BFFF),
@@ -357,19 +422,6 @@ class TemaService extends ChangeNotifier {
       isim: 'Tesla',
       aciklama: 'Elektrik enerji tonları',
       ikon: Icons.bolt,
-    ),
-    // 17: İslami - Yeşil ve Altın
-    17: TemaRenkleri(
-      arkaPlan: Color(0xFF0D2818),
-      kartArkaPlan: Color(0xFF1A3D28),
-      vurgu: Color(0xFFD4AF37),
-      vurguSecondary: Color(0xFF00BFA5),
-      yaziPrimary: Colors.white,
-      yaziSecondary: Color(0xFFA5D6A7),
-      ayirac: Color(0xFF2E5238),
-      isim: 'İslami',
-      aciklama: 'İslami yeşil ve altın',
-      ikon: Icons.mosque,
     ),
   };
 
