@@ -153,34 +153,66 @@ class _OnboardingPermissionsPageState extends State<OnboardingPermissionsPage> {
         if (granted) {
           _nextStep();
         } else {
-          // İzin verilmedi - kullanıcıya seçenek sun
+          // İzin verilmedi - kullanıcıya açık bilgi ver
           if (!mounted) return;
+          
+          String message = '';
+          switch (_currentStep) {
+            case 0: // Konum
+              message = 'Konum izni verilmedi. Manuel olarak konum seçebilirsiniz.\n\nAyarlar > Konum bölümünden il/ilçe seçin';
+              break;
+            case 1: // Bildirim
+              message = 'Bildirim izni verilmedi. Namaz vakti bildirimleri çalışmayacak.\n\nİsterseniz daha sonra telefonun Ayarlar menüsünden izin verebilirsiniz';
+              break;
+            case 2: // Exact Alarm
+              message = 'Tam zamanlı alarm izni verilmedi. Bildirimler gecikmeli gelebilir.\n\nİsterseniz daha sonra telefonun Ayarlar menüsünden izin verebilirsiniz';
+              break;
+            case 3: // Overlay
+              message = 'Üst katman izni verilmedi. Tam ekran bildirimler gösterilemeyecek.\n\nİsterseniz daha sonra telefonun Ayarlar menüsünden izin verebilirsiniz';
+              break;
+            case 4: // Pil
+              message = 'Pil optimizasyonu kapatılmadı. Arka plan bildirimleri sorun yaşayabilir.\n\nİsterseniz daha sonra telefonun Ayarlar menüsünden değiştirebilirsiniz';
+              break;
+          }
           
           final shouldContinue = await showDialog<bool>(
             context: context,
+            barrierDismissible: false, // Dialog dışına tıklayarak kapatılamaz
             builder: (context) => AlertDialog(
               backgroundColor: const Color(0xFF2B3151),
-              title: Text(
-                _languageService['permission_not_granted'] ?? 'İzin Verilmedi',
-                style: const TextStyle(color: Colors.white),
+              title: Row(
+                children: [
+                  const Icon(Icons.info_outline, color: Colors.orange, size: 28),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      _languageService['permission_info'] ?? 'İzin Bilgisi',
+                      style: const TextStyle(color: Colors.white, fontSize: 18),
+                    ),
+                  ),
+                ],
               ),
               content: Text(
-                '${_steps[_currentStep].title} ${_languageService['permission_not_granted_message'] ?? 'verilmedi. Bazı özellikler düzgün çalışmayabilir. Devam etmek istiyor musunuz?'}',
-                style: const TextStyle(color: Colors.white70),
+                message,
+                style: const TextStyle(color: Colors.white, fontSize: 14),
               ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context, false),
                   child: Text(
                     _languageService['try_again'] ?? 'Tekrar Dene',
-                    style: const TextStyle(color: Colors.orange),
+                    style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold),
                   ),
                 ),
-                TextButton(
+                ElevatedButton(
                   onPressed: () => Navigator.pop(context, true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                  ),
                   child: Text(
                     _languageService['continue'] ?? 'Devam Et',
-                    style: const TextStyle(color: Colors.blue),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
