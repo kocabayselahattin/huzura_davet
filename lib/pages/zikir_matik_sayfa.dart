@@ -334,7 +334,7 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
   @override
   Widget build(BuildContext context) {
     final progress = _sayac / _hedef;
-    final temaRenkleri = _temaService.aktifRenkler;
+    final temaRenkleri = _temaService.renkler;
 
     return Scaffold(
       backgroundColor: temaRenkleri.arkaPlan,
@@ -695,7 +695,7 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
   }
 
   Widget _infoChip(IconData icon, String label) {
-    final temaRenkleri = _temaService.aktifRenkler;
+    final temaRenkleri = _temaService.renkler;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
@@ -714,7 +714,7 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
   }
 
   Widget _controlButton({required IconData icon, required VoidCallback onTap, bool isLarge = false}) {
-    final temaRenkleri = _temaService.aktifRenkler;
+    final temaRenkleri = _temaService.renkler;
     return GestureDetector(
       onTap: onTap,
       child: Container(

@@ -7,7 +7,8 @@ import 'package:intl/intl.dart';
 import 'package:hijri/hijri_calendar.dart';
 
 class NurSayacWidget extends StatefulWidget {
-  const NurSayacWidget({super.key});
+  final bool shouldLoadData;
+  const NurSayacWidget({super.key, this.shouldLoadData = true});
 
   @override
   State<NurSayacWidget> createState() => _NurSayacWidgetState();
@@ -38,12 +39,14 @@ class _NurSayacWidgetState extends State<NurSayacWidget>
       duration: const Duration(seconds: 20),
       vsync: this,
     )..repeat();
-    _vakitleriYukle();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) {
-        _vakitHesapla();
-      }
-    });
+    if (widget.shouldLoadData) {
+      _vakitleriYukle();
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (mounted) {
+          _vakitHesapla();
+        }
+      });
+    }
   }
 
   @override

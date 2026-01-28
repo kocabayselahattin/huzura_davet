@@ -7,7 +7,8 @@ import 'package:intl/intl.dart';
 import 'package:hijri/hijri_calendar.dart';
 
 class MihrapSayacWidget extends StatefulWidget {
-  const MihrapSayacWidget({super.key});
+  final bool shouldLoadData;
+  const MihrapSayacWidget({super.key, this.shouldLoadData = true});
 
   @override
   State<MihrapSayacWidget> createState() => _MihrapSayacWidgetState();
@@ -33,12 +34,14 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
     _archAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _archController, curve: Curves.easeInOut),
     );
-    _vakitleriYukle();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) {
-        _vakitHesapla();
-      }
-    });
+    if (widget.shouldLoadData) {
+      _vakitleriYukle();
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (mounted) {
+          _vakitHesapla();
+        }
+      });
+    }
   }
 
   @override

@@ -10,7 +10,9 @@ import '../services/language_service.dart';
 
 /// İslami Sayaç - Hilal, yıldız ve İslami geometrik desenlerle tasarım
 class IslamiSayacWidget extends StatefulWidget {
-  const IslamiSayacWidget({super.key});
+  final bool shouldLoadData;
+  
+  const IslamiSayacWidget({super.key, this.shouldLoadData = true});
 
   @override
   State<IslamiSayacWidget> createState() => _IslamiSayacWidgetState();
@@ -49,10 +51,13 @@ class _IslamiSayacWidgetState extends State<IslamiSayacWidget>
       vsync: this,
     )..repeat();
 
-    _vakitleriYukle();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      _hesaplaKalanSure();
-    });
+    // Sadece shouldLoadData true ise veri yükle
+    if (widget.shouldLoadData) {
+      _vakitleriYukle();
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+        _hesaplaKalanSure();
+      });
+    }
     _temaService.addListener(_onTemaChanged);
     _languageService.addListener(_onTemaChanged);
   }

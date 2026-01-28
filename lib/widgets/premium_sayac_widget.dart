@@ -10,7 +10,8 @@ import '../services/tema_service.dart';
 import '../services/language_service.dart';
 
 class PremiumSayacWidget extends StatefulWidget {
-  const PremiumSayacWidget({super.key});
+  final bool shouldLoadData;
+  const PremiumSayacWidget({super.key, this.shouldLoadData = true});
 
   @override
   State<PremiumSayacWidget> createState() => _PremiumSayacWidgetState();
@@ -66,10 +67,12 @@ class _PremiumSayacWidgetState extends State<PremiumSayacWidget>
       CurvedAnimation(parent: _rotateController, curve: Curves.linear),
     );
     
-    _vakitleriYukle();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      _hesaplaKalanSure();
-    });
+    if (widget.shouldLoadData) {
+      _vakitleriYukle();
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+        _hesaplaKalanSure();
+      });
+    }
     
     _temaService.addListener(_onTemaChanged);
     _languageService.addListener(_onTemaChanged);

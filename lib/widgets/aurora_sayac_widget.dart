@@ -12,7 +12,8 @@ import '../services/language_service.dart';
 /// Aurora (Kuzey Işıkları) temalı sayaç widget'ı
 /// Mor, yeşil, mavi renk geçişleri ve dalgalanan efektler
 class AuroraSayacWidget extends StatefulWidget {
-  const AuroraSayacWidget({super.key});
+  final bool shouldLoadData;
+  const AuroraSayacWidget({super.key, this.shouldLoadData = true});
 
   @override
   State<AuroraSayacWidget> createState() => _AuroraSayacWidgetState();
@@ -51,10 +52,12 @@ class _AuroraSayacWidgetState extends State<AuroraSayacWidget>
       CurvedAnimation(parent: _shimmerController, curve: Curves.easeInOut),
     );
     
-    _vakitleriYukle();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      _hesaplaKalanSure();
-    });
+    if (widget.shouldLoadData) {
+      _vakitleriYukle();
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+        _hesaplaKalanSure();
+      });
+    }
     _temaService.addListener(_onTemaChanged);
     _languageService.addListener(_onTemaChanged);
   }

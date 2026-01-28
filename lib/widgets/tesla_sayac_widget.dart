@@ -10,7 +10,8 @@ import '../services/language_service.dart';
 
 /// Tesla Sayaç - Elektrik ve enerji temalı dinamik tasarım
 class TeslaSayacWidget extends StatefulWidget {
-  const TeslaSayacWidget({super.key});
+  final bool shouldLoadData;
+  const TeslaSayacWidget({super.key, this.shouldLoadData = true});
 
   @override
   State<TeslaSayacWidget> createState() => _TeslaSayacWidgetState();
@@ -58,10 +59,12 @@ class _TeslaSayacWidgetState extends State<TeslaSayacWidget>
       _generateSparks();
     });
 
-    _vakitleriYukle();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      _hesaplaKalanSure();
-    });
+    if (widget.shouldLoadData) {
+      _vakitleriYukle();
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+        _hesaplaKalanSure();
+      });
+    }
     _temaService.addListener(_onTemaChanged);
     _languageService.addListener(_onTemaChanged);
   }

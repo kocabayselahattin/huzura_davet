@@ -6,7 +6,8 @@ import 'package:intl/intl.dart';
 import 'package:hijri/hijri_calendar.dart';
 
 class KalemSayacWidget extends StatefulWidget {
-  const KalemSayacWidget({super.key});
+  final bool shouldLoadData;
+  const KalemSayacWidget({super.key, this.shouldLoadData = true});
 
   @override
   State<KalemSayacWidget> createState() => _KalemSayacWidgetState();
@@ -32,12 +33,14 @@ class _KalemSayacWidgetState extends State<KalemSayacWidget>
     _pulseAnimation = Tween<double>(begin: 0.98, end: 1.02).animate(
       CurvedAnimation(parent: _animController, curve: Curves.easeInOut),
     );
-    _vakitleriYukle();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) {
-        _vakitHesapla();
-      }
-    });
+    if (widget.shouldLoadData) {
+      _vakitleriYukle();
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (mounted) {
+          _vakitHesapla();
+        }
+      });
+    }
   }
 
   @override

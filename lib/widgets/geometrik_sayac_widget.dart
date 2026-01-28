@@ -10,7 +10,8 @@ import '../services/language_service.dart';
 
 /// Geometrik Sayaç - Sacred Geometry temalı mistik ve hipnotik tasarım
 class GeometrikSayacWidget extends StatefulWidget {
-  const GeometrikSayacWidget({super.key});
+  final bool shouldLoadData;
+  const GeometrikSayacWidget({super.key, this.shouldLoadData = true});
 
   @override
   State<GeometrikSayacWidget> createState() => _GeometrikSayacWidgetState();
@@ -49,10 +50,12 @@ class _GeometrikSayacWidgetState extends State<GeometrikSayacWidget>
       vsync: this,
     )..repeat(reverse: true);
 
-    _vakitleriYukle();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      _hesaplaKalanSure();
-    });
+    if (widget.shouldLoadData) {
+      _vakitleriYukle();
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+        _hesaplaKalanSure();
+      });
+    }
     _temaService.addListener(_onTemaChanged);
     _languageService.addListener(_onTemaChanged);
   }

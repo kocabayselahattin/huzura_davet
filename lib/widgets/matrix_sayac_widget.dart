@@ -10,7 +10,8 @@ import '../services/language_service.dart';
 
 /// Matrix Sayaç - Matrix filmi tarzı düşen kod efektli hacker teması
 class MatrixSayacWidget extends StatefulWidget {
-  const MatrixSayacWidget({super.key});
+  final bool shouldLoadData;
+  const MatrixSayacWidget({super.key, this.shouldLoadData = true});
 
   @override
   State<MatrixSayacWidget> createState() => _MatrixSayacWidgetState();
@@ -51,10 +52,12 @@ class _MatrixSayacWidgetState extends State<MatrixSayacWidget>
       _updateMatrixColumns();
     });
 
-    _vakitleriYukle();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      _hesaplaKalanSure();
-    });
+    if (widget.shouldLoadData) {
+      _vakitleriYukle();
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+        _hesaplaKalanSure();
+      });
+    }
     _temaService.addListener(_onTemaChanged);
     _languageService.addListener(_onTemaChanged);
   }

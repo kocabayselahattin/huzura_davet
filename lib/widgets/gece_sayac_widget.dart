@@ -12,7 +12,8 @@ import '../services/language_service.dart';
 /// Gece/Ay temalı sayaç widget'ı
 /// Koyu mavi gece gökyüzü, ay ve yıldızlar
 class GeceSayacWidget extends StatefulWidget {
-  const GeceSayacWidget({super.key});
+  final bool shouldLoadData;
+  const GeceSayacWidget({super.key, this.shouldLoadData = true});
 
   @override
   State<GeceSayacWidget> createState() => _GeceSayacWidgetState();
@@ -39,10 +40,12 @@ class _GeceSayacWidgetState extends State<GeceSayacWidget>
       vsync: this,
     )..repeat(reverse: true);
     
-    _vakitleriYukle();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      _hesaplaKalanSure();
-    });
+    if (widget.shouldLoadData) {
+      _vakitleriYukle();
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+        _hesaplaKalanSure();
+      });
+    }
     _temaService.addListener(_onTemaChanged);
     _languageService.addListener(_onTemaChanged);
   }

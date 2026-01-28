@@ -10,7 +10,8 @@ import '../services/language_service.dart';
 
 /// Nefes Sayaç - Meditasyon ve nefes egzersizi temalı sakinleştirici tasarım
 class NefesSayacWidget extends StatefulWidget {
-  const NefesSayacWidget({super.key});
+  final bool shouldLoadData;
+  const NefesSayacWidget({super.key, this.shouldLoadData = true});
 
   @override
   State<NefesSayacWidget> createState() => _NefesSayacWidgetState();
@@ -50,10 +51,12 @@ class _NefesSayacWidgetState extends State<NefesSayacWidget>
       vsync: this,
     )..repeat();
 
-    _vakitleriYukle();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      _hesaplaKalanSure();
-    });
+    if (widget.shouldLoadData) {
+      _vakitleriYukle();
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+        _hesaplaKalanSure();
+      });
+    }
     _temaService.addListener(_onTemaChanged);
     _languageService.addListener(_onTemaChanged);
   }

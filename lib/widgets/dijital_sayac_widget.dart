@@ -9,7 +9,9 @@ import '../services/tema_service.dart';
 import '../services/language_service.dart';
 
 class DijitalSayacWidget extends StatefulWidget {
-  const DijitalSayacWidget({super.key});
+  final bool shouldLoadData;
+  
+  const DijitalSayacWidget({super.key, this.shouldLoadData = true});
 
   @override
   State<DijitalSayacWidget> createState() => _DijitalSayacWidgetState();
@@ -27,10 +29,13 @@ class _DijitalSayacWidgetState extends State<DijitalSayacWidget> {
   @override
   void initState() {
     super.initState();
-    _vakitleriYukle();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      _hesaplaKalanSure();
-    });
+    // Sadece shouldLoadData true ise veri yükle
+    if (widget.shouldLoadData) {
+      _vakitleriYukle();
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+        _hesaplaKalanSure();
+      });
+    }
     _temaService.addListener(_onTemaChanged);
     _languageService.addListener(_onTemaChanged);
   }

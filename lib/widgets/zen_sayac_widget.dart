@@ -11,7 +11,8 @@ import '../services/language_service.dart';
 /// Zen temalı sayaç widget'ı
 /// Japon bahçesi esintisi, huzurlu renkler, bambu ve su efektleri
 class ZenSayacWidget extends StatefulWidget {
-  const ZenSayacWidget({super.key});
+  final bool shouldLoadData;
+  const ZenSayacWidget({super.key, this.shouldLoadData = true});
 
   @override
   State<ZenSayacWidget> createState() => _ZenSayacWidgetState();
@@ -38,10 +39,12 @@ class _ZenSayacWidgetState extends State<ZenSayacWidget>
       vsync: this,
     )..repeat();
     
-    _vakitleriYukle();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      _hesaplaKalanSure();
-    });
+    if (widget.shouldLoadData) {
+      _vakitleriYukle();
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+        _hesaplaKalanSure();
+      });
+    }
     _temaService.addListener(_onTemaChanged);
     _languageService.addListener(_onTemaChanged);
   }

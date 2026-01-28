@@ -12,7 +12,8 @@ import '../services/language_service.dart';
 /// Okyanus/Su temalı sayaç widget'ı
 /// Dalga animasyonları, su damlaları ve ay ışığı efektleri
 class OkyanusSayacWidget extends StatefulWidget {
-  const OkyanusSayacWidget({super.key});
+  final bool shouldLoadData;
+  const OkyanusSayacWidget({super.key, this.shouldLoadData = true});
 
   @override
   State<OkyanusSayacWidget> createState() => _OkyanusSayacWidgetState();
@@ -72,10 +73,12 @@ class _OkyanusSayacWidgetState extends State<OkyanusSayacWidget>
     // Kabarcıkları oluştur
     _generateBubbles();
     
-    _vakitleriYukle();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      _hesaplaKalanSure();
-    });
+    if (widget.shouldLoadData) {
+      _vakitleriYukle();
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+        _hesaplaKalanSure();
+      });
+    }
     _temaService.addListener(_onTemaChanged);
     _languageService.addListener(_onTemaChanged);
   }

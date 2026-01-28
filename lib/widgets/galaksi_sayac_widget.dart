@@ -10,7 +10,8 @@ import '../services/tema_service.dart';
 import '../services/language_service.dart';
 
 class GalaksiSayacWidget extends StatefulWidget {
-  const GalaksiSayacWidget({super.key});
+  final bool shouldLoadData;
+  const GalaksiSayacWidget({super.key, this.shouldLoadData = true});
 
   @override
   State<GalaksiSayacWidget> createState() => _GalaksiSayacWidgetState();
@@ -58,10 +59,12 @@ class _GalaksiSayacWidgetState extends State<GalaksiSayacWidget>
       vsync: this,
     )..repeat(reverse: true);
     
-    _vakitleriYukle();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      _hesaplaKalanSure();
-    });
+    if (widget.shouldLoadData) {
+      _vakitleriYukle();
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+        _hesaplaKalanSure();
+      });
+    }
     _temaService.addListener(_onTemaChanged);
     _languageService.addListener(_onTemaChanged);
   }

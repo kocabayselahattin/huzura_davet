@@ -10,7 +10,8 @@ import '../services/tema_service.dart';
 import '../services/language_service.dart';
 
 class NeonSayacWidget extends StatefulWidget {
-  const NeonSayacWidget({super.key});
+  final bool shouldLoadData;
+  const NeonSayacWidget({super.key, this.shouldLoadData = true});
 
   @override
   State<NeonSayacWidget> createState() => _NeonSayacWidgetState();
@@ -48,10 +49,12 @@ class _NeonSayacWidgetState extends State<NeonSayacWidget>
       vsync: this,
     )..repeat();
     
-    _vakitleriYukle();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      _hesaplaKalanSure();
-    });
+    if (widget.shouldLoadData) {
+      _vakitleriYukle();
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+        _hesaplaKalanSure();
+      });
+    }
     _temaService.addListener(_onTemaChanged);
     _languageService.addListener(_onTemaChanged);
   }

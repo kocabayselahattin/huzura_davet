@@ -11,7 +11,8 @@ import '../services/language_service.dart';
 /// Retro/Vintage LCD tarzı sayaç widget'ı
 /// Eski dijital saat görünümü, nostaljik
 class RetroSayacWidget extends StatefulWidget {
-  const RetroSayacWidget({super.key});
+  final bool shouldLoadData;
+  const RetroSayacWidget({super.key, this.shouldLoadData = true});
 
   @override
   State<RetroSayacWidget> createState() => _RetroSayacWidgetState();
@@ -42,10 +43,12 @@ class _RetroSayacWidgetState extends State<RetroSayacWidget>
     
     _blinkAnimation = Tween<double>(begin: 0.3, end: 1.0).animate(_blinkController);
     
-    _vakitleriYukle();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      _hesaplaKalanSure();
-    });
+    if (widget.shouldLoadData) {
+      _vakitleriYukle();
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+        _hesaplaKalanSure();
+      });
+    }
     _temaService.addListener(_onTemaChanged);
     _languageService.addListener(_onTemaChanged);
   }

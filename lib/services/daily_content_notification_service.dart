@@ -61,7 +61,7 @@ class DailyContentNotificationService {
         
         // Eski kanalı sil ve yeniden oluştur (ses değişikliği için gerekli)
         try {
-          await androidImplementation.deleteNotificationChannel('daily_content_channel');
+          await androidImplementation.deleteNotificationChannel(channelId: 'daily_content_channel');
           debugPrint('🗑️ Eski günlük içerik kanalı silindi');
         } catch (e) {
           debugPrint('⚠️ Kanal silinirken hata (normal olabilir): $e');
@@ -249,7 +249,7 @@ class DailyContentNotificationService {
       largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
     );
 
-    const notificationDetails = NotificationDetails(
+    final notificationDetails = NotificationDetails(
       android: androidPlatformChannelSpecifics,
     );
 
@@ -344,7 +344,7 @@ class DailyContentNotificationService {
       largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
     );
 
-    const notificationDetails = NotificationDetails(
+    final notificationDetails = NotificationDetails(
       android: androidPlatformChannelSpecifics,
     );
 

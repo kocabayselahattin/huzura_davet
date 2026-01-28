@@ -12,7 +12,8 @@ import '../services/language_service.dart';
 /// Siber/Cyberpunk temalı sayaç widget'ı
 /// Neon pembe-mavi, glitch efektleri, fütüristik tasarım
 class SiberSayacWidget extends StatefulWidget {
-  const SiberSayacWidget({super.key});
+  final bool shouldLoadData;
+  const SiberSayacWidget({super.key, this.shouldLoadData = true});
 
   @override
   State<SiberSayacWidget> createState() => _SiberSayacWidgetState();
@@ -59,10 +60,12 @@ class _SiberSayacWidgetState extends State<SiberSayacWidget>
       }
     });
     
-    _vakitleriYukle();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      _hesaplaKalanSure();
-    });
+    if (widget.shouldLoadData) {
+      _vakitleriYukle();
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+        _hesaplaKalanSure();
+      });
+    }
     _temaService.addListener(_onTemaChanged);
     _languageService.addListener(_onTemaChanged);
   }

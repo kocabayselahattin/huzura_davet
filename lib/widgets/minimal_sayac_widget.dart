@@ -10,7 +10,8 @@ import '../services/language_service.dart';
 /// Minimal tasarımlı sayaç widget'ı
 /// Sade, temiz ve modern görünüm
 class MinimalSayacWidget extends StatefulWidget {
-  const MinimalSayacWidget({super.key});
+  final bool shouldLoadData;
+  const MinimalSayacWidget({super.key, this.shouldLoadData = true});
 
   @override
   State<MinimalSayacWidget> createState() => _MinimalSayacWidgetState();
@@ -29,10 +30,12 @@ class _MinimalSayacWidgetState extends State<MinimalSayacWidget> {
   @override
   void initState() {
     super.initState();
-    _vakitleriYukle();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      _hesaplaKalanSure();
-    });
+    if (widget.shouldLoadData) {
+      _vakitleriYukle();
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+        _hesaplaKalanSure();
+      });
+    }
     _temaService.addListener(_onTemaChanged);
     _languageService.addListener(_onTemaChanged);
   }

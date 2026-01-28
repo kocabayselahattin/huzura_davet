@@ -12,7 +12,8 @@ import '../services/language_service.dart';
 /// Kristal/Cam efektli sayaç widget'ı
 /// Şeffaf cam görünümü, ışık kırılmaları ve parıltılar
 class KristalSayacWidget extends StatefulWidget {
-  const KristalSayacWidget({super.key});
+  final bool shouldLoadData;
+  const KristalSayacWidget({super.key, this.shouldLoadData = true});
 
   @override
   State<KristalSayacWidget> createState() => _KristalSayacWidgetState();
@@ -39,10 +40,12 @@ class _KristalSayacWidgetState extends State<KristalSayacWidget>
       vsync: this,
     )..repeat();
     
-    _vakitleriYukle();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      _hesaplaKalanSure();
-    });
+    if (widget.shouldLoadData) {
+      _vakitleriYukle();
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+        _hesaplaKalanSure();
+      });
+    }
     _temaService.addListener(_onTemaChanged);
     _languageService.addListener(_onTemaChanged);
   }

@@ -12,7 +12,8 @@ import '../services/language_service.dart';
 /// Volkanik/Lav temalı sayaç widget'ı
 /// Sıcak renkler, akan lav efektleri ve parıldayan ateş
 class VolkanikSayacWidget extends StatefulWidget {
-  const VolkanikSayacWidget({super.key});
+  final bool shouldLoadData;
+  const VolkanikSayacWidget({super.key, this.shouldLoadData = true});
 
   @override
   State<VolkanikSayacWidget> createState() => _VolkanikSayacWidgetState();
@@ -50,10 +51,12 @@ class _VolkanikSayacWidgetState extends State<VolkanikSayacWidget>
       CurvedAnimation(parent: _glowController, curve: Curves.easeInOut),
     );
     
-    _vakitleriYukle();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      _hesaplaKalanSure();
-    });
+    if (widget.shouldLoadData) {
+      _vakitleriYukle();
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+        _hesaplaKalanSure();
+      });
+    }
     _temaService.addListener(_onTemaChanged);
     _languageService.addListener(_onTemaChanged);
   }
