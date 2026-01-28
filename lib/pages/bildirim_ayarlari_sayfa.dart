@@ -524,6 +524,65 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
     return true;
   }
 
+  /// Bildirim izni kontrolü
+  Future<bool> _checkNotificationPermission() async {
+    final notificationsPlugin = FlutterLocalNotificationsPlugin();
+    final androidImpl = notificationsPlugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+
+    if (androidImpl == null) return true;
+
+    final hasPermission =
+        await androidImpl.areNotificationsEnabled() ?? false;
+    if (hasPermission) return true;
+
+    if (mounted) {
+      final shouldRequest = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(
+            _languageService['notification_permission_required'] ??
+                'Bildirim İzni Gerekli',
+          ),
+          content: Text(
+            _languageService['notification_permission_message'] ??
+                'Test bildirimleri için bildirim izni vermeniz gerekiyor.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(_languageService['give_up'] ?? 'Vazgeç'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(_languageService['allow'] ?? 'İzin Ver'),
+            ),
+          ],
+        ),
+      );
+
+      if (shouldRequest == true) {
+        final granted =
+            await androidImpl.requestNotificationsPermission() ?? false;
+        if (!granted && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                _languageService['notification_permission_denied'] ??
+                    'Bildirim izni verilmedi. Test bildirimi gönderilemez.',
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return granted;
+      }
+    }
+    return false;
+  }
+
   Future<void> _sesCal(String key, String sesDosyasi) async {
     try {
       await _audioPlayer.stop();
@@ -1010,104 +1069,6 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
                               ),
                             ),
                           ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  // Test butonları
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () async {
-                              await DailyContentNotificationService
-                                  .sendTestNotification('verse');
-                              if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Test bildirimi gönderildi!'),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                              }
-                            },
-                            icon: const Text('📖', style: TextStyle(fontSize: 14)),
-                            label: const Text(
-                              'Test',
-                              style: TextStyle(fontSize: 11),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.tealAccent.withOpacity(0.2),
-                              foregroundColor: Colors.tealAccent,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 8,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () async {
-                              await DailyContentNotificationService
-                                  .sendTestNotification('hadith');
-                              if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Test bildirimi gönderildi!'),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                              }
-                            },
-                            icon: const Text('📿', style: TextStyle(fontSize: 14)),
-                            label: const Text(
-                              'Test',
-                              style: TextStyle(fontSize: 11),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.tealAccent.withOpacity(0.2),
-                              foregroundColor: Colors.tealAccent,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 8,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () async {
-                              await DailyContentNotificationService
-                                  .sendTestNotification('prayer');
-                              if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Test bildirimi gönderildi!'),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                              }
-                            },
-                            icon: const Text('🤲', style: TextStyle(fontSize: 14)),
-                            label: const Text(
-                              'Test',
-                              style: TextStyle(fontSize: 11),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.tealAccent.withOpacity(0.2),
-                              foregroundColor: Colors.tealAccent,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 8,
-                              ),
-                            ),
-                          ),
                         ),
                       ],
                     ),

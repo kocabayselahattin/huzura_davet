@@ -154,7 +154,7 @@ class _HilalSayacWidgetState extends State<HilalSayacWidget>
     final hicri = '${hijriNow.hDay} ${_getHijriMonth(hijriNow.hMonth)} ${hijriNow.hYear}';
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topRight,
@@ -189,16 +189,16 @@ class _HilalSayacWidgetState extends State<HilalSayacWidget>
           ),
           // Hilal
           Positioned(
-            right: 30,
-            top: 30,
+            right: 24,
+            top: 24,
             child: CustomPaint(
-              size: const Size(80, 80),
+              size: const Size(60, 60),
               painter: _HilalPainter(),
             ),
           ),
           // İçerik
           Padding(
-            padding: const EdgeInsets.all(25),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -207,7 +207,7 @@ class _HilalSayacWidgetState extends State<HilalSayacWidget>
                   children: [
                     Expanded(
                       child: Container(
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.08),
                           borderRadius: BorderRadius.circular(12),
@@ -220,14 +220,14 @@ class _HilalSayacWidgetState extends State<HilalSayacWidget>
                             Icon(
                               Icons.calendar_today,
                               color: Colors.blue.shade200,
-                              size: 18,
+                              size: 16,
                             ),
                             const SizedBox(height: 6),
                             Text(
                               'Miladi',
                               style: TextStyle(
                                 color: Colors.white.withOpacity(0.6),
-                                fontSize: 10,
+                                fontSize: 9,
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -235,7 +235,7 @@ class _HilalSayacWidgetState extends State<HilalSayacWidget>
                               miladi,
                               style: const TextStyle(
                                 color: Colors.white,
-                                fontSize: 11,
+                                fontSize: 10,
                                 fontWeight: FontWeight.w600,
                               ),
                               textAlign: TextAlign.center,
@@ -247,7 +247,7 @@ class _HilalSayacWidgetState extends State<HilalSayacWidget>
                     const SizedBox(width: 12),
                     Expanded(
                       child: Container(
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
                           color: Colors.amber.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(12),
@@ -260,14 +260,14 @@ class _HilalSayacWidgetState extends State<HilalSayacWidget>
                             const Icon(
                               Icons.star_half,
                               color: Colors.amber,
-                              size: 18,
+                              size: 16,
                             ),
                             const SizedBox(height: 6),
                             Text(
                               'Hicri',
                               style: TextStyle(
                                 color: Colors.amber.withOpacity(0.8),
-                                fontSize: 10,
+                                fontSize: 9,
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -275,7 +275,7 @@ class _HilalSayacWidgetState extends State<HilalSayacWidget>
                               hicri,
                               style: const TextStyle(
                                 color: Colors.amber,
-                                fontSize: 11,
+                                fontSize: 10,
                                 fontWeight: FontWeight.w600,
                               ),
                               textAlign: TextAlign.center,
@@ -286,10 +286,10 @@ class _HilalSayacWidgetState extends State<HilalSayacWidget>
                     ),
                   ],
                 ),
-                const SizedBox(height: 30),
+                const SizedBox(height: 16),
                 // Vakit
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
@@ -298,12 +298,12 @@ class _HilalSayacWidgetState extends State<HilalSayacWidget>
                     'Sonraki Vakit: $_gelecekVakit',
                     style: const TextStyle(
                       color: Colors.white70,
-                      fontSize: 14,
+                      fontSize: 12,
                       letterSpacing: 1,
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 12),
                 // Kalan süre
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -315,10 +315,10 @@ class _HilalSayacWidgetState extends State<HilalSayacWidget>
                     _buildTimeBox(seconds.toString().padLeft(2, '0'), 'Sn'),
                   ],
                 ),
-                const Spacer(),
+                const SizedBox(height: 12),
                 // Ecir barı
                 Container(
-                  padding: const EdgeInsets.all(15),
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     color: Colors.black.withOpacity(0.3),
                     borderRadius: BorderRadius.circular(15),
@@ -336,7 +336,7 @@ class _HilalSayacWidgetState extends State<HilalSayacWidget>
                                 'Sevap Kazanımı',
                                 style: TextStyle(
                                   color: Colors.white70,
-                                  fontSize: 12,
+                                  fontSize: 11,
                                 ),
                               ),
                             ],
@@ -345,7 +345,7 @@ class _HilalSayacWidgetState extends State<HilalSayacWidget>
                             '%${(_ecirOrani * 100).toInt()}',
                             style: const TextStyle(
                               color: Colors.amber,
-                              fontSize: 16,
+                              fontSize: 14,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -360,7 +360,7 @@ class _HilalSayacWidgetState extends State<HilalSayacWidget>
                           valueColor: AlwaysStoppedAnimation<Color>(
                             Colors.amber,
                           ),
-                          minHeight: 10,
+                          minHeight: 8,
                         ),
                       ),
                     ],
@@ -376,8 +376,8 @@ class _HilalSayacWidgetState extends State<HilalSayacWidget>
 
   Widget _buildTimeBox(String value, String label) {
     return Container(
-      width: 80,
-      padding: const EdgeInsets.symmetric(vertical: 15),
+      width: 62,
+      padding: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
@@ -397,7 +397,7 @@ class _HilalSayacWidgetState extends State<HilalSayacWidget>
           Text(
             value,
             style: const TextStyle(
-              fontSize: 36,
+              fontSize: 28,
               fontWeight: FontWeight.bold,
               color: Colors.white,
               height: 1,
@@ -407,7 +407,7 @@ class _HilalSayacWidgetState extends State<HilalSayacWidget>
           Text(
             label,
             style: TextStyle(
-              fontSize: 11,
+              fontSize: 9,
               color: Colors.white.withOpacity(0.6),
             ),
           ),

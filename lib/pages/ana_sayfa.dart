@@ -1067,10 +1067,10 @@ class _AnaSayfaState extends State<AnaSayfa> {
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: GridView.count(
-                  crossAxisCount: 2,
-                  childAspectRatio: 1.1,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
+                  crossAxisCount: 3,
+                  childAspectRatio: 0.95,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
                   children: [
                     _buildMenuCard(icon: Icons.schedule, title: _languageService['calendar'] ?? 'İmsakiye', color: Colors.blue, onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (context) => const ImsakiyeSayfa())); }),
                     _buildMenuCard(icon: Icons.auto_awesome, title: _languageService['dhikr'] ?? 'Zikir Matik', color: Colors.purple, onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (context) => const ZikirMatikSayfa())); }),
@@ -1105,14 +1105,14 @@ class _AnaSayfaState extends State<AnaSayfa> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
-              child: Icon(icon, size: 36, color: Colors.white),
+              child: Icon(icon, size: 28, color: Colors.white),
             ),
             const SizedBox(height: 12),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Text(title, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
+              child: Text(title, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
             ),
           ],
         ),

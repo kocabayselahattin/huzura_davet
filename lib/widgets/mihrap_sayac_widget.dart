@@ -158,7 +158,7 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
     final hicri = '${hijriNow.hDay} ${_getHijriMonth(hijriNow.hMonth)} ${hijriNow.hYear}';
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
@@ -205,7 +205,7 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
           ),
           // İçerik
           Padding(
-            padding: const EdgeInsets.all(25),
+            padding: const EdgeInsets.all(16),
             child: Column(
               children: [
                 // Takvim başlığı
@@ -213,7 +213,7 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                       decoration: BoxDecoration(
                         color: Colors.amber.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(20),
@@ -221,13 +221,13 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
                       ),
                       child: const Row(
                         children: [
-                          Icon(Icons.mosque, color: Colors.amber, size: 18),
+                          Icon(Icons.mosque, color: Colors.amber, size: 16),
                           SizedBox(width: 10),
                           Text(
                             'TAKVİM',
                             style: TextStyle(
                               color: Colors.amber,
-                              fontSize: 12,
+                              fontSize: 10,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 2,
                             ),
@@ -237,7 +237,7 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 12),
                 // Takvimler
                 Row(
                   children: [
@@ -249,7 +249,7 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
                         color: Colors.blue.shade300,
                       ),
                     ),
-                    const SizedBox(width: 15),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: _buildCalendarCard(
                         icon: Icons.nightlight_round,
@@ -260,10 +260,10 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
                     ),
                   ],
                 ),
-                const SizedBox(height: 25),
+                const SizedBox(height: 16),
                 // Vakit bilgisi
                 Container(
-                  padding: const EdgeInsets.all(15),
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     color: Colors.black.withOpacity(0.3),
                     borderRadius: BorderRadius.circular(15),
@@ -277,7 +277,7 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
                         _gelecekVakit.toUpperCase(),
                         style: const TextStyle(
                           color: Colors.amber,
-                          fontSize: 18,
+                          fontSize: 15,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 3,
                         ),
@@ -287,25 +287,25 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
                         'vakti için',
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.6),
-                          fontSize: 12,
+                          fontSize: 11,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 12),
                 // Kalan süre
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     _buildTimePillar(hours.toString().padLeft(2, '0'), 'SAAT'),
-                    const SizedBox(width: 15),
+                    const SizedBox(width: 12),
                     _buildTimePillar(minutes.toString().padLeft(2, '0'), 'DAKİKA'),
-                    const SizedBox(width: 15),
+                    const SizedBox(width: 12),
                     _buildTimePillar(seconds.toString().padLeft(2, '0'), 'SANİYE'),
                   ],
                 ),
-                const Spacer(),
+                const SizedBox(height: 12),
                 // Ecir barı
                 _buildEcirSection(),
               ],
@@ -323,7 +323,7 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
     required Color color,
   }) {
     return Container(
-      padding: const EdgeInsets.all(15),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
@@ -338,22 +338,22 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
       ),
       child: Column(
         children: [
-          Icon(icon, color: color, size: 24),
-          const SizedBox(height: 8),
+          Icon(icon, color: color, size: 18),
+          const SizedBox(height: 6),
           Text(
             label,
             style: TextStyle(
               color: color.withOpacity(0.8),
-              fontSize: 10,
+              fontSize: 9,
               letterSpacing: 1.5,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Text(
             date,
             style: TextStyle(
               color: color,
-              fontSize: 11,
+              fontSize: 10,
               fontWeight: FontWeight.w600,
             ),
             textAlign: TextAlign.center,
@@ -367,8 +367,8 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
     return Column(
       children: [
         Container(
-          width: 75,
-          height: 80,
+          width: 60,
+          height: 60,
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
@@ -391,7 +391,7 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
             child: Text(
               value,
               style: const TextStyle(
-                fontSize: 36,
+                fontSize: 28,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),
@@ -402,7 +402,7 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
         Text(
           label,
           style: TextStyle(
-            fontSize: 10,
+            fontSize: 9,
             color: Colors.white.withOpacity(0.6),
             letterSpacing: 1,
           ),
@@ -413,7 +413,7 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
 
   Widget _buildEcirSection() {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -431,13 +431,13 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
             children: [
               const Row(
                 children: [
-                  Icon(Icons.star, color: Colors.amber, size: 20),
-                  SizedBox(width: 10),
+                  Icon(Icons.star, color: Colors.amber, size: 16),
+                  SizedBox(width: 8),
                   Text(
                     'İbadet Saati',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 14,
+                      fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -453,18 +453,18 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
                   '%${(_ecirOrani * 100).toInt()}',
                   style: const TextStyle(
                     color: Colors.amber,
-                    fontSize: 16,
+                    fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Stack(
             children: [
               Container(
-                height: 14,
+                height: 10,
                 decoration: BoxDecoration(
                   color: Colors.black.withOpacity(0.3),
                   borderRadius: BorderRadius.circular(10),
@@ -473,7 +473,7 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
               FractionallySizedBox(
                 widthFactor: _ecirOrani,
                 child: Container(
-                  height: 14,
+                  height: 10,
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       colors: [Colors.amber, Colors.orange, Colors.deepOrange],

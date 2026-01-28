@@ -164,7 +164,7 @@ class _NurSayacWidgetState extends State<NurSayacWidget>
     final hicri = '${hijriNow.hDay} ${_getHijriMonth(hijriNow.hMonth)} ${hijriNow.hYear}';
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topCenter,
@@ -199,12 +199,12 @@ class _NurSayacWidgetState extends State<NurSayacWidget>
           ),
           // İçerik
           Padding(
-            padding: const EdgeInsets.all(25),
+            padding: const EdgeInsets.all(16),
             child: Column(
               children: [
                 // Takvim
                 Container(
-                  padding: const EdgeInsets.all(15),
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(15),
@@ -218,13 +218,13 @@ class _NurSayacWidgetState extends State<NurSayacWidget>
                         children: [
                           Row(
                             children: [
-                              const Icon(Icons.calendar_month, color: Colors.white70, size: 14),
+                              const Icon(Icons.calendar_month, color: Colors.white70, size: 12),
                               const SizedBox(width: 6),
                               Text(
                                 'MİLADİ',
                                 style: TextStyle(
                                   color: Colors.white.withOpacity(0.6),
-                                  fontSize: 10,
+                                  fontSize: 9,
                                   letterSpacing: 1,
                                 ),
                               ),
@@ -235,7 +235,7 @@ class _NurSayacWidgetState extends State<NurSayacWidget>
                             miladi,
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 13,
+                              fontSize: 11,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -243,7 +243,7 @@ class _NurSayacWidgetState extends State<NurSayacWidget>
                       ),
                       Container(
                         width: 1,
-                        height: 40,
+                        height: 32,
                         color: Colors.white.withOpacity(0.2),
                       ),
                       Column(
@@ -251,13 +251,13 @@ class _NurSayacWidgetState extends State<NurSayacWidget>
                         children: [
                           Row(
                             children: [
-                              const Icon(Icons.mosque, color: Colors.amber, size: 14),
+                              const Icon(Icons.mosque, color: Colors.amber, size: 12),
                               const SizedBox(width: 6),
                               Text(
                                 'HİCRİ',
                                 style: TextStyle(
                                   color: Colors.amber.withOpacity(0.8),
-                                  fontSize: 10,
+                                  fontSize: 9,
                                   letterSpacing: 1,
                                 ),
                               ),
@@ -268,7 +268,7 @@ class _NurSayacWidgetState extends State<NurSayacWidget>
                             hicri,
                             style: const TextStyle(
                               color: Colors.amber,
-                              fontSize: 13,
+                              fontSize: 11,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -277,7 +277,7 @@ class _NurSayacWidgetState extends State<NurSayacWidget>
                     ],
                   ),
                 ),
-                const SizedBox(height: 25),
+                const SizedBox(height: 16),
                 // Vakit bilgisi
                 AnimatedBuilder(
                   animation: _glowAnimation,
@@ -291,13 +291,13 @@ class _NurSayacWidgetState extends State<NurSayacWidget>
                     _gelecekVakit,
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 22,
+                      fontSize: 18,
                       fontWeight: FontWeight.w300,
                       letterSpacing: 4,
                     ),
                   ),
                 ),
-                const SizedBox(height: 15),
+                const SizedBox(height: 10),
                 // Kalan süre
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -309,7 +309,7 @@ class _NurSayacWidgetState extends State<NurSayacWidget>
                     _buildTimeUnit(seconds.toString().padLeft(2, '0')),
                   ],
                 ),
-                const SizedBox(height: 25),
+                const SizedBox(height: 16),
                 // Ecir barı
                 _buildEcirBar(),
               ],
@@ -322,8 +322,8 @@ class _NurSayacWidgetState extends State<NurSayacWidget>
 
   Widget _buildTimeUnit(String value) {
     return Container(
-      width: 70,
-      height: 70,
+      width: 56,
+      height: 56,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -346,7 +346,7 @@ class _NurSayacWidgetState extends State<NurSayacWidget>
         child: Text(
           value,
           style: const TextStyle(
-            fontSize: 32,
+            fontSize: 26,
             fontWeight: FontWeight.bold,
             color: Colors.white,
           ),
@@ -361,7 +361,7 @@ class _NurSayacWidgetState extends State<NurSayacWidget>
       child: Text(
         ':',
         style: TextStyle(
-          fontSize: 32,
+          fontSize: 24,
           color: Colors.white.withOpacity(0.5),
           fontWeight: FontWeight.w300,
         ),
@@ -383,7 +383,7 @@ class _NurSayacWidgetState extends State<NurSayacWidget>
                   'Gün İlerlemesi',
                   style: TextStyle(
                     color: Colors.white70,
-                    fontSize: 13,
+                    fontSize: 12,
                   ),
                 ),
               ],
@@ -392,15 +392,15 @@ class _NurSayacWidgetState extends State<NurSayacWidget>
               '${(_ecirOrani * 100).toInt()}%',
               style: const TextStyle(
                 color: Colors.amber,
-                fontSize: 16,
+                fontSize: 14,
                 fontWeight: FontWeight.bold,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
         Container(
-          height: 12,
+          height: 8,
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.1),
             borderRadius: BorderRadius.circular(10),
