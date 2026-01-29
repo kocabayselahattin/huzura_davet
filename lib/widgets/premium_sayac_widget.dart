@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'dart:async';
-import 'dart:ui';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:intl/intl.dart';
 import '../services/konum_service.dart';
@@ -233,13 +232,6 @@ class _PremiumSayacWidgetState extends State<PremiumSayacWidget>
       _mevcutVakit = _vakitAdlari[mevcutVakitKey] ?? mevcutVakitKey;
       _ilerlemeYuzdesi = ilerleme;
     });
-  }
-
-  String _formatDuration(Duration d) {
-    final hours = d.inHours.toString().padLeft(2, '0');
-    final minutes = (d.inMinutes % 60).toString().padLeft(2, '0');
-    final seconds = (d.inSeconds % 60).toString().padLeft(2, '0');
-    return '$hours:$minutes:$seconds';
   }
 
   @override

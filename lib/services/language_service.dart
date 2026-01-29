@@ -30,16 +30,13 @@ class LanguageService extends ChangeNotifier {
       String jsonString = await rootBundle.loadString('assets/lang/$_currentLanguage.json');
       _localizedStrings = json.decode(jsonString);
       
-      // Dil tercihini kaydet (ilk açılışta da kaydedilmiş olsun)
-      if (!prefs.containsKey('language')) {
-        await prefs.setString('language', _currentLanguage);
-      }
+      // NOT: Dil tercihini burada kaydetmiyoruz - kullanıcı seçmeli
+      // Sadece dil zaten seçilmişse (changeLanguage ile) kaydedilir
     } catch (e) {
       print('⚠️ Dil dosyası yüklenemedi ($_currentLanguage), Türkçe yükleniyor: $e');
       _currentLanguage = 'tr';
       String jsonString = await rootBundle.loadString('assets/lang/tr.json');
       _localizedStrings = json.decode(jsonString);
-      await prefs.setString('language', _currentLanguage);
     }
     
     notifyListeners();

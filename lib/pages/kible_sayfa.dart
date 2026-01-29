@@ -122,8 +122,9 @@ class _KibleSayfaState extends State<KibleSayfa> {
 
   /// Doğru yönde olup olmadığını kontrol et ve geri bildirim ver
   void _checkCorrectDirection() {
-    if (_kibleDerece == null || _heading == null || _declination == null)
+    if (_kibleDerece == null || _heading == null || _declination == null) {
       return;
+    }
 
     final trueHeading = _normalizeAngle(
       (_heading ?? 0).toDouble() + (_declination ?? 0),
@@ -256,18 +257,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
         }
       }
 
-      if (position == null) {
-        setState(() {
-          _hata =
-              _languageService['location_not_available'] ??
-              'Konum bilgisi alınamadı.';
-          _hataAksiyon = _konumuAl;
-          _hataAksiyonLabel = _languageService['try_again'] ?? 'Tekrar Dene';
-          _yukleniyor = false;
-        });
-        return;
-      }
-
+      // Position artık null olamaz (ya getCurrentPosition ya da lastKnown)
       // Kıble açısını hesapla
       final kibleAcisi = _kibleHesapla(position.latitude, position.longitude);
 
@@ -443,7 +433,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
     final qibla = _kibleDerece ?? 0;
     final double? trueHeading = hasHeading
         ? _normalizeAngle(
-            (heading ?? 0).toDouble() + (_declination ?? 0),
+            heading.toDouble() + (_declination ?? 0),
           ).toDouble()
         : null;
     final double? relative = trueHeading != null
@@ -711,9 +701,6 @@ class _KibleSayfaState extends State<KibleSayfa> {
     final headingText = trueHeading == null
         ? '--'
         : '${trueHeading.toStringAsFixed(0)}° ${_getYonKisaltma(trueHeading)}';
-    final qiblaText = _kibleDerece == null
-        ? '--'
-        : '${_kibleDerece!.toStringAsFixed(0)}°';
     final isCorrectDirection = relativeAngle != null && relativeAngle.abs() < 3;
     // Kabe simgesi için açı (kıble açısı - cihaz yönü)
     final double kabeAngle = (_kibleDerece ?? 0) - (trueHeading ?? 0);
@@ -1384,301 +1371,15 @@ class _KibleSayfaState extends State<KibleSayfa> {
     );
   }
 
-  Widget _centerDegreeBadge(String text) {
-    return Container(
-      width: 56,
-      height: 56,
-      decoration: BoxDecoration(
-        color: const Color(0xFF2F7DE1),
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.35),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      alignment: Alignment.center,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.mosque, color: Colors.black, size: 16),
-          const SizedBox(height: 2),
-          Text(
-            text,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   String _getYonKisaltma(double derece) {
-    if (derece >= 337.5 || derece < 22.5)
-      return _languageService['compass_n'] ?? 'K';
-    if (derece >= 22.5 && derece < 67.5)
-      return _languageService['compass_ne'] ?? 'KD';
-    if (derece >= 67.5 && derece < 112.5)
-      return _languageService['compass_e'] ?? 'D';
-    if (derece >= 112.5 && derece < 157.5)
-      return _languageService['compass_se'] ?? 'GD';
-    if (derece >= 157.5 && derece < 202.5)
-      return _languageService['compass_s'] ?? 'G';
-    if (derece >= 202.5 && derece < 247.5)
-      return _languageService['compass_sw'] ?? 'GB';
-    if (derece >= 247.5 && derece < 292.5)
-      return _languageService['compass_w'] ?? 'B';
-    return _languageService['compass_nw'] ?? 'KB';
-  }
-
-  Widget _compassFace(TemaRenkleri renkler) {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        _orbitDots(renkler),
-        for (int i = 0; i < 72; i++)
-          Transform.rotate(
-            angle: _toRadians(i * 5.0),
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: Container(
-                width: i % 6 == 0 ? 3 : 1,
-                height: i % 6 == 0 ? 18 : 10,
-                decoration: BoxDecoration(
-                  color: i % 18 == 0
-                      ? renkler.vurgu.withValues(alpha: 0.9)
-                      : renkler.ayirac.withValues(alpha: 0.6),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-            ),
-          ),
-        for (int i = 0; i < 4; i++)
-          Transform.rotate(
-            angle: _toRadians(i * 90.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: renkler.kartArkaPlan.withValues(alpha: 0.8),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: renkler.ayirac.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: Text(
-                    ['K', 'D', 'G', 'B'][i],
-                    style: TextStyle(
-                      color: i == 0 ? Colors.redAccent : renkler.yaziPrimary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 100),
-              ],
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _qiblaNeedle(TemaRenkleri renkler) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 8,
-          height: 120,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Colors.greenAccent.shade200, Colors.green.shade600],
-            ),
-            borderRadius: BorderRadius.circular(4),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.green.withValues(alpha: 0.5),
-                blurRadius: 18,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _centerDot(TemaRenkleri renkler) {
-    return Container(
-      width: 20,
-      height: 20,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: renkler.vurgu,
-        boxShadow: [
-          BoxShadow(
-            color: renkler.vurgu.withValues(alpha: 0.7),
-            blurRadius: 10,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _glowRing(TemaRenkleri renkler) {
-    return IgnorePointer(
-      child: Container(
-        width: 260,
-        height: 260,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: renkler.vurgu.withValues(alpha: 0.12),
-              blurRadius: 40,
-              spreadRadius: 8,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _glassRing(TemaRenkleri renkler) {
-    return Container(
-      width: 320,
-      height: 320,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: SweepGradient(
-          colors: [
-            renkler.vurgu.withValues(alpha: 0.10),
-            Colors.transparent,
-            renkler.vurgu.withValues(alpha: 0.10),
-          ],
-        ),
-        border: Border.all(color: renkler.ayirac.withValues(alpha: 0.25)),
-      ),
-    );
-  }
-
-  Widget _orbitDots(TemaRenkleri renkler) {
-    return SizedBox(
-      width: 280,
-      height: 280,
-      child: Stack(
-        children: List.generate(8, (index) {
-          final angle = _toRadians(index * 45.0);
-          return Align(
-            alignment: Alignment(math.cos(angle), math.sin(angle)),
-            child: Container(
-              width: 6,
-              height: 6,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: renkler.vurgu.withValues(alpha: 0.5),
-              ),
-            ),
-          );
-        }),
-      ),
-    );
-  }
-
-  Widget _qiblaHalo(TemaRenkleri renkler, double? relativeAngle) {
-    if (relativeAngle == null) return const SizedBox.shrink();
-    return AnimatedRotation(
-      turns: relativeAngle / 360,
-      duration: const Duration(milliseconds: 140),
-      child: Align(
-        alignment: Alignment.topCenter,
-        child: Container(
-          width: 120,
-          height: 120,
-          margin: const EdgeInsets.only(top: 20),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: RadialGradient(
-              colors: [
-                Colors.greenAccent.withValues(alpha: 0.18),
-                Colors.transparent,
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _infoChip(
-    TemaRenkleri renkler,
-    IconData icon,
-    String title,
-    String value,
-  ) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: renkler.arkaPlan.withValues(alpha: 0.7),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: renkler.ayirac.withValues(alpha: 0.4)),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 16, color: renkler.vurgu),
-          const SizedBox(width: 6),
-          Text(
-            '$title: ',
-            style: TextStyle(color: renkler.yaziSecondary, fontSize: 12),
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              color: renkler.yaziPrimary,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _pusulaDestekYok(TemaRenkleri renkler) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.explore_off,
-              size: 80,
-              color: renkler.yaziSecondary.withValues(alpha: 0.6),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              _languageService['compass_not_found'] ??
-                  'Cihazda pusula sensörü bulunamadı.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: renkler.yaziPrimary, fontSize: 16),
-            ),
-          ],
-        ),
-      ),
-    );
+    if (derece >= 337.5 || derece < 22.5) return 'N';
+    if (derece >= 22.5 && derece < 67.5) return 'NE';
+    if (derece >= 67.5 && derece < 112.5) return 'E';
+    if (derece >= 112.5 && derece < 157.5) return 'SE';
+    if (derece >= 157.5 && derece < 202.5) return 'S';
+    if (derece >= 202.5 && derece < 247.5) return 'SW';
+    if (derece >= 247.5 && derece < 292.5) return 'W';
+    return 'NW';
   }
 
   Widget _kibleAcisiGoster(TemaRenkleri renkler) {
@@ -1741,21 +1442,53 @@ class _KibleSayfaState extends State<KibleSayfa> {
     );
   }
 
+  Widget _pusulaDestekYok(TemaRenkleri renkler) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.explore_off,
+              size: 80,
+              color: renkler.yaziSecondary.withValues(alpha: 0.6),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              _languageService['compass_not_found'] ??
+                  'Cihazda pusula sensörü bulunamadı.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: renkler.yaziPrimary, fontSize: 16),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   String _getYonAdi(double derece) {
-    if (derece >= 337.5 || derece < 22.5)
+    if (derece >= 337.5 || derece < 22.5) {
       return _languageService['direction_north'] ?? 'Kuzey';
-    if (derece >= 22.5 && derece < 67.5)
+    }
+    if (derece >= 22.5 && derece < 67.5) {
       return _languageService['direction_northeast'] ?? 'Kuzeydoğu';
-    if (derece >= 67.5 && derece < 112.5)
+    }
+    if (derece >= 67.5 && derece < 112.5) {
       return _languageService['direction_east'] ?? 'Doğu';
-    if (derece >= 112.5 && derece < 157.5)
+    }
+    if (derece >= 112.5 && derece < 157.5) {
       return _languageService['direction_southeast'] ?? 'Güneydoğu';
-    if (derece >= 157.5 && derece < 202.5)
+    }
+    if (derece >= 157.5 && derece < 202.5) {
       return _languageService['direction_south'] ?? 'Güney';
-    if (derece >= 202.5 && derece < 247.5)
+    }
+    if (derece >= 202.5 && derece < 247.5) {
       return _languageService['direction_southwest'] ?? 'Güneybatı';
-    if (derece >= 247.5 && derece < 292.5)
+    }
+    if (derece >= 247.5 && derece < 292.5) {
       return _languageService['direction_west'] ?? 'Batı';
+    }
     return _languageService['direction_northwest'] ?? 'Kuzeybatı';
   }
 

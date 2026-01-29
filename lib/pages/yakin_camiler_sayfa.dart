@@ -135,18 +135,7 @@ class _YakinCamilerSayfaState extends State<YakinCamilerSayfa> {
         }
       }
 
-      if (position == null) {
-        setState(() {
-          _hata =
-              _languageService['location_not_available'] ??
-              'Konum bilgisi alınamadı.';
-          _hataAksiyon = _camileriYukle;
-          _hataAksiyonLabel = _languageService['try_again'] ?? 'Tekrar Dene';
-          _yukleniyor = false;
-        });
-        return;
-      }
-
+      // Position artık null olamaz (ya getCurrentPosition ya da lastKnown)
       setState(() {
         _konum = position;
       });

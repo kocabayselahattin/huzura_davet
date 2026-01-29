@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:math' as math;
-import 'package:shared_preferences/shared_preferences.dart';
 import '../services/konum_service.dart';
 import '../services/diyanet_api_service.dart';
+import '../services/tema_service.dart';
 import 'package:intl/intl.dart';
 import 'package:hijri/hijri_calendar.dart';
 
@@ -16,6 +16,7 @@ class MihrapSayacWidget extends StatefulWidget {
 
 class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
     with TickerProviderStateMixin {
+  final TemaService _temaService = TemaService();
   Timer? _timer;
   String _gelecekVakit = "Öğle";
   Duration _kalanSure = const Duration();
@@ -40,17 +41,22 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
         _vakitHesapla();
       }
     });
+    _temaService.addListener(_onTemaChanged);
+  }
+
+  void _onTemaChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
     _timer?.cancel();
     _archController.dispose();
+    _temaService.removeListener(_onTemaChanged);
     super.dispose();
   }
 
   Future<void> _vakitleriYukle() async {
-    final prefs = await SharedPreferences.getInstance();
     final konumlar = await KonumService.getKonumlar();
     final aktifIndex = await KonumService.getAktifKonumIndex();
 
@@ -79,14 +85,14 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
     if (_vakitler.isEmpty) return;
 
     final now = DateTime.now();
-    final vakitSirasi = ['imsak', 'gunes', 'ogle', 'ikindi', 'aksam', 'yatsi'];
+    final vakitSirasi = ['Imsak', 'Gunes', 'Ogle', 'Ikindi', 'Aksam', 'Yatsi'];
     final vakitIsimleri = {
-      'imsak': 'İmsak',
-      'gunes': 'Güneş',
-      'ogle': 'Öğle',
-      'ikindi': 'İkindi',
-      'aksam': 'Akşam',
-      'yatsi': 'Yatsı',
+      'Imsak': 'İmsak',
+      'Gunes': 'Güneş',
+      'Ogle': 'Öğle',
+      'Ikindi': 'İkindi',
+      'Aksam': 'Akşam',
+      'Yatsi': 'Yatsı',
     };
 
     DateTime? gelecekVakitZamani;
@@ -115,7 +121,7 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
     }
 
     if (gelecekVakitZamani == null) {
-      final imsakStr = _vakitler['imsak'];
+      final imsakStr = _vakitler['Imsak'];
       if (imsakStr != null) {
         final parts = imsakStr.split(':');
         if (parts.length == 2) {
@@ -154,7 +160,7 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
     final seconds = _kalanSure.inSeconds.remainder(60);
 
     final hijriNow = HijriCalendar.now();
-    final miladi = DateFormat('d MMMM yyyy', 'tr_TR').format(DateTime.now());
+    final miladi = DateFormat('d MMM yyyy', 'tr_TR').format(DateTime.now());
     final hicri = '${hijriNow.hDay} ${_getHijriMonth(hijriNow.hMonth)} ${hijriNow.hYear}';
 
     return Container(
@@ -191,121 +197,69 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
               },
             ),
           ),
-          // Geometrik desenler
-          Positioned(
-            left: -20,
-            bottom: -20,
-            child: Opacity(
-              opacity: 0.1,
-              child: CustomPaint(
-                size: const Size(150, 150),
-                painter: _IslamicPatternPainter(),
-              ),
-            ),
-          ),
           // İçerik
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(14),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                // Takvim başlığı
+                // Tarih satırı (kompakt)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.amber.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.amber.withOpacity(0.3)),
-                      ),
-                      child: const Row(
-                        children: [
-                          Icon(Icons.mosque, color: Colors.amber, size: 16),
-                          SizedBox(width: 10),
-                          Text(
-                            'TAKVİM',
-                            style: TextStyle(
-                              color: Colors.amber,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 2,
-                            ),
-                          ),
-                        ],
+                    const Icon(Icons.calendar_today, color: Colors.white60, size: 12),
+                    const SizedBox(width: 6),
+                    Text(
+                      miladi,
+                      style: const TextStyle(
+                        color: Colors.white60,
+                        fontSize: 11,
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                // Takvimler
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildCalendarCard(
-                        icon: Icons.today,
-                        label: 'MİLADİ',
-                        date: miladi,
-                        color: Colors.blue.shade300,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildCalendarCard(
-                        icon: Icons.nightlight_round,
-                        label: 'HİCRİ',
-                        date: hicri,
+                    const Text(' • ', style: TextStyle(color: Colors.white38)),
+                    const Icon(Icons.mosque, color: Colors.amber, size: 12),
+                    const SizedBox(width: 4),
+                    Text(
+                      hicri,
+                      style: const TextStyle(
                         color: Colors.amber,
+                        fontSize: 11,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 10),
                 // Vakit bilgisi
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: Colors.black.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(15),
-                    border: Border.all(
-                      color: Colors.amber.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                  ),
+                  child: Text(
+                    _gelecekVakit.toUpperCase(),
+                    style: const TextStyle(
+                      color: Colors.amber,
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 2,
                     ),
                   ),
-                  child: Column(
-                    children: [
-                      Text(
-                        _gelecekVakit.toUpperCase(),
-                        style: const TextStyle(
-                          color: Colors.amber,
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 3,
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                      Text(
-                        'vakti için',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.6),
-                          fontSize: 11,
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
                 // Kalan süre
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     _buildTimePillar(hours.toString().padLeft(2, '0'), 'SAAT'),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 10),
                     _buildTimePillar(minutes.toString().padLeft(2, '0'), 'DAKİKA'),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 10),
                     _buildTimePillar(seconds.toString().padLeft(2, '0'), 'SANİYE'),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
                 // Ecir barı
                 _buildEcirSection(),
               ],
@@ -316,59 +270,12 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
     );
   }
 
-  Widget _buildCalendarCard({
-    required IconData icon,
-    required String label,
-    required String date,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            color.withOpacity(0.2),
-            color.withOpacity(0.05),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: color.withOpacity(0.3)),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: color, size: 18),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            style: TextStyle(
-              color: color.withOpacity(0.8),
-              fontSize: 9,
-              letterSpacing: 1.5,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            date,
-            style: TextStyle(
-              color: color,
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildTimePillar(String value, String label) {
     return Column(
       children: [
         Container(
-          width: 60,
-          height: 60,
+          width: 52,
+          height: 52,
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
@@ -378,12 +285,12 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
                 Colors.amber.withOpacity(0.1),
               ],
             ),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
             border: Border.all(color: Colors.amber.withOpacity(0.4), width: 2),
             boxShadow: [
               BoxShadow(
                 color: Colors.amber.withOpacity(0.2),
-                blurRadius: 10,
+                blurRadius: 8,
               ),
             ],
           ),
@@ -391,20 +298,20 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
             child: Text(
               value,
               style: const TextStyle(
-                fontSize: 28,
+                fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),
             ),
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 4),
         Text(
           label,
           style: TextStyle(
-            fontSize: 9,
+            fontSize: 8,
             color: Colors.white.withOpacity(0.6),
-            letterSpacing: 1,
+            letterSpacing: 0.5,
           ),
         ),
       ],
@@ -412,86 +319,66 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
   }
 
   Widget _buildEcirSection() {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Colors.amber.withOpacity(0.15),
-            Colors.amber.withOpacity(0.05),
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.star, color: Colors.amber, size: 14),
+                SizedBox(width: 6),
+                Text(
+                  'İbadet Saati',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            Text(
+              '%${(_ecirOrani * 100).toInt()}',
+              style: const TextStyle(
+                color: Colors.amber,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ],
         ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.amber.withOpacity(0.3)),
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Row(
-                children: [
-                  Icon(Icons.star, color: Colors.amber, size: 16),
-                  SizedBox(width: 8),
-                  Text(
-                    'İbadet Saati',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
+        const SizedBox(height: 6),
+        Stack(
+          children: [
+            Container(
+              height: 5,
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(6),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            ),
+            FractionallySizedBox(
+              widthFactor: _ecirOrani,
+              child: Container(
+                height: 5,
                 decoration: BoxDecoration(
-                  color: Colors.amber.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  '%${(_ecirOrani * 100).toInt()}',
-                  style: const TextStyle(
-                    color: Colors.amber,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
+                  gradient: const LinearGradient(
+                    colors: [Colors.amber, Colors.orange, Colors.deepOrange],
                   ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Stack(
-            children: [
-              Container(
-                height: 10,
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              FractionallySizedBox(
-                widthFactor: _ecirOrani,
-                child: Container(
-                  height: 10,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Colors.amber, Colors.orange, Colors.deepOrange],
+                  borderRadius: BorderRadius.circular(6),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.amber.withOpacity(0.6),
+                      blurRadius: 6,
                     ),
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.amber.withOpacity(0.8),
-                        blurRadius: 10,
-                      ),
-                    ],
-                  ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ],
-      ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 

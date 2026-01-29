@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:math' as math;
-import 'dart:ui';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:intl/intl.dart';
 import '../services/konum_service.dart';
@@ -23,7 +22,6 @@ class _SiberSayacWidgetState extends State<SiberSayacWidget>
   Timer? _timer;
   Duration _kalanSure = Duration.zero;
   String _sonrakiVakit = '';
-  String _mevcutVakit = '';
   Map<String, String> _vakitSaatleri = {};
   final TemaService _temaService = TemaService();
   final LanguageService _languageService = LanguageService();
@@ -135,7 +133,6 @@ class _SiberSayacWidgetState extends State<SiberSayacWidget>
 
     DateTime? sonrakiVakitZamani;
     String sonrakiVakitAdi = '';
-    String mevcutVakitAdi = '';
     int oncekiVakitSeconds = 0;
     int sonrakiVakitSeconds = 0;
 
@@ -147,7 +144,6 @@ class _SiberSayacWidgetState extends State<SiberSayacWidget>
         sonrakiVakitZamani = DateTime(now.year, now.month, now.day,
             int.parse(parts[0]), int.parse(parts[1]));
         sonrakiVakitAdi = vakitSaatleri[i]['adi']!;
-        mevcutVakitAdi = i > 0 ? vakitSaatleri[i - 1]['adi']! : vakitSaatleri.last['adi']!;
         sonrakiVakitSeconds = vakitSeconds;
         if (i > 0) {
           final oncekiParts = vakitSaatleri[i - 1]['saat']!.split(':');
@@ -166,7 +162,6 @@ class _SiberSayacWidgetState extends State<SiberSayacWidget>
       sonrakiVakitZamani = DateTime(now.year, now.month, now.day + 1,
           int.parse(parts[0]), int.parse(parts[1]));
       sonrakiVakitAdi = vakitSaatleri[0]['adi']!;
-      mevcutVakitAdi = vakitSaatleri.last['adi']!;
       // Yatsıdan sonra, sonraki gün imsak'a kadar
       final yatsiParts = vakitSaatleri.last['saat']!.split(':');
       oncekiVakitSeconds = int.parse(yatsiParts[0]) * 3600 + int.parse(yatsiParts[1]) * 60;
@@ -184,7 +179,6 @@ class _SiberSayacWidgetState extends State<SiberSayacWidget>
     setState(() {
       _kalanSure = sonrakiVakitZamani!.difference(now);
       _sonrakiVakit = sonrakiVakitAdi;
-      _mevcutVakit = mevcutVakitAdi;
       _ilerlemeOrani = ilerleme;
     });
   }
@@ -219,7 +213,6 @@ class _SiberSayacWidgetState extends State<SiberSayacWidget>
     final bgColor1 = kullanTemaRenkleri ? temaRenkleri.arkaPlan : const Color(0xFF0D0221);
     final bgColor2 = kullanTemaRenkleri ? temaRenkleri.kartArkaPlan : const Color(0xFF1A0533);
     final textColor = kullanTemaRenkleri ? temaRenkleri.yaziPrimary : Colors.white;
-    final secondaryTextColor = kullanTemaRenkleri ? temaRenkleri.yaziSecondary : const Color(0xFFB388FF);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),

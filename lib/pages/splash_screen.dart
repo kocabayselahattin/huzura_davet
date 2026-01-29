@@ -25,19 +25,24 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> _kontrolVeYonlendir() async {
     if (!mounted) return;
+    print('🚀 Splash: Başladı');
 
     // 1 saniye splash screen göster
     await Future.delayed(const Duration(milliseconds: 800));
 
     if (!mounted) return;
+    print('🚀 Splash: Delay bitti');
 
     // SharedPreferences'ı tek seferde al
     final prefs = await SharedPreferences.getInstance();
+    print('🚀 Splash: Prefs yüklendi');
     final dilSecildi = prefs.containsKey('language');
     final onboardingCompleted = prefs.getBool('onboarding_completed') ?? false;
+    print('🚀 Splash: dilSecildi=$dilSecildi, onboardingCompleted=$onboardingCompleted');
 
-    // İlk açılış kontrolü
+    // İlk açılış kontrolü - dil sadece ilk kurulumda sorulur
     if (!dilSecildi) {
+      print('🚀 Splash: Dil seçim sayfasına yönlendiriliyor (ilk kurulum)');
       // 1. Dil seçimi
       final result = await Navigator.push(
         context,
@@ -45,29 +50,41 @@ class _SplashScreenState extends State<SplashScreen> {
       );
 
       if (result != true || !mounted) return;
+      
+      // Dil seçildi, bir daha sorma
+      print('🚀 Splash: Dil seçildi, kaydedildi');
+    } else {
+      // Dil zaten seçilmiş, yükle
+      print('🚀 Splash: Kayıtlı dil yükleniyor');
+      await LanguageService().load();
     }
 
     // 2. İzin onboarding (sadece ilk kurulumda ve kritik izinler eksikse)
     if (!onboardingCompleted) {
+      print('🚀 Splash: Onboarding tamamlanmamış, izinler kontrol ediliyor...');
       setState(() => _durum = 'İzinler kontrol ediliyor...');
 
       // Kritik izinleri kontrol et (konum ve bildirim)
       final locationGranted = await PermissionService.checkLocationPermission();
       final notificationGranted = await PermissionService.checkNotificationPermission();
+      print('🚀 Splash: locationGranted=$locationGranted, notificationGranted=$notificationGranted');
       
       // Eğer kritik izinler eksikse onboarding göster
       if (!locationGranted || !notificationGranted) {
-        final permissionResult = await Navigator.push(
+        print('🚀 Splash: İzin sayfasına yönlendiriliyor...');
+        await Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => const OnboardingPermissionsPage(),
           ),
         );
+        print('🚀 Splash: İzin sayfasından döndü');
 
         if (!mounted) return;
       }
 
       // Onboarding tamamlandı olarak işaretle (kullanıcı atlamış olsa bile)
+      print('🚀 Splash: Onboarding tamamlandı işaretleniyor');
       await prefs.setBool('onboarding_completed', true);
     }
 

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'dart:ui';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:intl/intl.dart';
 import '../services/konum_service.dart';
@@ -22,7 +21,6 @@ class _ZenSayacWidgetState extends State<ZenSayacWidget>
   Timer? _timer;
   Duration _kalanSure = Duration.zero;
   String _sonrakiVakit = '';
-  String _mevcutVakit = '';
   Map<String, String> _vakitSaatleri = {};
   final TemaService _temaService = TemaService();
   final LanguageService _languageService = LanguageService();
@@ -114,7 +112,6 @@ class _ZenSayacWidgetState extends State<ZenSayacWidget>
 
     DateTime? sonrakiVakitZamani;
     String sonrakiVakitAdi = '';
-    String mevcutVakitAdi = '';
     int mevcutVakitIndex = -1;
 
     for (int i = 0; i < vakitSaatleri.length; i++) {
@@ -125,7 +122,6 @@ class _ZenSayacWidgetState extends State<ZenSayacWidget>
         sonrakiVakitZamani = DateTime(now.year, now.month, now.day,
             int.parse(parts[0]), int.parse(parts[1]));
         sonrakiVakitAdi = vakitSaatleri[i]['adi']!;
-        mevcutVakitAdi = i > 0 ? vakitSaatleri[i - 1]['adi']! : vakitSaatleri.last['adi']!;
         mevcutVakitIndex = i > 0 ? i - 1 : vakitSaatleri.length - 1;
         break;
       }
@@ -136,7 +132,6 @@ class _ZenSayacWidgetState extends State<ZenSayacWidget>
       sonrakiVakitZamani = DateTime(now.year, now.month, now.day + 1,
           int.parse(parts[0]), int.parse(parts[1]));
       sonrakiVakitAdi = vakitSaatleri[0]['adi']!;
-      mevcutVakitAdi = vakitSaatleri.last['adi']!;
       mevcutVakitIndex = vakitSaatleri.length - 1;
     }
 
@@ -177,7 +172,6 @@ class _ZenSayacWidgetState extends State<ZenSayacWidget>
     setState(() {
       _kalanSure = sonrakiVakitZamani!.difference(now);
       _sonrakiVakit = sonrakiVakitAdi;
-      _mevcutVakit = mevcutVakitAdi;
       _ilerlemeOrani = ilerlemeOrani;
     });
   }
@@ -208,11 +202,9 @@ class _ZenSayacWidgetState extends State<ZenSayacWidget>
 
     // Orijinal renkler veya tema renkleri
     final primaryColor = kullanTemaRenkleri ? temaRenkleri.vurgu : const Color(0xFF4A6741);
-    final secondaryColor = kullanTemaRenkleri ? temaRenkleri.vurguSecondary : const Color(0xFF6B8E5F);
     final bgColor1 = kullanTemaRenkleri ? temaRenkleri.kartArkaPlan : const Color(0xFFF5F5DC);
     final bgColor2 = kullanTemaRenkleri ? temaRenkleri.arkaPlan : const Color(0xFFE8E4D9);
     final textColor = kullanTemaRenkleri ? temaRenkleri.yaziPrimary : const Color(0xFF2D3A29);
-    final secondaryTextColor = kullanTemaRenkleri ? temaRenkleri.yaziSecondary : const Color(0xFF5C6B54);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),

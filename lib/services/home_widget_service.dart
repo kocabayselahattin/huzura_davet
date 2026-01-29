@@ -491,7 +491,7 @@ class HomeWidgetService {
     // Geri sayım formatı: saniye YOK (widget'lar her 30sn güncellenir)
     final geriSayimStr = kalanSaat > 0 
         ? '${kalanSaat}s ${kalanDk}dk' 
-        : '${kalanDk} dk';
+        : '$kalanDk dk';
 
     return {
       'sonrakiVakit': sonrakiVakit,
@@ -500,7 +500,7 @@ class HomeWidgetService {
       'mevcutSaat': mevcutSaat,
       'kalanSure': kalanSaat > 0 
           ? '${kalanSaat}s ${kalanDk}dk kaldı'
-          : '${kalanDk} dk kaldı',
+          : '$kalanDk dk kaldı',
       'kalanKisa': geriSayimStr,
       'geriSayim': geriSayimStr,
       'ilerleme': ilerleme.toString(),

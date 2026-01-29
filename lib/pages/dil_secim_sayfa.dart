@@ -22,7 +22,14 @@ class _DilSecimSayfaState extends State<DilSecimSayfa> {
   };
 
   @override
+  void initState() {
+    super.initState();
+    print('🌍 DilSecimSayfa: initState');
+  }
+
+  @override
   Widget build(BuildContext context) {
+    print('🌍 DilSecimSayfa: build çağrıldı');
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(

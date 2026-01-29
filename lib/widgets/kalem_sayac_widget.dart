@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../services/konum_service.dart';
 import '../services/diyanet_api_service.dart';
+import '../services/tema_service.dart';
 import 'package:intl/intl.dart';
 import 'package:hijri/hijri_calendar.dart';
 
@@ -15,6 +15,7 @@ class KalemSayacWidget extends StatefulWidget {
 
 class _KalemSayacWidgetState extends State<KalemSayacWidget>
     with SingleTickerProviderStateMixin {
+  final TemaService _temaService = TemaService();
   Timer? _timer;
   String _gelecekVakit = "Öğle";
   Duration _kalanSure = const Duration();
@@ -39,17 +40,22 @@ class _KalemSayacWidgetState extends State<KalemSayacWidget>
         _vakitHesapla();
       }
     });
+    _temaService.addListener(_onTemaChanged);
+  }
+
+  void _onTemaChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
     _timer?.cancel();
     _animController.dispose();
+    _temaService.removeListener(_onTemaChanged);
     super.dispose();
   }
 
   Future<void> _vakitleriYukle() async {
-    final prefs = await SharedPreferences.getInstance();
     final konumlar = await KonumService.getKonumlar();
     final aktifIndex = await KonumService.getAktifKonumIndex();
 
@@ -78,14 +84,14 @@ class _KalemSayacWidgetState extends State<KalemSayacWidget>
     if (_vakitler.isEmpty) return;
 
     final now = DateTime.now();
-    final vakitSirasi = ['imsak', 'gunes', 'ogle', 'ikindi', 'aksam', 'yatsi'];
+    final vakitSirasi = ['Imsak', 'Gunes', 'Ogle', 'Ikindi', 'Aksam', 'Yatsi'];
     final vakitIsimleri = {
-      'imsak': 'İmsak',
-      'gunes': 'Güneş',
-      'ogle': 'Öğle',
-      'ikindi': 'İkindi',
-      'aksam': 'Akşam',
-      'yatsi': 'Yatsı',
+      'Imsak': 'İmsak',
+      'Gunes': 'Güneş',
+      'Ogle': 'Öğle',
+      'Ikindi': 'İkindi',
+      'Aksam': 'Akşam',
+      'Yatsi': 'Yatsı',
     };
 
     DateTime? gelecekVakitZamani;
@@ -114,7 +120,7 @@ class _KalemSayacWidgetState extends State<KalemSayacWidget>
     }
 
     if (gelecekVakitZamani == null) {
-      final imsakStr = _vakitler['imsak'];
+      final imsakStr = _vakitler['Imsak'];
       if (imsakStr != null) {
         final parts = imsakStr.split(':');
         if (parts.length == 2) {
@@ -155,7 +161,7 @@ class _KalemSayacWidgetState extends State<KalemSayacWidget>
     final seconds = _kalanSure.inSeconds.remainder(60);
 
     final hijriNow = HijriCalendar.now();
-    final miladi = DateFormat('d MMMM yyyy', 'tr_TR').format(DateTime.now());
+    final miladi = DateFormat('d MMM yyyy', 'tr_TR').format(DateTime.now());
     final hicri = '${hijriNow.hDay} ${_getHijriMonth(hijriNow.hMonth)} ${hijriNow.hYear}';
 
     return ScaleTransition(
@@ -191,66 +197,45 @@ class _KalemSayacWidgetState extends State<KalemSayacWidget>
                 angle: 0.3,
                 child: Icon(
                   Icons.edit,
-                  size: 200,
+                  size: 150,
                   color: Colors.white.withOpacity(0.05),
-                ),
-              ),
-            ),
-            // Arapça desen
-            Positioned(
-              left: 20,
-              bottom: 20,
-              child: Text(
-                'بِسْمِ اللَّهِ',
-                style: TextStyle(
-                  fontSize: 40,
-                  color: Colors.white.withOpacity(0.1),
-                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
             // İçerik
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(14),
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Takvim bilgileri
+                  // Tarih satırı (kompakt)
                   Row(
                     children: [
-                      Icon(Icons.calendar_today, color: Colors.white70, size: 16),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              miladi,
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            Text(
-                              hicri,
-                              style: const TextStyle(
-                                color: Colors.white60,
-                                fontSize: 11,
-                              ),
-                            ),
-                          ],
+                      Text(
+                        miladi,
+                        style: const TextStyle(
+                          color: Colors.white60,
+                          fontSize: 11,
+                        ),
+                      ),
+                      const Text(' • ', style: TextStyle(color: Colors.white38)),
+                      Text(
+                        hicri,
+                        style: const TextStyle(
+                          color: Colors.amber,
+                          fontSize: 11,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 10),
                   // Gelecek vakit
                   Text(
                     _gelecekVakit.toUpperCase(),
                     style: const TextStyle(
                       color: Colors.white70,
-                      fontSize: 16,
+                      fontSize: 14,
                       letterSpacing: 3,
                       fontWeight: FontWeight.w300,
                     ),
@@ -262,29 +247,29 @@ class _KalemSayacWidgetState extends State<KalemSayacWidget>
                     children: [
                       _buildTimeBlock(hours.toString().padLeft(2, '0'), 'SAAT'),
                       const SizedBox(width: 3),
-                      const Text(':', style: TextStyle(fontSize: 30, color: Colors.white70)),
+                      const Text(':', style: TextStyle(fontSize: 26, color: Colors.white70)),
                       const SizedBox(width: 3),
                       _buildTimeBlock(minutes.toString().padLeft(2, '0'), 'DAKİKA'),
                       const SizedBox(width: 3),
-                      const Text(':', style: TextStyle(fontSize: 30, color: Colors.white70)),
+                      const Text(':', style: TextStyle(fontSize: 26, color: Colors.white70)),
                       const SizedBox(width: 3),
                       _buildTimeBlock(seconds.toString().padLeft(2, '0'), 'SANİYE'),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   // Ecir barı
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.auto_awesome, color: Colors.amber, size: 16),
-                          const SizedBox(width: 8),
+                          Icon(Icons.auto_awesome, color: Colors.amber, size: 14),
+                          const SizedBox(width: 6),
                           const Text(
                             'Günün Bereketi',
                             style: TextStyle(
                               color: Colors.white70,
-                              fontSize: 12,
+                              fontSize: 11,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -293,37 +278,37 @@ class _KalemSayacWidgetState extends State<KalemSayacWidget>
                             '${(_ecirOrani * 100).toInt()}%',
                             style: const TextStyle(
                               color: Colors.amber,
-                              fontSize: 14,
+                              fontSize: 12,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 5),
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(8),
                         child: Stack(
                           children: [
                             Container(
-                              height: 6,
+                              height: 5,
                               decoration: BoxDecoration(
                                 color: Colors.white.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(8),
                               ),
                             ),
                             FractionallySizedBox(
                               widthFactor: _ecirOrani,
                               child: Container(
-                                height: 6,
+                                height: 5,
                                 decoration: BoxDecoration(
                                   gradient: const LinearGradient(
                                     colors: [Colors.amber, Colors.orange],
                                   ),
-                                  borderRadius: BorderRadius.circular(10),
+                                  borderRadius: BorderRadius.circular(8),
                                   boxShadow: [
                                     BoxShadow(
                                       color: Colors.amber.withOpacity(0.5),
-                                      blurRadius: 8,
+                                      blurRadius: 6,
                                     ),
                                   ],
                                 ),
@@ -347,27 +332,27 @@ class _KalemSayacWidgetState extends State<KalemSayacWidget>
     return Column(
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
             border: Border.all(color: Colors.white.withOpacity(0.2)),
           ),
           child: Text(
             time,
             style: const TextStyle(
-              fontSize: 30,
+              fontSize: 26,
               fontWeight: FontWeight.bold,
               color: Colors.white,
               height: 1,
             ),
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 3),
         Text(
           label,
           style: TextStyle(
-            fontSize: 9,
+            fontSize: 8,
             color: Colors.white.withOpacity(0.5),
             letterSpacing: 1,
           ),

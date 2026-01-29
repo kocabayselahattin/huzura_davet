@@ -23,7 +23,7 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
   final LanguageService _languageService = LanguageService();
 
   // Bildirim açık/kapalı durumları
-  Map<String, bool> _bildirimAcik = {
+  final Map<String, bool> _bildirimAcik = {
     'imsak': false,
     'gunes': true,
     'ogle': true,
@@ -33,7 +33,7 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
   };
 
   // Vaktinde bildirim (tam vakitte göster)
-  Map<String, bool> _vaktindeBildirim = {
+  final Map<String, bool> _vaktindeBildirim = {
     'imsak': false,
     'gunes': false,
     'ogle': false,
@@ -43,7 +43,7 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
   };
 
   // Alarm açık/kapalı durumları (kilit ekranında alarm çalar)
-  Map<String, bool> _alarmAcik = {
+  final Map<String, bool> _alarmAcik = {
     'imsak': false,
     'gunes': false,
     'ogle': false,
@@ -69,7 +69,7 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
 
   // Erken bildirim süreleri (dakika)
   // Varsayılan: 15 dakika önce (güneş 45 dakika)
-  Map<String, int> _erkenBildirim = {
+  final Map<String, int> _erkenBildirim = {
     'imsak': 15,
     'gunes': 45,
     'ogle': 15,
@@ -79,7 +79,7 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
   };
 
   // Bildirim sesi seçimi (her vakit için) - default: Best
-  Map<String, String> _bildirimSesi = {
+  final Map<String, String> _bildirimSesi = {
     'imsak': 'best.mp3',
     'gunes': 'best.mp3',
     'ogle': 'best.mp3',
@@ -111,7 +111,7 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
   ];
 
   // Özel ses yolları
-  Map<String, String> _ozelSesDosyalari = {};
+  final Map<String, String> _ozelSesDosyalari = {};
 
   /// Dosya adını Android resource kurallarına uygun hale getirir
   /// - Küçük harfe çevirir
@@ -524,65 +524,6 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
     return true;
   }
 
-  /// Bildirim izni kontrolü
-  Future<bool> _checkNotificationPermission() async {
-    final notificationsPlugin = FlutterLocalNotificationsPlugin();
-    final androidImpl = notificationsPlugin
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >();
-
-    if (androidImpl == null) return true;
-
-    final hasPermission =
-        await androidImpl.areNotificationsEnabled() ?? false;
-    if (hasPermission) return true;
-
-    if (mounted) {
-      final shouldRequest = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(
-            _languageService['notification_permission_required'] ??
-                'Bildirim İzni Gerekli',
-          ),
-          content: Text(
-            _languageService['notification_permission_message'] ??
-                'Test bildirimleri için bildirim izni vermeniz gerekiyor.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text(_languageService['give_up'] ?? 'Vazgeç'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: Text(_languageService['allow'] ?? 'İzin Ver'),
-            ),
-          ],
-        ),
-      );
-
-      if (shouldRequest == true) {
-        final granted =
-            await androidImpl.requestNotificationsPermission() ?? false;
-        if (!granted && mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                _languageService['notification_permission_denied'] ??
-                    'Bildirim izni verilmedi. Test bildirimi gönderilemez.',
-              ),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-        return granted;
-      }
-    }
-    return false;
-  }
-
   Future<void> _sesCal(String key, String sesDosyasi) async {
     try {
       await _audioPlayer.stop();
@@ -893,7 +834,7 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
                           });
                           await _toggleSessizeAl(value);
                         },
-                        activeColor: Colors.orangeAccent,
+                        activeThumbColor: Colors.orangeAccent,
                       ),
                     ],
                   ),
@@ -953,7 +894,7 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
                           await DailyContentNotificationService
                               .setDailyContentNotificationsEnabled(value);
                         },
-                        activeColor: Colors.tealAccent,
+                        activeThumbColor: Colors.tealAccent,
                       ),
                     ],
                   ),
@@ -1112,7 +1053,7 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
                           });
                           await _toggleKilitEkraniBildirimi(value);
                         },
-                        activeColor: Colors.purpleAccent,
+                        activeThumbColor: Colors.purpleAccent,
                       ),
                     ],
                   ),
@@ -1296,7 +1237,7 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
                   _degisiklikYapildi = true;
                 });
               },
-              activeColor: Colors.cyanAccent,
+              activeThumbColor: Colors.cyanAccent,
             ),
           ),
 
@@ -1362,7 +1303,7 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
                               _degisiklikYapildi = true;
                             });
                           },
-                          activeColor: Colors.orangeAccent,
+                          activeThumbColor: Colors.orangeAccent,
                         ),
                       ],
                     ),

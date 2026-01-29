@@ -223,7 +223,7 @@ class _KuranSayfaState extends State<KuranSayfa>
                       ),
                       if (_sonOkunanAyetNo != null)
                         Text(
-                          'Ayet ${_sonOkunanAyetNo}',
+                          'Ayet $_sonOkunanAyetNo',
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.9),
                             fontSize: 13,
@@ -1693,8 +1693,9 @@ class _SureDetaySayfaState extends State<SureDetaySayfa> {
                   final ayetIndex = widget.sure.no != 1 && widget.sure.no != 9
                       ? index - 1
                       : index;
-                  if (ayetIndex < 0 || ayetIndex >= _ayetler.length)
+                  if (ayetIndex < 0 || ayetIndex >= _ayetler.length) {
                     return const SizedBox();
+                  }
 
                   final ayet = _ayetler[ayetIndex];
                   return _buildAyetKarti(ayet, renkler);
@@ -2213,8 +2214,6 @@ class CuzDetaySayfa extends StatefulWidget {
 
 class _CuzDetaySayfaState extends State<CuzDetaySayfa> {
   final TemaService _temaService = TemaService();
-  final LanguageService _languageService = LanguageService();
-  bool _yukleniyor = false;
 
   // Cüzdeki sureleri al
   List<Sure> _getCuzSureleri() {

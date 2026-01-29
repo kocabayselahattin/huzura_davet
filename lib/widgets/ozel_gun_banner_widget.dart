@@ -66,7 +66,6 @@ class _OzelGunBannerWidgetState extends State<OzelGunBannerWidget>
       return const SizedBox.shrink();
     }
 
-    final renkler = _temaService.renkler;
     final bannerRenkleri = _getBannerRenkleri(_ozelGun!.tur);
 
     return AnimatedBuilder(

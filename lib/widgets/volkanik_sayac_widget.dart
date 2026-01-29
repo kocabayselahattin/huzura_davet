@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:math' as math;
-import 'dart:ui';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:intl/intl.dart';
 import '../services/konum_service.dart';
@@ -23,7 +22,6 @@ class _VolkanikSayacWidgetState extends State<VolkanikSayacWidget>
   Timer? _timer;
   Duration _kalanSure = Duration.zero;
   String _sonrakiVakit = '';
-  String _mevcutVakit = '';
   Map<String, String> _vakitSaatleri = {};
   final TemaService _temaService = TemaService();
   final LanguageService _languageService = LanguageService();
@@ -132,7 +130,6 @@ class _VolkanikSayacWidgetState extends State<VolkanikSayacWidget>
 
     DateTime? sonrakiVakitZamani;
     String sonrakiVakitAdi = '';
-    String mevcutVakitAdi = '';
     double ilerlemeOrani = 0.0;
 
     for (int i = 0; i < vakitSaatleri.length; i++) {
@@ -143,7 +140,6 @@ class _VolkanikSayacWidgetState extends State<VolkanikSayacWidget>
         sonrakiVakitZamani = DateTime(now.year, now.month, now.day,
             int.parse(parts[0]), int.parse(parts[1]));
         sonrakiVakitAdi = vakitSaatleri[i]['adi']!;
-        mevcutVakitAdi = i > 0 ? vakitSaatleri[i - 1]['adi']! : vakitSaatleri.last['adi']!;
         
         // İlerleme oranı hesapla
         if (i > 0) {
@@ -169,7 +165,6 @@ class _VolkanikSayacWidgetState extends State<VolkanikSayacWidget>
       sonrakiVakitZamani = DateTime(now.year, now.month, now.day + 1,
           int.parse(parts[0]), int.parse(parts[1]));
       sonrakiVakitAdi = vakitSaatleri[0]['adi']!;
-      mevcutVakitAdi = vakitSaatleri.last['adi']!;
       
       // Yatsıdan sonrası için ilerleme oranı
       final yatsiSaniye = vakitSaniyeleri.last;
@@ -182,7 +177,6 @@ class _VolkanikSayacWidgetState extends State<VolkanikSayacWidget>
     setState(() {
       _kalanSure = sonrakiVakitZamani!.difference(now);
       _sonrakiVakit = sonrakiVakitAdi;
-      _mevcutVakit = mevcutVakitAdi;
       _ilerlemeOrani = ilerlemeOrani;
     });
   }
@@ -217,7 +211,6 @@ class _VolkanikSayacWidgetState extends State<VolkanikSayacWidget>
     final bgColor1 = kullanTemaRenkleri ? temaRenkleri.arkaPlan : const Color(0xFF1A0A00);
     final bgColor2 = kullanTemaRenkleri ? temaRenkleri.kartArkaPlan : const Color(0xFF2D1810);
     final textColor = kullanTemaRenkleri ? temaRenkleri.yaziPrimary : const Color(0xFFFFAA00);
-    final secondaryTextColor = kullanTemaRenkleri ? temaRenkleri.yaziSecondary : const Color(0xFFFF8C00);
 
     return AnimatedBuilder(
       animation: Listenable.merge([_lavaController, _glowAnimation]),

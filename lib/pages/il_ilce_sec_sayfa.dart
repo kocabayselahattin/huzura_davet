@@ -375,9 +375,7 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
     }
 
     // ÖNCELİK 3: Koordinatlardan en yakın ili bul
-    if (enYakinIl == null) {
-      enYakinIl = _enYakinIliBul(position.latitude, position.longitude);
-    }
+    enYakinIl ??= _enYakinIliBul(position.latitude, position.longitude);
 
     if (enYakinIl != null && enYakinIl.isNotEmpty) {
       final ilId =
@@ -588,7 +586,7 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
     }
 
     if (secilenIlce != null) {
-      final ilceId = secilenIlce!['IlceID']?.toString();
+      final ilceId = secilenIlce['IlceID']?.toString();
       final ilceAdi = secilenIlce['IlceAdi']?.toString();
       
       setState(() {
@@ -732,12 +730,6 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
     }
 
     return null;
-  }
-
-  // Eski fonksiyon - uyumluluk için
-  Future<Position?> _getIpBasedLocation() async {
-    final result = await _getIpBasedLocationWithCity();
-    return result?['position'] as Position?;
   }
 
   /// Ülke koduna göre uygulama dilini ayarla

@@ -403,7 +403,6 @@ class _MatrixSayacWidgetState extends State<MatrixSayacWidget>
                           margin: const EdgeInsets.symmetric(horizontal: 4),
                           child: LayoutBuilder(
                             builder: (context, constraints) {
-                              final filledWidth = constraints.maxWidth * _ilerlemeOrani;
                               final chars = (constraints.maxWidth / 8).floor();
                               final filledChars = (chars * _ilerlemeOrani).floor();
                               

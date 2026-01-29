@@ -744,33 +744,6 @@ class _IslamicCornerPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-// İslami ilerleme deseni çizici
-class _IslamicProgressPainter extends CustomPainter {
-  final Color color;
-
-  _IslamicProgressPainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.5;
-
-    // Diyagonal çizgiler
-    for (double x = 0; x < size.width + size.height; x += 8) {
-      canvas.drawLine(
-        Offset(x, 0),
-        Offset(x - size.height, size.height),
-        paint,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
 class _ProgressBarLinesPainter extends CustomPainter {
   final Color lineColor;
   _ProgressBarLinesPainter({required this.lineColor});

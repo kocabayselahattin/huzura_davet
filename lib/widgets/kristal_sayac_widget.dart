@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:math' as math;
-import 'dart:ui';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:intl/intl.dart';
 import '../services/konum_service.dart';
@@ -23,7 +22,6 @@ class _KristalSayacWidgetState extends State<KristalSayacWidget>
   Timer? _timer;
   Duration _kalanSure = Duration.zero;
   String _sonrakiVakit = '';
-  String _mevcutVakit = '';
   double _ilerlemeOrani = 0.0;
   Map<String, String> _vakitSaatleri = {};
   final TemaService _temaService = TemaService();
@@ -120,7 +118,6 @@ class _KristalSayacWidgetState extends State<KristalSayacWidget>
 
     DateTime? sonrakiVakitZamani;
     String sonrakiVakitAdi = '';
-    String mevcutVakitAdi = '';
     double oran = 0.0;
 
     int sonrakiIndex = -1;
@@ -136,7 +133,6 @@ class _KristalSayacWidgetState extends State<KristalSayacWidget>
       sonrakiVakitZamani = DateTime(now.year, now.month, now.day + 1,
           int.parse(parts[0]), int.parse(parts[1]));
       sonrakiVakitAdi = vakitSaatleri[0]['adi']!;
-      mevcutVakitAdi = vakitSaatleri.last['adi']!;
       final yatsiSaniye = vakitSaniyeleri.last;
       final imsakSaniye = vakitSaniyeleri.first;
       final toplamSure = (24 * 3600 - yatsiSaniye) + imsakSaniye;
@@ -147,7 +143,6 @@ class _KristalSayacWidgetState extends State<KristalSayacWidget>
       sonrakiVakitZamani = DateTime(now.year, now.month, now.day,
           int.parse(parts[0]), int.parse(parts[1]));
       sonrakiVakitAdi = vakitSaatleri[0]['adi']!;
-      mevcutVakitAdi = vakitSaatleri.last['adi']!;
       final yatsiSaniye = vakitSaniyeleri.last;
       final imsakSaniye = vakitSaniyeleri.first;
       final toplamSure = (24 * 3600 - yatsiSaniye) + imsakSaniye;
@@ -158,7 +153,6 @@ class _KristalSayacWidgetState extends State<KristalSayacWidget>
       sonrakiVakitZamani = DateTime(now.year, now.month, now.day,
           int.parse(parts[0]), int.parse(parts[1]));
       sonrakiVakitAdi = vakitSaatleri[sonrakiIndex]['adi']!;
-      mevcutVakitAdi = sonrakiIndex > 0 ? vakitSaatleri[sonrakiIndex - 1]['adi']! : vakitSaatleri.last['adi']!;
       final toplamSure = vakitSaniyeleri[sonrakiIndex] - vakitSaniyeleri[sonrakiIndex - 1];
       final gecenSure = nowTotalSeconds - vakitSaniyeleri[sonrakiIndex - 1];
       oran = (gecenSure / toplamSure).clamp(0.0, 1.0);
@@ -167,7 +161,6 @@ class _KristalSayacWidgetState extends State<KristalSayacWidget>
     setState(() {
       _kalanSure = sonrakiVakitZamani!.difference(now);
       _sonrakiVakit = sonrakiVakitAdi;
-      _mevcutVakit = mevcutVakitAdi;
       _ilerlemeOrani = oran;
     });
   }
@@ -201,7 +194,6 @@ class _KristalSayacWidgetState extends State<KristalSayacWidget>
     final secondaryColor = kullanTemaRenkleri ? temaRenkleri.vurguSecondary : const Color(0xFF64B5F6);
     final bgColor = kullanTemaRenkleri ? temaRenkleri.kartArkaPlan : const Color(0xFFF5F7FA);
     final textColor = kullanTemaRenkleri ? temaRenkleri.yaziPrimary : const Color(0xFF3D4F6F);
-    final secondaryTextColor = kullanTemaRenkleri ? temaRenkleri.yaziSecondary : const Color(0xFF6B7D9A);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),

@@ -29,8 +29,10 @@ class _OnboardingPermissionsPageState extends State<OnboardingPermissionsPage> {
   @override
   void initState() {
     super.initState();
+    print('🔐 OnboardingPermissions: initState başladı');
     _initSteps();
     _checkCurrentPermissions();
+    print('🔐 OnboardingPermissions: initState bitti');
   }
 
   void _initSteps() {
@@ -261,6 +263,7 @@ class _OnboardingPermissionsPageState extends State<OnboardingPermissionsPage> {
 
   @override
   Widget build(BuildContext context) {
+    print('🔐 OnboardingPermissions: build çağrıldı, step=$_currentStep');
     final step = _steps[_currentStep];
     final isGranted = _isStepGranted(_currentStep);
 
