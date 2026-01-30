@@ -319,7 +319,7 @@ class _MatrixSayacWidgetState extends State<MatrixSayacWidget>
                   ],
                 ),
               ),
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(12),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -332,11 +332,13 @@ class _MatrixSayacWidgetState extends State<MatrixSayacWidget>
                         children: [
                           Text(
                             '> $_sonrakiVakit',
+                            textScaler: TextScaler.noScaling,
                             style: TextStyle(
                               color: matrixGreen,
-                              fontSize: 22,
+                              fontSize: 18,
                               fontWeight: FontWeight.bold,
                               fontFamily: 'monospace',
+                              inherit: false,
                               shadows: [
                                 Shadow(color: matrixGreen, blurRadius: 10),
                               ],
@@ -344,10 +346,12 @@ class _MatrixSayacWidgetState extends State<MatrixSayacWidget>
                           ),
                           Text(
                             '// ${_languageService['time_remaining'] ?? 'Kalan Süre'}',
+                            textScaler: TextScaler.noScaling,
                             style: TextStyle(
                               color: darkGreen,
-                              fontSize: 11,
+                              fontSize: 10,
                               fontFamily: 'monospace',
+                              inherit: false,
                             ),
                           ),
                         ],
@@ -357,7 +361,7 @@ class _MatrixSayacWidgetState extends State<MatrixSayacWidget>
                         animation: _glowController,
                         builder: (context, child) {
                           return Container(
-                            padding: const EdgeInsets.all(8),
+                            padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
                               border: Border.all(
                                 color: matrixGreen.withOpacity(
@@ -370,7 +374,7 @@ class _MatrixSayacWidgetState extends State<MatrixSayacWidget>
                             child: Icon(
                               Icons.terminal,
                               color: matrixGreen,
-                              size: 24,
+                              size: 20,
                             ),
                           );
                         },
@@ -378,7 +382,7 @@ class _MatrixSayacWidgetState extends State<MatrixSayacWidget>
                     ],
                   ),
 
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 4),
 
                   // Zaman göstergesi - Terminal stili (yukarı kaydırıldı)
                   Expanded(
@@ -390,8 +394,8 @@ class _MatrixSayacWidgetState extends State<MatrixSayacWidget>
                           builder: (context, child) {
                             return Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 24,
-                                vertical: 16,
+                                horizontal: 20,
+                                vertical: 12,
                               ),
                               decoration: BoxDecoration(
                                 color: cardBg.withOpacity(0.8),
@@ -415,11 +419,13 @@ class _MatrixSayacWidgetState extends State<MatrixSayacWidget>
                                 children: [
                                   Text(
                                     'COUNTDOWN.exe',
+                                    textScaler: TextScaler.noScaling,
                                     style: TextStyle(
                                       color: darkGreen,
                                       fontSize: 10,
                                       fontFamily: 'monospace',
                                       letterSpacing: 2,
+                                      inherit: false,
                                     ),
                                   ),
                                   const SizedBox(height: 8),
@@ -451,7 +457,7 @@ class _MatrixSayacWidgetState extends State<MatrixSayacWidget>
                     ),
                   ),
 
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
 
                   // İlerleme çubuğu - ASCII style
                   Row(
@@ -584,12 +590,14 @@ class _MatrixSayacWidgetState extends State<MatrixSayacWidget>
   Widget _buildDigit(String value, Color color) {
     return Text(
       value,
+      textScaler: TextScaler.noScaling,
       style: TextStyle(
         color: color,
         fontSize: 42,
         fontWeight: FontWeight.bold,
         fontFamily: 'monospace',
         letterSpacing: 2,
+        inherit: false,
         shadows: [
           Shadow(color: color, blurRadius: 15),
           Shadow(color: color.withOpacity(0.5), blurRadius: 30),
@@ -603,11 +611,13 @@ class _MatrixSayacWidgetState extends State<MatrixSayacWidget>
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Text(
         ':',
+        textScaler: TextScaler.noScaling,
         style: TextStyle(
           color: color.withOpacity(0.7),
           fontSize: 36,
           fontWeight: FontWeight.bold,
           fontFamily: 'monospace',
+          inherit: false,
         ),
       ),
     );

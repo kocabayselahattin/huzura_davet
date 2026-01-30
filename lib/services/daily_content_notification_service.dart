@@ -1,5 +1,6 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
 import 'language_service.dart';
@@ -52,6 +53,11 @@ class DailyContentNotificationService {
     if (_initialized) return;
 
     try {
+      // Timezone verilerini yükle
+      tz_data.initializeTimeZones();
+      tz.setLocalLocation(tz.getLocation('Europe/Istanbul'));
+      debugPrint('🕐 Timezone başlatıldı: ${tz.local.name}');
+
       // Android notification channel oluştur
       final androidImplementation = _notificationsPlugin
           .resolvePlatformSpecificImplementation<
@@ -135,6 +141,8 @@ class DailyContentNotificationService {
   /// Günün ayeti bildirimini zamanla
   static Future<void> _scheduleVerseNotification() async {
     final now = tz.TZDateTime.now(tz.local);
+    debugPrint('📅 Günün Ayeti zamanlama başlıyor - Şu an: $now');
+
     var scheduledDate = tz.TZDateTime(
       tz.local,
       now.year,
@@ -144,10 +152,12 @@ class DailyContentNotificationService {
       0,
       0,
     );
+    debugPrint('📅 Hedef saat: $scheduledDate (saat $verseHour:00)');
 
     // Eğer saat geçmişse yarına ayarla
     if (scheduledDate.isBefore(now)) {
       scheduledDate = scheduledDate.add(const Duration(days: 1));
+      debugPrint('📅 Saat geçmiş, yarına ayarlandı: $scheduledDate');
     }
 
     final languageService = LanguageService();

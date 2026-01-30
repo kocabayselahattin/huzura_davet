@@ -45,9 +45,17 @@ class _SayacAyarlariSayfaState extends State<SayacAyarlariSayfa> {
   final List<Map<String, dynamic>> _sayaclar = [
     {'id': 'islami', 'icon': Icons.mosque, 'color': const Color(0xFF1B5E20)},
     {'id': 'kalem', 'icon': Icons.edit, 'color': const Color(0xFF2D6A4F)},
-    {'id': 'nur', 'icon': Icons.wb_sunny, 'color': const Color(0xFF3949AB)},
-    {'id': 'hilal', 'icon': Icons.nights_stay, 'color': const Color(0xFF415A77)},
-    {'id': 'mihrap', 'icon': Icons.architecture, 'color': const Color(0xFF5D4037)},
+    {'id': 'nur', 'icon': Icons.wb_sunny, 'color': const Color(0xFF00BCD4)},
+    {
+      'id': 'hilal',
+      'icon': Icons.nights_stay,
+      'color': const Color(0xFF415A77),
+    },
+    {
+      'id': 'mihrap',
+      'icon': Icons.architecture,
+      'color': const Color(0xFF5D4037),
+    },
     {'id': 'dijital', 'icon': Icons.access_time, 'color': Colors.cyan},
     {'id': 'premium', 'icon': Icons.star, 'color': Colors.amber},
     {'id': 'galaksi', 'icon': Icons.auto_awesome, 'color': Colors.purple},
@@ -55,15 +63,35 @@ class _SayacAyarlariSayfaState extends State<SayacAyarlariSayfa> {
     {'id': 'okyanus', 'icon': Icons.water, 'color': Colors.blue},
     {'id': 'minimal', 'icon': Icons.crop_square, 'color': Colors.grey},
     {'id': 'retro', 'icon': Icons.tv, 'color': const Color(0xFF00FF41)},
-    {'id': 'aurora', 'icon': Icons.nights_stay, 'color': const Color(0xFF00D4AA)},
-    {'id': 'kristal', 'icon': Icons.diamond_outlined, 'color': const Color(0xFF64B5F6)},
-    {'id': 'volkanik', 'icon': Icons.local_fire_department, 'color': const Color(0xFFFF6B35)},
+    {
+      'id': 'aurora',
+      'icon': Icons.nights_stay,
+      'color': const Color(0xFF00D4AA),
+    },
+    {
+      'id': 'kristal',
+      'icon': Icons.diamond_outlined,
+      'color': const Color(0xFF64B5F6),
+    },
+    {
+      'id': 'volkanik',
+      'icon': Icons.local_fire_department,
+      'color': const Color(0xFFFF6B35),
+    },
     {'id': 'zen', 'icon': Icons.spa, 'color': const Color(0xFF4A6741)},
     {'id': 'siber', 'icon': Icons.memory, 'color': const Color(0xFFFF00FF)},
-    {'id': 'gece', 'icon': Icons.nightlight_round, 'color': const Color(0xFF1E3A5F)},
+    {
+      'id': 'gece',
+      'icon': Icons.nightlight_round,
+      'color': const Color(0xFF1E3A5F),
+    },
     {'id': 'matrix', 'icon': Icons.terminal, 'color': const Color(0xFF00FF41)},
     {'id': 'nefes', 'icon': Icons.air, 'color': const Color(0xFF6B5B95)},
-    {'id': 'geometrik', 'icon': Icons.hexagon_outlined, 'color': const Color(0xFFFFD700)},
+    {
+      'id': 'geometrik',
+      'icon': Icons.hexagon_outlined,
+      'color': const Color(0xFFFFD700),
+    },
     {'id': 'tesla', 'icon': Icons.bolt, 'color': const Color(0xFF00D4FF)},
   ];
 
@@ -240,7 +268,7 @@ class _SayacAyarlariSayfaState extends State<SayacAyarlariSayfa> {
     if (!isActive) {
       return const SizedBox.shrink();
     }
-    
+
     // isActive=true ise widget'ı oluştur ve veri yükle
     switch (index) {
       case 0:

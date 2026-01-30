@@ -286,7 +286,7 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 18),
                 // Ecir barı
                 _buildEcirSection(),
               ],
@@ -301,8 +301,8 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
     return Column(
       children: [
         Container(
-          width: 52,
-          height: 52,
+          width: 62,
+          height: 62,
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
@@ -322,7 +322,7 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
             child: Text(
               value,
               style: const TextStyle(
-                fontSize: 24,
+                fontSize: 28,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),

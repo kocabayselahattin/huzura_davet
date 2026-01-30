@@ -275,7 +275,7 @@ class _HilalSayacWidgetState extends State<HilalSayacWidget>
                     _buildTimeBox(seconds.toString().padLeft(2, '0'), 'Sn'),
                   ],
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 18),
                 // Ecir barı
                 Container(
                   padding: const EdgeInsets.all(8),
@@ -309,8 +309,8 @@ class _HilalSayacWidgetState extends State<HilalSayacWidget>
 
   Widget _buildTimeBox(String value, String label) {
     return Container(
-      width: 55,
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      width: 65,
+      padding: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
@@ -328,7 +328,7 @@ class _HilalSayacWidgetState extends State<HilalSayacWidget>
           Text(
             value,
             style: const TextStyle(
-              fontSize: 24,
+              fontSize: 28,
               fontWeight: FontWeight.bold,
               color: Colors.white,
               height: 1,
@@ -368,7 +368,9 @@ class _HilalSayacWidgetState extends State<HilalSayacWidget>
     final days = date.toUtc().difference(reference).inSeconds / 86400.0;
     const synodicMonth = 29.53058867;
     final phase = (days % synodicMonth) / synodicMonth;
-    return phase < 0 ? phase + 1 : phase;
+    final normalizedPhase = phase < 0 ? phase + 1 : phase;
+    // Yönü tersine çevir (sağdan sola)
+    return 1.0 - normalizedPhase;
   }
 }
 

@@ -348,15 +348,15 @@ class _KristalSayacWidgetState extends State<KristalSayacWidget>
 
             // İçerik
             Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   // Üst: Vakit etiketi
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 10,
+                      horizontal: 16,
+                      vertical: 6,
                     ),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.6),
@@ -379,23 +379,25 @@ class _KristalSayacWidgetState extends State<KristalSayacWidget>
                         Icon(
                           Icons.diamond_outlined,
                           color: primaryColor,
-                          size: 18,
+                          size: 16,
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 6),
                         Text(
                           _sonrakiVakit,
+                          textScaler: TextScaler.noScaling,
                           style: TextStyle(
                             color: textColor,
-                            fontSize: 16,
+                            fontSize: 14,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 1,
+                            inherit: false,
                           ),
                         ),
                       ],
                     ),
                   ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 8),
 
                   // Sayaç - Kristal görünümlü
                   Row(
@@ -412,10 +414,12 @@ class _KristalSayacWidgetState extends State<KristalSayacWidget>
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         child: Text(
                           ':',
+                          textScaler: TextScaler.noScaling,
                           style: TextStyle(
                             fontSize: 36,
                             fontWeight: FontWeight.w300,
                             color: primaryColor.withOpacity(0.6),
+                            inherit: false,
                           ),
                         ),
                       ),
@@ -427,13 +431,15 @@ class _KristalSayacWidgetState extends State<KristalSayacWidget>
                         textColor,
                       ),
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
                         child: Text(
                           ':',
+                          textScaler: TextScaler.noScaling,
                           style: TextStyle(
-                            fontSize: 36,
+                            fontSize: 28,
                             fontWeight: FontWeight.w300,
                             color: primaryColor.withOpacity(0.6),
+                            inherit: false,
                           ),
                         ),
                       ),
@@ -447,13 +453,13 @@ class _KristalSayacWidgetState extends State<KristalSayacWidget>
                     ],
                   ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 10),
 
                   // Alt: Tarihler
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
+                      horizontal: 12,
+                      vertical: 6,
                     ),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.4),
@@ -464,9 +470,11 @@ class _KristalSayacWidgetState extends State<KristalSayacWidget>
                       children: [
                         Text(
                           miladiTarih,
+                          textScaler: TextScaler.noScaling,
                           style: TextStyle(
                             color: textColor.withOpacity(0.7),
                             fontSize: 11,
+                            inherit: false,
                           ),
                         ),
                         Padding(
@@ -482,16 +490,18 @@ class _KristalSayacWidgetState extends State<KristalSayacWidget>
                         ),
                         Text(
                           hicriTarih,
+                          textScaler: TextScaler.noScaling,
                           style: TextStyle(
                             color: textColor.withOpacity(0.7),
                             fontSize: 11,
+                            inherit: false,
                           ),
                         ),
                       ],
                     ),
                   ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 4),
 
                   // İlerleme Barı
                   _buildProgressBar(primaryColor, secondaryColor, textColor),
@@ -510,11 +520,11 @@ class _KristalSayacWidgetState extends State<KristalSayacWidget>
     Color textColor,
   ) {
     return Container(
-      height: 12,
+      height: 10,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(5),
         color: textColor.withOpacity(0.25),
-        border: Border.all(color: textColor.withOpacity(0.2), width: 1),
+        border: Border.all(color: textColor.withOpacity(0.4), width: 1),
       ),
       child: Stack(
         children: [
@@ -527,25 +537,27 @@ class _KristalSayacWidgetState extends State<KristalSayacWidget>
               ),
             ),
           ),
-          FractionallySizedBox(
-            widthFactor: _ilerlemeOrani.clamp(0.0, 1.0),
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(6),
-                gradient: LinearGradient(
-                  colors: [
-                    primaryColor.withOpacity(0.9),
-                    primaryColor,
-                    secondaryColor,
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: FractionallySizedBox(
+              widthFactor: _ilerlemeOrani.clamp(0.0, 1.0),
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      primaryColor.withOpacity(0.9),
+                      primaryColor,
+                      secondaryColor,
+                    ],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: primaryColor.withOpacity(0.7),
+                      blurRadius: 8,
+                      spreadRadius: 1,
+                    ),
                   ],
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: primaryColor.withOpacity(0.7),
-                    blurRadius: 8,
-                    spreadRadius: 1,
-                  ),
-                ],
               ),
             ),
           ),
@@ -562,8 +574,8 @@ class _KristalSayacWidgetState extends State<KristalSayacWidget>
     Color textColor,
   ) {
     return Container(
-      width: 80,
-      height: 85,
+      width: 70,
+      height: 70,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -598,20 +610,24 @@ class _KristalSayacWidgetState extends State<KristalSayacWidget>
             textAlign: TextAlign.center,
             maxLines: 1,
             softWrap: false,
+            textScaler: TextScaler.noScaling,
             style: TextStyle(
-              fontSize: 36,
+              fontSize: 30,
               fontWeight: FontWeight.w300,
               color: textColor,
               fontFeatures: const [FontFeature.tabularFigures()],
+              inherit: false,
             ),
           ),
           const SizedBox(height: 2),
           Text(
             label,
+            textScaler: TextScaler.noScaling,
             style: TextStyle(
-              fontSize: 10,
+              fontSize: 9,
               fontWeight: FontWeight.w500,
               color: primaryColor.withOpacity(0.6),
+              inherit: false,
             ),
           ),
         ],

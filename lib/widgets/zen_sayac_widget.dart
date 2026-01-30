@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'dart:ui';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:intl/intl.dart';
 import '../services/konum_service.dart';
@@ -315,8 +316,9 @@ class _ZenSayacWidgetState extends State<ZenSayacWidget>
 
             // İçerik
             Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(16),
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -325,7 +327,7 @@ class _ZenSayacWidgetState extends State<ZenSayacWidget>
                     children: [
                       Container(
                         width: 4,
-                        height: 40,
+                        height: 32,
                         decoration: BoxDecoration(
                           color: primaryColor,
                           borderRadius: BorderRadius.circular(2),
@@ -337,18 +339,22 @@ class _ZenSayacWidgetState extends State<ZenSayacWidget>
                         children: [
                           Text(
                             _sonrakiVakit,
+                            textScaler: TextScaler.noScaling,
                             style: TextStyle(
                               color: textColor,
-                              fontSize: 18,
+                              fontSize: 16,
                               fontWeight: FontWeight.w600,
                               letterSpacing: 2,
+                              inherit: false,
                             ),
                           ),
                           Text(
                             'vaktine kalan',
+                            textScaler: TextScaler.noScaling,
                             style: TextStyle(
                               color: primaryColor.withOpacity(0.7),
-                              fontSize: 12,
+                              fontSize: 11,
+                              inherit: false,
                             ),
                           ),
                         ],
@@ -356,7 +362,7 @@ class _ZenSayacWidgetState extends State<ZenSayacWidget>
                     ],
                   ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 12),
 
                   // Sayaç
                   Padding(
@@ -367,21 +373,21 @@ class _ZenSayacWidgetState extends State<ZenSayacWidget>
                         children: [
                           _buildZenTimeUnit(
                             hours.toString().padLeft(2, '0'),
-                            '時',
+                            'Saat',
                             primaryColor,
                             textColor,
                           ),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: 12),
                           _buildZenTimeUnit(
                             minutes.toString().padLeft(2, '0'),
-                            '分',
+                            'Dakika',
                             primaryColor,
                             textColor,
                           ),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: 12),
                           _buildZenTimeUnit(
                             seconds.toString().padLeft(2, '0'),
-                            '秒',
+                            'Saniye',
                             primaryColor,
                             textColor,
                           ),
@@ -390,14 +396,14 @@ class _ZenSayacWidgetState extends State<ZenSayacWidget>
                     ),
                   ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 8),
 
                   // Alt: Tarihler
                   Center(
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
+                        horizontal: 12,
+                        vertical: 6,
                       ),
                       decoration: BoxDecoration(
                         border: Border.all(
@@ -407,15 +413,17 @@ class _ZenSayacWidgetState extends State<ZenSayacWidget>
                       ),
                       child: Text(
                         '$miladiTarih  •  $hicriTarih',
+                        textScaler: TextScaler.noScaling,
                         style: TextStyle(
                           color: primaryColor.withOpacity(0.7),
-                          fontSize: 11,
+                          fontSize: 10,
+                          inherit: false,
                         ),
                       ),
                     ),
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
 
                   // İlerleme barı
                   _buildProgressBar(primaryColor, textColor),
@@ -437,8 +445,8 @@ class _ZenSayacWidgetState extends State<ZenSayacWidget>
     return Column(
       children: [
         Container(
-          width: 80,
-          height: 65,
+          width: 70,
+          height: 55,
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.6),
@@ -450,18 +458,25 @@ class _ZenSayacWidgetState extends State<ZenSayacWidget>
             textAlign: TextAlign.center,
             maxLines: 1,
             softWrap: false,
+            textScaler: TextScaler.noScaling,
             style: TextStyle(
-              fontSize: 36,
+              fontSize: 30,
               fontWeight: FontWeight.w300,
               color: textColor,
               fontFeatures: const [FontFeature.tabularFigures()],
+              inherit: false,
             ),
           ),
         ),
         const SizedBox(height: 4),
         Text(
           kanji,
-          style: TextStyle(fontSize: 14, color: primaryColor.withOpacity(0.6)),
+          textScaler: TextScaler.noScaling,
+          style: TextStyle(
+            fontSize: 11,
+            color: primaryColor.withOpacity(0.6),
+            inherit: false,
+          ),
         ),
       ],
     );
@@ -469,11 +484,11 @@ class _ZenSayacWidgetState extends State<ZenSayacWidget>
 
   Widget _buildProgressBar(Color primaryColor, Color textColor) {
     return Container(
-      height: 12,
+      height: 8,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(4),
         color: textColor.withOpacity(0.25),
-        border: Border.all(color: textColor.withOpacity(0.2), width: 1),
+        border: Border.all(color: textColor.withOpacity(0.4), width: 1),
       ),
       child: Stack(
         children: [
@@ -486,25 +501,27 @@ class _ZenSayacWidgetState extends State<ZenSayacWidget>
               ),
             ),
           ),
-          FractionallySizedBox(
-            widthFactor: _ilerlemeOrani.clamp(0.0, 1.0),
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(6),
-                gradient: LinearGradient(
-                  colors: [
-                    primaryColor.withOpacity(0.9),
-                    primaryColor,
-                    Color.lerp(primaryColor, Colors.white, 0.2)!,
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: FractionallySizedBox(
+              widthFactor: _ilerlemeOrani.clamp(0.0, 1.0),
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      primaryColor.withOpacity(0.9),
+                      primaryColor,
+                      Color.lerp(primaryColor, Colors.white, 0.2)!,
+                    ],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: primaryColor.withOpacity(0.7),
+                      blurRadius: 8,
+                      spreadRadius: 1,
+                    ),
                   ],
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: primaryColor.withOpacity(0.7),
-                    blurRadius: 8,
-                    spreadRadius: 1,
-                  ),
-                ],
               ),
             ),
           ),

@@ -13,6 +13,76 @@ import 'services/notification_service.dart';
 import 'services/scheduled_notification_service.dart';
 import 'services/daily_content_notification_service.dart';
 
+/// İlk kurulumda varsayılan bildirim ayarlarını SharedPreferences'a kaydet
+Future<void> _initializeDefaultNotificationSettings(
+  SharedPreferences prefs,
+) async {
+  // Daha önce ayarlar kaydedilmiş mi kontrol et
+  final alreadyInitialized =
+      prefs.getBool('notification_settings_initialized') ?? false;
+  if (alreadyInitialized) return;
+
+  debugPrint('🔔 İlk kurulum: Varsayılan bildirim ayarları kaydediliyor...');
+
+  // Varsayılan erken bildirim süreleri (dakika)
+  const defaultErkenBildirim = {
+    'imsak': 15,
+    'gunes': 45,
+    'ogle': 15,
+    'ikindi': 15,
+    'aksam': 15,
+    'yatsi': 15,
+  };
+
+  // Varsayılan bildirim açık durumları
+  const defaultBildirimAcik = {
+    'imsak': true,
+    'gunes': true,
+    'ogle': true,
+    'ikindi': true,
+    'aksam': true,
+    'yatsi': true,
+  };
+
+  // Varsayılan bildirim sesleri
+  const defaultBildirimSesi = {
+    'imsak': 'best.mp3',
+    'gunes': 'best.mp3',
+    'ogle': 'best.mp3',
+    'ikindi': 'best.mp3',
+    'aksam': 'best.mp3',
+    'yatsi': 'best.mp3',
+  };
+
+  // Her vakit için varsayılan değerleri kaydet
+  for (final vakit in defaultErkenBildirim.keys) {
+    // Erken bildirim süresi
+    if (!prefs.containsKey('erken_$vakit')) {
+      await prefs.setInt('erken_$vakit', defaultErkenBildirim[vakit]!);
+    }
+    // Bildirim açık/kapalı
+    if (!prefs.containsKey('bildirim_$vakit')) {
+      await prefs.setBool('bildirim_$vakit', defaultBildirimAcik[vakit]!);
+    }
+    // Bildirim sesi
+    if (!prefs.containsKey('bildirim_sesi_$vakit')) {
+      await prefs.setString(
+        'bildirim_sesi_$vakit',
+        defaultBildirimSesi[vakit]!,
+      );
+    }
+  }
+
+  // Günlük içerik bildirimleri varsayılan olarak açık
+  if (!prefs.containsKey('daily_content_notifications_enabled')) {
+    await prefs.setBool('daily_content_notifications_enabled', true);
+  }
+
+  // Ayarların başlatıldığını işaretle
+  await prefs.setBool('notification_settings_initialized', true);
+  debugPrint('✅ Varsayılan bildirim ayarları kaydedildi');
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -50,6 +120,9 @@ void main() async {
   if (sessizeAl) {
     await DndService.schedulePrayerDnd();
   }
+
+  // 🔔 İlk kurulumda varsayılan erken bildirim değerlerini kaydet
+  await _initializeDefaultNotificationSettings(prefs);
 
   // Bildirim altyapısını başlat
   await NotificationService.initialize(null);

@@ -36,6 +36,17 @@ class ScheduledNotificationService {
     'Yatsi': 'Yatsı',
   };
 
+  // Varsayılan erken bildirim süreleri (dakika)
+  // bildirim_ayarlari_sayfa.dart ile tutarlı olmalı
+  static const Map<String, int> _varsayilanErkenBildirim = {
+    'imsak': 15,
+    'gunes': 45,
+    'ogle': 15,
+    'ikindi': 15,
+    'aksam': 15,
+    'yatsi': 15,
+  };
+
   /// Servisi başlat
   static Future<void> initialize() async {
     if (_initialized) return;
@@ -214,8 +225,10 @@ class ScheduledNotificationService {
             continue;
           }
 
-          // Erken bildirim süresi (dakika)
-          final erkenDakika = prefs.getInt('erken_$vakitKeyLower') ?? 0;
+          // Erken bildirim süresi (dakika) - varsayılan değerler map'ten alınır
+          final varsayilanErken = _varsayilanErkenBildirim[vakitKeyLower] ?? 15;
+          final erkenDakika =
+              prefs.getInt('erken_$vakitKeyLower') ?? varsayilanErken;
 
           // Ses dosyası
           final sesDosyasi =
@@ -239,15 +252,24 @@ class ScheduledNotificationService {
             dakika,
           );
 
+          debugPrint(
+            '📌 $vakitKey: Vakit saati $saat:$dakika, Erken dakika: $erkenDakika, Bildirim açık: $bildirimAcik',
+          );
+
           // Erken bildirim süresi varsa çıkar
           if (erkenDakika > 0) {
+            final tamVakitZamani = bildirimZamani;
             bildirimZamani = bildirimZamani.subtract(
               Duration(minutes: erkenDakika),
+            );
+            debugPrint(
+              '   ⏰ Erken bildirim zamanı: $bildirimZamani (tam vakit: $tamVakitZamani)',
             );
           }
 
           // Eğer zaman geçmişse, bu bildirimi atla
           if (bildirimZamani.isBefore(now)) {
+            debugPrint('   ⏭️ Zaman geçmiş, atlanıyor: $bildirimZamani');
             continue;
           }
 

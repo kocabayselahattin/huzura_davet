@@ -89,6 +89,10 @@ class _NurSayacWidgetState extends State<NurSayacWidget>
     if (_vakitler.isEmpty) return;
 
     final now = DateTime.now();
+    debugPrint(
+      '🔵 [NUR DEBUG] _vakitHesapla çalışıyor - Şimdiki zaman: ${now.toString()}',
+    );
+
     final vakitSirasi = ['Imsak', 'Gunes', 'Ogle', 'Ikindi', 'Aksam', 'Yatsi'];
     final vakitIsimleri = {
       'Imsak': 'İmsak',
@@ -232,15 +236,31 @@ class _NurSayacWidgetState extends State<NurSayacWidget>
                   children: [
                     Text(
                       miladi,
+                      textScaler: TextScaler.noScaling,
                       style: const TextStyle(
-                        color: Colors.white60,
+                        color: Colors.white,
                         fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        inherit: false,
                       ),
                     ),
-                    const Text(' • ', style: TextStyle(color: Colors.white38)),
+                    Text(
+                      ' • ',
+                      textScaler: TextScaler.noScaling,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        inherit: false,
+                      ),
+                    ),
                     Text(
                       hicri,
-                      style: const TextStyle(color: Colors.amber, fontSize: 11),
+                      textScaler: TextScaler.noScaling,
+                      style: const TextStyle(
+                        color: Colors.cyanAccent,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        inherit: false,
+                      ),
                     ),
                   ],
                 ),
@@ -253,15 +273,17 @@ class _NurSayacWidgetState extends State<NurSayacWidget>
                   },
                   child: Text(
                     _gelecekVakit,
+                    textScaler: TextScaler.noScaling,
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 16,
                       fontWeight: FontWeight.w300,
                       letterSpacing: 4,
+                      inherit: false,
                     ),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 16),
                 // Kalan süre
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -273,7 +295,7 @@ class _NurSayacWidgetState extends State<NurSayacWidget>
                     _buildTimeUnit(seconds.toString().padLeft(2, '0')),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 26),
                 // Ecir barı
                 _buildEcirBar(),
               ],
@@ -286,8 +308,8 @@ class _NurSayacWidgetState extends State<NurSayacWidget>
 
   Widget _buildTimeUnit(String value) {
     return Container(
-      width: 50,
-      height: 50,
+      width: 60,
+      height: 60,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -306,10 +328,12 @@ class _NurSayacWidgetState extends State<NurSayacWidget>
       child: Center(
         child: Text(
           value,
+          textScaler: TextScaler.noScaling,
           style: const TextStyle(
-            fontSize: 22,
+            fontSize: 26,
             fontWeight: FontWeight.bold,
             color: Colors.white,
+            inherit: false,
           ),
         ),
       ),
@@ -321,10 +345,12 @@ class _NurSayacWidgetState extends State<NurSayacWidget>
       padding: const EdgeInsets.symmetric(horizontal: 6),
       child: Text(
         ':',
+        textScaler: TextScaler.noScaling,
         style: TextStyle(
           fontSize: 20,
           color: Colors.white.withOpacity(0.5),
           fontWeight: FontWeight.w300,
+          inherit: false,
         ),
       ),
     );
@@ -334,10 +360,12 @@ class _NurSayacWidgetState extends State<NurSayacWidget>
     return Column(
       children: [
         Container(
-          height: 5,
+          height: 10,
+          margin: const EdgeInsets.symmetric(horizontal: 20),
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white.withOpacity(0.3), width: 1),
           ),
           child: Stack(
             children: [
@@ -346,13 +374,14 @@ class _NurSayacWidgetState extends State<NurSayacWidget>
                 child: Container(
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [Colors.amber, Colors.orange, Colors.deepOrange],
+                      colors: [Colors.cyan, Colors.teal, Colors.blueAccent],
                     ),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.amber.withOpacity(0.5),
-                        blurRadius: 10,
+                        color: Colors.cyan.withOpacity(0.4),
+                        blurRadius: 8,
+                        spreadRadius: 0,
                       ),
                     ],
                   ),

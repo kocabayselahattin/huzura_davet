@@ -229,7 +229,9 @@ class _GeceSayacWidgetState extends State<GeceSayacWidget>
     final days = date.toUtc().difference(reference).inSeconds / 86400.0;
     const synodicMonth = 29.53058867;
     final phase = (days % synodicMonth) / synodicMonth;
-    return phase < 0 ? phase + 1 : phase;
+    final normalizedPhase = phase < 0 ? phase + 1 : phase;
+    // Yönü tersine çevir (sağdan sola)
+    return 1.0 - normalizedPhase;
   }
 
   @override
@@ -252,9 +254,6 @@ class _GeceSayacWidgetState extends State<GeceSayacWidget>
     final primaryColor = kullanTemaRenkleri
         ? temaRenkleri.vurgu
         : const Color(0xFFFFF8DC);
-    final secondaryColor = kullanTemaRenkleri
-        ? temaRenkleri.vurguSecondary
-        : const Color(0xFFFFE4B5);
     final bgColor1 = kullanTemaRenkleri
         ? temaRenkleri.arkaPlan
         : const Color(0xFF0A1628);
@@ -400,7 +399,7 @@ class _GeceSayacWidgetState extends State<GeceSayacWidget>
                     ],
                   ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
                   // Alt: Tarihler
                   Container(
@@ -442,7 +441,7 @@ class _GeceSayacWidgetState extends State<GeceSayacWidget>
                     ),
                   ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
 
                   // İlerleme Barı
                   _buildProgressBar(primaryColor, textColor),
@@ -457,11 +456,11 @@ class _GeceSayacWidgetState extends State<GeceSayacWidget>
 
   Widget _buildProgressBar(Color primaryColor, Color textColor) {
     return Container(
-      height: 8,
+      height: 10,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(5),
         color: textColor.withOpacity(0.15),
-        border: Border.all(color: textColor.withOpacity(0.1), width: 0.5),
+        border: Border.all(color: textColor.withOpacity(0.3), width: 1),
       ),
       child: Stack(
         children: [
@@ -474,25 +473,27 @@ class _GeceSayacWidgetState extends State<GeceSayacWidget>
               ),
             ),
           ),
-          FractionallySizedBox(
-            widthFactor: _ilerlemeOrani.clamp(0.0, 1.0),
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(4),
-                gradient: LinearGradient(
-                  colors: [
-                    primaryColor.withOpacity(0.7),
-                    primaryColor,
-                    Color.lerp(primaryColor, Colors.white, 0.2)!,
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: FractionallySizedBox(
+              widthFactor: _ilerlemeOrani.clamp(0.0, 1.0),
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      primaryColor.withOpacity(0.7),
+                      primaryColor,
+                      Color.lerp(primaryColor, Colors.white, 0.2)!,
+                    ],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: primaryColor.withOpacity(0.5),
+                      blurRadius: 6,
+                      spreadRadius: 0,
+                    ),
                   ],
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: primaryColor.withOpacity(0.5),
-                    blurRadius: 6,
-                    spreadRadius: 0,
-                  ),
-                ],
               ),
             ),
           ),
