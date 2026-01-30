@@ -23,10 +23,9 @@ class AlarmService {
       final now = DateTime.now().millisecondsSinceEpoch;
       final triggerTime = DateTime.fromMillisecondsSinceEpoch(triggerAtMillis);
 
-      debugPrint('🔔 Alarm kurulacak: $prayerName');
-      debugPrint('   Zaman: $triggerTime');
-      debugPrint('   Ses: $soundPath');
-      debugPrint('   ID: ${alarmId ?? prayerName.hashCode}');
+      debugPrint(
+        '🔔 [ALARM SCHEDULE] prayerName=$prayerName, triggerTime=$triggerTime, soundPath=$soundPath, alarmId=${alarmId ?? prayerName.hashCode}',
+      );
 
       if (triggerAtMillis <= now) {
         debugPrint('⚠️ Alarm zamanı geçmiş, atlanıyor');
@@ -40,8 +39,9 @@ class AlarmService {
         'useVibration': useVibration,
         'alarmId': alarmId ?? prayerName.hashCode,
       });
-
-      debugPrint('✅ Alarm kuruldu: $prayerName - Sonuç: $result');
+      debugPrint(
+        '✅ [ALARM SCHEDULE RESULT] prayerName=$prayerName, result=$result',
+      );
       return result ?? false;
     } catch (e) {
       debugPrint('❌ Alarm kurma hatası: $e');

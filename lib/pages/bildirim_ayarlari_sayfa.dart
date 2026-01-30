@@ -46,13 +46,14 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
   };
 
   // Alarm açık/kapalı durumları (kilit ekranında alarm çalar)
+  // Varsayılan: öğle, ikindi, akşam, yatsı için açık
   final Map<String, bool> _alarmAcik = {
     'imsak': false,
     'gunes': false,
-    'ogle': false,
-    'ikindi': false,
-    'aksam': false,
-    'yatsi': false,
+    'ogle': true,
+    'ikindi': true,
+    'aksam': true,
+    'yatsi': true,
   };
 
   // Vakitlerde sessize al seçeneği
@@ -243,7 +244,7 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
             vakit == 'yatsi');
         _vaktindeBildirim[vakit] =
             prefs.getBool('vaktinde_$vakit') ?? varsayilanVaktinde;
-        _alarmAcik[vakit] = prefs.getBool('alarm_$vakit') ?? false;
+        _alarmAcik[vakit] = prefs.getBool('alarm_$vakit') ?? _alarmAcik[vakit]!;
         _erkenBildirim[vakit] =
             prefs.getInt('erken_$vakit') ?? _erkenBildirim[vakit]!;
         _bildirimSesi[vakit] =
@@ -367,6 +368,9 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
       await prefs.setBool('alarm_$vakit', _alarmAcik[vakit]!);
       await prefs.setInt('erken_$vakit', _erkenBildirim[vakit]!);
       await prefs.setString('bildirim_sesi_$vakit', _bildirimSesi[vakit]!);
+      debugPrint(
+        '💾 [$vakit] Kaydedildi: bildirim=${_bildirimAcik[vakit]}, vaktinde=${_vaktindeBildirim[vakit]}, alarm=${_alarmAcik[vakit]}, erken=${_erkenBildirim[vakit]}',
+      );
 
       // Özel ses yollarını kaydet
       if (_ozelSesDosyalari.containsKey(vakit)) {
@@ -783,48 +787,6 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
         body: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            // TEST BUTONU - Alarm çalışıyor mu kontrol et
-            Container(
-              margin: const EdgeInsets.only(bottom: 16),
-              child: ElevatedButton.icon(
-                onPressed: () async {
-                  // Test alarmı
-                  final alarmResult = await AlarmService.testAlarm();
-
-                  // Test bildirimi
-                  await ScheduledNotificationService.sendTestNotification();
-
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          alarmResult
-                              ? '✅ Test alarmı 5 saniye sonra çalacak!'
-                              : '❌ Test alarmı kurulamadı!',
-                        ),
-                        backgroundColor: alarmResult
-                            ? Colors.green
-                            : Colors.red,
-                        duration: const Duration(seconds: 3),
-                      ),
-                    );
-                  }
-                },
-                icon: const Icon(Icons.alarm, color: Colors.white),
-                label: const Text(
-                  '🧪 TEST: Alarm ve Bildirimi Dene (5 sn)',
-                  style: TextStyle(color: Colors.white),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.deepOrange,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ),
-
             // Bilgilendirme kartı
             Container(
               padding: const EdgeInsets.all(16),

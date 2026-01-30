@@ -231,6 +231,10 @@ class ScheduledNotificationService {
           final vaktindeBildirim =
               prefs.getBool('vaktinde_$vakitKeyLower') ?? varsayilanVaktinde;
 
+          debugPrint(
+            '🔍 [$vakitKey] SharedPreferences: bildirim_$vakitKeyLower=$bildirimAcik, vaktinde_$vakitKeyLower=$vaktindeBildirim',
+          );
+
           final vakitSaati = gunVakitler[vakitKey]?.toString();
           if (vakitSaati == null || vakitSaati == '—:—' || vakitSaati.isEmpty) {
             continue;
@@ -320,8 +324,17 @@ class ScheduledNotificationService {
           }
 
           // 🔔 ALARM: Alarm ayarları
-          final alarmAcik = prefs.getBool('alarm_$vakitKeyLower') ?? false;
-          debugPrint('🔔 Vakit: $vakitKey, Alarm açık: $alarmAcik');
+          // Varsayılan: öğle, ikindi, akşam, yatsı için true
+          final varsayilanAlarm =
+              (vakitKeyLower == 'ogle' ||
+              vakitKeyLower == 'ikindi' ||
+              vakitKeyLower == 'aksam' ||
+              vakitKeyLower == 'yatsi');
+          final alarmAcik =
+              prefs.getBool('alarm_$vakitKeyLower') ?? varsayilanAlarm;
+          debugPrint(
+            '🔔 [$vakitKey] SharedPreferences: alarm_$vakitKeyLower=$alarmAcik',
+          );
 
           if (alarmAcik) {
             // TAM VAKİT ALARMI
