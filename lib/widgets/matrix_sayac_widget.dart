@@ -422,13 +422,13 @@ class _MatrixSayacWidgetState extends State<MatrixSayacWidget>
                                     textScaler: TextScaler.noScaling,
                                     style: TextStyle(
                                       color: darkGreen,
-                                      fontSize: 10,
+                                      fontSize: 9,
                                       fontFamily: 'monospace',
-                                      letterSpacing: 2,
+                                      letterSpacing: 1,
                                       inherit: false,
                                     ),
                                   ),
-                                  const SizedBox(height: 8),
+                                  const SizedBox(height: 6),
                                   Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
@@ -593,7 +593,7 @@ class _MatrixSayacWidgetState extends State<MatrixSayacWidget>
       textScaler: TextScaler.noScaling,
       style: TextStyle(
         color: color,
-        fontSize: 42,
+        fontSize: 36,
         fontWeight: FontWeight.bold,
         fontFamily: 'monospace',
         letterSpacing: 2,
@@ -614,7 +614,7 @@ class _MatrixSayacWidgetState extends State<MatrixSayacWidget>
         textScaler: TextScaler.noScaling,
         style: TextStyle(
           color: color.withOpacity(0.7),
-          fontSize: 36,
+          fontSize: 30,
           fontWeight: FontWeight.bold,
           fontFamily: 'monospace',
           inherit: false,
