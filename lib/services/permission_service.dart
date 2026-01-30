@@ -15,11 +15,7 @@ class PermissionService {
   static Future<void> _ensureNotificationsInitialized() async {
     if (_notificationsInitialized) return;
     try {
-      const androidSettings = AndroidInitializationSettings(
-        '@mipmap/ic_launcher',
-      );
-      const initSettings = InitializationSettings(android: androidSettings);
-      await _notificationsPlugin.initialize(initSettings);
+      await _notificationsPlugin.initialize();
       _notificationsInitialized = true;
     } catch (e) {
       debugPrint('⚠️ Bildirim init hatası: $e');
