@@ -46,15 +46,15 @@ class PrayerDndReceiver : BroadcastReceiver() {
         val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
         val alarmActive = prefs.getBoolean("flutter.alarm_active", false)
         if (alarmActive) {
-          Log.d(TAG, "⏳ Alarm aktif, sessiz mod 30 saniye erteleniyor...")
-          // Alarm aktifse 30 saniye sonra tekrar dene
+          Log.d(TAG, "⏳ Alarm aktif, sessiz mod 60 saniye erteleniyor...")
+          // Alarm aktifse 60 saniye sonra tekrar dene (uzun ses dosyaları için)
           android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
             if (!prefs.getBoolean("flutter.alarm_active", false)) {
               notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE)
               showSilentModeNotification(context, notificationManager, label, duration)
               Log.d(TAG, "📵 Ertelenmiş sessiz mod aktif: $label")
             }
-          }, 30000)
+          }, 60000) // 30000'den 60000'e çıkarıldı
           return
         }
         // Sessiz moda al

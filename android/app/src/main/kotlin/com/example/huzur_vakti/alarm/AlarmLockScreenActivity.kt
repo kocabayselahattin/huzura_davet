@@ -143,13 +143,26 @@ class AlarmLockScreenActivity : Activity() {
         }
         findViewById<TextView>(R.id.tv_moon_icon)?.text = moonIcon
         
-        // Butonları ayarla - sessize al durumuna göre
+        // Butonları ayarla - sessize al durumuna ve erken bildirime göre
         val btnDismiss = findViewById<Button>(R.id.btn_dismiss)
         val btnStay = findViewById<Button>(R.id.btn_stay)
         val btnExit = findViewById<Button>(R.id.btn_exit)
         
-        if (isSessizeAlEnabled) {
-            // Vakitlerde sessize al açık - Kal ve Çık butonlarını göster
+        // ERKEN BİLDİRİMDE "Kal" ve "Çık" butonları GÖSTERME
+        if (isEarly) {
+            // Erken bildirim - sadece Kapat butonu (sessize al ayarı açık olsa bile)
+            btnDismiss?.visibility = View.VISIBLE
+            btnStay?.visibility = View.GONE
+            btnExit?.visibility = View.GONE
+            
+            btnDismiss?.setOnClickListener {
+                dismissAlarm()
+            }
+            
+            findViewById<TextView>(R.id.tv_hint)?.text = 
+                "Ses veya kilit tuşuna basarak kapatabilirsiniz"
+        } else if (isSessizeAlEnabled) {
+            // Vaktinde bildirim VE vakitlerde sessize al açık - Kal ve Çık butonlarını göster
             btnDismiss?.visibility = View.GONE
             btnStay?.visibility = View.VISIBLE
             btnExit?.visibility = View.VISIBLE
@@ -168,7 +181,7 @@ class AlarmLockScreenActivity : Activity() {
             findViewById<TextView>(R.id.tv_hint)?.text = 
                 "Kal: Telefonu sessize alır • Çık: Normal moda döner"
         } else {
-            // Normal mod - sadece Kapat butonu
+            // Vaktinde bildirim - sadece Kapat butonu
             btnDismiss?.visibility = View.VISIBLE
             btnStay?.visibility = View.GONE
             btnExit?.visibility = View.GONE
@@ -188,11 +201,12 @@ class AlarmLockScreenActivity : Activity() {
             KeyEvent.KEYCODE_VOLUME_DOWN,
             KeyEvent.KEYCODE_POWER,
             KeyEvent.KEYCODE_HEADSETHOOK -> {
-                // Vakitlerde sessize al açıksa, tuşla susturunca sessize al
-                if (isSessizeAlEnabled) {
-                    dismissAlarmWithSilentMode(true)
-                } else {
+                // Erken bildirimde veya sessize al kapalıysa sadece kapat
+                if (isEarly || !isSessizeAlEnabled) {
                     dismissAlarm()
+                } else {
+                    // Vaktinde bildirim VE vakitlerde sessize al açıksa, tuşla susturunca sessize al
+                    dismissAlarmWithSilentMode(true)
                 }
                 return true
             }
@@ -203,10 +217,10 @@ class AlarmLockScreenActivity : Activity() {
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
         // Geri tuşu ile de alarmı kapat
-        if (isSessizeAlEnabled) {
-            dismissAlarmWithSilentMode(true)
-        } else {
+        if (isEarly || !isSessizeAlEnabled) {
             dismissAlarm()
+        } else {
+            dismissAlarmWithSilentMode(true)
         }
     }
     

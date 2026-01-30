@@ -106,13 +106,17 @@ class DailyContentNotificationService {
 
   /// Günlük bildirimleri zamanla
   static Future<void> scheduleDailyContentNotifications() async {
+    debugPrint('📱 Günlük içerik bildirimleri zamanlanıyor...');
+
     if (!_initialized) {
+      debugPrint('🔧 Servis henüz başlatılmamış, initialize ediliyor...');
       await initialize();
     }
 
     final prefs = await SharedPreferences.getInstance();
     final enabled =
         prefs.getBool('daily_content_notifications_enabled') ?? true;
+    debugPrint('🔍 daily_content_notifications_enabled: $enabled');
 
     if (!enabled) {
       debugPrint('⏸️ Günlük içerik bildirimleri devre dışı');
@@ -121,15 +125,81 @@ class DailyContentNotificationService {
     }
 
     try {
+      debugPrint('🗑️ Mevcut günlük içerik bildirimleri iptal ediliyor...');
       // Mevcut bildirimleri iptal et
       await cancelAllDailyContentNotifications();
 
-      // Her bildirim için zamanlama yap
-      await _scheduleVerseNotification();
-      await _scheduleHadithNotification();
-      await _schedulePrayerNotification();
+      // 7 günlük bildirimler zamanla (her gün için ayrı)
+      final now = tz.TZDateTime.now(tz.local);
+      int scheduledCount = 0;
 
-      debugPrint('✅ Günlük içerik bildirimleri zamanlandı:');
+      for (int day = 0; day < 7; day++) {
+        final targetDate = now.add(Duration(days: day));
+
+        // Günün Ayeti - Sabah 08:00
+        final verseTime = tz.TZDateTime(
+          tz.local,
+          targetDate.year,
+          targetDate.month,
+          targetDate.day,
+          verseHour,
+          0,
+          0,
+        );
+        if (verseTime.isAfter(now)) {
+          await _scheduleNotification(
+            id: verseNotificationId + day * 10,
+            title: 'todays_verse',
+            body: 'daily_verse_notification_desc',
+            scheduledDate: verseTime,
+          );
+          scheduledCount++;
+        }
+
+        // Günün Hadisi - Öğle 13:00
+        final hadithTime = tz.TZDateTime(
+          tz.local,
+          targetDate.year,
+          targetDate.month,
+          targetDate.day,
+          hadithHour,
+          0,
+          0,
+        );
+        if (hadithTime.isAfter(now)) {
+          await _scheduleNotification(
+            id: hadithNotificationId + day * 10,
+            title: 'todays_hadith',
+            body: 'daily_hadith_notification_desc',
+            scheduledDate: hadithTime,
+          );
+          scheduledCount++;
+        }
+
+        // Günün Duası - Akşam 20:00
+        final prayerTime = tz.TZDateTime(
+          tz.local,
+          targetDate.year,
+          targetDate.month,
+          targetDate.day,
+          prayerHour,
+          0,
+          0,
+        );
+        if (prayerTime.isAfter(now)) {
+          await _scheduleNotification(
+            id: prayerNotificationId + day * 10,
+            title: 'todays_dua',
+            body: 'daily_prayer_notification_desc',
+            scheduledDate: prayerTime,
+          );
+          scheduledCount++;
+        }
+      }
+
+      debugPrint(
+        '✅ Günlük içerik bildirimleri zamanlandı ($scheduledCount adet):',
+      );
       debugPrint('   📖 Günün Ayeti: Her gün $verseHour:00');
       debugPrint('   📿 Günün Hadisi: Her gün $hadithHour:00');
       debugPrint('   🤲 Günün Duası: Her gün $prayerHour:00');
@@ -138,119 +208,20 @@ class DailyContentNotificationService {
     }
   }
 
-  /// Günün ayeti bildirimini zamanla
-  static Future<void> _scheduleVerseNotification() async {
-    final now = tz.TZDateTime.now(tz.local);
-    debugPrint('📅 Günün Ayeti zamanlama başlıyor - Şu an: $now');
-
-    var scheduledDate = tz.TZDateTime(
-      tz.local,
-      now.year,
-      now.month,
-      now.day,
-      verseHour,
-      0,
-      0,
-    );
-    debugPrint('📅 Hedef saat: $scheduledDate (saat $verseHour:00)');
-
-    // Eğer saat geçmişse yarına ayarla
-    if (scheduledDate.isBefore(now)) {
-      scheduledDate = scheduledDate.add(const Duration(days: 1));
-      debugPrint('📅 Saat geçmiş, yarına ayarlandı: $scheduledDate');
-    }
-
-    final languageService = LanguageService();
-    await languageService.load();
-
-    final title = languageService['todays_verse'] ?? 'Günün Ayeti';
-    final body =
-        languageService['daily_verse_notification_desc'] ??
-        'Bugünün ayetini okumak için tıklayın';
-
-    await _scheduleNotification(
-      id: verseNotificationId,
-      title: title,
-      body: body,
-      scheduledDate: scheduledDate,
-    );
-  }
-
-  /// Günün hadisi bildirimini zamanla
-  static Future<void> _scheduleHadithNotification() async {
-    final now = tz.TZDateTime.now(tz.local);
-    var scheduledDate = tz.TZDateTime(
-      tz.local,
-      now.year,
-      now.month,
-      now.day,
-      hadithHour,
-      0,
-      0,
-    );
-
-    // Eğer saat geçmişse yarına ayarla
-    if (scheduledDate.isBefore(now)) {
-      scheduledDate = scheduledDate.add(const Duration(days: 1));
-    }
-
-    final languageService = LanguageService();
-    await languageService.load();
-
-    final title = languageService['todays_hadith'] ?? 'Günün Hadisi';
-    final body =
-        languageService['daily_hadith_notification_desc'] ??
-        'Bugünün hadisini okumak için tıklayın';
-
-    await _scheduleNotification(
-      id: hadithNotificationId,
-      title: title,
-      body: body,
-      scheduledDate: scheduledDate,
-    );
-  }
-
-  /// Günün duası bildirimini zamanla
-  static Future<void> _schedulePrayerNotification() async {
-    final now = tz.TZDateTime.now(tz.local);
-    var scheduledDate = tz.TZDateTime(
-      tz.local,
-      now.year,
-      now.month,
-      now.day,
-      prayerHour,
-      0,
-      0,
-    );
-
-    // Eğer saat geçmişse yarına ayarla
-    if (scheduledDate.isBefore(now)) {
-      scheduledDate = scheduledDate.add(const Duration(days: 1));
-    }
-
-    final languageService = LanguageService();
-    await languageService.load();
-
-    final title = languageService['todays_dua'] ?? 'Günün Duası';
-    final body =
-        languageService['daily_prayer_notification_desc'] ??
-        'Bugünün duasını okumak için tıklayın';
-
-    await _scheduleNotification(
-      id: prayerNotificationId,
-      title: title,
-      body: body,
-      scheduledDate: scheduledDate,
-    );
-  }
-
-  /// Bildirim zamanla (her gün tekrar eden)
+  /// Bildirim zamanla (7 günlük sistem)
   static Future<void> _scheduleNotification({
     required int id,
-    required String title,
-    required String body,
+    required String title, // Dil anahtarı
+    required String body, // Dil anahtarı
     required tz.TZDateTime scheduledDate,
   }) async {
+    // Dil servisinden metinleri al
+    final languageService = LanguageService();
+    await languageService.load();
+
+    final titleText = languageService[title] ?? title;
+    final bodyText = languageService[body] ?? body;
+
     // Ses ayarını al
     final soundFile = await getDailyContentNotificationSound();
     final soundName = soundFile.replaceAll('.mp3', '');
@@ -267,8 +238,8 @@ class DailyContentNotificationService {
       enableVibration: true,
       enableLights: true,
       visibility: NotificationVisibility.public,
-      ongoing: true, // Kullanıcı silene kadar bildirim çubuğunda kalsın
-      autoCancel: false,
+      ongoing: false,
+      autoCancel: true,
       ticker: 'Günlük içerik',
       largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
     );
@@ -279,24 +250,26 @@ class DailyContentNotificationService {
 
     await _notificationsPlugin.zonedSchedule(
       id: id,
-      title: title,
-      body: body,
+      title: titleText,
+      body: bodyText,
       scheduledDate: scheduledDate,
       notificationDetails: notificationDetails,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      matchDateTimeComponents: DateTimeComponents.time, // Her gün aynı saatte
     );
 
     debugPrint(
-      '📅 Bildirim zamanlandı: $title - ${scheduledDate.hour}:${scheduledDate.minute.toString().padLeft(2, '0')}',
+      '📅 Bildirim zamanlandı: $titleText - ${scheduledDate.day}/${scheduledDate.month} ${scheduledDate.hour}:${scheduledDate.minute.toString().padLeft(2, '0')} (ID: $id)',
     );
   }
 
   /// Tüm günlük içerik bildirimlerini iptal et
   static Future<void> cancelAllDailyContentNotifications() async {
-    await _notificationsPlugin.cancel(id: verseNotificationId);
-    await _notificationsPlugin.cancel(id: hadithNotificationId);
-    await _notificationsPlugin.cancel(id: prayerNotificationId);
+    // 7 günlük tüm bildirimleri iptal et
+    for (int day = 0; day < 7; day++) {
+      await _notificationsPlugin.cancel(id: verseNotificationId + day * 10);
+      await _notificationsPlugin.cancel(id: hadithNotificationId + day * 10);
+      await _notificationsPlugin.cancel(id: prayerNotificationId + day * 10);
+    }
     debugPrint('🚫 Günlük içerik bildirimleri iptal edildi');
   }
 

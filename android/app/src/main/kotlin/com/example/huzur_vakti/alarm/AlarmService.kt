@@ -60,6 +60,7 @@ class AlarmService : Service() {
     private var currentVakitName = ""
     private var currentVakitTime = ""
     private var isSessizeAlEnabled = false  // Vakitlerde sessize al ayarı
+    private var isCurrentAlarmEarly = false  // Mevcut alarm erken bildirim mi?
     private var mediaSession: MediaSession? = null
     private var screenOffReceiver: BroadcastReceiver? = null
     
@@ -125,10 +126,13 @@ class AlarmService : Service() {
                 val isEarly = intent?.getBooleanExtra(AlarmReceiver.EXTRA_IS_EARLY, false) ?: false
                 val earlyMinutes = intent?.getIntExtra(AlarmReceiver.EXTRA_EARLY_MINUTES, 0) ?: 0
                 
+                // Erken bildirim bilgisini kaydet
+                isCurrentAlarmEarly = isEarly
+                
                 // Vakitlerde sessize al ayarını kontrol et
                 val prefs = getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
                 isSessizeAlEnabled = prefs.getBoolean("flutter.sessize_al", false)
-                Log.d(TAG, "📵 Vakitlerde sessize al ayarı: $isSessizeAlEnabled")
+                Log.d(TAG, "📵 Vakitlerde sessize al ayarı: $isSessizeAlEnabled, Erken bildirim: $isEarly")
                 
                 // Alarm aktif flag'ini ayarla (DND beklesin diye)
                 setAlarmActiveFlag(true)
@@ -243,11 +247,11 @@ class AlarmService : Service() {
             .setAutoCancel(false)
             .setOngoing(true)
         
-        // Vakitlerde sessize al ayarı açıksa "Kal" ve "Çık" butonları göster
-        if (isSessizeAlEnabled) {
+        // Vakitlerde sessize al ayarı açıksa VE bu erken bildirim DEĞİLSE "Kal" ve "Çık" butonları göster
+        if (isSessizeAlEnabled && !isEarly) {
             builder.addAction(android.R.drawable.ic_lock_silent_mode, "Kal (Sessize Al)", stayPendingIntent)
             builder.addAction(android.R.drawable.ic_lock_silent_mode_off, "Çık (Normal)", exitPendingIntent)
-            Log.d(TAG, "📵 Bildirimde 'Kal' ve 'Çık' butonları eklendi")
+            Log.d(TAG, "📵 Bildirimde 'Kal' ve 'Çık' butonları eklendi (vaktinde bildirim)")
         } else {
             // Normal mod - sadece Kapat butonu
             builder.addAction(android.R.drawable.ic_menu_close_clear_cancel, "Kapat", stopPendingIntent)
@@ -332,6 +336,9 @@ class AlarmService : Service() {
                     
                     // Vakitlerde sessize al ayarı açıksa telefonu sessize al
                     this@AlarmService.checkAndSetSilentMode()
+                    
+                    // Alarm aktif flag'ini kapat (DND aktif olabilir diye)
+                    this@AlarmService.setAlarmActiveFlag(false)
                     
                     // Servisi kapat
                     this@AlarmService.stopForeground(STOP_FOREGROUND_REMOVE)
@@ -622,9 +629,16 @@ class AlarmService : Service() {
     /**
      * Vakitlerde sessize al ayarı açıksa ve alarm durdurulduğunda telefonu sessize alır
      * Bu fonksiyon alarm susturulduğunda (güç/ses tuşu) çağrılır
+     * NOT: SADECE VAKTİNDE BİLDİRİMLERDE ÇALIŞIR, ERKEN BİLDİRİMLERDE ÇALIŞMAZ
      */
     private fun checkAndSetSilentMode() {
         try {
+            // Erken bildirimde sessize alma yapma
+            if (isCurrentAlarmEarly) {
+                Log.d(TAG, "ℹ️ Bu erken bildirim - sessize alma yapılmayacak")
+                return
+            }
+            
             // Vakitlerde sessize al ayarı açık mı?
             if (!isSessizeAlEnabled) {
                 Log.d(TAG, "ℹ️ Vakitlerde sessize al ayarı kapalı - otomatik sessize alma yapılmayacak")
