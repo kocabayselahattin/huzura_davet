@@ -423,6 +423,19 @@ class TemaService extends ChangeNotifier {
       aciklama: 'Elektrik enerji tonları',
       ikon: Icons.bolt,
     ),
+    // 22: Gündönümü - Gece ve altın vurgular
+    22: TemaRenkleri(
+      arkaPlan: Color(0xFF0B0F1E),
+      kartArkaPlan: Color(0xFF141A2E),
+      vurgu: Color(0xFFD9A441),
+      vurguSecondary: Color(0xFF2BB4A5),
+      yaziPrimary: Color(0xFFE9ECEF),
+      yaziSecondary: Color(0xFFB6C2CC),
+      ayirac: Color(0xFF1E2740),
+      isim: 'Gündönümü',
+      aciklama: 'Gece-gündüz geçişli altın tema',
+      ikon: Icons.change_circle_outlined,
+    ),
   };
 
   static const Map<AppTema, TemaRenkleri> temalar = {

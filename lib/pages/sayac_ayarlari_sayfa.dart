@@ -24,6 +24,7 @@ import '../widgets/kalem_sayac_widget.dart';
 import '../widgets/nur_sayac_widget.dart';
 import '../widgets/hilal_sayac_widget.dart';
 import '../widgets/mihrap_sayac_widget.dart';
+import '../widgets/gundonumu_sayac_widget.dart';
 
 class SayacAyarlariSayfa extends StatefulWidget {
   const SayacAyarlariSayfa({super.key});
@@ -41,58 +42,146 @@ class _SayacAyarlariSayfaState extends State<SayacAyarlariSayfa> {
     viewportFraction: 1.0,
   );
 
-  // Sayaç bilgileri - İslami sayaçlar en başta
+  // Sayaç bilgileri - Gündönümü en başta (index eski sırayı korur)
   final List<Map<String, dynamic>> _sayaclar = [
-    {'id': 'islami', 'icon': Icons.mosque, 'color': const Color(0xFF1B5E20)},
-    {'id': 'kalem', 'icon': Icons.edit, 'color': const Color(0xFF2D6A4F)},
-    {'id': 'nur', 'icon': Icons.wb_sunny, 'color': const Color(0xFF00BCD4)},
+    {
+      'id': 'gundonumu',
+      'icon': Icons.change_circle_outlined,
+      'color': const Color(0xFF5E60CE),
+      'index': 22,
+    },
+    {
+      'id': 'islami',
+      'icon': Icons.mosque,
+      'color': const Color(0xFF1B5E20),
+      'index': 0,
+    },
+    {
+      'id': 'kalem',
+      'icon': Icons.edit,
+      'color': const Color(0xFF2D6A4F),
+      'index': 1,
+    },
+    {
+      'id': 'nur',
+      'icon': Icons.wb_sunny,
+      'color': const Color(0xFF00BCD4),
+      'index': 2,
+    },
     {
       'id': 'hilal',
       'icon': Icons.nights_stay,
       'color': const Color(0xFF415A77),
+      'index': 3,
     },
     {
       'id': 'mihrap',
       'icon': Icons.architecture,
       'color': const Color(0xFF5D4037),
+      'index': 4,
     },
-    {'id': 'dijital', 'icon': Icons.access_time, 'color': Colors.cyan},
-    {'id': 'premium', 'icon': Icons.star, 'color': Colors.amber},
-    {'id': 'galaksi', 'icon': Icons.auto_awesome, 'color': Colors.purple},
-    {'id': 'neon', 'icon': Icons.lightbulb, 'color': Colors.green},
-    {'id': 'okyanus', 'icon': Icons.water, 'color': Colors.blue},
-    {'id': 'minimal', 'icon': Icons.crop_square, 'color': Colors.grey},
-    {'id': 'retro', 'icon': Icons.tv, 'color': const Color(0xFF00FF41)},
+    {
+      'id': 'dijital',
+      'icon': Icons.access_time,
+      'color': Colors.cyan,
+      'index': 5,
+    },
+    {
+      'id': 'premium',
+      'icon': Icons.star,
+      'color': Colors.amber,
+      'index': 6,
+    },
+    {
+      'id': 'galaksi',
+      'icon': Icons.auto_awesome,
+      'color': Colors.purple,
+      'index': 7,
+    },
+    {
+      'id': 'neon',
+      'icon': Icons.lightbulb,
+      'color': Colors.green,
+      'index': 8,
+    },
+    {
+      'id': 'okyanus',
+      'icon': Icons.water,
+      'color': Colors.blue,
+      'index': 9,
+    },
+    {
+      'id': 'minimal',
+      'icon': Icons.crop_square,
+      'color': Colors.grey,
+      'index': 10,
+    },
+    {
+      'id': 'retro',
+      'icon': Icons.tv,
+      'color': const Color(0xFF00FF41),
+      'index': 11,
+    },
     {
       'id': 'aurora',
       'icon': Icons.nights_stay,
       'color': const Color(0xFF00D4AA),
+      'index': 12,
     },
     {
       'id': 'kristal',
       'icon': Icons.diamond_outlined,
       'color': const Color(0xFF64B5F6),
+      'index': 13,
     },
     {
       'id': 'volkanik',
       'icon': Icons.local_fire_department,
       'color': const Color(0xFFFF6B35),
+      'index': 14,
     },
-    {'id': 'zen', 'icon': Icons.spa, 'color': const Color(0xFF4A6741)},
-    {'id': 'siber', 'icon': Icons.memory, 'color': const Color(0xFFFF00FF)},
+    {
+      'id': 'zen',
+      'icon': Icons.spa,
+      'color': const Color(0xFF4A6741),
+      'index': 15,
+    },
+    {
+      'id': 'siber',
+      'icon': Icons.memory,
+      'color': const Color(0xFFFF00FF),
+      'index': 16,
+    },
     {
       'id': 'gece',
       'icon': Icons.nightlight_round,
       'color': const Color(0xFF1E3A5F),
+      'index': 17,
     },
-    {'id': 'matrix', 'icon': Icons.terminal, 'color': const Color(0xFF00FF41)},
-    {'id': 'nefes', 'icon': Icons.air, 'color': const Color(0xFF6B5B95)},
+    {
+      'id': 'matrix',
+      'icon': Icons.terminal,
+      'color': const Color(0xFF00FF41),
+      'index': 18,
+    },
+    {
+      'id': 'nefes',
+      'icon': Icons.air,
+      'color': const Color(0xFF6B5B95),
+      'index': 19,
+    },
     {
       'id': 'geometrik',
       'icon': Icons.hexagon_outlined,
       'color': const Color(0xFFFFD700),
+      'index': 20,
     },
-    {'id': 'tesla', 'icon': Icons.bolt, 'color': const Color(0xFF00D4FF)},
+    {
+      'id': 'tesla',
+      'icon': Icons.bolt,
+      'color': const Color(0xFF00D4FF),
+      'index': 21,
+    },
   ];
 
   @override
@@ -117,26 +206,31 @@ class _SayacAyarlariSayfaState extends State<SayacAyarlariSayfa> {
 
   Future<void> _loadSeciliSayac() async {
     final prefs = await SharedPreferences.getInstance();
-    final index = prefs.getInt('secili_sayac_index') ?? 0;
+    final storedIndex = prefs.getInt('secili_sayac_index') ?? 0;
+    final displayIndex = _sayaclar.indexWhere(
+      (sayac) => sayac['index'] == storedIndex,
+    );
+    final resolvedIndex = displayIndex == -1 ? 0 : displayIndex;
     if (mounted) {
       setState(() {
-        _seciliSayacIndex = index;
-        _currentPreviewIndex = index;
+        _seciliSayacIndex = resolvedIndex;
+        _currentPreviewIndex = resolvedIndex;
       });
       // Preview'ı seçili sayaca getir
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (_previewController.hasClients) {
-          _previewController.jumpToPage(index);
+          _previewController.jumpToPage(resolvedIndex);
         }
       });
     }
   }
 
   Future<void> _saveSeciliSayac(int index) async {
+    final actualIndex = _sayaclar[index]['index'] as int? ?? 0;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('secili_sayac_index', index);
+    await prefs.setInt('secili_sayac_index', actualIndex);
     // Sayaç temasını güncelle
-    await _temaService.sayacTemasiGuncelle(index);
+    await _temaService.sayacTemasiGuncelle(actualIndex);
     setState(() {
       _seciliSayacIndex = index;
     });
@@ -188,6 +282,8 @@ class _SayacAyarlariSayfaState extends State<SayacAyarlariSayfa> {
         return 'Hilal';
       case 'mihrap':
         return 'Mihrap';
+      case 'gundonumu':
+        return 'Gün Dönümü';
       default:
         return id;
     }
@@ -257,6 +353,8 @@ class _SayacAyarlariSayfaState extends State<SayacAyarlariSayfa> {
         return 'Yıldızlı gece, Hicri/Miladi takvimli';
       case 'mihrap':
         return 'Cami mimarisi temalı, Hicri/Miladi takvimli';
+      case 'gundonumu':
+        return 'Elips üzerinde 24 saat ve vakit göstergeleri';
       default:
         return '';
     }
@@ -269,51 +367,55 @@ class _SayacAyarlariSayfaState extends State<SayacAyarlariSayfa> {
       return const SizedBox.shrink();
     }
 
+    final id = _sayaclar[index]['id'] as String? ?? 'islami';
+
     // isActive=true ise widget'ı oluştur ve veri yükle
-    switch (index) {
-      case 0:
+    switch (id) {
+      case 'gundonumu':
+        return const GundonumuSayacWidget();
+      case 'islami':
         return const IslamiSayacWidget();
-      case 1:
+      case 'kalem':
         return const KalemSayacWidget();
-      case 2:
+      case 'nur':
         return const NurSayacWidget();
-      case 3:
+      case 'hilal':
         return const HilalSayacWidget();
-      case 4:
+      case 'mihrap':
         return const MihrapSayacWidget();
-      case 5:
+      case 'dijital':
         return const DijitalSayacWidget();
-      case 6:
+      case 'premium':
         return const PremiumSayacWidget();
-      case 7:
+      case 'galaksi':
         return const GalaksiSayacWidget();
-      case 8:
+      case 'neon':
         return const NeonSayacWidget();
-      case 9:
+      case 'okyanus':
         return const OkyanusSayacWidget();
-      case 10:
+      case 'minimal':
         return const MinimalSayacWidget();
-      case 11:
+      case 'retro':
         return const RetroSayacWidget();
-      case 12:
+      case 'aurora':
         return const AuroraSayacWidget();
-      case 13:
+      case 'kristal':
         return const KristalSayacWidget();
-      case 14:
+      case 'volkanik':
         return const VolkanikSayacWidget();
-      case 15:
+      case 'zen':
         return const ZenSayacWidget();
-      case 16:
+      case 'siber':
         return const SiberSayacWidget();
-      case 17:
+      case 'gece':
         return const GeceSayacWidget();
-      case 18:
+      case 'matrix':
         return const MatrixSayacWidget();
-      case 19:
+      case 'nefes':
         return const NefesSayacWidget();
-      case 20:
+      case 'geometrik':
         return const GeometrikSayacWidget();
-      case 21:
+      case 'tesla':
         return const TeslaSayacWidget();
       default:
         return const IslamiSayacWidget();

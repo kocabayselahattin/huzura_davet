@@ -26,6 +26,7 @@ import '../widgets/kalem_sayac_widget.dart';
 import '../widgets/nur_sayac_widget.dart';
 import '../widgets/hilal_sayac_widget.dart';
 import '../widgets/mihrap_sayac_widget.dart';
+import '../widgets/gundonumu_sayac_widget.dart';
 import '../widgets/esmaul_husna_widget.dart';
 import '../widgets/ozel_gun_popup.dart';
 import '../widgets/ozel_gun_banner_widget.dart';
@@ -878,6 +879,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
               // --- SAYAÇ BÖLÜMÜ ---
               SizedBox(
                 height: 240,
+                width: double.infinity,
                 child: _sayacYuklendi
                     ? _buildSelectedCounter()
                     : const Center(child: CircularProgressIndicator()),
@@ -965,6 +967,8 @@ class _AnaSayfaState extends State<AnaSayfa> {
         return const GeometrikSayacWidget();
       case 21:
         return const TeslaSayacWidget();
+      case 22:
+        return const GundonumuSayacWidget();
       default:
         return const IslamiSayacWidget();
     }
