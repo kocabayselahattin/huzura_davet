@@ -230,8 +230,8 @@ class _GeceSayacWidgetState extends State<GeceSayacWidget>
     const synodicMonth = 29.53058867;
     final phase = (days % synodicMonth) / synodicMonth;
     final normalizedPhase = phase < 0 ? phase + 1 : phase;
-    // Yönü tersine çevir (sağdan sola)
-    return 1.0 - normalizedPhase;
+    // Faz değeri (0=yeni ay, 0.5=dolunay, 1=yeni ay)
+    return normalizedPhase;
   }
 
   @override
@@ -618,8 +618,9 @@ class _MoonPhasePainter extends CustomPainter {
     canvas.saveLayer(Offset.zero & size, Paint());
     canvas.drawCircle(center, radius, lightPaint);
 
+    // Gölge yönü tersine çevrildi (sağdan sola)
     final t = phase <= 0.5 ? (phase / 0.5) : ((1 - phase) / 0.5);
-    final dx = (phase <= 0.5 ? -1 : 1) * (t * 2 * radius);
+    final dx = (phase <= 0.5 ? 1 : -1) * (t * 2 * radius); // Yön tersine
     canvas.drawCircle(center.translate(dx, 0), radius, darkPaint);
     canvas.restore();
   }

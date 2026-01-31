@@ -52,6 +52,10 @@ dependencies:
   file_picker: ^10.3.10
   path_provider: ^2.1.0
   timezone: ^0.10.1
+  flutter_weather_bg_null_safety: ^1.0.0
+  weather: ^3.2.1
+  open_meteo: ^3.0.0
+  app_settings: ^7.0.0
 
 dev_dependencies:
   flutter_test:
@@ -93,6 +97,12 @@ flutter:
     - assets/sounds/
     - assets/lang/
     - assets/icon/app_icon.png
+    - assets/icon/sun.png
+    - assets/icon/moon.png
+    - assets/icon/sky_day.png
+    - assets/icon/sky_night.png
+    - assets/icon/sun.png
+    - assets/icon/moon.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

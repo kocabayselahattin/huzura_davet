@@ -223,6 +223,16 @@
             </intent-filter>
         </receiver>
 
+        <!-- Silent Mode Receiver - Sessize mod butonlarını işler -->
+        <receiver
+            android:name=".alarm.SilentModeReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.example.huzur_vakti.STAY_SILENT" />
+                <action android:name="com.example.huzur_vakti.EXIT_SILENT" />
+            </intent-filter>
+        </receiver>
+
         <!-- Alarm Service - Foreground service olarak alarm çalar -->
         <service
             android:name=".alarm.AlarmService"

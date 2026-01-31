@@ -238,14 +238,10 @@ class DailyContentNotificationService {
       enableVibration: true,
       enableLights: true,
       visibility: NotificationVisibility.public,
-      ongoing: false,
-      autoCancel: true,
+      ongoing: true, // Bildirim kullanıcı kapatana kadar kalsın
+      autoCancel: false, // Otomatik kaybolmasın
       ticker: 'Günlük içerik',
       largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
-    );
-
-    final notificationDetails = NotificationDetails(
-      android: androidPlatformChannelSpecifics,
     );
 
     await _notificationsPlugin.zonedSchedule(
@@ -253,18 +249,19 @@ class DailyContentNotificationService {
       title: titleText,
       body: bodyText,
       scheduledDate: scheduledDate,
-      notificationDetails: notificationDetails,
+      notificationDetails: NotificationDetails(
+        android: androidPlatformChannelSpecifics,
+      ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      payload: null,
     );
-
     debugPrint(
-      '📅 Bildirim zamanlandı: $titleText - ${scheduledDate.day}/${scheduledDate.month} ${scheduledDate.hour}:${scheduledDate.minute.toString().padLeft(2, '0')} (ID: $id)',
+      '📅 Bildirim zamanlandı: $titleText - \\${scheduledDate.day}/\\${scheduledDate.month} \\${scheduledDate.hour}:\\${scheduledDate.minute.toString().padLeft(2, '0')} (ID: $id)',
     );
   }
 
   /// Tüm günlük içerik bildirimlerini iptal et
   static Future<void> cancelAllDailyContentNotifications() async {
-    // 7 günlük tüm bildirimleri iptal et
     for (int day = 0; day < 7; day++) {
       await _notificationsPlugin.cancel(id: verseNotificationId + day * 10);
       await _notificationsPlugin.cancel(id: hadithNotificationId + day * 10);
@@ -277,18 +274,11 @@ class DailyContentNotificationService {
   static Future<void> setDailyContentNotificationsEnabled(bool enabled) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('daily_content_notifications_enabled', enabled);
-
     if (enabled) {
       await scheduleDailyContentNotifications();
     } else {
       await cancelAllDailyContentNotifications();
     }
-  }
-
-  /// Günlük içerik bildirimleri aktif mi?
-  static Future<bool> isDailyContentNotificationsEnabled() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool('daily_content_notifications_enabled') ?? true;
   }
 
   /// Test bildirimi gönder (hemen)
@@ -323,7 +313,6 @@ class DailyContentNotificationService {
         return;
     }
 
-    // Ses ayarını al
     final soundFile = await getDailyContentNotificationSound();
     final soundName = soundFile.replaceAll('.mp3', '');
 
@@ -344,15 +333,14 @@ class DailyContentNotificationService {
       largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
     );
 
-    final notificationDetails = NotificationDetails(
-      android: androidPlatformChannelSpecifics,
-    );
-
     await _notificationsPlugin.show(
       id: id,
       title: title,
       body: body,
-      notificationDetails: notificationDetails,
+      notificationDetails: NotificationDetails(
+        android: androidPlatformChannelSpecifics,
+      ),
+      payload: null,
     );
 
     debugPrint('🔔 Test bildirimi gönderildi: $title');

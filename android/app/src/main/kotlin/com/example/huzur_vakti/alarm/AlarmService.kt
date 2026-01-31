@@ -129,7 +129,7 @@ class AlarmService : Service() {
                 // Erken bildirim bilgisini kaydet
                 isCurrentAlarmEarly = isEarly
                 
-                // Vakitlerde sessize al ayarını kontrol et
+                // Vakitlerde sessize al ayarı kontrol et
                 val prefs = getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
                 isSessizeAlEnabled = prefs.getBoolean("flutter.sessize_al", false)
                 Log.d(TAG, "📵 Vakitlerde sessize al ayarı: $isSessizeAlEnabled, Erken bildirim: $isEarly")
@@ -206,19 +206,19 @@ class AlarmService : Service() {
         )
         
         // "Kal" butonu - telefonu sessize al
-        val stayIntent = Intent(this, AlarmService::class.java).apply {
-            action = ACTION_STAY_SILENT
+        val stayIntent = Intent(ACTION_STAY_SILENT).apply {
+            setPackage(packageName)
         }
-        val stayPendingIntent = PendingIntent.getService(
+        val stayPendingIntent = PendingIntent.getBroadcast(
             this, 2, stayIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         
         // "Çık" butonu - normal moda dön
-        val exitIntent = Intent(this, AlarmService::class.java).apply {
-            action = ACTION_EXIT_SILENT
+        val exitIntent = Intent(ACTION_EXIT_SILENT).apply {
+            setPackage(packageName)
         }
-        val exitPendingIntent = PendingIntent.getService(
+        val exitPendingIntent = PendingIntent.getBroadcast(
             this, 3, exitIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -244,8 +244,8 @@ class AlarmService : Service() {
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setContentIntent(mainPendingIntent)
             .setFullScreenIntent(mainPendingIntent, true)
-            .setAutoCancel(false)
-            .setOngoing(true)
+            .setAutoCancel(true)
+            .setOngoing(false)
         
         // Vakitlerde sessize al ayarı açıksa VE bu erken bildirim DEĞİLSE "Kal" ve "Çık" butonları göster
         if (isSessizeAlEnabled && !isEarly) {
@@ -294,9 +294,9 @@ class AlarmService : Service() {
             Log.d(TAG, "🔊 Alarm sesi başlatılıyor - Orijinal: $soundFile, Kullanılan: $actualSoundFile")
             
             mediaPlayer = MediaPlayer().apply {
-                // Ses kaynağını ayarla - ZİL SESİ akışını kullan (telefon sessizde iken çalmaz)
+                // Ses kaynağını ayarla - ALARM akışını kullan (telefon sessizde de çalar)
                 val audioAttributes = AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                    .setUsage(AudioAttributes.USAGE_ALARM)
                     .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                     .build()
                 setAudioAttributes(audioAttributes)

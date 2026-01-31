@@ -23,6 +23,25 @@
 			],
 			"isBackground": false,
 			"group": "build"
+		},
+		{
+			"label": "Run App",
+			"type": "shell",
+			"command": "flutter",
+			"args": [
+				"run"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Build APK",
+			"type": "shell",
+			"command": "flutter",
+			"args": [
+				"build",
+				"apk"
+			],
+			"group": "build"
 		}
 	]
 }

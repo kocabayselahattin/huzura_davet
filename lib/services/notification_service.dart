@@ -1,6 +1,7 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/foundation.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:app_settings/app_settings.dart';
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin =
@@ -74,6 +75,12 @@ class NotificationService {
             await androidImplementation.requestNotificationsPermission() ??
             false;
         debugPrint('📱 Bildirim izni sonucu: $granted');
+        if (!granted) {
+          debugPrint(
+            '⚠️ Kullanıcı bildirim izni vermedi, ayarlara yönlendiriliyor...',
+          );
+          AppSettings.openAppSettings(type: AppSettingsType.notification);
+        }
       }
     }
 
@@ -128,7 +135,7 @@ class NotificationService {
           category: AndroidNotificationCategory.alarm,
           visibility: NotificationVisibility.public,
           autoCancel: false,
-          ongoing: false,
+          ongoing: true,
           ticker: 'Vakit bildirimi',
           largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
         );

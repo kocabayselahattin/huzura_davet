@@ -1,3 +1,4 @@
+import '../widgets/gun_donumu_sayac_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/tema_service.dart';
@@ -24,7 +25,6 @@ import '../widgets/kalem_sayac_widget.dart';
 import '../widgets/nur_sayac_widget.dart';
 import '../widgets/hilal_sayac_widget.dart';
 import '../widgets/mihrap_sayac_widget.dart';
-import '../widgets/gundonumu_sayac_widget.dart';
 
 class SayacAyarlariSayfa extends StatefulWidget {
   const SayacAyarlariSayfa({super.key});
@@ -172,7 +172,7 @@ class _SayacAyarlariSayfaState extends State<SayacAyarlariSayfa> {
   @override
   void initState() {
     super.initState();
-    _loadSeciliSayac();
+    _loadSeciliSayac(); // Load the selected counter
     _temaService.addListener(_onTemaChanged);
     _languageService.addListener(_onTemaChanged);
   }
@@ -357,7 +357,7 @@ class _SayacAyarlariSayfaState extends State<SayacAyarlariSayfa> {
     // isActive=true ise widget'ı oluştur ve veri yükle
     switch (id) {
       case 'gundonumu':
-        return const GundonumuSayacWidget();
+        return const GunDonumuSayacWidget();
       case 'islami':
         return const IslamiSayacWidget();
       case 'kalem':

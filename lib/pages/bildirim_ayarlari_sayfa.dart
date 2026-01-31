@@ -65,6 +65,9 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
   // Günlük içerik bildirimleri
   bool _gunlukIcerikBildirimleri = true;
 
+  // Ses çalma durumu (play/pause toggle için)
+  bool _sesCaliyor = false;
+
   // Kilit ekranı servisi için MethodChannel
   static const _lockScreenChannel = MethodChannel('huzur_vakti/lockscreen');
 
@@ -221,6 +224,18 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
   void initState() {
     super.initState();
     _ayarlariYukle();
+    _baslangicAyarlari();
+  }
+
+  Future<void> _baslangicAyarlari() async {
+    // Günlük içerik bildirimlerini başlat
+    try {
+      await DailyContentNotificationService.initialize();
+      await DailyContentNotificationService.scheduleDailyContentNotifications();
+      debugPrint('✅ Başlangıçta günlük içerik bildirimleri zamanlandı');
+    } catch (e) {
+      debugPrint('❌ Günlük içerik bildirimleri hatası: $e');
+    }
   }
 
   @override
@@ -554,20 +569,35 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
 
   Future<void> _sesCal(String key, String sesDosyasi) async {
     try {
-      await _audioPlayer.stop();
+      if (_sesCaliyor) {
+        // Ses çalıyorsa durdur
+        await _audioPlayer.stop();
+        setState(() => _sesCaliyor = false);
+      } else {
+        // Ses çalmıyorsa çal
+        if (sesDosyasi == 'custom' && _ozelSesDosyalari.containsKey(key)) {
+          // Özel ses çal
+          await _audioPlayer.play(DeviceFileSource(_ozelSesDosyalari[key]!));
+        } else if (sesDosyasi != 'custom') {
+          // Asset ses çal - dosya adını düzgün kullan
+          await _audioPlayer.play(AssetSource('sounds/$sesDosyasi'));
+        }
 
-      if (sesDosyasi == 'custom' && _ozelSesDosyalari.containsKey(key)) {
-        // Özel ses çal
-        await _audioPlayer.play(DeviceFileSource(_ozelSesDosyalari[key]!));
-      } else if (sesDosyasi != 'custom') {
-        // Asset ses çal - dosya adını düzgün kullan
-        await _audioPlayer.play(AssetSource('sounds/$sesDosyasi'));
+        setState(() => _sesCaliyor = true);
+
+        // Ses bitince otomatik toggle
+        _audioPlayer.onPlayerStateChanged.listen((state) {
+          if (state == PlayerState.stopped || state == PlayerState.completed) {
+            setState(() => _sesCaliyor = false);
+          }
+        });
       }
     } catch (e) {
+      setState(() => _sesCaliyor = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Ses çalınamadı: $e'),
+            content: Text('Ses hatası: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -1467,17 +1497,42 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      // Ses önizleme butonu
-                      IconButton(
-                        onPressed: () => _sesCal(key, seciliSes),
-                        icon: const Icon(
-                          Icons.play_circle_outline,
-                          color: Colors.cyanAccent,
-                          size: 28,
+                      // Ses önizleme butonu - Play/Pause toggle
+                      Container(
+                        decoration: BoxDecoration(
+                          color: _sesCaliyor
+                              ? Colors.red.withOpacity(0.3)
+                              : Colors.green.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(6),
                         ),
-                        tooltip:
-                            _languageService['listen_sound'] ?? 'Sesi dinle',
+                        child: IconButton(
+                          onPressed: () => _sesCal(key, seciliSes),
+                          icon: Icon(
+                            _sesCaliyor ? Icons.stop_circle : Icons.play_circle,
+                            color: _sesCaliyor ? Colors.red : Colors.green,
+                            size: 28,
+                          ),
+                          tooltip: _sesCaliyor ? 'Durdur' : 'Dinle',
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: 40,
+                            minHeight: 40,
+                          ),
+                        ),
                       ),
+                      const SizedBox(width: 8),
+                      // Özel ses seçme butonu
+                      if (seciliSes == 'custom' ||
+                          _ozelSesDosyalari.containsKey(key))
+                        IconButton(
+                          onPressed: () => _ozelSesSec(key),
+                          icon: const Icon(
+                            Icons.folder_open,
+                            color: Colors.amber,
+                            size: 24,
+                          ),
+                          tooltip: 'Dosya seç',
+                        ),
                     ],
                   ),
                   // Özel ses seçildiyse dosya adını göster

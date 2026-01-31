@@ -55,7 +55,7 @@ class AlarmLockScreenActivity : Activity() {
         isEarly = intent.getBooleanExtra(AlarmReceiver.EXTRA_IS_EARLY, false)
         earlyMinutes = intent.getIntExtra(AlarmReceiver.EXTRA_EARLY_MINUTES, 0)
         
-        // Vakitlerde sessize al ayarını kontrol et
+        // Vakitlerde sessize al ayarı
         val prefs = getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
         isSessizeAlEnabled = prefs.getBoolean("flutter.sessize_al", false)
         
@@ -169,11 +169,26 @@ class AlarmLockScreenActivity : Activity() {
             
             // "Kal" butonu - sessize al ve kapat
             btnStay?.setOnClickListener {
+                // Telefonu hemen sessize al
+                val audioManager = getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
+                val prefs = getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+                val currentMode = audioManager.ringerMode
+                prefs.edit().putInt("flutter.previous_ringer_mode", currentMode).apply()
+                audioManager.ringerMode = android.media.AudioManager.RINGER_MODE_SILENT
+                
+                // AlarmService'e bildir
                 dismissAlarmWithSilentMode(true)
             }
             
             // "Çık" butonu - normale dön ve kapat
             btnExit?.setOnClickListener {
+                // Telefonu hemen normale döndür
+                val audioManager = getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
+                val prefs = getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+                val previousMode = prefs.getInt("flutter.previous_ringer_mode", android.media.AudioManager.RINGER_MODE_NORMAL)
+                audioManager.ringerMode = previousMode
+                
+                // AlarmService'e bildir
                 dismissAlarmWithSilentMode(false)
             }
             
