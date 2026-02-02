@@ -128,7 +128,7 @@ class NotificationService {
           priority: Priority.high,
           playSound: true,
           sound: RawResourceAndroidNotificationSound(soundResourceName),
-          audioAttributesUsage: AudioAttributesUsage.notificationRingtone,
+          audioAttributesUsage: AudioAttributesUsage.alarm,
           enableVibration: true,
           enableLights: true,
           fullScreenIntent: true,
@@ -198,3 +198,4 @@ class NotificationService {
     }
   }
 }
+

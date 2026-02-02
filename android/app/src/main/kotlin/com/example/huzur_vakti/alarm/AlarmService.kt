@@ -169,15 +169,16 @@ class AlarmService : Service() {
                 Log.d(TAG, "📱 Telefon modu: ${audioManager.ringerMode} (NORMAL=2, VIBRATE=1, SILENT=0), Sessiz mi: $isSilentMode")
                 
                 // Telefon sessiz modda DEĞİLSE ses çal
+                // Kullanıcı telefonunu sessize aldıysa (camide, toplantıda vb.) ses çıkmamalı
                 if (!isSilentMode) {
                     Log.d(TAG, "🔊 Telefon normal modda - ses çalınacak: $soundFile")
                     playAlarmSound(soundFile)
-                    // Normal modda standart titreşim paterni
+                    // Standart titreşim paterni (tekrarlı)
                     startVibration(false)
                 } else {
-                    Log.d(TAG, "📵 Telefon sessiz/titreşim modunda - ses çalmayacak, sadece uzun titreşim")
-                    // Sessiz modda sadece uzun titreşim (3 saniye)
-                    startVibration(true)
+                    Log.d(TAG, "📵 Telefon sessiz/titreşim modunda - ses çalmayacak, standart titreşim")
+                    // Sessiz modda da standart titreşim paterni (tekrarlı)
+                    startVibration(false)
                 }
                 
                 // Kilit ekranı activity'sini başlat

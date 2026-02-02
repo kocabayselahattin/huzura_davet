@@ -114,6 +114,36 @@ class MainActivity : FlutterActivity() {
 							result.success(false)
 						}
 					}
+					"scheduleDailyContentAlarm" -> {
+						val notificationId = call.argument<Int>("notificationId") ?: 0
+						val title = call.argument<String>("title") ?: ""
+						val body = call.argument<String>("body") ?: ""
+						val triggerAtMillis = call.argument<Number>("triggerAtMillis")?.toLong() ?: 0L
+						val soundFile = call.argument<String>("soundFile") ?: "ding_dong"
+
+						if (notificationId > 0 && triggerAtMillis > System.currentTimeMillis()) {
+							val success = com.example.huzur_vakti.alarm.DailyContentReceiver.scheduleDailyContent(
+								context = this,
+								notificationId = notificationId,
+								title = title,
+								body = body,
+								triggerAtMillis = triggerAtMillis,
+								soundFile = soundFile
+							)
+							result.success(success)
+						} else {
+							result.success(false)
+						}
+					}
+					"cancelDailyContentAlarm" -> {
+						val notificationId = call.argument<Int>("notificationId") ?: 0
+						com.example.huzur_vakti.alarm.DailyContentReceiver.cancelDailyContent(this, notificationId)
+						result.success(true)
+					}
+					"cancelAllDailyContentAlarms" -> {
+						com.example.huzur_vakti.alarm.DailyContentReceiver.cancelAllDailyContent(this)
+						result.success(true)
+					}
 					"cancelAlarm" -> {
 						val alarmId = call.argument<Int>("alarmId") ?: 0
 						AlarmReceiver.cancelAlarm(this, alarmId)

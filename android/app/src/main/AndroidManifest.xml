@@ -211,6 +211,15 @@
             </intent-filter>
         </receiver>
         
+        <!-- Günlük İçerik Receiver - Günün ayeti, hadisi ve duası bildirimlerini alır -->
+        <receiver
+            android:name=".alarm.DailyContentReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.example.huzur_vakti.DAILY_CONTENT" />
+            </intent-filter>
+        </receiver>
+        
         <!-- Boot Receiver - Cihaz yeniden başlatıldığında alarmları geri yükler -->
         <receiver
             android:name=".alarm.BootReceiver"

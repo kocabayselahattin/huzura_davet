@@ -145,6 +145,71 @@ class AlarmService {
     }
   }
 
+  /// Günlük içerik bildirimi için alarm kur (AlarmManager kullanır)
+  /// Bu bildirimler uygulama kapalı olsa bile çalmalı
+  static Future<bool> scheduleDailyContentAlarm({
+    required int notificationId,
+    required String title,
+    required String body,
+    required int triggerAtMillis,
+    required String soundFile,
+  }) async {
+    try {
+      final triggerTime = DateTime.fromMillisecondsSinceEpoch(triggerAtMillis);
+      final now = DateTime.now().millisecondsSinceEpoch;
+
+      debugPrint(
+        '📅 [GÜNLÜK İÇERİK ALARM] title=$title, triggerTime=$triggerTime, notificationId=$notificationId, soundFile=$soundFile',
+      );
+
+      if (triggerAtMillis <= now) {
+        debugPrint('⚠️ Günlük içerik alarm zamanı geçmiş, atlanıyor');
+        return false;
+      }
+
+      final result = await _channel
+          .invokeMethod<bool>('scheduleDailyContentAlarm', {
+            'notificationId': notificationId,
+            'title': title,
+            'body': body,
+            'triggerAtMillis': triggerAtMillis,
+            'soundFile': soundFile,
+          });
+      debugPrint('✅ [GÜNLÜK İÇERİK ALARM RESULT] title=$title, result=$result');
+      return result ?? false;
+    } catch (e) {
+      debugPrint('❌ Günlük içerik alarm kurma hatası: $e');
+      return false;
+    }
+  }
+
+  /// Günlük içerik alarmını iptal et
+  static Future<bool> cancelDailyContentAlarm(int notificationId) async {
+    try {
+      final result = await _channel.invokeMethod<bool>(
+        'cancelDailyContentAlarm',
+        {'notificationId': notificationId},
+      );
+      return result ?? false;
+    } catch (e) {
+      debugPrint('❌ Günlük içerik alarm iptal hatası: $e');
+      return false;
+    }
+  }
+
+  /// Tüm günlük içerik alarmlarını iptal et
+  static Future<bool> cancelAllDailyContentAlarms() async {
+    try {
+      final result = await _channel.invokeMethod<bool>(
+        'cancelAllDailyContentAlarms',
+      );
+      return result ?? false;
+    } catch (e) {
+      debugPrint('❌ Tüm günlük içerik alarmları iptal hatası: $e');
+      return false;
+    }
+  }
+
   /// TEST: 5 saniye sonra çalacak test alarmı
   /// Bu fonksiyon alarm sisteminin çalışıp çalışmadığını test etmek için
   static Future<bool> testAlarm() async {

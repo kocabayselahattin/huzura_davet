@@ -4,9 +4,11 @@ import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
 import 'language_service.dart';
+import 'alarm_service.dart';
 
 /// Günlük içerik bildirimleri servisi
 /// Her gün belirli saatlerde günün ayeti, hadisi ve duasını bildirim olarak gönderir
+/// AlarmManager kullanır - uygulama kapalı olsa bile çalışır
 class DailyContentNotificationService {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
@@ -321,59 +323,30 @@ class DailyContentNotificationService {
 
     // Ses ayarını al
     final soundFile = await getDailyContentNotificationSound();
-    final soundName = soundFile.replaceAll('.mp3', '');
 
-    final androidPlatformChannelSpecifics = AndroidNotificationDetails(
-      'daily_content_channel_v3', // Yeni channel ID - eski ayarları geçersiz kılar
-      'Günlük İçerik',
-      channelDescription: 'Günün ayeti, hadisi ve duası bildirimleri',
-      importance: Importance.high,
-      priority: Priority.high,
-      playSound: true,
-      sound: RawResourceAndroidNotificationSound(soundName),
-      audioAttributesUsage: AudioAttributesUsage.notificationRingtone,
-      enableVibration: true,
-      enableLights: true,
-      visibility: NotificationVisibility.public,
-      ongoing: false, // Kullanıcı kaydırarak kaldırabilsin
-      autoCancel: true, // Tıklanınca kapansın
-      ticker: 'Günlük içerik',
-      largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
-      // BigText style - tam içerik göster
-      styleInformation: BigTextStyleInformation(
-        bodyText,
-        htmlFormatBigText: false,
-        contentTitle: titleText,
-        htmlFormatContentTitle: false,
-        summaryText: 'Huzur Vakti',
-        htmlFormatSummaryText: false,
-      ),
-    );
-
-    await _notificationsPlugin.zonedSchedule(
-      id: id,
+    // AlarmManager kullanarak zamanla (vakit alarmları gibi kesin çalışır)
+    final success = await AlarmService.scheduleDailyContentAlarm(
+      notificationId: id,
       title: titleText,
       body: bodyText,
-      scheduledDate: scheduledDate,
-      notificationDetails: NotificationDetails(
-        android: androidPlatformChannelSpecifics,
-      ),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      payload: null,
+      triggerAtMillis: scheduledDate.millisecondsSinceEpoch,
+      soundFile: soundFile,
     );
-    debugPrint(
-      '📅 Bildirim zamanlandı: $titleText - ${scheduledDate.day}/${scheduledDate.month} ${scheduledDate.hour}:${scheduledDate.minute.toString().padLeft(2, '0')} (ID: $id)',
-    );
+
+    if (success) {
+      debugPrint(
+        '📅 Günlük içerik AlarmManager ile zamanlandı: $titleText - ${scheduledDate.day}/${scheduledDate.month} ${scheduledDate.hour}:${scheduledDate.minute.toString().padLeft(2, '0')} (ID: $id)',
+      );
+    } else {
+      debugPrint('❌ Günlük içerik zamanlama başarısız: $titleText (ID: $id)');
+    }
   }
 
   /// Tüm günlük içerik bildirimlerini iptal et
   static Future<void> cancelAllDailyContentNotifications() async {
-    for (int day = 0; day < 7; day++) {
-      await _notificationsPlugin.cancel(id: verseNotificationId + day * 10);
-      await _notificationsPlugin.cancel(id: hadithNotificationId + day * 10);
-      await _notificationsPlugin.cancel(id: prayerNotificationId + day * 10);
-    }
-    debugPrint('🚫 Günlük içerik bildirimleri iptal edildi');
+    // AlarmManager ile zamanlanmış bildirimleri iptal et
+    await AlarmService.cancelAllDailyContentAlarms();
+    debugPrint('🚫 Günlük içerik bildirimleri iptal edildi (AlarmManager)');
   }
 
   /// Günlük içerik bildirimlerini aç/kapat
@@ -483,7 +456,7 @@ class DailyContentNotificationService {
       priority: Priority.high,
       playSound: true,
       sound: RawResourceAndroidNotificationSound(soundName),
-      audioAttributesUsage: AudioAttributesUsage.notificationRingtone,
+      audioAttributesUsage: AudioAttributesUsage.alarm,
       enableVibration: true,
       enableLights: true,
       visibility: NotificationVisibility.public,
@@ -514,3 +487,4 @@ class DailyContentNotificationService {
     debugPrint('🔔 Test bildirimi gönderildi: $title');
   }
 }
+
