@@ -8,6 +8,7 @@ class NotificationService {
       FlutterLocalNotificationsPlugin();
   static AudioPlayer? _audioPlayer;
   static bool _initialized = false;
+  static final Set<String> _createdChannels = {};
 
   // Ses dosyası adını Android raw kaynağı adına dönüştür
   static String _getSoundResourceName(String? soundAsset) {
@@ -82,6 +83,34 @@ class NotificationService {
           AppSettings.openAppSettings(type: AppSettingsType.notification);
         }
       }
+      // Varsayılan sesler için kanalları başlat
+      final defaultSounds = [
+        'ding_dong',
+        'best',
+        'corner',
+        'melodi',
+        'snaps',
+        'sweet_favour',
+        'violet',
+      ];
+      for (final sound in defaultSounds) {
+        final channelId = 'vakit_channel_$sound';
+        if (!_createdChannels.contains(channelId)) {
+          final channel = AndroidNotificationChannel(
+            channelId,
+            'Vakit Bildirimleri',
+            description: 'Namaz vakitleri için bildirimler',
+            importance: Importance.max,
+            playSound: true,
+            sound: RawResourceAndroidNotificationSound(sound),
+            enableVibration: true,
+            enableLights: true,
+            showBadge: true,
+          );
+          await androidImplementation.createNotificationChannel(channel);
+          _createdChannels.add(channelId);
+        }
+      }
     }
 
     _initialized = true;
@@ -97,67 +126,44 @@ class NotificationService {
       final soundResourceName = _getSoundResourceName(soundAsset);
       debugPrint('🔊 Ses kaynağı: $soundResourceName (orijinal: $soundAsset)');
 
-      // Android notification channel'ı ses ile oluştur
-      final androidImplementation = _notificationsPlugin
-          .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin
-          >();
+      final channelId = 'vakit_channel_$soundResourceName';
+      final androidPlatformChannelSpecifics = AndroidNotificationDetails(
+        channelId,
+        'Vakit Bildirimleri',
+        channelDescription: 'Namaz vakitleri için bildirimler',
+        importance: Importance.max,
+        priority: Priority.high,
+        playSound: true,
+        sound: RawResourceAndroidNotificationSound(soundResourceName),
+        audioAttributesUsage: AudioAttributesUsage.alarm,
+        enableVibration: true,
+        enableLights: true,
+        fullScreenIntent: true,
+        category: AndroidNotificationCategory.alarm,
+        visibility: NotificationVisibility.public,
+        autoCancel: false,
+        ongoing: true,
+        ticker: 'Vakit bildirimi',
+        largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+      );
 
-      if (androidImplementation != null) {
-        // Her ses için ayrı kanal oluştur (Android kısıtlaması)
-        final channelId = 'vakit_channel_$soundResourceName';
-        final channel = AndroidNotificationChannel(
-          channelId,
-          'Vakit Bildirimleri',
-          description: 'Namaz vakitleri için bildirimler',
-          importance: Importance.max,
-          playSound: true,
-          sound: RawResourceAndroidNotificationSound(soundResourceName),
-          enableVibration: true,
-          enableLights: true,
-          showBadge: true,
-        );
-        await androidImplementation.createNotificationChannel(channel);
+      final notificationDetails = NotificationDetails(
+        android: androidPlatformChannelSpecifics,
+      );
 
-        // Bildirim göster (Android native ses ile)
-        final androidPlatformChannelSpecifics = AndroidNotificationDetails(
-          channelId,
-          'Vakit Bildirimleri',
-          channelDescription: 'Namaz vakitleri için bildirimler',
-          importance: Importance.max,
-          priority: Priority.high,
-          playSound: true,
-          sound: RawResourceAndroidNotificationSound(soundResourceName),
-          audioAttributesUsage: AudioAttributesUsage.alarm,
-          enableVibration: true,
-          enableLights: true,
-          fullScreenIntent: true,
-          category: AndroidNotificationCategory.alarm,
-          visibility: NotificationVisibility.public,
-          autoCancel: false,
-          ongoing: true,
-          ticker: 'Vakit bildirimi',
-          largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
-        );
+      final notificationId = DateTime.now().millisecondsSinceEpoch.remainder(
+        100000,
+      );
 
-        final notificationDetails = NotificationDetails(
-          android: androidPlatformChannelSpecifics,
-        );
-
-        final notificationId = DateTime.now().millisecondsSinceEpoch.remainder(
-          100000,
-        );
-
-        await _notificationsPlugin.show(
-          id: notificationId,
-          title: title,
-          body: body,
-          notificationDetails: notificationDetails,
-        );
-        debugPrint(
-          '✅ Bildirim gönderildi: $title - $body (ID: $notificationId, Ses: $soundResourceName)',
-        );
-      }
+      await _notificationsPlugin.show(
+        id: notificationId,
+        title: title,
+        body: body,
+        notificationDetails: notificationDetails,
+      );
+      debugPrint(
+        '✅ Bildirim gönderildi: $title - $body (ID: $notificationId, Ses: $soundResourceName)',
+      );
     } catch (e) {
       debugPrint('❌ Bildirim gönderilemedi: $e');
     }
@@ -198,4 +204,3 @@ class NotificationService {
     }
   }
 }
-
