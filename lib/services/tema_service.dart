@@ -757,7 +757,7 @@ class TemaService extends ChangeNotifier {
     }
     _fontFamily = prefs.getString('font_family') ?? _fontFamily;
     _sayacTemasiKullan = prefs.getBool('sayac_temasi_kullan') ?? true;
-    _aktifSayacIndex = prefs.getInt('secili_sayac_index') ?? 0;
+    _aktifSayacIndex = prefs.getInt('secili_sayac_index') ?? 22;
     await _ozelTemayiYukle();
     notifyListeners();
   }

@@ -229,38 +229,48 @@ class OzelGunlerService {
     final hicriGun = hicri.hDay;
 
     debugPrint(
-      '📅 [OzelGun] Bugün: ${now.day}/${now.month}/${now.year} ${now.hour}:${now.minute}',
+      '📅 [OzelGun] Bugün: \\${now.day}/\\${now.month}/\\${now.year} \\${now.hour}:\\${now.minute}',
     );
-    debugPrint('📅 [OzelGun] Hicri: $hicriGun/$hicriAy/${hicri.hYear}');
+    debugPrint(
+      '📅 [OzelGun] Hicri: \\${hicriGun}/\\${hicriAy}/\\${hicri.hYear}',
+    );
 
-    // Kandiller için önceki günün akşamından itibaren başlar
-    // Bu yüzden hem bugünü hem de yarını kontrol ediyoruz
     for (final ozelGun in ozelGunler) {
-      if (ozelGun.hicriAy == hicriAy && ozelGun.hicriGun == hicriGun) {
-        // Normal özel günler için sabah 09:00'dan itibaren göster
-        if (now.hour >= 9) {
-          debugPrint('✅ [OzelGun] Bugün özel gün: ${ozelGun.ad}');
-          return ozelGun;
-        } else {
-          debugPrint(
-            '⏰ [OzelGun] ${ozelGun.ad} var ama henüz saat 09:00 olmadı (${now.hour}:${now.minute})',
-          );
+      // 1. Normal özel günler (geceOncesiMi == false): sadece o gün 09:00'dan itibaren
+      if (!ozelGun.geceOncesiMi) {
+        if (ozelGun.hicriAy == hicriAy && ozelGun.hicriGun == hicriGun) {
+          if (now.hour >= 9) {
+            debugPrint('✅ [OzelGun] Bugün özel gün: \\${ozelGun.ad}');
+            return ozelGun;
+          } else {
+            debugPrint(
+              '⏰ [OzelGun] \\${ozelGun.ad} var ama henüz saat 09:00 olmadı (\\${now.hour}:\\${now.minute})',
+            );
+          }
         }
-      }
-
-      // Kandiller için bir gün öncesinden göster (sabah 09:00'dan başla)
-      if (ozelGun.geceOncesiMi) {
-        // Bugün kandil gününden 1 gün önceyse ve saat 09:00 geçtiyse
+      } else {
+        // 2. Kandil/gece günleri: hem bir önceki gün 09:00'dan, hem de asıl günün sabah 09:00'ına kadar
+        // a) Bir önceki gün 09:00'dan geceye kadar
+        if (ozelGun.hicriAy == hicriAy && ozelGun.hicriGun == hicriGun + 1) {
+          if (now.hour >= 9) {
+            debugPrint(
+              '✅ [OzelGun] Yarın kandil/gece: \\${ozelGun.ad} (bugün göster)',
+            );
+            return ozelGun;
+          } else {
+            debugPrint(
+              '⏰ [OzelGun] Yarın \\${ozelGun.ad} ama henüz saat 09:00 olmadı (\\${now.hour}:\\${now.minute})',
+            );
+          }
+        }
+        // b) Asıl gün gece 00:00'dan sabah 09:00'a kadar (yani gece boyunca)
         if (ozelGun.hicriAy == hicriAy &&
-            ozelGun.hicriGun == hicriGun + 1 &&
-            now.hour >= 9) {
-          debugPrint('✅ [OzelGun] Yarın kandil: ${ozelGun.ad} (bugün göster)');
-          return ozelGun;
-        } else if (ozelGun.hicriAy == hicriAy &&
-            ozelGun.hicriGun == hicriGun + 1) {
+            ozelGun.hicriGun == hicriGun &&
+            now.hour < 9) {
           debugPrint(
-            '⏰ [OzelGun] Yarın ${ozelGun.ad} ama henüz saat 09:00 olmadı (${now.hour}:${now.minute})',
+            '✅ [OzelGun] Gece devam ediyor: \\${ozelGun.ad} (sabah 09:00\'a kadar göster)',
           );
+          return ozelGun;
         }
       }
     }
@@ -383,6 +393,7 @@ class OzelGunlerService {
 
   /// Özel gün bildirimlerini zamanla
   /// 7 gün içindeki özel günler için bildirim zamanlar
+  /// GeceOncesiMi olanlarda hem bir önceki gün 09:00'da, hem de asıl gün 00:05'te (sabah 09:00'dan önce) bildirim kurulur
   static Future<void> scheduleOzelGunBildirimleri() async {
     final prefs = await SharedPreferences.getInstance();
     final enabled = prefs.getBool('ozel_gun_bildirimleri_aktif') ?? true;
@@ -405,6 +416,7 @@ class OzelGunlerService {
     debugPrint('📅 ========== ÖZEL GÜN BİLDİRİM ZAMANLAMA ==========');
     debugPrint('📅 Toplam ${yaklasanlar.length} özel gün bulundu');
 
+    int idOffset = 0;
     for (int i = 0; i < yaklasanlar.length && i < 10; i++) {
       final item = yaklasanlar[i];
       final ozelGun = item['ozelGun'] as OzelGun;
@@ -422,75 +434,89 @@ class OzelGunlerService {
         continue;
       }
 
-      // Bildirim zamanı - bugün için 12:20, diğer günler için 09:00
-      final now = DateTime.now();
-      // Kandiller için 1 gün öncesi bugün sayılır, normal günler için aynı gün
-      final isToday = ozelGun.geceOncesiMi ? (kalanGun == 1) : (kalanGun == 0);
-      final bildirimSaat = isToday ? 12 : 9;
-      final bildirimDakika = isToday ? 20 : 0;
-
-      debugPrint(
-        '   🕐 Bugün mü: $isToday, Bildirim saati: $bildirimSaat:${bildirimDakika.toString().padLeft(2, "0")}',
-      );
-
-      DateTime bildirimZamani;
       if (ozelGun.geceOncesiMi) {
-        // Kandiller: bir gün önceki sabah (kandil gecesi başlamadan önce hatırlatma)
-        bildirimZamani = DateTime(
+        // 1) Bir önceki gün 09:00'da (banner gibi)
+        DateTime oncekiGunBildirimi = DateTime(
           tarih.year,
           tarih.month,
           tarih.day - 1,
-          bildirimSaat,
-          bildirimDakika,
+          9,
+          0,
         );
-        debugPrint(
-          '   📍 Kandil için 1 gün önceki bildirim: ${bildirimZamani.day}/${bildirimZamani.month} ${bildirimZamani.hour}:${bildirimZamani.minute.toString().padLeft(2, "0")}',
-        );
-      } else {
-        // Diğer günler: o günün sabahı
-        bildirimZamani = DateTime(
+        if (oncekiGunBildirimi.isAfter(DateTime.now())) {
+          final tzOncekiGun = tz.TZDateTime.from(oncekiGunBildirimi, tz.local);
+          debugPrint(
+            '   📍 Kandil/gece için önceki gün bildirimi: ${oncekiGunBildirimi.day}/${oncekiGunBildirimi.month} ${oncekiGunBildirimi.hour}:${oncekiGunBildirimi.minute.toString().padLeft(2, "0")}',
+          );
+          try {
+            await _scheduleOzelGunBildirimi(
+              id: _ozelGunBildirimIdBase + idOffset,
+              ozelGun: ozelGun,
+              scheduledDate: tzOncekiGun,
+            );
+            zamanlanandi++;
+            idOffset++;
+          } catch (e) {
+            debugPrint(
+              '❌ Özel gün bildirimi zamanlanamadı: ${ozelGun.ad} - $e',
+            );
+          }
+        }
+        // 2) Asıl gün gece 00:05'te (sabah 09:00'dan önce, gece boyunca)
+        DateTime geceBildirimi = DateTime(
           tarih.year,
           tarih.month,
           tarih.day,
-          bildirimSaat,
-          bildirimDakika,
+          0,
+          5,
         );
-        debugPrint(
-          '   📍 Normal gün bildirimi: ${bildirimZamani.day}/${bildirimZamani.month} ${bildirimZamani.hour}:${bildirimZamani.minute.toString().padLeft(2, "0")}',
+        if (geceBildirimi.isAfter(DateTime.now())) {
+          final tzGece = tz.TZDateTime.from(geceBildirimi, tz.local);
+          debugPrint(
+            '   📍 Kandil/gece için gece bildirimi: ${geceBildirimi.day}/${geceBildirimi.month} ${geceBildirimi.hour}:${geceBildirimi.minute.toString().padLeft(2, "0")}',
+          );
+          try {
+            await _scheduleOzelGunBildirimi(
+              id: _ozelGunBildirimIdBase + idOffset,
+              ozelGun: ozelGun,
+              scheduledDate: tzGece,
+            );
+            zamanlanandi++;
+            idOffset++;
+          } catch (e) {
+            debugPrint(
+              '❌ Özel gün bildirimi zamanlanamadı: ${ozelGun.ad} - $e',
+            );
+          }
+        }
+      } else {
+        // Diğer günler: o günün sabahı 09:00
+        DateTime bildirimZamani = DateTime(
+          tarih.year,
+          tarih.month,
+          tarih.day,
+          9,
+          0,
         );
-      }
-
-      // Geçmiş tarihler için zamanlamama
-      if (bildirimZamani.isBefore(DateTime.now())) {
-        debugPrint(
-          '⏭️ [OzelGun] ${ozelGun.ad} bildirim zamanı geçmiş: $bildirimZamani',
-        );
-        continue;
-      }
-
-      final tzBildirimZamani = tz.TZDateTime.from(bildirimZamani, tz.local);
-
-      debugPrint('🔔 [OzelGun] Bildirim zamanlanıyor:');
-      debugPrint('   🌟 Özel Gün: ${ozelGun.ad}');
-      debugPrint('   📅 Tarih: ${tarih.day}/${tarih.month}/${tarih.year}');
-      debugPrint(
-        '   ⏰ Bildirim Saati: $bildirimSaat:${bildirimDakika.toString().padLeft(2, '0')}',
-      );
-      debugPrint(
-        '   📍 Bildirim Zamanı: ${bildirimZamani.day}/${bildirimZamani.month} ${bildirimZamani.hour}:${bildirimZamani.minute}',
-      );
-      debugPrint('   🔢 ID: ${_ozelGunBildirimIdBase + i}');
-      debugPrint('   🔥 Kandil mi: ${ozelGun.geceOncesiMi}');
-
-      try {
-        await _scheduleOzelGunBildirimi(
-          id: _ozelGunBildirimIdBase + i,
-          ozelGun: ozelGun,
-          scheduledDate: tzBildirimZamani,
-        );
-        zamanlanandi++;
-      } catch (e) {
-        debugPrint('❌ Özel gün bildirimi zamanlanamadı: ${ozelGun.ad} - $e');
+        if (bildirimZamani.isAfter(DateTime.now())) {
+          final tzBildirimZamani = tz.TZDateTime.from(bildirimZamani, tz.local);
+          debugPrint(
+            '   📍 Normal gün bildirimi: ${bildirimZamani.day}/${bildirimZamani.month} ${bildirimZamani.hour}:${bildirimZamani.minute.toString().padLeft(2, "0")}',
+          );
+          try {
+            await _scheduleOzelGunBildirimi(
+              id: _ozelGunBildirimIdBase + idOffset,
+              ozelGun: ozelGun,
+              scheduledDate: tzBildirimZamani,
+            );
+            zamanlanandi++;
+            idOffset++;
+          } catch (e) {
+            debugPrint(
+              '❌ Özel gün bildirimi zamanlanamadı: ${ozelGun.ad} - $e',
+            );
+          }
+        }
       }
     }
 

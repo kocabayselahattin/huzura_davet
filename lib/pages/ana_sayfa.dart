@@ -60,7 +60,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
   String konumBasligi = "";
   final TemaService _temaService = TemaService();
   final LanguageService _languageService = LanguageService();
-  int _currentSayacIndex = 0;
+  int _currentSayacIndex = 22;
   bool _sayacYuklendi = false;
 
   // Çoklu konum sistemi
@@ -362,7 +362,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
     final index = _temaService.aktifSayacIndex;
     if (mounted) {
       setState(() {
-        _currentSayacIndex = index;
+        _currentSayacIndex = index == 0 ? 22 : index;
         _sayacYuklendi = true;
       });
     }
