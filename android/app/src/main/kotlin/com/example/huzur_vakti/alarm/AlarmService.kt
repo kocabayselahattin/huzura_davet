@@ -519,17 +519,21 @@ class AlarmService : Service() {
      * Vakit adını normalize et (Türkçe karakterleri dönüştür)
      */
     private fun normalizeVakitName(vakitName: String): String {
-        val normalized = vakitName.lowercase()
+        // Önce Türkçe büyük harfleri de dönüştür
+        val normalized = vakitName.lowercase(java.util.Locale("tr", "TR"))
             .replace("ı", "i").replace("ö", "o").replace("ü", "u")
             .replace("ş", "s").replace("ğ", "g").replace("ç", "c")
+            .replace("İ", "i").replace("i̇", "i") // Büyük İ ve combining dot
+        
+        Log.d(TAG, "🔄 normalizeVakitName: '$vakitName' -> '$normalized'")
         
         return when {
             normalized.contains("imsak") || normalized.contains("sahur") -> "imsak"
-            normalized.contains("gunes") || normalized.contains("güneş") -> "gunes"
-            normalized.contains("ogle") || normalized.contains("öğle") -> "ogle"
+            normalized.contains("gunes") -> "gunes"
+            normalized.contains("ogle") -> "ogle"
             normalized.contains("ikindi") -> "ikindi"
-            normalized.contains("aksam") || normalized.contains("akşam") -> "aksam"
-            normalized.contains("yatsi") || normalized.contains("yatsı") -> "yatsi"
+            normalized.contains("aksam") -> "aksam"
+            normalized.contains("yatsi") -> "yatsi"
             else -> ""
         }
     }

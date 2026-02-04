@@ -45,9 +45,10 @@ class AlarmReceiver : BroadcastReceiver() {
             // Ses dosyası null veya boş ise SharedPreferences'tan veya varsayılan kullan
             var actualSoundPath = soundPath
             if (actualSoundPath.isNullOrEmpty()) {
-                val vakitKey = prayerName.lowercase()
+                val vakitKey = prayerName.lowercase(java.util.Locale("tr", "TR"))
                     .replace("ı", "i").replace("ö", "o").replace("ü", "u")
                     .replace("ş", "s").replace("ğ", "g").replace("ç", "c")
+                    .replace("İ", "i").replace("i̇", "i")
                     .let { name ->
                         when {
                             name.contains("imsak") || name.contains("sahur") -> "imsak"
@@ -338,9 +339,10 @@ class AlarmReceiver : BroadcastReceiver() {
                     if (soundFile.isEmpty() || soundFile == "ding_dong" || soundFile == "ding_dong.mp3" || soundFile == "best" || soundFile == "best.mp3") {
                         Log.d(TAG, "📢 [ALARM RECEIVER] Varsayılan ses tespit edildi, SharedPreferences kontrol ediliyor...")
                         
-                        val vakitKey = vakitName.lowercase()
+                        val vakitKey = vakitName.lowercase(java.util.Locale("tr", "TR"))
                             .replace("ı", "i").replace("ö", "o").replace("ü", "u")
                             .replace("ş", "s").replace("ğ", "g").replace("ç", "c")
+                            .replace("İ", "i").replace("i̇", "i")
                             .let { name ->
                                 when {
                                     name.contains("imsak") || name.contains("sahur") -> "imsak"
