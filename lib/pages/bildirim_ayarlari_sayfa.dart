@@ -9,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import '../services/dnd_service.dart';
 import '../services/scheduled_notification_service.dart';
 import '../services/daily_content_notification_service.dart';
+import '../services/early_reminder_service.dart';
 import '../services/language_service.dart';
 
 class BildirimAyarlariSayfa extends StatefulWidget {
@@ -500,12 +501,18 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
 
     // NOT: DndService artık kullanılmıyor - AlarmService "sessize_al" ayarını kontrol edip
     // telefonu sessize alıyor. Çakışma önlendi.
-    // Eski DND zamanlayıcılarını temizle
+    // Eski DND zamanlayicilari temizle
     if (!_sessizeAl) {
       await DndService.cancelPrayerDnd();
     }
 
-    // Zamanlanmış bildirimleri yeniden ayarla
+    // Önce erken hatırlatma alarmlarını kaydet ve zamanla (yeni servis)
+    await EarlyReminderService.saveAndReschedule(
+      erkenSureler: Map<String, int>.from(_erkenBildirim),
+      erkenSesler: Map<String, String>.from(_erkenBildirimSesi),
+    );
+
+    // Zamanlanmış tam vakit bildirimlerini yeniden ayarla
     await ScheduledNotificationService.scheduleAllPrayerNotifications();
     // Günlük içerik alarmlari ayarlari yukarida guncellendi
 

@@ -8,12 +8,19 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.media.AudioAttributes
+import android.media.AudioManager
+import android.media.MediaPlayer
 import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Build
+import android.os.PowerManager
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import com.example.huzur_vakti.R
 
 /**
  * Günlük içerik bildirimlerini alan BroadcastReceiver
@@ -142,15 +149,29 @@ class DailyContentReceiver : BroadcastReceiver() {
         
         when (intent.action) {
             ACTION_DAILY_CONTENT -> {
-                val notificationId = intent.getIntExtra(EXTRA_NOTIFICATION_ID, 0)
-                val title = intent.getStringExtra(EXTRA_TITLE) ?: "Huzur Vakti"
-                val body = intent.getStringExtra(EXTRA_BODY) ?: ""
-                val soundFile = intent.getStringExtra(EXTRA_SOUND_FILE) ?: "ding_dong"
+                // Wake lock al
+                val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+                val wakeLock = powerManager.newWakeLock(
+                    PowerManager.PARTIAL_WAKE_LOCK or PowerManager.ACQUIRE_CAUSES_WAKEUP,
+                    "HuzurVakti::DailyContentWakeLock"
+                )
+                wakeLock.acquire(30_000L) // 30 saniye
                 
-                Log.d(TAG, "🔔 Günlük içerik bildirimi gösteriliyor: $title")
-                
-                // Bildirimi göster
-                showNotification(context, notificationId, title, body, soundFile)
+                try {
+                    val notificationId = intent.getIntExtra(EXTRA_NOTIFICATION_ID, 0)
+                    val title = intent.getStringExtra(EXTRA_TITLE) ?: "Huzur Vakti"
+                    val body = intent.getStringExtra(EXTRA_BODY) ?: ""
+                    val soundFile = intent.getStringExtra(EXTRA_SOUND_FILE) ?: "ding_dong"
+                    
+                    Log.d(TAG, "🔔 Günlük içerik bildirimi gösteriliyor: $title (ses: $soundFile)")
+                    
+                    // Bildirimi göster
+                    showNotification(context, notificationId, title, body, soundFile)
+                } finally {
+                    if (wakeLock.isHeld) {
+                        wakeLock.release()
+                    }
+                }
             }
         }
     }
@@ -164,65 +185,160 @@ class DailyContentReceiver : BroadcastReceiver() {
     ) {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         
+        // ÖNEMLİ: Telefon sessiz modda mı kontrol et
+        val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        val ringerMode = audioManager.ringerMode
+        val isPhoneSilent = (ringerMode == AudioManager.RINGER_MODE_SILENT || 
+                            ringerMode == AudioManager.RINGER_MODE_VIBRATE)
+        
+        Log.d(TAG, "📱 Telefon modu: $ringerMode (NORMAL=2, VIBRATE=1, SILENT=0), Sessiz: $isPhoneSilent")
+        
         // Notification channel oluştur (Android 8.0+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            // Ses resource'unu bul
-            val soundResourceName = soundFile.replace(".mp3", "")
-            val soundResId = context.resources.getIdentifier(
-                soundResourceName,
-                "raw",
-                context.packageName
-            )
-            
-            val soundUri = if (soundResId != 0) {
-                Uri.parse("android.resource://${context.packageName}/$soundResId")
-            } else {
-                RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+            // ÖNEMLİ: Eski kanalları SİL
+            try {
+                notificationManager.deleteNotificationChannel(CHANNEL_ID)
+                notificationManager.deleteNotificationChannel("daily_content_channel")
+                notificationManager.deleteNotificationChannel("daily_content_channel_v2")
+                notificationManager.deleteNotificationChannel("daily_content_channel_v3")
+            } catch (e: Exception) {
+                Log.d(TAG, "⚠️ Channel silinirken hata (normal olabilir): ${e.message}")
             }
             
-            Log.d(TAG, "🔊 Ses ayarı: $soundFile -> $soundResourceName (resId: $soundResId)")
-            
-            val audioAttributes = AudioAttributes.Builder()
-                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                .setUsage(AudioAttributes.USAGE_ALARM)
-                .build()
-            
+            // Kanal sessiz oluşturulacak - ses MediaPlayer ile çalınacak
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 "Günlük İçerik",
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description = "Günün ayeti, hadisi ve duası bildirimleri"
-                setSound(soundUri, audioAttributes)
+                setSound(null, null) // Ses kanalda değil, MediaPlayer ile çalınacak
                 enableVibration(true)
                 enableLights(true)
                 setShowBadge(true)
             }
             
             notificationManager.createNotificationChannel(channel)
-            Log.d(TAG, "✅ Notification channel oluşturuldu")
+            Log.d(TAG, "✅ Notification channel oluşturuldu (ses MediaPlayer ile çalınacak)")
         }
         
-        // Bildirimi oluştur ve göster
+        // Ana uygulamayı açacak intent
+        val mainIntent = Intent(context, com.example.huzur_vakti.MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        val mainPendingIntent = PendingIntent.getActivity(
+            context, notificationId, mainIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        
+        // Bildirimi oluştur - kullanıcı silene kadar kalacak
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(context.applicationInfo.icon)
+            .setSmallIcon(R.mipmap.ic_launcher)
             .setContentTitle(title)
             .setContentText(body)
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setAutoCancel(true)
+            .setAutoCancel(false) // Tıklayınca silinmesin
+            .setOngoing(false)   // Kaydırılarak silinebilsin
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setContentIntent(mainPendingIntent)
+            .setLargeIcon(android.graphics.BitmapFactory.decodeResource(context.resources, R.mipmap.ic_launcher))
             .build()
         
         try {
             if (NotificationManagerCompat.from(context).areNotificationsEnabled()) {
                 notificationManager.notify(notificationId, notification)
                 Log.d(TAG, "✅ Bildirim gösterildi: $title (ID: $notificationId)")
+                
+                // Ses çal - telefon sessiz modda değilse
+                if (!isPhoneSilent) {
+                    playSoundViaMediaPlayer(context, soundFile)
+                } else {
+                    Log.d(TAG, "🔇 Telefon sessiz modda - ses çalınmıyor, titreşim yapılıyor")
+                    doVibration(context)
+                }
             } else {
                 Log.w(TAG, "⚠️ Bildirim izni yok!")
             }
         } catch (e: Exception) {
             Log.e(TAG, "❌ Bildirim gösterme hatası: ${e.message}")
+        }
+    }
+    
+    /**
+     * MediaPlayer ile ses çal - sessiz mod kontrolü zaten yapılmış
+     */
+    private fun playSoundViaMediaPlayer(context: Context, soundFile: String) {
+        try {
+            var soundResourceName = soundFile.replace(".mp3", "").lowercase()
+                .replace(" ", "_").replace("-", "_")
+                .replace(Regex("[^a-z0-9_]"), "_")
+            if (soundResourceName.isEmpty()) soundResourceName = "ding_dong"
+            
+            Log.d(TAG, "🔊 MediaPlayer ile ses çalınıyor: '$soundResourceName'")
+            
+            var resId = context.resources.getIdentifier(soundResourceName, "raw", context.packageName)
+            
+            // Bulunamazsa ding_dong dene
+            if (resId == 0) {
+                Log.w(TAG, "⚠️ Ses bulunamadı: $soundResourceName, ding_dong deneniyor")
+                resId = context.resources.getIdentifier("ding_dong", "raw", context.packageName)
+            }
+            
+            if (resId != 0) {
+                val mediaPlayer = MediaPlayer()
+                val audioAttributes = AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build()
+                mediaPlayer.setAudioAttributes(audioAttributes)
+                
+                val afd = context.resources.openRawResourceFd(resId)
+                try {
+                    mediaPlayer.setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
+                    mediaPlayer.prepare()
+                } finally {
+                    afd.close()
+                }
+                
+                mediaPlayer.isLooping = false
+                mediaPlayer.setOnCompletionListener {
+                    it.release()
+                    Log.d(TAG, "🔊 Ses çalma tamamlandı")
+                }
+                mediaPlayer.start()
+                Log.d(TAG, "✅ Ses çalındı: $soundResourceName")
+            } else {
+                Log.w(TAG, "⚠️ Hiçbir ses dosyası bulunamadı")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Ses çalma hatası: ${e.message}")
+        }
+    }
+    
+    /**
+     * Titreşim yap
+     */
+    private fun doVibration(context: Context) {
+        try {
+            val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val vibratorManager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+                vibratorManager.defaultVibrator
+            } else {
+                @Suppress("DEPRECATION")
+                context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+            }
+            
+            val pattern = longArrayOf(0, 300, 200, 300, 200, 300)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator.vibrate(VibrationEffect.createWaveform(pattern, -1))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator.vibrate(pattern, -1)
+            }
+            Log.d(TAG, "📳 Titreşim yapıldı")
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Titreşim hatası: ${e.message}")
         }
     }
 }

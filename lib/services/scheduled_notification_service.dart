@@ -5,8 +5,10 @@ import 'dart:async';
 import 'konum_service.dart';
 import 'diyanet_api_service.dart';
 import 'alarm_service.dart';
+import 'early_reminder_service.dart';
 
 /// Zamanlanmış alarm servisi - Uygulama kapalıyken bile vakit alarmlarını kurar
+/// NOT: Erken hatırlatma alarmları EarlyReminderService tarafından yönetilir
 class ScheduledNotificationService {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
@@ -32,17 +34,6 @@ class ScheduledNotificationService {
     'Ikindi': 'İkindi',
     'Aksam': 'Akşam',
     'Yatsi': 'Yatsı',
-  };
-
-  // Varsayılan erken bildirim süreleri (dakika)
-  // bildirim_ayarlari_sayfa.dart ile tutarlı olmalı
-  static const Map<String, int> _varsayilanErkenBildirim = {
-    'imsak': 45,
-    'gunes': 30,
-    'ogle': 15,
-    'ikindi': 15,
-    'aksam': 15,
-    'yatsi': 15,
   };
 
   /// Servisi başlat
@@ -203,7 +194,8 @@ class ScheduledNotificationService {
           continue;
         }
 
-        // Her vakit için bildirim ve alarm zamanla
+        // Her vakit için TAM VAKİT alarmı zamanla
+        // NOT: Erken hatırlatma alarmları EarlyReminderService tarafından ayrıca zamanlanır
         for (int i = 0; i < _vakitler.length; i++) {
           final vakitKey = _vakitler[i];
           final vakitKeyLower = vakitKey.toLowerCase();
@@ -212,7 +204,6 @@ class ScheduledNotificationService {
           final bildirimAcik = prefs.getBool('bildirim_$vakitKeyLower') ?? true;
 
           // Vaktinde bildirim - tam vakitte bildirim gönder
-          // Varsayılan: öğle, ikindi, akşam, yatsı için true
           final varsayilanVaktinde =
               (vakitKeyLower == 'ogle' ||
               vakitKeyLower == 'ikindi' ||
@@ -222,7 +213,7 @@ class ScheduledNotificationService {
               prefs.getBool('vaktinde_$vakitKeyLower') ?? varsayilanVaktinde;
 
           debugPrint(
-            '🔍 [$vakitKey] SharedPreferences: bildirim_$vakitKeyLower=$bildirimAcik, vaktinde_$vakitKeyLower=$vaktindeBildirim',
+            '🔍 [$vakitKey] bildirim=$bildirimAcik, vaktinde=$vaktindeBildirim',
           );
 
           final vakitSaati = gunVakitler[vakitKey]?.toString();
@@ -230,19 +221,11 @@ class ScheduledNotificationService {
             continue;
           }
 
-          // Erken bildirim süresi (dakika) - varsayılan değerler map'ten alınır
-          final varsayilanErken = _varsayilanErkenBildirim[vakitKeyLower] ?? 15;
-          final erkenDakika =
-              prefs.getInt('erken_$vakitKeyLower') ?? varsayilanErken;
-
-            // Vaktinde alarm ses dosyasi (raw)
-            final sesDosyasiRaw =
+          // Vaktinde alarm ses dosyası - normalize et
+          final sesDosyasiRaw =
               prefs.getString('bildirim_sesi_$vakitKeyLower') ?? 'best.mp3';
-
-            // Erken alarm ses dosyasi (raw)
-            // Kullanici ayrica erken ses secmediyse, vaktindeki sesi kullan
-            final erkenSesKey = 'erken_bildirim_sesi_$vakitKeyLower';
-            final erkenSesRaw = prefs.getString(erkenSesKey) ?? sesDosyasiRaw;
+          final sesDosyasiNormalized =
+              EarlyReminderService.normalizeSoundName(sesDosyasiRaw);
 
           // Vakit saatini parse et
           final parts = vakitSaati.split(':');
@@ -252,125 +235,71 @@ class ScheduledNotificationService {
           final dakika = int.tryParse(parts[1]);
           if (saat == null || dakika == null) continue;
 
-          // 🔔 ÖNEMLİ: Vakit saatini SharedPreferences'a kaydet (BootReceiver için)
-          // BootReceiver bu bilgiyi kullanarak telefon yeniden başlatıldığında alarmları yeniden zamanlar
+          // Vakit saatini kaydet (BootReceiver için)
           final dateKey =
               '${hedefTarih.year}-${hedefTarih.month.toString().padLeft(2, '0')}-${hedefTarih.day.toString().padLeft(2, '0')}';
           await prefs.setString('vakit_${vakitKeyLower}_$dateKey', vakitSaati);
 
           debugPrint(
-            '📌 $vakitKey: Vakit saati $saat:$dakika, Erken dakika: $erkenDakika, Bildirim açık: $bildirimAcik, Vaktinde: $vaktindeBildirim',
+            '📌 $vakitKey: $saat:$dakika, Bildirim: $bildirimAcik, Vaktinde: $vaktindeBildirim',
           );
 
-          // Ana bildirim switch'i kapalıysa hiçbir bildirim gönderme
+          // Ana bildirim switch'i kapalıysa atla
           if (!bildirimAcik) {
             debugPrint('   ⏭️ Bildirim kapalı, atlanıyor');
             continue;
           }
 
-          // ERKEN HATIRLATMA: Bildirim degil, alarm ile calar (asagida)
+          // TAM VAKİT ALARMI - Sadece vaktinde bildirim açıksa çal
+          var alarmZamani = DateTime(
+            hedefTarih.year,
+            hedefTarih.month,
+            hedefTarih.day,
+            saat,
+            dakika,
+          );
 
-          // VAKTİNDE HATIRLATMA: Bildirim degil, alarm ile calar (asagida)
-
-          // 🔔 ALARM: Ana bildirim switch'i aciksa alarmlari kur
-          if (bildirimAcik) {
-            // TAM VAKİT ALARMI - Sadece vaktinde bildirim açıksa çal!
-            // Kullanıcı vaktinde bildirimi kapattıysa tam vakit alarmı da kapanmalı
-            var alarmZamani = DateTime(
-              hedefTarih.year,
-              hedefTarih.month,
-              hedefTarih.day,
-              saat,
-              dakika,
+          if (vaktindeBildirim && alarmZamani.isAfter(now)) {
+            final alarmId = AlarmService.generateAlarmId(
+              vakitKeyLower,
+              alarmZamani,
             );
 
-            debugPrint('   Tam vakit alarm zamanı: $alarmZamani, Şu an: $now');
+            debugPrint('   Alarm ID: $alarmId, Ses: $sesDosyasiNormalized');
 
-            // ÖNEMLİ: vaktindeBildirim de açık olmalı!
-            if (vaktindeBildirim && alarmZamani.isAfter(now)) {
-              // TAM VAKİT ALARMI için ID (son 2 hane: vakit indexi)
-              final alarmId = AlarmService.generateAlarmId(
-                vakitKeyLower, // Örn: "ogle"
-                alarmZamani,
-              );
+            final success = await AlarmService.scheduleAlarm(
+              prayerName: _vakitTurkce[vakitKey] ?? vakitKey,
+              triggerAtMillis: alarmZamani.millisecondsSinceEpoch,
+              soundPath: sesDosyasiNormalized,
+              useVibration: true,
+              alarmId: alarmId,
+              isEarly: false,
+              earlyMinutes: 0,
+            );
 
-              debugPrint('   Alarm ID: $alarmId, Ses: $sesDosyasiRaw');
-
-              final success = await AlarmService.scheduleAlarm(
-                prayerName: _vakitTurkce[vakitKey] ?? vakitKey,
-                triggerAtMillis: alarmZamani.millisecondsSinceEpoch,
-                soundPath: sesDosyasiRaw,
-                useVibration: true,
-                alarmId: alarmId,
-                isEarly: false,
-                earlyMinutes: 0,
-              );
-
-              if (success) {
-                alarmCount++;
-                debugPrint('   ✅ Tam vakit alarmı zamanlandı');
-              } else {
-                debugPrint('   ❌ Tam vakit alarmı zamanlanamadı');
-              }
-            } else if (!vaktindeBildirim) {
-              debugPrint(
-                '   ⏭️ Vaktinde bildirim kapalı, tam vakit alarmı atlanıyor',
-              );
+            if (success) {
+              alarmCount++;
+              debugPrint('   ✅ Tam vakit alarmı zamanlandı');
             } else {
-              debugPrint('   ⏭️ Tam vakit alarm zamanı geçmiş, atlanıyor');
+              debugPrint('   ❌ Tam vakit alarmı zamanlanamadı');
             }
-
-            // ERKEN ALARM (Vaktinden önce) - Sadece erkenDakika > 0 ise çal
-            // erkenDakika = 0 ise kullanıcı erken bildirimi kapatmış demektir
-            if (erkenDakika > 0) {
-              var erkenAlarmZamani = alarmZamani.subtract(
-                Duration(minutes: erkenDakika),
-              );
-
-              debugPrint(
-                '   Erken alarm zamanı: $erkenAlarmZamani ($erkenDakika dk önce)',
-              );
-
-              if (erkenAlarmZamani.isAfter(now)) {
-                final erkenAlarmId = AlarmService.generateAlarmId(
-                  '${vakitKeyLower}_erken',
-                  erkenAlarmZamani,
-                );
-
-                final erkenSuccess = await AlarmService.scheduleAlarm(
-                  prayerName: '${_vakitTurkce[vakitKey]} ($erkenDakika dk)',
-                  triggerAtMillis: erkenAlarmZamani.millisecondsSinceEpoch,
-                  soundPath: erkenSesRaw, // Erken alarm sesi kullan
-                  useVibration: true,
-                  alarmId: erkenAlarmId,
-                  isEarly: true,
-                  earlyMinutes: erkenDakika,
-                );
-
-                if (erkenSuccess) {
-                  alarmCount++;
-                  debugPrint(
-                    '   ✅ Erken alarm zamanlandı (ses: $erkenSesRaw)',
-                  );
-                } else {
-                  debugPrint('   ❌ Erken alarm zamanlanamadı');
-                }
-              } else {
-                debugPrint('   ⏭️ Erken alarm zamanı geçmiş, atlanıyor');
-              }
-            } else {
-              debugPrint(
-                '   ⏭️ Erken bildirim kapalı (0 dk), erken alarm atlanıyor',
-              );
-            }
+          } else if (!vaktindeBildirim) {
+            debugPrint(
+              '   ⏭️ Vaktinde bildirim kapalı, alarm atlanıyor',
+            );
           } else {
-            debugPrint('   ⏭️ Ana bildirim kapalı, tüm alarmlar atlanıyor');
+            debugPrint('   ⏭️ Alarm zamanı geçmiş, atlanıyor');
           }
         }
       }
 
+      // Erken hatırlatma alarmlarını da zamanla (EarlyReminderService üzerinden)
+      final erkenAlarmCount =
+          await EarlyReminderService.scheduleAllEarlyReminders();
+      alarmCount += erkenAlarmCount;
+
       debugPrint(
-        '🔔 $zamanlamaSuresi gunluk zamanlama tamamlandi: $alarmCount alarm',
+        '🔔 $zamanlamaSuresi gunluk zamanlama tamamlandi: $alarmCount alarm (erken: $erkenAlarmCount)',
       );
 
       // Son zamanlama tarihini kaydet
@@ -389,7 +318,8 @@ class ScheduledNotificationService {
     debugPrint('🗑️ Namaz vakti alarmlari iptal edildi');
   }
 
-  /// Namaz vakti alarmlarını iptal et (sadece bu servisin ürettiği ID'ler)
+  /// Namaz vakti alarmlarını iptal et (sadece tam vakit alarmları)
+  /// NOT: Erken hatırlatma alarmları EarlyReminderService tarafından iptal edilir
   static Future<void> _cancelPrayerAlarms() async {
     final now = DateTime.now();
     for (int gun = 0; gun < 7; gun++) {
@@ -398,14 +328,10 @@ class ScheduledNotificationService {
         final vakitKeyLower = vakitKey.toLowerCase();
         final alarmId = AlarmService.generateAlarmId(vakitKeyLower, hedefTarih);
         await AlarmService.cancelAlarm(alarmId);
-
-        final erkenAlarmId = AlarmService.generateAlarmId(
-          '${vakitKeyLower}_erken',
-          hedefTarih,
-        );
-        await AlarmService.cancelAlarm(erkenAlarmId);
       }
     }
+    // Erken hatırlatma alarmlarını da iptal et
+    await EarlyReminderService.cancelAllEarlyReminders();
   }
 
   /// Yarının alarmlarını zamanla (gece yarısında çağrılacak)

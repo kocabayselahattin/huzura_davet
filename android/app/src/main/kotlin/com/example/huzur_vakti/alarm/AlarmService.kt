@@ -336,7 +336,7 @@ class AlarmService : Service() {
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setContentIntent(mainPendingIntent)
             .setFullScreenIntent(mainPendingIntent, true)
-            .setAutoCancel(true)
+            .setAutoCancel(false)
             .setOngoing(false)
             .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Kapat", stopPendingIntent)
         
@@ -569,6 +569,13 @@ class AlarmService : Service() {
             val dingDongId = resources.getIdentifier("ding_dong", "raw", packageName)
             if (dingDongId != 0) {
                 mediaPlayer = MediaPlayer.create(this@AlarmService, dingDongId)
+                mediaPlayer?.let {
+                    val audioAttributes = AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .build()
+                    it.setAudioAttributes(audioAttributes)
+                }
             } else {
                 val defaultUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
                 mediaPlayer = MediaPlayer()

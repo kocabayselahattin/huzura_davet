@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
 import 'language_service.dart';
 import 'alarm_service.dart';
+import 'early_reminder_service.dart';
 
 /// Günlük içerik alarmları servisi
 /// Her gün belirli saatlerde günün ayeti, hadisi ve duasını alarm olarak gönderir
@@ -148,9 +149,9 @@ class DailyContentNotificationService {
           await androidImplementation.requestExactAlarmsPermission();
         }
 
-        // Ses ayarını al
-        final soundFile = await getDailyContentNotificationSound();
-        final soundName = soundFile.replaceAll('.mp3', '');
+        // Ses ayarını al ve normalize et
+        final soundFileRaw = await getDailyContentNotificationSound();
+        final soundName = EarlyReminderService.normalizeSoundName(soundFileRaw);
 
         // Eski kanalları sil (ses değişikliği için gerekli)
         try {
@@ -160,6 +161,12 @@ class DailyContentNotificationService {
           await androidImplementation.deleteNotificationChannel(
             channelId: 'daily_content_channel_v2',
           );
+          await androidImplementation.deleteNotificationChannel(
+            channelId: 'daily_content_channel_v3',
+          );
+          await androidImplementation.deleteNotificationChannel(
+            channelId: 'daily_content_channel_v4',
+          );
           debugPrint('🗑️ Eski günlük içerik kanalları silindi');
         } catch (e) {
           debugPrint('⚠️ Kanal silinirken hata (normal olabilir): $e');
@@ -167,7 +174,7 @@ class DailyContentNotificationService {
 
         // Günlük içerik kanalı oluştur
         final channel = AndroidNotificationChannel(
-          'daily_content_channel_v3',
+          'daily_content_channel_v4',
           'Günlük İçerik',
           description: 'Günün ayeti, hadisi ve duası alarmlari',
           importance: Importance.high,
@@ -401,8 +408,11 @@ class DailyContentNotificationService {
       bodyText = languageService[body] ?? body;
     }
 
-    // Ses ayarını al
-    final soundFile = await getDailyContentNotificationSound();
+    // Ses ayarını al ve normalize et
+    final soundFileRaw = await getDailyContentNotificationSound();
+    final soundFile = EarlyReminderService.normalizeSoundName(soundFileRaw);
+
+    debugPrint('🔊 Günlük içerik ses: raw=$soundFileRaw, normalized=$soundFile');
 
     // AlarmManager kullanarak zamanla (vakit alarmları gibi kesin çalışır)
     final success = await AlarmService.scheduleDailyContentAlarm(
@@ -525,11 +535,11 @@ class DailyContentNotificationService {
         return;
     }
 
-    final soundFile = await getDailyContentNotificationSound();
-    final soundName = soundFile.replaceAll('.mp3', '');
+    final soundFileRaw = await getDailyContentNotificationSound();
+    final soundName = EarlyReminderService.normalizeSoundName(soundFileRaw);
 
     final androidPlatformChannelSpecifics = AndroidNotificationDetails(
-      'daily_content_channel_v3',
+      'daily_content_channel_v4',
       'Günlük İçerik',
       channelDescription: 'Günün ayeti, hadisi ve duası bildirimleri',
       importance: Importance.high,

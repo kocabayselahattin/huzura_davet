@@ -167,8 +167,16 @@ class AlarmService {
       final triggerTime = DateTime.fromMillisecondsSinceEpoch(triggerAtMillis);
       final now = DateTime.now().millisecondsSinceEpoch;
 
+      // Ses dosyasını normalize et
+      String normalizedSoundFile = soundFile.toLowerCase();
+      if (normalizedSoundFile.endsWith('.mp3')) {
+        normalizedSoundFile = normalizedSoundFile.substring(0, normalizedSoundFile.length - 4);
+      }
+      normalizedSoundFile = normalizedSoundFile.replaceAll(RegExp(r'[^a-z0-9_]'), '_');
+      if (normalizedSoundFile.isEmpty) normalizedSoundFile = 'ding_dong';
+
       debugPrint(
-        '📅 [GÜNLÜK İÇERİK ALARM] title=$title, triggerTime=$triggerTime, notificationId=$notificationId, soundFile=$soundFile',
+        '📅 [GÜNLÜK İÇERİK ALARM] title=$title, triggerTime=$triggerTime, notificationId=$notificationId, soundFile=$soundFile -> $normalizedSoundFile',
       );
 
       if (triggerAtMillis <= now) {
@@ -182,7 +190,7 @@ class AlarmService {
             'title': title,
             'body': body,
             'triggerAtMillis': triggerAtMillis,
-            'soundFile': soundFile,
+            'soundFile': normalizedSoundFile,
           });
       debugPrint('✅ [GÜNLÜK İÇERİK ALARM RESULT] title=$title, result=$result');
       return result ?? false;
