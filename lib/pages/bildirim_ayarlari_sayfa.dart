@@ -619,6 +619,8 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
   }
 
   Future<void> _ozelSesSec(String key) async {
+    final isErken = key.endsWith('_erken');
+    final baseKey = isErken ? key.replaceFirst('_erken', '') : key;
     // Önce kullanıcıyı bilgilendir
     final devam = await showDialog<bool>(
       context: context,
@@ -669,7 +671,11 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
         if (guvenliDosyaYolu != null) {
           setState(() {
             _ozelSesDosyalari[key] = guvenliDosyaYolu;
-            _bildirimSesi[key] = 'custom';
+            if (isErken) {
+              _erkenBildirimSesi[baseKey] = 'custom';
+            } else {
+              _bildirimSesi[baseKey] = 'custom';
+            }
             _degisiklikYapildi = true;
           });
 
@@ -705,9 +711,16 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
         if (mounted) {
           setState(() {
             // Eğer custom seçiliyse ve dosya yoksa, varsayılan sese dön
-            if (_bildirimSesi[key] == 'custom' &&
-                !_ozelSesDosyalari.containsKey(key)) {
-              _bildirimSesi[key] = _sesSecenekleri.first['dosya']!;
+            if (isErken) {
+              if (_erkenBildirimSesi[baseKey] == 'custom' &&
+                  !_ozelSesDosyalari.containsKey(key)) {
+                _erkenBildirimSesi[baseKey] = _sesSecenekleri.first['dosya']!;
+              }
+            } else {
+              if (_bildirimSesi[baseKey] == 'custom' &&
+                  !_ozelSesDosyalari.containsKey(key)) {
+                _bildirimSesi[baseKey] = _sesSecenekleri.first['dosya']!;
+              }
             }
           });
         }

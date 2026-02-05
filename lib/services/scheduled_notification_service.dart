@@ -253,10 +253,15 @@ class ScheduledNotificationService {
           final sesDosyasi = _getSoundResourceName(sesDosyasiRaw);
 
           // Erken bildirim ses dosyası
-          final erkenSesDosyasiRaw =
-              prefs.getString('erken_bildirim_sesi_$vakitKeyLower') ??
-              'ding_dong.mp3';
-          final erkenSesDosyasi = _getSoundResourceName(erkenSesDosyasiRaw);
+          // Kullanıcı ayrı bir erken ses seçmediyse, vaktindeki sesi kullan
+          final erkenSesKey = 'erken_bildirim_sesi_$vakitKeyLower';
+          final hasErkenSes = prefs.containsKey(erkenSesKey);
+          final erkenSesDosyasiRaw = hasErkenSes
+              ? (prefs.getString(erkenSesKey) ?? '')
+              : sesDosyasiRaw;
+          final erkenSesDosyasi = _getSoundResourceName(
+            erkenSesDosyasiRaw.isEmpty ? sesDosyasiRaw : erkenSesDosyasiRaw,
+          );
 
           // Vakit saatini parse et
           final parts = vakitSaati.split(':');
