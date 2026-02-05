@@ -10,6 +10,30 @@ class NotificationService {
   static bool _initialized = false;
   static final Set<String> _createdChannels = {};
 
+  static const String _onTimeChannelId = 'vakit_on_time_channel';
+  static const String _earlyChannelId = 'vakit_early_channel';
+
+  static const List<String> _legacySoundNames = [
+    'aksam_ezani',
+    'aksam_ezani_segah',
+    'ayasofya_ezan_sesi',
+    'best',
+    'corner',
+    'ding_dong',
+    'esselatu_hayrun_minen_nevm1',
+    'esselatu_hayrun_minen_nevm2',
+    'ikindi_ezani_hicaz',
+    'melodi',
+    'mescid_i_nebi_sabah_ezani',
+    'ney_uyan',
+    'ogle_ezani_rast',
+    'sabah_ezani_saba',
+    'snaps',
+    'sweet_favour',
+    'violet',
+    'yatsi_ezani_ussak',
+  ];
+
   // Ses dosyası adını Android raw kaynağı adına dönüştür
   static String _getSoundResourceName(String? soundAsset) {
     if (soundAsset == null || soundAsset.isEmpty) return 'ding_dong';
@@ -80,33 +104,44 @@ class NotificationService {
           AppSettings.openAppSettings(type: AppSettingsType.notification);
         }
       }
-      // Varsayılan sesler için kanalları başlat
-      final defaultSounds = [
-        'ding_dong',
-        'best',
-        'corner',
-        'melodi',
-        'snaps',
-        'sweet_favour',
-        'violet',
-      ];
-      for (final sound in defaultSounds) {
-        final channelId = 'vakit_channel_$sound';
-        if (!_createdChannels.contains(channelId)) {
-          final channel = AndroidNotificationChannel(
-            channelId,
-            'Vakit Bildirimleri',
-            description: 'Namaz vakitleri için bildirimler',
-            importance: Importance.max,
-            playSound: true,
-            sound: RawResourceAndroidNotificationSound(sound),
-            enableVibration: true,
-            enableLights: true,
-            showBadge: true,
+      for (final sound in _legacySoundNames) {
+        try {
+          await androidImplementation.deleteNotificationChannel(
+            channelId: 'vakit_channel_$sound',
           );
-          await androidImplementation.createNotificationChannel(channel);
-          _createdChannels.add(channelId);
+        } catch (_) {
+          // Ignore missing channels.
         }
+      }
+
+      if (!_createdChannels.contains(_onTimeChannelId)) {
+        final channel = AndroidNotificationChannel(
+          _onTimeChannelId,
+          'Vaktinde Bildirimler',
+          description: 'Vakitlerinde gosterilen bildirimler',
+          importance: Importance.max,
+          playSound: false,
+          enableVibration: true,
+          enableLights: true,
+          showBadge: true,
+        );
+        await androidImplementation.createNotificationChannel(channel);
+        _createdChannels.add(_onTimeChannelId);
+      }
+
+      if (!_createdChannels.contains(_earlyChannelId)) {
+        final channel = AndroidNotificationChannel(
+          _earlyChannelId,
+          'Erken Bildirimler',
+          description: 'Vakitlerden once gosterilen bildirimler',
+          importance: Importance.max,
+          playSound: false,
+          enableVibration: true,
+          enableLights: true,
+          showBadge: true,
+        );
+        await androidImplementation.createNotificationChannel(channel);
+        _createdChannels.add(_earlyChannelId);
       }
     }
 
@@ -121,17 +156,17 @@ class NotificationService {
     try {
       // Ses kaynağı adını al
       final soundResourceName = _getSoundResourceName(soundAsset);
-      debugPrint('🔊 Ses kaynağı: $soundResourceName (orijinal: $soundAsset)');
+      debugPrint('🔊 Ses kaynağı (bildirim): $soundResourceName');
 
-      final channelId = 'vakit_channel_$soundResourceName';
+      final channelId = _onTimeChannelId;
       final androidPlatformChannelSpecifics = AndroidNotificationDetails(
         channelId,
         'Vakit Bildirimleri',
         channelDescription: 'Namaz vakitleri için bildirimler',
         importance: Importance.max,
         priority: Priority.high,
-        playSound: true,
-        sound: RawResourceAndroidNotificationSound(soundResourceName),
+        playSound: false,
+        sound: null,
         audioAttributesUsage: AudioAttributesUsage.alarm,
         enableVibration: true,
         enableLights: true,

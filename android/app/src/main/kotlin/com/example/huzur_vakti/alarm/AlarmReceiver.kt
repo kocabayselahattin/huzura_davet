@@ -70,6 +70,7 @@ class AlarmReceiver : BroadcastReceiver() {
                         "flutter.bildirim_sesi_$vakitKey"
                     }
                     val savedSound = prefs.getString(soundKey, null)
+                    
                     if (!savedSound.isNullOrEmpty()) {
                         // Ses dosyasını normalize et (uzantısız ve küçük harf)
                         var normalizedSound = savedSound.lowercase()
@@ -79,12 +80,24 @@ class AlarmReceiver : BroadcastReceiver() {
                         
                         actualSoundPath = normalizedSound
                         Log.d(TAG, "🔊 Ses dosyası SharedPreferences'tan alındı ve normalize edildi: $soundKey -> '$savedSound' -> '$actualSoundPath'")
+                    } else if (isEarly) {
+                        // Erken alarm için kayıtlı ses yoksa, vaktinde sesi kullan
+                        val onTimeKey = "flutter.bildirim_sesi_$vakitKey"
+                        val onTimeSound = prefs.getString(onTimeKey, null)
+                        if (!onTimeSound.isNullOrEmpty()) {
+                            var normalizedSound = onTimeSound.lowercase()
+                                .replace(".mp3", "")
+                                .replace(" ", "_")
+                                .replace("-", "_")
+                            actualSoundPath = normalizedSound
+                            Log.d(TAG, "🔊 Erken alarm: vaktinde sesi kullanılıyor: $onTimeKey -> '$onTimeSound' -> '$actualSoundPath'")
+                        }
                     }
                 }
                 
-                // Hala null ise varsayılan ses (erken bildirim için ding_dong, vaktinde için best)
+                // Hala null ise varsayılan ses
                 if (actualSoundPath.isNullOrEmpty()) {
-                    actualSoundPath = if (isEarly) "ding_dong" else "best"
+                    actualSoundPath = "best"
                 }
             }
             
@@ -323,7 +336,7 @@ class AlarmReceiver : BroadcastReceiver() {
                     val alarmId = intent.getIntExtra(EXTRA_ALARM_ID, 0)
                     val vakitName = intent.getStringExtra(EXTRA_VAKIT_NAME) ?: "Vakit"
                     val vakitTime = intent.getStringExtra(EXTRA_VAKIT_TIME) ?: ""
-                    var soundFile = intent.getStringExtra(EXTRA_SOUND_FILE) ?: "ding_dong.mp3"
+                    var soundFile = intent.getStringExtra(EXTRA_SOUND_FILE) ?: "best"
                     val isEarly = intent.getBooleanExtra(EXTRA_IS_EARLY, false)
                     val earlyMinutes = intent.getIntExtra(EXTRA_EARLY_MINUTES, 0)
                     
@@ -332,54 +345,64 @@ class AlarmReceiver : BroadcastReceiver() {
                     Log.d(TAG, "   - Ses (INTENT'ten): '$soundFile'")
                     Log.d(TAG, "   - Erken: $isEarly ($earlyMinutes dk)")
                     
-                    // Ses dosyası yoksa veya varsayılan ise SharedPreferences'tan al
-                    if (soundFile.isEmpty() || soundFile == "ding_dong" || soundFile == "ding_dong.mp3" || soundFile == "best" || soundFile == "best.mp3") {
-                        Log.d(TAG, "📢 [ALARM RECEIVER] Varsayılan ses tespit edildi, SharedPreferences kontrol ediliyor...")
-                        
-                        val vakitKey = vakitName.lowercase(java.util.Locale("tr", "TR"))
-                            .replace("ı", "i").replace("ö", "o").replace("ü", "u")
-                            .replace("ş", "s").replace("ğ", "g").replace("ç", "c")
-                            .replace("İ", "i").replace("i̇", "i")
-                            .let { name ->
-                                when {
-                                    name.contains("imsak") || name.contains("sahur") -> "imsak"
-                                    name.contains("gunes") -> "gunes"
-                                    name.contains("ogle") -> "ogle"
-                                    name.contains("ikindi") -> "ikindi"
-                                    name.contains("aksam") -> "aksam"
-                                    name.contains("yatsi") -> "yatsi"
-                                    else -> ""
-                                }
+                    val intentSound = soundFile
+
+                    // Ses dosyasini her zaman SharedPreferences'tan kontrol et
+                    val vakitKey = vakitName.lowercase(java.util.Locale("tr", "TR"))
+                        .replace("ı", "i").replace("ö", "o").replace("ü", "u")
+                        .replace("ş", "s").replace("ğ", "g").replace("ç", "c")
+                        .replace("İ", "i").replace("i̇", "i")
+                        .let { name ->
+                            when {
+                                name.contains("imsak") || name.contains("sahur") -> "imsak"
+                                name.contains("gunes") -> "gunes"
+                                name.contains("ogle") -> "ogle"
+                                name.contains("ikindi") -> "ikindi"
+                                name.contains("aksam") -> "aksam"
+                                name.contains("yatsi") -> "yatsi"
+                                else -> ""
                             }
-                        
-                        Log.d(TAG, "   - VakitKey: '$vakitKey'")
-                        
-                        if (vakitKey.isNotEmpty()) {
-                            val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
-                            // Erken bildirim mi, vaktinde bildirim mi kontrol et
-                            val soundKey = if (isEarly) {
-                                "flutter.erken_bildirim_sesi_$vakitKey"
-                            } else {
-                                "flutter.bildirim_sesi_$vakitKey"
-                            }
-                            
-                            Log.d(TAG, "   - SoundKey: '$soundKey'")
-                            
-                            val savedSound = prefs.getString(soundKey, null)
-                            Log.d(TAG, "   - SharedPreferences değeri: '$savedSound'")
-                            
-                            if (!savedSound.isNullOrEmpty()) {
-                                // Ses dosyasını normalize et (uzantısız ve küçük harf)
-                                var normalizedSound = savedSound.lowercase()
-                                    .replace(".mp3", "")
-                                    .replace(" ", "_")
-                                    .replace("-", "_")
-                                
-                                soundFile = normalizedSound
-                                Log.d(TAG, "✅ [ALARM RECEIVER] Ses SharedPreferences'tan alındı ve normalize edildi: '$savedSound' -> '$soundFile'")
-                            } else {
-                                Log.w(TAG, "⚠️ [ALARM RECEIVER] SharedPreferences'ta ses bulunamadı")
-                            }
+                        }
+
+                    Log.d(TAG, "   - VakitKey: '$vakitKey'")
+
+                    if (vakitKey.isNotEmpty()) {
+                        val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+                        val earlyKey = "flutter.erken_bildirim_sesi_$vakitKey"
+                        val onTimeKey = "flutter.bildirim_sesi_$vakitKey"
+                        val primaryKey = if (isEarly) earlyKey else onTimeKey
+                        val fallbackKey = if (isEarly) onTimeKey else earlyKey
+
+                        val primarySound = prefs.getString(primaryKey, null)
+                        val fallbackSound = prefs.getString(fallbackKey, null)
+                        Log.d(TAG, "   - SoundKey: '$primaryKey' (fallback: '$fallbackKey')")
+                        Log.d(TAG, "   - SharedPreferences primary: '$primarySound', fallback: '$fallbackSound'")
+
+                        val resolvedSound = when {
+                            !primarySound.isNullOrEmpty() && primarySound != "custom" -> primarySound
+                            !fallbackSound.isNullOrEmpty() && fallbackSound != "custom" -> fallbackSound
+                            else -> null
+                        }
+
+                        if (!resolvedSound.isNullOrEmpty()) {
+                            var normalizedSound = resolvedSound.lowercase()
+                                .replace(".mp3", "")
+                                .replace(" ", "_")
+                                .replace("-", "_")
+
+                            soundFile = normalizedSound
+                            Log.d(TAG, "✅ [ALARM RECEIVER] Ses SharedPreferences'tan alındı ve normalize edildi: '$resolvedSound' -> '$soundFile'")
+                        }
+                    }
+
+                    if (soundFile == intentSound && intentSound.isNotEmpty()) {
+                        val normalizedIntent = intentSound.lowercase()
+                            .replace(".mp3", "")
+                            .replace(" ", "_")
+                            .replace("-", "_")
+                        if (normalizedIntent.isNotEmpty()) {
+                            soundFile = normalizedIntent
+                            Log.d(TAG, "✅ [ALARM RECEIVER] Intent sesten fallback: '$intentSound' -> '$soundFile'")
                         }
                     }
                     

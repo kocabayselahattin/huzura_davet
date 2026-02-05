@@ -56,14 +56,14 @@ Future<void> _initializeDefaultNotificationSettings(
     'yatsi': 'best.mp3',
   };
 
-  // Varsayılan erken bildirim sesleri (ding_dong)
+  // Varsayılan erken bildirim sesleri (vaktinde ile aynı)
   const defaultErkenBildirimSesi = {
-    'imsak': 'ding_dong.mp3',
-    'gunes': 'ding_dong.mp3',
-    'ogle': 'ding_dong.mp3',
-    'ikindi': 'ding_dong.mp3',
-    'aksam': 'ding_dong.mp3',
-    'yatsi': 'ding_dong.mp3',
+    'imsak': 'best.mp3',
+    'gunes': 'best.mp3',
+    'ogle': 'best.mp3',
+    'ikindi': 'best.mp3',
+    'aksam': 'best.mp3',
+    'yatsi': 'best.mp3',
   };
 
   // Varsayılan vaktinde hatırlat durumları

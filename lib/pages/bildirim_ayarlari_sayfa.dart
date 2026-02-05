@@ -64,6 +64,12 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
   // Günlük içerik bildirimleri
   bool _gunlukIcerikBildirimleri = true;
 
+  // Günlük içerik alarm ayarları
+  TimeOfDay _gunlukAyetSaati = const TimeOfDay(hour: 8, minute: 0);
+  TimeOfDay _gunlukHadisSaati = const TimeOfDay(hour: 13, minute: 0);
+  TimeOfDay _gunlukDuaSaati = const TimeOfDay(hour: 20, minute: 0);
+  String _gunlukIcerikSesi = 'ding_dong.mp3';
+
   // Ses çalma durumu (play/pause toggle için)
   String? _sesCalanKey; // Hangi vakit için ses çalıyor
 
@@ -94,14 +100,14 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
     'yatsi': 'best.mp3',
   };
 
-  // Erken bildirim sesi seçimi (her vakit için) - default: Ding Dong
+  // Erken bildirim sesi seçimi (her vakit için) - default: Best (vaktinde ile aynı)
   final Map<String, String> _erkenBildirimSesi = {
-    'imsak': 'ding_dong.mp3',
-    'gunes': 'ding_dong.mp3',
-    'ogle': 'ding_dong.mp3',
-    'ikindi': 'ding_dong.mp3',
-    'aksam': 'ding_dong.mp3',
-    'yatsi': 'ding_dong.mp3',
+    'imsak': 'best.mp3',
+    'gunes': 'best.mp3',
+    'ogle': 'best.mp3',
+    'ikindi': 'best.mp3',
+    'aksam': 'best.mp3',
+    'yatsi': 'best.mp3',
   };
 
   final List<int> _erkenSureler = [0, 5, 10, 15, 20, 30, 45, 60];
@@ -183,6 +189,9 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
 
   // Özel ses yolları
   final Map<String, String> _ozelSesDosyalari = {};
+
+  List<Map<String, String>> get _gunlukIcerikSesSecenekleri =>
+      _sesSecenekleri.where((s) => s['dosya'] != 'custom').toList();
 
   /// Dosya adını Android resource kurallarına uygun hale getirir
   /// - Küçük harfe çevirir
@@ -319,9 +328,10 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
             prefs.getInt('erken_$vakit') ?? _erkenBildirim[vakit]!;
         _bildirimSesi[vakit] =
             prefs.getString('bildirim_sesi_$vakit') ?? _bildirimSesi[vakit]!;
+        // Erken bildirim sesi: kayıtlı değer yoksa vaktinde sesi kullan
         _erkenBildirimSesi[vakit] =
             prefs.getString('erken_bildirim_sesi_$vakit') ??
-            _erkenBildirimSesi[vakit]!;
+            _bildirimSesi[vakit]!;
 
         // Özel ses yollarını yükle
         final ozelSes = prefs.getString('ozel_ses_$vakit');
@@ -335,6 +345,21 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
       }
       _gunlukIcerikBildirimleri =
           prefs.getBool('daily_content_notifications_enabled') ?? true;
+      _gunlukAyetSaati = _parseTimeOfDay(
+        prefs.getString('daily_content_verse_time'),
+        const TimeOfDay(hour: 8, minute: 0),
+      );
+      _gunlukHadisSaati = _parseTimeOfDay(
+        prefs.getString('daily_content_hadith_time'),
+        const TimeOfDay(hour: 13, minute: 0),
+      );
+      _gunlukDuaSaati = _parseTimeOfDay(
+        prefs.getString('daily_content_prayer_time'),
+        const TimeOfDay(hour: 20, minute: 0),
+      );
+      _gunlukIcerikSesi =
+          prefs.getString('daily_content_notification_sound') ??
+          _gunlukIcerikSesi;
       _sessizeAl = prefs.getBool('sessize_al') ?? false;
       _kilitEkraniBildirimi =
           prefs.getBool('kilit_ekrani_bildirimi_aktif') ?? false;
@@ -465,9 +490,12 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
       }
     }
     await prefs.setBool('sessize_al', _sessizeAl);
-    await prefs.setBool(
-      'daily_content_notifications_enabled',
-      _gunlukIcerikBildirimleri,
+    await DailyContentNotificationService.setDailyContentNotificationSettings(
+      enabled: _gunlukIcerikBildirimleri,
+      soundFileName: _gunlukIcerikSesi,
+      verseTime: _formatTimeOfDay(_gunlukAyetSaati),
+      hadithTime: _formatTimeOfDay(_gunlukHadisSaati),
+      prayerTime: _formatTimeOfDay(_gunlukDuaSaati),
     );
 
     // NOT: DndService artık kullanılmıyor - AlarmService "sessize_al" ayarını kontrol edip
@@ -479,9 +507,7 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
 
     // Zamanlanmış bildirimleri yeniden ayarla
     await ScheduledNotificationService.scheduleAllPrayerNotifications();
-    await DailyContentNotificationService.setDailyContentNotificationsEnabled(
-      _gunlukIcerikBildirimleri,
-    );
+    // Günlük içerik alarmlari ayarlari yukarida guncellendi
 
     setState(() {
       _degisiklikYapildi = false;
@@ -513,6 +539,38 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
     if (mounted) {
       setState(() {
         _sessizeAl = value;
+      });
+    }
+  }
+
+  TimeOfDay _parseTimeOfDay(String? value, TimeOfDay fallback) {
+    if (value == null) return fallback;
+    final parts = value.split(':');
+    if (parts.length != 2) return fallback;
+    final hour = int.tryParse(parts[0]);
+    final minute = int.tryParse(parts[1]);
+    if (hour == null || minute == null) return fallback;
+    return TimeOfDay(hour: hour, minute: minute);
+  }
+
+  String _formatTimeOfDay(TimeOfDay time) {
+    final h = time.hour.toString().padLeft(2, '0');
+    final m = time.minute.toString().padLeft(2, '0');
+    return '$h:$m';
+  }
+
+  Future<void> _pickDailyContentTime({
+    required TimeOfDay current,
+    required ValueChanged<TimeOfDay> onSelected,
+  }) async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: current,
+    );
+    if (picked != null) {
+      setState(() {
+        onSelected(picked);
+        _degisiklikYapildi = true;
       });
     }
   }
@@ -919,7 +977,7 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
               ),
             ),
 
-            // Günlük içerik bildirimleri
+            // Günlük içerik alarmları
             Container(
               margin: const EdgeInsets.only(bottom: 16),
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
@@ -940,7 +998,7 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
                       Expanded(
                         child: Text(
                           _languageService['daily_content_notifications'] ??
-                              'Günlük İçerik Bildirimleri',
+                              'Günlük İçerik Alarmları',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 15,
@@ -955,9 +1013,6 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
                             _gunlukIcerikBildirimleri = value;
                             _degisiklikYapildi = true;
                           });
-                          await DailyContentNotificationService.setDailyContentNotificationsEnabled(
-                            value,
-                          );
                         },
                         activeThumbColor: Colors.tealAccent,
                       ),
@@ -972,7 +1027,7 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
                     ),
                     child: Text(
                       _languageService['daily_content_notifications_desc'] ??
-                          'Her gün farklı saatlerde günün ayeti, hadisi ve duası bildirim olarak gönderilir.',
+                          'Her gun secilen saatlerde gunun ayeti, hadisi ve duasi alarm olarak calar.',
                       style: const TextStyle(
                         color: Colors.white54,
                         fontSize: 12,
@@ -980,7 +1035,7 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  // Bildirim zamanları
+                  // Alarm zamanlari
                   Padding(
                     padding: const EdgeInsets.only(left: 36, right: 12),
                     child: Column(
@@ -998,12 +1053,20 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
                               ),
                             ),
                             const Spacer(),
-                            const Text(
-                              '08:00',
-                              style: TextStyle(
-                                color: Colors.tealAccent,
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
+                            TextButton(
+                              onPressed: () => _pickDailyContentTime(
+                                current: _gunlukAyetSaati,
+                                onSelected: (value) {
+                                  _gunlukAyetSaati = value;
+                                },
+                              ),
+                              child: Text(
+                                _formatTimeOfDay(_gunlukAyetSaati),
+                                style: const TextStyle(
+                                  color: Colors.tealAccent,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ],
@@ -1022,12 +1085,20 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
                               ),
                             ),
                             const Spacer(),
-                            const Text(
-                              '13:00',
-                              style: TextStyle(
-                                color: Colors.tealAccent,
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
+                            TextButton(
+                              onPressed: () => _pickDailyContentTime(
+                                current: _gunlukHadisSaati,
+                                onSelected: (value) {
+                                  _gunlukHadisSaati = value;
+                                },
+                              ),
+                              child: Text(
+                                _formatTimeOfDay(_gunlukHadisSaati),
+                                style: const TextStyle(
+                                  color: Colors.tealAccent,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ],
@@ -1046,12 +1117,78 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
                               ),
                             ),
                             const Spacer(),
-                            const Text(
-                              '20:00',
-                              style: TextStyle(
-                                color: Colors.tealAccent,
+                            TextButton(
+                              onPressed: () => _pickDailyContentTime(
+                                current: _gunlukDuaSaati,
+                                onSelected: (value) {
+                                  _gunlukDuaSaati = value;
+                                },
+                              ),
+                              child: Text(
+                                _formatTimeOfDay(_gunlukDuaSaati),
+                                style: const TextStyle(
+                                  color: Colors.tealAccent,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.music_note,
+                              color: Colors.tealAccent,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              _languageService['daily_content_alarm_sound'] ??
+                                  'Alarm Sesi:',
+                              style: const TextStyle(
+                                color: Colors.white70,
                                 fontSize: 13,
-                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const Spacer(),
+                            SizedBox(
+                              width: 160,
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  value: _gunlukIcerikSesSecenekleri.any(
+                                        (s) =>
+                                            s['dosya'] == _gunlukIcerikSesi,
+                                      )
+                                      ? _gunlukIcerikSesi
+                                      : _gunlukIcerikSesSecenekleri
+                                          .first['dosya'],
+                                  isExpanded: true,
+                                  dropdownColor: const Color(0xFF2B3151),
+                                  icon: const Icon(
+                                    Icons.arrow_drop_down,
+                                    color: Colors.tealAccent,
+                                  ),
+                                  style: const TextStyle(color: Colors.white),
+                                  items:
+                                      _gunlukIcerikSesSecenekleri.map((ses) {
+                                    return DropdownMenuItem(
+                                      value: ses['dosya'],
+                                      child: Text(
+                                        ses['ad']!,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    );
+                                  }).toList(),
+                                  onChanged: (value) {
+                                    if (value == null) return;
+                                    setState(() {
+                                      _gunlukIcerikSesi = value;
+                                      _degisiklikYapildi = true;
+                                    });
+                                  },
+                                ),
                               ),
                             ),
                           ],
@@ -1486,7 +1623,12 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
                                             await _ozelSesSec(key);
                                           } else {
                                             setState(() {
+                                              final eskiSes = _bildirimSesi[key]!;
                                               _bildirimSesi[key] = value;
+                                              // Erken ses eski vaktinde ses ile aynıysa, yeni sese senkronla
+                                              if (_erkenBildirimSesi[key] == eskiSes) {
+                                                _erkenBildirimSesi[key] = value;
+                                              }
                                               _degisiklikYapildi = true;
                                             });
                                           }
@@ -1569,7 +1711,7 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
                               const SizedBox(width: 8),
                               Text(
                                 _languageService['early_sound'] ??
-                                    'Erken Bildirim Sesi:',
+                                    'Erken Hatırlatma Sesi:',
                                 style: const TextStyle(
                                   color: Colors.cyanAccent,
                                   fontSize: 13,

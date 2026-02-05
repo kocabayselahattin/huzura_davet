@@ -6,18 +6,22 @@ import 'package:flutter/foundation.dart';
 import 'language_service.dart';
 import 'alarm_service.dart';
 
-/// Günlük içerik bildirimleri servisi
-/// Her gün belirli saatlerde günün ayeti, hadisi ve duasını bildirim olarak gönderir
+/// Günlük içerik alarmları servisi
+/// Her gün belirli saatlerde günün ayeti, hadisi ve duasını alarm olarak gönderir
 /// AlarmManager kullanır - uygulama kapalı olsa bile çalışır
 class DailyContentNotificationService {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
   static bool _initialized = false;
 
-  // Bildirim saatleri
-  static const int verseHour = 8; // Sabah 08:00 - Günün Ayeti
-  static const int hadithHour = 13; // Öğle 13:00 - Günün Hadisi
-  static const int prayerHour = 20; // Akşam 20:00 - Günün Duası
+  // Varsayilan saatler
+  static const String _defaultVerseTime = '08:00';
+  static const String _defaultHadithTime = '13:00';
+  static const String _defaultPrayerTime = '20:00';
+
+  static const String _verseTimeKey = 'daily_content_verse_time';
+  static const String _hadithTimeKey = 'daily_content_hadith_time';
+  static const String _prayerTimeKey = 'daily_content_prayer_time';
 
   // Bildirim ID'leri
   static const int verseNotificationId = 1000;
@@ -27,27 +31,67 @@ class DailyContentNotificationService {
   // Varsayılan ses dosyası
   static const String defaultNotificationSound = 'ding_dong';
 
-  /// Günlük içerik bildirim sesini ayarla
+  /// Günlük içerik alarm sesini ayarla
   static Future<void> setDailyContentNotificationSound(
     String soundFileName,
   ) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('daily_content_notification_sound', soundFileName);
-    debugPrint('✅ Günlük içerik bildirim sesi ayarlandı: $soundFileName');
+    debugPrint('✅ Günlük içerik alarm sesi ayarlandı: $soundFileName');
 
     // Servisi yeniden başlat (kanal ses ayarını güncellemek için)
     _initialized = false;
     await initialize();
 
-    // Bildirimleri yeniden zamanla
+    // Alarmlari yeniden zamanla
     await scheduleDailyContentNotifications();
   }
 
-  /// Günlük içerik bildirim sesini al
+  /// Günlük içerik alarm sesini al
   static Future<String> getDailyContentNotificationSound() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('daily_content_notification_sound') ??
         defaultNotificationSound;
+  }
+
+  /// Günlük içerik alarm saatlerini ayarla
+  static Future<void> setDailyContentNotificationTimes({
+    required String verseTime,
+    required String hadithTime,
+    required String prayerTime,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_verseTimeKey, verseTime);
+    await prefs.setString(_hadithTimeKey, hadithTime);
+    await prefs.setString(_prayerTimeKey, prayerTime);
+
+    _initialized = false;
+    await initialize();
+    await scheduleDailyContentNotifications();
+  }
+
+  /// Gunluk icerik alarm ayarlarini topluca guncelle
+  static Future<void> setDailyContentNotificationSettings({
+    required bool enabled,
+    required String soundFileName,
+    required String verseTime,
+    required String hadithTime,
+    required String prayerTime,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('daily_content_notifications_enabled', enabled);
+    await prefs.setString('daily_content_notification_sound', soundFileName);
+    await prefs.setString(_verseTimeKey, verseTime);
+    await prefs.setString(_hadithTimeKey, hadithTime);
+    await prefs.setString(_prayerTimeKey, prayerTime);
+
+    _initialized = false;
+    await initialize();
+    if (enabled) {
+      await scheduleDailyContentNotifications();
+    } else {
+      await cancelAllDailyContentNotifications();
+    }
   }
 
   /// Servisi başlat
@@ -125,7 +169,7 @@ class DailyContentNotificationService {
         final channel = AndroidNotificationChannel(
           'daily_content_channel_v3',
           'Günlük İçerik',
-          description: 'Günün ayeti, hadisi ve duası bildirimleri',
+          description: 'Günün ayeti, hadisi ve duası alarmlari',
           importance: Importance.high,
           playSound: true,
           sound: RawResourceAndroidNotificationSound(soundName),
@@ -135,7 +179,7 @@ class DailyContentNotificationService {
         );
         await androidImplementation.createNotificationChannel(channel);
         debugPrint(
-          '✅ Günlük içerik bildirim kanalı oluşturuldu (ses: $soundName)',
+          '✅ Günlük içerik alarm kanalı oluşturuldu (ses: $soundName)',
         );
       }
 
@@ -146,9 +190,9 @@ class DailyContentNotificationService {
     }
   }
 
-  /// Günlük bildirimleri zamanla
+  /// Günlük alarmlari zamanla
   static Future<void> scheduleDailyContentNotifications() async {
-    debugPrint('📱 Günlük içerik bildirimleri zamanlanıyor...');
+    debugPrint('📱 Günlük içerik alarmlari zamanlaniyor...');
 
     if (!_initialized) {
       debugPrint('🔧 Servis henüz başlatılmamış, initialize ediliyor...');
@@ -161,31 +205,35 @@ class DailyContentNotificationService {
     debugPrint('🔍 daily_content_notifications_enabled: $enabled');
 
     if (!enabled) {
-      debugPrint('⏸️ Günlük içerik bildirimleri devre dışı');
+      debugPrint('⏸️ Günlük içerik alarmlari devre disi');
       await cancelAllDailyContentNotifications();
       return;
     }
 
     try {
-      debugPrint('🗑️ Mevcut günlük içerik bildirimleri iptal ediliyor...');
-      // Mevcut bildirimleri iptal et
+      debugPrint('🗑️ Mevcut günlük içerik alarmlari iptal ediliyor...');
+      // Mevcut alarmlari iptal et
       await cancelAllDailyContentNotifications();
 
-      // 7 günlük bildirimler zamanla (her gün için ayrı)
+      // 7 gunluk alarmlar zamanla (her gun icin ayri)
+      final times = await _getDailyContentTimes();
+      final verseTimeParts = times['verse']!;
+      final hadithTimeParts = times['hadith']!;
+      final prayerTimeParts = times['prayer']!;
       final now = tz.TZDateTime.now(tz.local);
       int scheduledCount = 0;
 
       for (int day = 0; day < 7; day++) {
         final targetDate = now.add(Duration(days: day));
 
-        // Günün Ayeti - Sabah 08:00
+        // Gunun Ayeti
         final verseTime = tz.TZDateTime(
           tz.local,
           targetDate.year,
           targetDate.month,
           targetDate.day,
-          verseHour,
-          0,
+          verseTimeParts[0],
+          verseTimeParts[1],
           0,
         );
         if (verseTime.isAfter(now)) {
@@ -198,14 +246,14 @@ class DailyContentNotificationService {
           scheduledCount++;
         }
 
-        // Günün Hadisi - Öğle 13:00
+        // Gunun Hadisi
         final hadithTime = tz.TZDateTime(
           tz.local,
           targetDate.year,
           targetDate.month,
           targetDate.day,
-          hadithHour,
-          0,
+          hadithTimeParts[0],
+          hadithTimeParts[1],
           0,
         );
         if (hadithTime.isAfter(now)) {
@@ -218,14 +266,14 @@ class DailyContentNotificationService {
           scheduledCount++;
         }
 
-        // Günün Duası - Akşam 20:00
+        // Gunun Duasi
         final prayerTime = tz.TZDateTime(
           tz.local,
           targetDate.year,
           targetDate.month,
           targetDate.day,
-          prayerHour,
-          0,
+          prayerTimeParts[0],
+          prayerTimeParts[1],
           0,
         );
         if (prayerTime.isAfter(now)) {
@@ -240,14 +288,46 @@ class DailyContentNotificationService {
       }
 
       debugPrint(
-        '✅ Günlük içerik bildirimleri zamanlandı ($scheduledCount adet):',
+        '✅ Günlük içerik alarmlari zamanlandi ($scheduledCount adet):',
       );
-      debugPrint('   📖 Günün Ayeti: Her gün $verseHour:00');
-      debugPrint('   📿 Günün Hadisi: Her gün $hadithHour:00');
-      debugPrint('   🤲 Günün Duası: Her gün $prayerHour:00');
+      debugPrint(
+        '   📖 Gunun Ayeti: Her gun ${times['verse']![0].toString().padLeft(2, '0')}:${times['verse']![1].toString().padLeft(2, '0')}',
+      );
+      debugPrint(
+        '   📿 Gunun Hadisi: Her gun ${times['hadith']![0].toString().padLeft(2, '0')}:${times['hadith']![1].toString().padLeft(2, '0')}',
+      );
+      debugPrint(
+        '   🤲 Gunun Duasi: Her gun ${times['prayer']![0].toString().padLeft(2, '0')}:${times['prayer']![1].toString().padLeft(2, '0')}',
+      );
     } catch (e) {
-      debugPrint('❌ Günlük içerik bildirimleri zamanlanamadı: $e');
+      debugPrint('❌ Günlük içerik alarmlari zamanlanamadi: $e');
     }
+  }
+
+  static Future<Map<String, List<int>>> _getDailyContentTimes() async {
+    final prefs = await SharedPreferences.getInstance();
+    final verse = prefs.getString(_verseTimeKey) ?? _defaultVerseTime;
+    final hadith = prefs.getString(_hadithTimeKey) ?? _defaultHadithTime;
+    final prayer = prefs.getString(_prayerTimeKey) ?? _defaultPrayerTime;
+
+    return {
+      'verse': _parseTimeParts(verse, _defaultVerseTime),
+      'hadith': _parseTimeParts(hadith, _defaultHadithTime),
+      'prayer': _parseTimeParts(prayer, _defaultPrayerTime),
+    };
+  }
+
+  static List<int> _parseTimeParts(String value, String fallback) {
+    final parts = value.split(':');
+    if (parts.length != 2) {
+      return _parseTimeParts(fallback, fallback);
+    }
+    final hour = int.tryParse(parts[0]);
+    final minute = int.tryParse(parts[1]);
+    if (hour == null || minute == null) {
+      return _parseTimeParts(fallback, fallback);
+    }
+    return [hour, minute];
   }
 
   /// Bildirim zamanla (7 günlük sistem)
@@ -342,14 +422,14 @@ class DailyContentNotificationService {
     }
   }
 
-  /// Tüm günlük içerik bildirimlerini iptal et
+  /// Tum gunluk icerik alarmlarini iptal et
   static Future<void> cancelAllDailyContentNotifications() async {
     // AlarmManager ile zamanlanmış bildirimleri iptal et
     await AlarmService.cancelAllDailyContentAlarms();
-    debugPrint('🚫 Günlük içerik bildirimleri iptal edildi (AlarmManager)');
+    debugPrint('🚫 Günlük içerik alarmlari iptal edildi (AlarmManager)');
   }
 
-  /// Günlük içerik bildirimlerini aç/kapat
+  /// Gunluk icerik alarmlarini ac/kapat
   static Future<void> setDailyContentNotificationsEnabled(bool enabled) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('daily_content_notifications_enabled', enabled);

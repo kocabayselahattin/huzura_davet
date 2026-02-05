@@ -125,7 +125,7 @@ class AlarmService : Service() {
         val alarmId = intent?.getIntExtra(AlarmReceiver.EXTRA_ALARM_ID, 0) ?: 0
         currentVakitName = intent?.getStringExtra(AlarmReceiver.EXTRA_VAKIT_NAME) ?: "Vakit"
         currentVakitTime = intent?.getStringExtra(AlarmReceiver.EXTRA_VAKIT_TIME) ?: ""
-        val soundFile = intent?.getStringExtra(AlarmReceiver.EXTRA_SOUND_FILE) ?: "ding_dong"
+        val soundFile = intent?.getStringExtra(AlarmReceiver.EXTRA_SOUND_FILE) ?: "best"
         isCurrentAlarmEarly = intent?.getBooleanExtra(AlarmReceiver.EXTRA_IS_EARLY, false) ?: false
         val earlyMinutes = intent?.getIntExtra(AlarmReceiver.EXTRA_EARLY_MINUTES, 0) ?: 0
         
@@ -278,6 +278,7 @@ class AlarmService : Service() {
                 setBypassDnd(true)
                 lockscreenVisibility = Notification.VISIBILITY_PUBLIC
                 setShowBadge(true)
+                setSound(null, null)
             }
             notificationManager.createNotificationChannel(alarmChannel)
             
@@ -289,6 +290,7 @@ class AlarmService : Service() {
             ).apply {
                 description = "Vakitlerde sessize al bildirimleri"
                 setShowBadge(true)
+                setSound(null, null)
             }
             notificationManager.createNotificationChannel(silentChannel)
         }
@@ -328,6 +330,7 @@ class AlarmService : Service() {
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentTitle(title)
             .setContentText(body)
+            .setSound(null)
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
@@ -467,50 +470,58 @@ class AlarmService : Service() {
     }
     
     /**
-     * Ses dosyası adını çözümle (SharedPreferences'tan veya varsayılan)
+     * Ses dosyası adını çözümle
+     * Öncelik sırası:
+     * 1. SharedPreferences'taki kullanıcı tercihi (erken/vaktinde ayrımı yapılır)
+     * 2. Intent'ten gelen ses (zamanlama sırasında doğru çözümlenmiş)
+     * 3. SharedPreferences'taki vaktinde ses (erken alarm için fallback)
+     * 4. Varsayılan ses ("best")
      */
     private fun resolveSoundFile(soundFile: String): String {
-        // SharedPreferences'tan güncel ses ayarını kontrol et
         val vakitKey = normalizeVakitName(currentVakitName)
+        // Intent'ten gelen sesi normalize et - bu zaten zamanlama sırasında doğru çözümlenmiş
         val intentSound = normalizeSoundName(soundFile)
+        val defaultSound = "best"
 
         if (vakitKey.isNotEmpty()) {
             val prefs = getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
-            // Erken bildirim mi, vaktinde bildirim mi kontrol et
-            val soundKey = if (isCurrentAlarmEarly) {
-                "flutter.erken_bildirim_sesi_$vakitKey"
-            } else {
-                "flutter.bildirim_sesi_$vakitKey"
-            }
-            val savedSound = prefs.getString(soundKey, null)
-            Log.d(TAG, "🔊 SharedPreferences kontrol: $soundKey -> '$savedSound' (intent'ten gelen: '$soundFile')")
+            val earlyKey = "flutter.erken_bildirim_sesi_$vakitKey"
+            val onTimeKey = "flutter.bildirim_sesi_$vakitKey"
+            val primaryKey = if (isCurrentAlarmEarly) earlyKey else onTimeKey
+            val fallbackKey = if (isCurrentAlarmEarly) onTimeKey else earlyKey
 
-            if (!savedSound.isNullOrEmpty() && savedSound != "custom") {
-                val normalizedSound = normalizeSoundName(savedSound)
+            val primarySound = prefs.getString(primaryKey, null)
+            val fallbackSound = prefs.getString(fallbackKey, null)
+            Log.d(TAG, "🔊 SharedPreferences kontrol: $primaryKey -> '$primarySound', fallback: $fallbackKey -> '$fallbackSound'")
+            Log.d(TAG, "🔊 Intent ses: '$intentSound'")
+
+            val resolvedSound = when {
+                // Kullanıcının seçtiği ses
+                !primarySound.isNullOrEmpty() && primarySound != "custom" -> primarySound
+                // Intent'ten gelen ses (zamanlama sırasında doğru çözümlenmiş)
+                intentSound.isNotEmpty() -> intentSound
+                // Vaktinde ses (erken alarm için fallback)
+                !fallbackSound.isNullOrEmpty() && fallbackSound != "custom" -> fallbackSound
+                else -> null
+            }
+
+            if (!resolvedSound.isNullOrEmpty()) {
+                val normalizedSound = normalizeSoundName(resolvedSound)
                 if (normalizedSound.isNotEmpty()) {
-                    Log.d(TAG, "✅ SharedPreferences'tan ses alındı: '$savedSound' -> '$normalizedSound'")
+                    Log.d(TAG, "✅ Ses çözümlendi: '$resolvedSound' -> '$normalizedSound'")
                     return normalizedSound
                 }
             }
 
-            // Prefs bos ya da custom ise intent sesini kullan
-            if (intentSound.isNotEmpty() && intentSound != "custom") {
-                Log.d(TAG, "✅ Intent ses kullaniliyor: '$soundFile' -> '$intentSound'")
-                return intentSound
-            }
-
-            val defaultSound = if (isCurrentAlarmEarly) "ding_dong" else "best"
             Log.d(TAG, "⚠️ Ses bulunamadı, varsayılan: '$defaultSound'")
             return defaultSound
         }
 
-        // vakitKey boş ise intent veya varsayılan kullan
-        if (intentSound.isNotEmpty() && intentSound != "custom") {
-            Log.d(TAG, "✅ Vakit key bos, intent ses kullaniliyor: '$intentSound'")
+        // vakitKey bos ise intent sesini veya varsayılanı kullan
+        if (intentSound.isNotEmpty()) {
+            Log.d(TAG, "✅ vakitKey boş, intent sesi kullanılıyor: '$intentSound'")
             return intentSound
         }
-
-        val defaultSound = if (isCurrentAlarmEarly) "ding_dong" else "best"
         Log.d(TAG, "⚠️ vakitKey bos, varsayılan: '$defaultSound'")
         return defaultSound
     }
