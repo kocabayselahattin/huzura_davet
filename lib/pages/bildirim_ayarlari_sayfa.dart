@@ -303,6 +303,8 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
     }
   }
 
+
+
   @override
   void dispose() {
     _audioPlayer.dispose();
@@ -506,11 +508,44 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
       await DndService.cancelPrayerDnd();
     }
 
+    // Konum kontrolü
+    final ilceId = await prefs.getString('ilce_id');
+    if (ilceId == null || ilceId.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _languageService['location_not_selected'] ??
+                  '⚠️ Konum seçilmemiş! Lütfen önce ana sayfadan konum seçin.',
+            ),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    }
+
     // Önce erken hatırlatma alarmlarını kaydet ve zamanla (yeni servis)
-    await EarlyReminderService.saveAndReschedule(
-      erkenSureler: Map<String, int>.from(_erkenBildirim),
-      erkenSesler: Map<String, String>.from(_erkenBildirimSesi),
-    );
+    int erkenAlarmSayisi = 0;
+    try {
+      erkenAlarmSayisi = await EarlyReminderService.saveAndReschedule(
+        erkenSureler: Map<String, int>.from(_erkenBildirim),
+        erkenSesler: Map<String, String>.from(_erkenBildirimSesi),
+      );
+      debugPrint('✅ Erken hatırlatma kaydı tamamlandı: $erkenAlarmSayisi alarm');
+    } catch (e, stackTrace) {
+      debugPrint('❌ Erken hatırlatma kaydetme hatası: $e');
+      debugPrint('Stack trace: $stackTrace');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Erken hatırlatma hatası: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+    }
 
     // Zamanlanmış tam vakit bildirimlerini yeniden ayarla
     await ScheduledNotificationService.scheduleAllPrayerNotifications();
@@ -521,13 +556,36 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
     });
 
     if (mounted) {
+      // Aktif erken hatırlatma sayısını hesapla
+      final aktifErkenSayisi = _erkenBildirim.entries
+          .where((e) => e.value > 0 && (_bildirimAcik[e.key] ?? false))
+          .length;
+      
+      String mesaj;
+      Color renk;
+      
+      if (erkenAlarmSayisi > 0) {
+        // Başarıyla alarm kuruldu
+        mesaj = '✅ Ayarlar kaydedildi!\n🔔 $erkenAlarmSayisi erken hatırlatma alarmı kuruldu';
+        renk = Colors.green;
+      } else if (aktifErkenSayisi > 0) {
+        // Erken hatırlatma seçilmiş ama kurulamadı
+        mesaj = '⚠️ Ayarlar kaydedildi ama erken hatırlatma alarmları kurulamadı!\n\n'
+            'Olası nedenler:\n'
+            '• Konum seçilmemiş (Ana sayfadan seçin)\n'
+            '• İnternet bağlantısı yok';
+        renk = Colors.orange;
+      } else {
+        // Erken hatırlatma seçilmemiş
+        mesaj = '✅ Ayarlar kaydedildi';
+        renk = Colors.green;
+      }
+      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            _languageService['notification_settings_saved'] ??
-                'Bildirim ayarları kaydedildi',
-          ),
-          backgroundColor: Colors.green,
+          content: Text(mesaj),
+          backgroundColor: renk,
+          duration: const Duration(seconds: 5),
         ),
       );
     }
@@ -1516,6 +1574,74 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
                       ),
                     ],
                   ),
+                  // Erken hatırlatma bilgilendirme
+                  if (erkenDakika > 0 && !acik) ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: Colors.orange.withOpacity(0.5),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.warning_amber_rounded,
+                            color: Colors.orange,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _languageService['early_reminder_warning'] ??
+                                  'Erken hatırlatma için ana bildirimi açın',
+                              style: const TextStyle(
+                                color: Colors.orange,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  if (erkenDakika > 0 && acik) ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: Colors.green.withOpacity(0.3),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.check_circle,
+                            color: Colors.greenAccent,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              erkenDakika < 60
+                                  ? '$erkenDakika dk önce hatırlatılacak'
+                                  : '${erkenDakika ~/ 60} saat önce hatırlatılacak',
+                              style: const TextStyle(
+                                color: Colors.greenAccent,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 12),
                   // === VAKTİNDE ALARM SESİ ===
                   if (vaktindeAcik) ...[

@@ -155,7 +155,7 @@ class DailyContentReceiver : BroadcastReceiver() {
                     PowerManager.PARTIAL_WAKE_LOCK or PowerManager.ACQUIRE_CAUSES_WAKEUP,
                     "HuzurVakti::DailyContentWakeLock"
                 )
-                wakeLock.acquire(30_000L) // 30 saniye
+                wakeLock.acquire(60_000L) // 60 saniye
                 
                 try {
                     val notificationId = intent.getIntExtra(EXTRA_NOTIFICATION_ID, 0)
@@ -163,10 +163,27 @@ class DailyContentReceiver : BroadcastReceiver() {
                     val body = intent.getStringExtra(EXTRA_BODY) ?: ""
                     val soundFile = intent.getStringExtra(EXTRA_SOUND_FILE) ?: "ding_dong"
                     
-                    Log.d(TAG, "🔔 Günlük içerik bildirimi gösteriliyor: $title (ses: $soundFile)")
+                    Log.d(TAG, "🔔 Günlük içerik için AlarmService başlatılıyor: $title (ses: $soundFile)")
                     
-                    // Bildirimi göster
-                    showNotification(context, notificationId, title, body, soundFile)
+                    // AlarmService'i başlat - böylece alarm sesi doğru çalar
+                    val serviceIntent = Intent(context, AlarmService::class.java).apply {
+                        action = "DAILY_CONTENT_ALARM"
+                        putExtra(AlarmReceiver.EXTRA_ALARM_ID, notificationId)
+                        putExtra(AlarmReceiver.EXTRA_VAKIT_NAME, title)
+                        putExtra(AlarmReceiver.EXTRA_VAKIT_TIME, "")
+                        putExtra(AlarmReceiver.EXTRA_SOUND_FILE, soundFile)
+                        putExtra(AlarmReceiver.EXTRA_IS_EARLY, false)
+                        putExtra(AlarmReceiver.EXTRA_EARLY_MINUTES, 0)
+                        putExtra("content_body", body) // Günlük içerik için body ekstra
+                    }
+                    
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        context.startForegroundService(serviceIntent)
+                    } else {
+                        context.startService(serviceIntent)
+                    }
+                    
+                    Log.d(TAG, "✅ AlarmService başlatıldı")
                 } finally {
                     if (wakeLock.isHeld) {
                         wakeLock.release()
