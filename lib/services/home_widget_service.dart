@@ -10,7 +10,7 @@ import 'language_service.dart';
 
 /// Android Home Screen Widget'larını güncelleyen servis
 class HomeWidgetService {
-  static const String _appGroupId = 'group.com.example.huzur_vakti';
+  static const String _appGroupId = 'group.com.kocabay.huzurvakti';
 
   static Timer? _updateTimer;
   static Map<String, String> _vakitSaatleri = {};
