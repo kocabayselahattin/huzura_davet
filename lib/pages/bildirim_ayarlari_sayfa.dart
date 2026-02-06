@@ -69,7 +69,7 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
   TimeOfDay _gunlukAyetSaati = const TimeOfDay(hour: 8, minute: 0);
   TimeOfDay _gunlukHadisSaati = const TimeOfDay(hour: 13, minute: 0);
   TimeOfDay _gunlukDuaSaati = const TimeOfDay(hour: 20, minute: 0);
-  String _gunlukIcerikSesi = 'ding_dong.mp3';
+  String _gunlukIcerikSesi = 'ding_dong'; // Ses ID'si
 
   // Ses çalma durumu (play/pause toggle için)
   String? _sesCalanKey; // Hangi vakit için ses çalıyor
@@ -91,98 +91,133 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
     'yatsi': 15,
   };
 
-  // Vaktinde bildirim sesi seçimi (her vakit için) - default: Best
+  // Vaktinde bildirim sesi seçimi (her vakit için) - default: best (ID)
   final Map<String, String> _bildirimSesi = {
-    'imsak': 'best.mp3',
-    'gunes': 'best.mp3',
-    'ogle': 'best.mp3',
-    'ikindi': 'best.mp3',
-    'aksam': 'best.mp3',
-    'yatsi': 'best.mp3',
+    'imsak': 'best',
+    'gunes': 'best',
+    'ogle': 'best',
+    'ikindi': 'best',
+    'aksam': 'best',
+    'yatsi': 'best',
   };
 
-  // Erken bildirim sesi seçimi (her vakit için) - default: Best (vaktinde ile aynı)
+  // Erken bildirim sesi seçimi (her vakit için) - default: best (ID)
   final Map<String, String> _erkenBildirimSesi = {
-    'imsak': 'best.mp3',
-    'gunes': 'best.mp3',
-    'ogle': 'best.mp3',
-    'ikindi': 'best.mp3',
-    'aksam': 'best.mp3',
-    'yatsi': 'best.mp3',
+    'imsak': 'best',
+    'gunes': 'best',
+    'ogle': 'best',
+    'ikindi': 'best',
+    'aksam': 'best',
+    'yatsi': 'best',
   };
 
   final List<int> _erkenSureler = [0, 5, 10, 15, 20, 30, 45, 60];
 
   // Ses seçenekleri - getter olarak tanımlanıyor çünkü languageService'e ihtiyaç var
+  // Her sesin küçük harfle başlayan benzersiz bir ID'si var (Android raw resource adı)
   List<Map<String, String>> get _sesSecenekleri => [
     {
+      'id': 'aksam_ezani',
       'ad': _languageService['sound_aksam_ezani'] ?? 'Akşam Ezanı',
       'dosya': 'aksam_ezani.mp3',
     },
     {
+      'id': 'ayasofya_ezan_sesi',
       'ad': _languageService['sound_ayasofya_ezan'] ?? 'Ayasofya Ezan Sesi',
       'dosya': 'ayasofya_ezan_sesi.mp3',
     },
-    {'ad': _languageService['sound_best'] ?? 'Best', 'dosya': 'best.mp3'},
-    {'ad': _languageService['sound_corner'] ?? 'Corner', 'dosya': 'corner.mp3'},
     {
+      'id': 'best',
+      'ad': _languageService['sound_best'] ?? 'Best',
+      'dosya': 'best.mp3',
+    },
+    {
+      'id': 'corner',
+      'ad': _languageService['sound_corner'] ?? 'Corner',
+      'dosya': 'corner.mp3',
+    },
+    {
+      'id': 'ding_dong',
       'ad': _languageService['sound_ding_dong'] ?? 'Ding Dong',
       'dosya': 'ding_dong.mp3',
     },
     {
+      'id': 'esselatu_hayrun_minen_nevm1',
       'ad':
           _languageService['sound_esselatu_1'] ??
           'Es-Selatu Hayrun Minen Nevm 1',
       'dosya': 'esselatu_hayrun_minen_nevm1.mp3',
     },
     {
+      'id': 'esselatu_hayrun_minen_nevm2',
       'ad':
           _languageService['sound_esselatu_2'] ??
           'Es-Selatu Hayrun Minen Nevm 2',
       'dosya': 'esselatu_hayrun_minen_nevm2.mp3',
     },
-    {'ad': _languageService['sound_melodi'] ?? 'Melodi', 'dosya': 'melodi.mp3'},
     {
+      'id': 'melodi',
+      'ad': _languageService['sound_melodi'] ?? 'Melodi',
+      'dosya': 'melodi.mp3',
+    },
+    {
+      'id': 'mescid_i_nebi_sabah_ezani',
       'ad':
           _languageService['sound_mescid_nebi_sabah'] ??
           'Mescid-i Nebi Sabah Ezanı',
       'dosya': 'mescid_i_nebi_sabah_ezani.mp3',
     },
-    {'ad': _languageService['sound_snaps'] ?? 'Snaps', 'dosya': 'snaps.mp3'},
     {
+      'id': 'snaps',
+      'ad': _languageService['sound_snaps'] ?? 'Snaps',
+      'dosya': 'snaps.mp3',
+    },
+    {
+      'id': 'sweet_favour',
       'ad': _languageService['sound_sweet_favour'] ?? 'Sweet Favour',
       'dosya': 'sweet_favour.mp3',
     },
-    {'ad': _languageService['sound_violet'] ?? 'Violet', 'dosya': 'violet.mp3'},
     {
+      'id': 'violet',
+      'ad': _languageService['sound_violet'] ?? 'Violet',
+      'dosya': 'violet.mp3',
+    },
+    {
+      'id': 'sabah_ezani_saba',
       'ad': _languageService['sound_sabah_ezani_saba'] ?? 'Sabah Ezanı (Saba)',
       'dosya': 'sabah_ezani_saba.mp3',
     },
     {
+      'id': 'ogle_ezani_rast',
       'ad': _languageService['sound_ogle_ezani_rast'] ?? 'Öğle Ezanı (Rast)',
       'dosya': 'ogle_ezani_rast.mp3',
     },
     {
+      'id': 'ikindi_ezani_hicaz',
       'ad':
           _languageService['sound_ikindi_ezani_hicaz'] ??
           'İkindi Ezanı (Hicaz)',
       'dosya': 'ikindi_ezani_hicaz.mp3',
     },
     {
+      'id': 'aksam_ezani_segah',
       'ad':
           _languageService['sound_aksam_ezani_segah'] ?? 'Akşam Ezanı (Segah)',
       'dosya': 'aksam_ezani_segah.mp3',
     },
     {
+      'id': 'yatsi_ezani_ussak',
       'ad':
           _languageService['sound_yatsi_ezani_ussak'] ?? 'Yatsı Ezanı (Uşşak)',
       'dosya': 'yatsi_ezani_ussak.mp3',
     },
     {
+      'id': 'ney_uyan',
       'ad': _languageService['sound_ney_uyan'] ?? 'Ney - Uyan',
       'dosya': 'ney_uyan.mp3',
     },
     {
+      'id': 'custom',
       'ad': _languageService['custom_sound'] ?? 'Özel Ses Seç',
       'dosya': 'custom',
     },
