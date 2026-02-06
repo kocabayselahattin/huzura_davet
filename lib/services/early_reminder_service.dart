@@ -117,7 +117,7 @@ class EarlyReminderService {
     try {
       if (!_initialized) await initialize();
 
-      debugPrint('⏰ Erken hatırlatma alarmları zamanlanıyor...');
+      debugPrint('⏰ ===== ERKEN HATIRLATMA ZAMANLAMA BAŞLIYOR =====');
 
       // Mevcut erken alarmları iptal et
       await cancelAllEarlyReminders();
@@ -125,17 +125,23 @@ class EarlyReminderService {
       // Konum ID'sini al
       final ilceId = await KonumService.getIlceId();
       if (ilceId == null || ilceId.isEmpty) {
-        debugPrint('⚠️ Konum seçilmemiş, erken hatırlatmalar zamanlanamıyor');
+        debugPrint('❌ KONUM SEÇİLMEMİŞ! Erken hatırlatmalar zamanlanamıyor.');
+        debugPrint('⚠️ Lütfen ana sayfadan konum seçin.');
+        debugPrint('==========================================');
         return 0;
       }
+      debugPrint('📍 Konum ID: $ilceId');
 
       // 7 günlük vakit bilgisi al
       final now = DateTime.now();
+      debugPrint('🕐 Şimdiki zaman: $now');
+      
       final aylikVakitler = await DiyanetApiService.getAylikVakitler(
         ilceId,
         now.year,
         now.month,
       );
+      debugPrint('📅 Bu ay vakit sayısı: ${aylikVakitler.length}');
 
       // Gelecek ay da lazım olabilir
       List<Map<String, dynamic>> sonrakiAyVakitler = [];
@@ -147,16 +153,21 @@ class EarlyReminderService {
           sonrakiYil,
           sonrakiAy,
         );
+        debugPrint('📅 Gelecek ay vakit sayısı: ${sonrakiAyVakitler.length}');
       }
 
       final tumVakitler = [...aylikVakitler, ...sonrakiAyVakitler];
       if (tumVakitler.isEmpty) {
-        debugPrint('⚠️ Vakit bilgisi alınamadı');
+        debugPrint('❌ VAKİT BİLGİSİ ALINAMADI!');
+        debugPrint('⚠️ İnternet bağlantısını kontrol edin.');
+        debugPrint('==========================================');
         return 0;
       }
+      debugPrint('📊 Toplam vakit bilgisi: ${tumVakitler.length} gün');
 
       final prefs = await SharedPreferences.getInstance();
       int alarmCount = 0;
+      int skippedCount = 0;
 
       // 7 gün için döngü
       for (int gun = 0; gun < 7; gun++) {
@@ -164,13 +175,18 @@ class EarlyReminderService {
         final hedefTarihStr =
             '${hedefTarih.day.toString().padLeft(2, '0')}.${hedefTarih.month.toString().padLeft(2, '0')}.${hedefTarih.year}';
 
+        debugPrint('\\n📆 Gün $gun: $hedefTarihStr');
+
         // O güne ait vakitleri bul
         final gunVakitler = tumVakitler.firstWhere(
           (v) => v['MiladiTarihKisa'] == hedefTarihStr,
           orElse: () => <String, dynamic>{},
         );
 
-        if (gunVakitler.isEmpty) continue;
+        if (gunVakitler.isEmpty) {
+          debugPrint('   ⚠️ Bu gün için vakit bilgisi yok');
+          continue;
+        }
 
         for (int i = 0; i < _vakitler.length; i++) {
           final vakitKey = _vakitler[i];
@@ -178,7 +194,13 @@ class EarlyReminderService {
 
           // Ana bildirim switch'i - kapalıysa erken hatırlatma da kapalı
           final bildirimAcik = prefs.getBool('bildirim_$vakitKeyLower') ?? true;
-          if (!bildirimAcik) continue;
+          if (!bildirimAcik) {
+            debugPrint(
+              '   ⏭️ $vakitKey ana bildirimi kapalı, erken hatırlatma atlanıyor',
+            );
+            skippedCount++;
+            continue;
+          }
 
           // Erken hatırlatma süresi
           final erkenDakika = prefs.getInt('erken_$vakitKeyLower') ??
@@ -189,6 +211,7 @@ class EarlyReminderService {
             debugPrint(
               '   ⏭️ $vakitKey erken hatırlatma kapalı (0 dk)',
             );
+            skippedCount++;
             continue;
           }
 
@@ -197,6 +220,7 @@ class EarlyReminderService {
           if (vakitSaati == null ||
               vakitSaati == '—:—' ||
               vakitSaati.isEmpty) {
+            debugPrint('   ⚠️ $vakitKey saati bulunamadı');
             continue;
           }
 
@@ -205,6 +229,11 @@ class EarlyReminderService {
           final saat = int.tryParse(parts[0]);
           final dakika = int.tryParse(parts[1]);
           if (saat == null || dakika == null) continue;
+
+          // Vakit saatini kaydet (BootReceiver için) - ÖNEMLI!
+          final dateKey =
+              '${hedefTarih.year}-${hedefTarih.month.toString().padLeft(2, '0')}-${hedefTarih.day.toString().padLeft(2, '0')}';
+          await prefs.setString('vakit_${vakitKeyLower}_$dateKey', vakitSaati);
 
           // Tam vakit zamanı
           final vakitZamani = DateTime(
@@ -224,6 +253,7 @@ class EarlyReminderService {
             debugPrint(
               '   ⏭️ $vakitKey erken alarm zamanı geçmiş ($erkenAlarmZamani)',
             );
+            skippedCount++;
             continue;
           }
 
@@ -242,7 +272,7 @@ class EarlyReminderService {
           );
 
           debugPrint(
-            '⏰ $vakitKey erken alarm: $erkenAlarmZamani ($erkenDakika dk önce), ses: $erkenSesNormalized',
+            '   ⏰ $vakitKey erken alarm: $erkenAlarmZamani ($erkenDakika dk önce), ses: $erkenSesNormalized, ID: $erkenAlarmId',
           );
 
           // Alarmı zamanla - SES DOSYASINI NORMALİZE EDİLMİŞ OLARAK GÖNDERİYORUZ
@@ -259,19 +289,24 @@ class EarlyReminderService {
           if (success) {
             alarmCount++;
             debugPrint(
-              '   ✅ Erken alarm zamanlandı (ses: $erkenSesNormalized)',
+              '      ✅ Erken alarm zamanlandı',
             );
           } else {
-            debugPrint('   ❌ Erken alarm zamanlanamadı');
+            debugPrint('      ❌ Erken alarm zamanlanamadı');
+            skippedCount++;
           }
         }
       }
 
-      debugPrint('⏰ Erken hatırlatma zamanlama tamamlandı: $alarmCount alarm');
+      debugPrint('\\n⏰ ===== ERKEN HATIRLATMA ZAMANLAMA BİTTİ =====');
+      debugPrint('✅ Kurulan alarm sayısı: $alarmCount');
+      debugPrint('⏭️ Atlanan/başarısız: $skippedCount');
+      debugPrint('==========================================\\n');
       return alarmCount;
     } catch (e, stackTrace) {
-      debugPrint('❌ Erken hatırlatma zamanlama hatası: $e');
+      debugPrint('❌ ERKEN HATIRLATMA ZAMANLAMA HATASI: $e');
       debugPrint('📋 Stack trace: $stackTrace');
+      debugPrint('==========================================');
       return 0;
     }
   }
@@ -308,14 +343,17 @@ class EarlyReminderService {
   }
 
   /// Ayarları topluca kaydet ve alarmları yeniden zamanla
-  static Future<void> saveAndReschedule({
+  /// Returns: Kurulan alarm sayısı
+  static Future<int> saveAndReschedule({
     required Map<String, int> erkenSureler,
     required Map<String, String> erkenSesler,
   }) async {
     final prefs = await SharedPreferences.getInstance();
 
+    debugPrint('💾 Erken hatırlatma ayarları kaydediliyor...');
     for (final entry in erkenSureler.entries) {
       await prefs.setInt('erken_${entry.key}', entry.value);
+      debugPrint('   - ${entry.key}: ${entry.value} dakika');
     }
 
     for (final entry in erkenSesler.entries) {
@@ -324,7 +362,9 @@ class EarlyReminderService {
 
     debugPrint('💾 Erken hatırlatma ayarları kaydedildi');
 
-    // Alarmları yeniden zamanla
-    await scheduleAllEarlyReminders();
+    // Alarmları yeniden zamanla ve kurulan alarm sayısını döndür
+    final alarmCount = await scheduleAllEarlyReminders();
+    debugPrint('🔔 Toplam $alarmCount erken hatırlatma alarmı kuruldu');
+    return alarmCount;
   }
 }

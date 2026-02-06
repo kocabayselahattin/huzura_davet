@@ -229,10 +229,10 @@ class OzelGunlerService {
     final hicriGun = hicri.hDay;
 
     debugPrint(
-      '📅 [OzelGun] Bugün: \\${now.day}/\\${now.month}/\\${now.year} \\${now.hour}:\\${now.minute}',
+      '📅 [OzelGun] Bugün: $now.day/$now.month/$now.year $now.hour:$now.minute',
     );
     debugPrint(
-      '📅 [OzelGun] Hicri: \\${hicriGun}/\\${hicriAy}/\\${hicri.hYear}',
+      '📅 [OzelGun] Hicri: $hicriGun/$hicriAy/$hicri.hYear',
     );
 
     for (final ozelGun in ozelGunler) {

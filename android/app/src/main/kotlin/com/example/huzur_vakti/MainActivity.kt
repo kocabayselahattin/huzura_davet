@@ -74,7 +74,6 @@ class MainActivity : FlutterActivity() {
 						val prayerName = call.argument<String>("prayerName") ?: ""
 						val triggerAtMillis = call.argument<Number>("triggerAtMillis")?.toLong() ?: 0L
 						val soundPath = call.argument<String>("soundPath")
-						val useVibration = call.argument<Boolean>("useVibration") ?: true
 						val alarmId = call.argument<Int>("alarmId") ?: prayerName.hashCode()
 						val isEarly = call.argument<Boolean>("isEarly") ?: false
 						val earlyMinutes = call.argument<Int>("earlyMinutes") ?: 0
@@ -86,7 +85,6 @@ class MainActivity : FlutterActivity() {
 								prayerName = prayerName,
 								triggerAtMillis = triggerAtMillis,
 								soundPath = soundPath,
-								useVibration = useVibration,
 								isEarly = isEarly,
 								earlyMinutes = earlyMinutes
 							)
@@ -154,7 +152,12 @@ class MainActivity : FlutterActivity() {
 						result.success(true)
 					}
 					"isAlarmPlaying" -> {
-						result.success(com.example.huzur_vakti.alarm.AlarmService.isAlarmPlaying())
+						val isPlaying = try {
+							com.example.huzur_vakti.alarm.AlarmService.Companion.isAlarmPlaying()
+						} catch (e: Exception) {
+							false
+						}
+						result.success(isPlaying)
 					}
 					"stopAlarm" -> {
 						val stopIntent = Intent(this, com.example.huzur_vakti.alarm.AlarmService::class.java)

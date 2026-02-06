@@ -101,7 +101,7 @@ class BootReceiver : BroadcastReceiver() {
                     "gunes" -> 45
                     else -> 15
                 }
-                val erkenDakika = prefs.getLong("flutter.erken_$vakitKey", varsayilanErken.toLong()).toInt()
+                val erkenDakika = prefs.getInt("flutter.erken_$vakitKey", varsayilanErken)
                 
                 // Ses dosyası
                 val onTimeSound = prefs.getString("flutter.bildirim_sesi_$vakitKey", "best.mp3") ?: "best.mp3"

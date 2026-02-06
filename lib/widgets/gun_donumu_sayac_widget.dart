@@ -275,7 +275,7 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
         }
       } else {
         // 4. Konum yoksa il/ilçe seçiminden bak
-        final ilceId = await KonumService.getIlceId();
+        await KonumService.getIlceId();
         final ilAdi = await KonumService.getIl();
 
         if (ilAdi != null && ilAdi.isNotEmpty) {
@@ -503,7 +503,7 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
                   fit: BoxFit.cover,
                   width: width,
                   height: height,
-                  errorBuilder: (_, __, ___) => Container(
+                  errorBuilder: (_, _, __) => Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
@@ -595,7 +595,7 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
                             ? Image.asset(
                                 'assets/icon/sun.png',
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => _fallbackSun(),
+                                errorBuilder: (_, _, __) => _fallbackSun(),
                               )
                             : _buildMoonWithPhase(8 - moonPhase),
                       ),
@@ -718,7 +718,7 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
         Image.asset(
           'assets/icon/moon.png',
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _fallbackMoon(phase),
+          errorBuilder: (_, _, __) => _fallbackMoon(phase),
         ),
         // Faz gölgesi
         CustomPaint(
@@ -873,7 +873,7 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
         Positioned(
           left: labelX - 32,
           top: labelY,
-          child: Container(
+          child: SizedBox(
             width: 64,
             child: Column(
               mainAxisSize: MainAxisSize.min,

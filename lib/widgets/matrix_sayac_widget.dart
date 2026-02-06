@@ -385,58 +385,61 @@ class _MatrixSayacWidgetState extends State<MatrixSayacWidget>
                   const SizedBox(height: 20),
 
                   // Zaman göstergesi - Terminal stili
-                  Center(
-                    child: AnimatedBuilder(
-                      animation: _glowController,
-                      builder: (context, child) {
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: cardBg.withOpacity(0.8),
-                            border: Border.all(
-                              color: matrixGreen.withOpacity(0.3),
-                              width: 1,
+                  Transform.translate(
+                    offset: const Offset(-12, 0), // 1mm sola kaydırma (yaklaşık değer)
+                    child: Center(
+                      child: AnimatedBuilder(
+                        animation: _glowController,
+                        builder: (context, child) {
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 4,
                             ),
-                            borderRadius: BorderRadius.circular(8),
-                            boxShadow: [
-                              BoxShadow(
-                                color: matrixGreen.withOpacity(
-                                  0.1 + _glowController.value * 0.1,
+                            decoration: BoxDecoration(
+                              color: cardBg.withOpacity(0.8),
+                              border: Border.all(
+                                color: matrixGreen.withOpacity(0.3),
+                                width: 1,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: matrixGreen.withOpacity(
+                                    0.1 + _glowController.value * 0.1,
+                                  ),
+                                  blurRadius: 15,
+                                  spreadRadius: 2,
                                 ),
-                                blurRadius: 15,
-                                spreadRadius: 2,
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  _buildDigit(
-                                    hours.toString().padLeft(2, '0'),
-                                    matrixGreen,
-                                  ),
-                                  _buildColon(matrixGreen),
-                                  _buildDigit(
-                                    minutes.toString().padLeft(2, '0'),
-                                    matrixGreen,
-                                  ),
-                                  _buildColon(matrixGreen),
-                                  _buildDigit(
-                                    seconds.toString().padLeft(2, '0'),
-                                    matrixGreen,
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        );
-                      },
+                              ],
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    _buildDigit(
+                                      hours.toString().padLeft(2, '0'),
+                                      matrixGreen,
+                                    ),
+                                    _buildColon(matrixGreen),
+                                    _buildDigit(
+                                      minutes.toString().padLeft(2, '0'),
+                                      matrixGreen,
+                                    ),
+                                    _buildColon(matrixGreen),
+                                    _buildDigit(
+                                      seconds.toString().padLeft(2, '0'),
+                                      matrixGreen,
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
                     ),
                   ),
 
