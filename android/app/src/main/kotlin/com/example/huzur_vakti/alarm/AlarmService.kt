@@ -172,21 +172,20 @@ class AlarmService : Service() {
         val notification = createAlarmNotification(currentVakitName, currentVakitTime, isCurrentAlarmEarly, earlyMinutes, soundUri)
         startForeground(NOTIFICATION_ID, notification)
 
-        if (wasPhoneSilentBefore) {
-            startVibration()
-            handler.postDelayed({
-                stopVibration()
-                setAlarmActiveFlag(false)
-                if (!isCurrentAlarmEarly && isSessizeAlEnabled) {
-                    showSilentModeNotification()
-                }
-                stopForeground(STOP_FOREGROUND_REMOVE)
-                stopSelf()
-            }, 5000)
-        } else {
-            // Ses ve titreşim bildirim tarafından yönetilecek
-            isPlaying = true // Set playing true to handle stop actions
-        }
+        // Telefonun sessizde olup olmamasından bağımsız olarak, bildirim kanalı titreşimi yönetecek.
+        // Bu yüzden manuel titreşim kontrolü ve gecikmeli durdurma kaldırıldı.
+        // Servis, bildirim gösterildikten kısa bir süre sonra kendini durdurabilir.
+        handler.postDelayed({
+            setAlarmActiveFlag(false)
+            if (!isCurrentAlarmEarly && isSessizeAlEnabled) {
+                showSilentModeNotification()
+            }
+            stopForeground(STOP_FOREGROUND_REMOVE)
+            stopSelf()
+        }, 5000) // 5 saniye sonra servisi durdur.
+
+        // Ses ve titreşim bildirim tarafından yönetilecek
+        isPlaying = true // Set playing true to handle stop actions
 
         startLockScreenActivity(currentVakitName, currentVakitTime, isCurrentAlarmEarly, earlyMinutes)
     }
