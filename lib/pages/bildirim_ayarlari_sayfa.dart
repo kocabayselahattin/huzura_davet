@@ -338,8 +338,6 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
     }
   }
 
-
-
   @override
   void dispose() {
     _audioPlayer.dispose();
@@ -567,7 +565,9 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
         erkenSureler: Map<String, int>.from(_erkenBildirim),
         erkenSesler: Map<String, String>.from(_erkenBildirimSesi),
       );
-      debugPrint('✅ Erken hatırlatma kaydı tamamlandı: $erkenAlarmSayisi alarm');
+      debugPrint(
+        '✅ Erken hatırlatma kaydı tamamlandı: $erkenAlarmSayisi alarm',
+      );
     } catch (e, stackTrace) {
       debugPrint('❌ Erken hatırlatma kaydetme hatası: $e');
       debugPrint('Stack trace: $stackTrace');
@@ -595,17 +595,19 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
       final aktifErkenSayisi = _erkenBildirim.entries
           .where((e) => e.value > 0 && (_bildirimAcik[e.key] ?? false))
           .length;
-      
+
       String mesaj;
       Color renk;
-      
+
       if (erkenAlarmSayisi > 0) {
         // Başarıyla alarm kuruldu
-        mesaj = '✅ Ayarlar kaydedildi!\n🔔 $erkenAlarmSayisi erken hatırlatma alarmı kuruldu';
+        mesaj =
+            '✅ Ayarlar kaydedildi!\n🔔 $erkenAlarmSayisi erken hatırlatma alarmı kuruldu';
         renk = Colors.green;
       } else if (aktifErkenSayisi > 0) {
         // Erken hatırlatma seçilmiş ama kurulamadı
-        mesaj = '⚠️ Ayarlar kaydedildi ama erken hatırlatma alarmları kurulamadı!\n\n'
+        mesaj =
+            '⚠️ Ayarlar kaydedildi ama erken hatırlatma alarmları kurulamadı!\n\n'
             'Olası nedenler:\n'
             '• Konum seçilmemiş (Ana sayfadan seçin)\n'
             '• İnternet bağlantısı yok';
@@ -615,7 +617,7 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
         mesaj = '✅ Ayarlar kaydedildi';
         renk = Colors.green;
       }
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(mesaj),
@@ -663,10 +665,7 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
     required TimeOfDay current,
     required ValueChanged<TimeOfDay> onSelected,
   }) async {
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: current,
-    );
+    final picked = await showTimePicker(context: context, initialTime: current);
     if (picked != null) {
       setState(() {
         onSelected(picked);
@@ -709,7 +708,7 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
     }
   }
 
-  Future<void> _sesCal(String key, String sesDosyasi) async {
+  Future<void> _sesCal(String key, String sesId) async {
     try {
       if (_sesCalanKey == key) {
         // Aynı tuşa basıldıysa durdur
@@ -719,11 +718,17 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
         // Farklı tuşa basıldıysa önce durdur sonra yenisini çal
         await _audioPlayer.stop();
 
-        if (sesDosyasi == 'custom' && _ozelSesDosyalari.containsKey(key)) {
+        if (sesId == 'custom' && _ozelSesDosyalari.containsKey(key)) {
           // Özel ses çal
           await _audioPlayer.play(DeviceFileSource(_ozelSesDosyalari[key]!));
-        } else if (sesDosyasi != 'custom') {
-          // Asset ses çal - dosya adını düzgün kullan
+        } else if (sesId != 'custom') {
+          // ID'den dosya adını bul
+          final sesSecenegi = _sesSecenekleri.firstWhere(
+            (s) => s['id'] == sesId,
+            orElse: () => _sesSecenekleri.first,
+          );
+          final sesDosyasi = sesSecenegi['dosya']!;
+          // Asset ses çal
           await _audioPlayer.play(AssetSource('sounds/$sesDosyasi'));
         }
 
@@ -847,12 +852,12 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
             if (isErken) {
               if (_erkenBildirimSesi[baseKey] == 'custom' &&
                   !_ozelSesDosyalari.containsKey(key)) {
-                _erkenBildirimSesi[baseKey] = _sesSecenekleri.first['dosya']!;
+                _erkenBildirimSesi[baseKey] = _sesSecenekleri.first['id']!;
               }
             } else {
               if (_bildirimSesi[baseKey] == 'custom' &&
                   !_ozelSesDosyalari.containsKey(key)) {
-                _bildirimSesi[baseKey] = _sesSecenekleri.first['dosya']!;
+                _bildirimSesi[baseKey] = _sesSecenekleri.first['id']!;
               }
             }
           });
@@ -1219,13 +1224,12 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
                               width: 160,
                               child: DropdownButtonHideUnderline(
                                 child: DropdownButton<String>(
-                                  value: _gunlukIcerikSesSecenekleri.any(
-                                        (s) =>
-                                            s['dosya'] == _gunlukIcerikSesi,
+                                  value:
+                                      _gunlukIcerikSesSecenekleri.any(
+                                        (s) => s['id'] == _gunlukIcerikSesi,
                                       )
                                       ? _gunlukIcerikSesi
-                                      : _gunlukIcerikSesSecenekleri
-                                          .first['dosya'],
+                                      : _gunlukIcerikSesSecenekleri.first['id'],
                                   isExpanded: true,
                                   dropdownColor: const Color(0xFF2B3151),
                                   icon: const Icon(
@@ -1233,10 +1237,9 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
                                     color: Colors.tealAccent,
                                   ),
                                   style: const TextStyle(color: Colors.white),
-                                  items:
-                                      _gunlukIcerikSesSecenekleri.map((ses) {
+                                  items: _gunlukIcerikSesSecenekleri.map((ses) {
                                     return DropdownMenuItem(
-                                      value: ses['dosya'],
+                                      value: ses['id'],
                                       child: Text(
                                         ses['ad']!,
                                         overflow: TextOverflow.ellipsis,
@@ -1585,10 +1588,10 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
                                   label = _languageService['none'] ?? 'Yok';
                                 } else if (dakika < 60) {
                                   label =
-                                      '$dakika ${_languageService['minutes_before'] ?? 'dk önce'}';
+                                      '$dakika dk';
                                 } else {
                                   label =
-                                      '${dakika ~/ 60} ${_languageService['hours_before'] ?? 'saat önce'}';
+                                      '${dakika ~/ 60} saat';
                                 }
                                 return DropdownMenuItem(
                                   value: dakika,
@@ -1665,8 +1668,8 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
                           Expanded(
                             child: Text(
                               erkenDakika < 60
-                                  ? '$erkenDakika dk önce hatırlatılacak'
-                                  : '${erkenDakika ~/ 60} saat önce hatırlatılacak',
+                                  ? '$erkenDakika dk'
+                                  : '${erkenDakika ~/ 60} saat',
                               style: const TextStyle(
                                 color: Colors.greenAccent,
                                 fontSize: 11,
@@ -1725,10 +1728,10 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
                                     child: DropdownButton<String>(
                                       value:
                                           _sesSecenekleri.any(
-                                            (s) => s['dosya'] == seciliSes,
+                                            (s) => s['id'] == seciliSes,
                                           )
                                           ? seciliSes
-                                          : _sesSecenekleri.first['dosya'],
+                                          : _sesSecenekleri.first['id'],
                                       isExpanded: true,
                                       dropdownColor: const Color(0xFF2B3151),
                                       icon: const Icon(
@@ -1743,7 +1746,7 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
                                       ),
                                       items: _sesSecenekleri.map((ses) {
                                         return DropdownMenuItem(
-                                          value: ses['dosya'],
+                                          value: ses['id'],
                                           child: Text(ses['ad']!),
                                         );
                                       }).toList(),
@@ -1753,10 +1756,12 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
                                             await _ozelSesSec(key);
                                           } else {
                                             setState(() {
-                                              final eskiSes = _bildirimSesi[key]!;
+                                              final eskiSes =
+                                                  _bildirimSesi[key]!;
                                               _bildirimSesi[key] = value;
                                               // Erken ses eski vaktinde ses ile aynıysa, yeni sese senkronla
-                                              if (_erkenBildirimSesi[key] == eskiSes) {
+                                              if (_erkenBildirimSesi[key] ==
+                                                  eskiSes) {
                                                 _erkenBildirimSesi[key] = value;
                                               }
                                               _degisiklikYapildi = true;
@@ -1864,10 +1869,10 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
                                     child: DropdownButton<String>(
                                       value:
                                           _sesSecenekleri.any(
-                                            (s) => s['dosya'] == erkenSeciliSes,
+                                            (s) => s['id'] == erkenSeciliSes,
                                           )
                                           ? erkenSeciliSes
-                                          : _sesSecenekleri.first['dosya'],
+                                          : _sesSecenekleri.first['id'],
                                       isExpanded: true,
                                       dropdownColor: const Color(0xFF2B3151),
                                       icon: const Icon(
@@ -1882,7 +1887,7 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
                                       ),
                                       items: _sesSecenekleri.map((ses) {
                                         return DropdownMenuItem(
-                                          value: ses['dosya'],
+                                          value: ses['id'],
                                           child: Text(ses['ad']!),
                                         );
                                       }).toList(),

@@ -103,9 +103,9 @@ class BootReceiver : BroadcastReceiver() {
                 }
                 val erkenDakika = prefs.getInt("flutter.erken_$vakitKey", varsayilanErken)
                 
-                // Ses dosyası
-                val onTimeSound = prefs.getString("flutter.bildirim_sesi_$vakitKey", "best.mp3") ?: "best.mp3"
-                val earlySound = prefs.getString("flutter.erken_bildirim_sesi_$vakitKey", onTimeSound) ?: onTimeSound
+                // Ses ID'leri (artık .mp3 uzantısı yok)
+                val onTimeSoundId = prefs.getString("flutter.bildirim_sesi_$vakitKey", "best") ?: "best"
+                val earlySoundId = prefs.getString("flutter.erken_bildirim_sesi_$vakitKey", onTimeSoundId) ?: onTimeSoundId
                 
                 // Tam vakit zamanı
                 val vakitZamani = Calendar.getInstance().apply {
@@ -130,7 +130,7 @@ class BootReceiver : BroadcastReceiver() {
                             alarmId = erkenAlarmId,
                             prayerName = vakitName,
                             triggerAtMillis = erkenZamani,
-                            soundPath = earlySound,
+                            soundPath = earlySoundId,
                             isEarly = true,
                             earlyMinutes = erkenDakika
                         )
@@ -146,7 +146,7 @@ class BootReceiver : BroadcastReceiver() {
                         alarmId = alarmId,
                         prayerName = vakitName,
                         triggerAtMillis = vakitZamani.timeInMillis,
-                        soundPath = onTimeSound,
+                        soundPath = onTimeSoundId,
                         isEarly = false,
                         earlyMinutes = 0
                     )

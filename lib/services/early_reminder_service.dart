@@ -40,8 +40,8 @@ class EarlyReminderService {
     'yatsi': 15,
   };
 
-  // Varsayılan ses dosyası
-  static const String varsayilanSes = 'best.mp3';
+  // Varsayılan ses ID'si
+  static const String varsayilanSes = 'best';
 
   /// Servisi başlat
   static Future<void> initialize() async {
@@ -68,7 +68,7 @@ class EarlyReminderService {
     debugPrint('💾 Erken süre kaydedildi: $vakitKey = $dakika dk');
   }
 
-  /// Erken hatırlatma alarm sesini al
+  /// Erken hatırlatma alarm sesini al (ses ID'si)
   static Future<String> getErkenSes(String vakitKey) async {
     final prefs = await SharedPreferences.getInstance();
     final ses = prefs.getString('erken_bildirim_sesi_$vakitKey');
@@ -78,11 +78,11 @@ class EarlyReminderService {
     return vaktindeSes ?? varsayilanSes;
   }
 
-  /// Erken hatırlatma alarm sesini ayarla
-  static Future<void> setErkenSes(String vakitKey, String sesDosyasi) async {
+  /// Erken hatırlatma alarm sesini ayarla (ses ID'si)
+  static Future<void> setErkenSes(String vakitKey, String sesId) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('erken_bildirim_sesi_$vakitKey', sesDosyasi);
-    debugPrint('💾 Erken ses kaydedildi: $vakitKey = $sesDosyasi');
+    await prefs.setString('erken_bildirim_sesi_$vakitKey', sesId);
+    debugPrint('💾 Erken ses kaydedildi: $vakitKey = $sesId');
   }
 
   /// Ses dosyası adını Android raw resource adına normalize et
@@ -135,7 +135,7 @@ class EarlyReminderService {
       // 7 günlük vakit bilgisi al
       final now = DateTime.now();
       debugPrint('🕐 Şimdiki zaman: $now');
-      
+
       final aylikVakitler = await DiyanetApiService.getAylikVakitler(
         ilceId,
         now.year,
@@ -203,23 +203,20 @@ class EarlyReminderService {
           }
 
           // Erken hatırlatma süresi
-          final erkenDakika = prefs.getInt('erken_$vakitKeyLower') ??
+          final erkenDakika =
+              prefs.getInt('erken_$vakitKeyLower') ??
               (varsayilanErkenSureler[vakitKeyLower] ?? 15);
 
           // Erken dakika 0 ise kullanıcı kapatmış demektir
           if (erkenDakika <= 0) {
-            debugPrint(
-              '   ⏭️ $vakitKey erken hatırlatma kapalı (0 dk)',
-            );
+            debugPrint('   ⏭️ $vakitKey erken hatırlatma kapalı (0 dk)');
             skippedCount++;
             continue;
           }
 
           // Vakit saatini al
           final vakitSaati = gunVakitler[vakitKey]?.toString();
-          if (vakitSaati == null ||
-              vakitSaati == '—:—' ||
-              vakitSaati.isEmpty) {
+          if (vakitSaati == null || vakitSaati == '—:—' || vakitSaati.isEmpty) {
             debugPrint('   ⚠️ $vakitKey saati bulunamadı');
             continue;
           }
@@ -257,13 +254,11 @@ class EarlyReminderService {
             continue;
           }
 
-          // Erken alarm sesini al ve NORMALIZE ET
-          final erkenSesRaw = prefs.getString(
-                'erken_bildirim_sesi_$vakitKeyLower',
-              ) ??
+          // Erken alarm sesini al - ARTIK SES ID'Sİ KULLANIYORUZ
+          final erkenSesId =
+              prefs.getString('erken_bildirim_sesi_$vakitKeyLower') ??
               prefs.getString('bildirim_sesi_$vakitKeyLower') ??
               varsayilanSes;
-          final erkenSesNormalized = normalizeSoundName(erkenSesRaw);
 
           // Benzersiz alarm ID'si oluştur
           final erkenAlarmId = AlarmService.generateAlarmId(
@@ -272,14 +267,14 @@ class EarlyReminderService {
           );
 
           debugPrint(
-            '   ⏰ $vakitKey erken alarm: $erkenAlarmZamani ($erkenDakika dk önce), ses: $erkenSesNormalized, ID: $erkenAlarmId',
+            '   ⏰ $vakitKey erken alarm: $erkenAlarmZamani ($erkenDakika dk önce), ses: $erkenSesId, ID: $erkenAlarmId',
           );
 
-          // Alarmı zamanla - SES DOSYASINI NORMALİZE EDİLMİŞ OLARAK GÖNDERİYORUZ
+          // Alarmı zamanla - SES ID'SİNİ DİREKT GÖNDERİYORUZ
           final success = await AlarmService.scheduleAlarm(
             prayerName: '${_vakitTurkce[vakitKey]} ($erkenDakika dk)',
             triggerAtMillis: erkenAlarmZamani.millisecondsSinceEpoch,
-            soundPath: erkenSesNormalized, // Normalize edilmiş ses adı
+            soundPath: erkenSesId, // Ses ID'si
             useVibration: true,
             alarmId: erkenAlarmId,
             isEarly: true,
@@ -288,9 +283,7 @@ class EarlyReminderService {
 
           if (success) {
             alarmCount++;
-            debugPrint(
-              '      ✅ Erken alarm zamanlandı',
-            );
+            debugPrint('      ✅ Erken alarm zamanlandı');
           } else {
             debugPrint('      ❌ Erken alarm zamanlanamadı');
             skippedCount++;

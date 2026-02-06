@@ -386,7 +386,7 @@ class _MatrixSayacWidgetState extends State<MatrixSayacWidget>
 
                   // Zaman göstergesi - Terminal stili
                   Transform.translate(
-                    offset: const Offset(-12, 0), // 1mm sola kaydırma (yaklaşık değer)
+                    offset: const Offset(-16, 0), // 1mm daha sola kaydırıldı
                     child: Center(
                       child: AnimatedBuilder(
                         animation: _glowController,

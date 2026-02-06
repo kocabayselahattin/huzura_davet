@@ -221,11 +221,9 @@ class ScheduledNotificationService {
             continue;
           }
 
-          // Vaktinde alarm ses dosyası - normalize et
-          final sesDosyasiRaw =
-              prefs.getString('bildirim_sesi_$vakitKeyLower') ?? 'best.mp3';
-          final sesDosyasiNormalized =
-              EarlyReminderService.normalizeSoundName(sesDosyasiRaw);
+          // Vaktinde alarm ses ID'si - direkt ID kullanıyoruz, normalizasyon yok
+          final sesId =
+              prefs.getString('bildirim_sesi_$vakitKeyLower') ?? 'best';
 
           // Vakit saatini parse et
           final parts = vakitSaati.split(':');
@@ -265,12 +263,12 @@ class ScheduledNotificationService {
               alarmZamani,
             );
 
-            debugPrint('   Alarm ID: $alarmId, Ses: $sesDosyasiNormalized');
+            debugPrint('   Alarm ID: $alarmId, Ses ID: $sesId');
 
             final success = await AlarmService.scheduleAlarm(
               prayerName: _vakitTurkce[vakitKey] ?? vakitKey,
               triggerAtMillis: alarmZamani.millisecondsSinceEpoch,
-              soundPath: sesDosyasiNormalized,
+              soundPath: sesId, // Direkt ses ID'si gönderiyoruz
               useVibration: true,
               alarmId: alarmId,
               isEarly: false,
@@ -284,9 +282,7 @@ class ScheduledNotificationService {
               debugPrint('   ❌ Tam vakit alarmı zamanlanamadı');
             }
           } else if (!vaktindeBildirim) {
-            debugPrint(
-              '   ⏭️ Vaktinde bildirim kapalı, alarm atlanıyor',
-            );
+            debugPrint('   ⏭️ Vaktinde bildirim kapalı, alarm atlanıyor');
           } else {
             debugPrint('   ⏭️ Alarm zamanı geçmiş, atlanıyor');
           }

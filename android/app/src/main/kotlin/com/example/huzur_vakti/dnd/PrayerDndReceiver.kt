@@ -162,7 +162,7 @@ class PrayerDndReceiver : BroadcastReceiver() {
       .setCategory(NotificationCompat.CATEGORY_STATUS)
       .setContentIntent(contentExitPendingIntent) // Tıklanınca normale dön
       .setOngoing(true)
-      .setAutoCancel(true)
+      .setAutoCancel(false)
       .addAction(R.mipmap.ic_launcher, "🔊 Çık", exitPendingIntent)
       .addAction(R.mipmap.ic_launcher, "🔇 Kal", stayPendingIntent)
       .build()

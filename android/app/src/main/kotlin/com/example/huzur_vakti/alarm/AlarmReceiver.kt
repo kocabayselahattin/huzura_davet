@@ -225,7 +225,6 @@ class AlarmReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         Log.d(TAG, "📢 Alarm alındı: ${intent.action}")
-<<<<<<< HEAD
         
         when (intent.action) {
             ACTION_PRAYER_ALARM -> {
@@ -241,102 +240,38 @@ class AlarmReceiver : BroadcastReceiver() {
                     val alarmId = intent.getIntExtra(EXTRA_ALARM_ID, 0)
                     val vakitName = intent.getStringExtra(EXTRA_VAKIT_NAME) ?: "Vakit"
                     val vakitTime = intent.getStringExtra(EXTRA_VAKIT_TIME) ?: ""
-                    val intentSound = intent.getStringExtra(EXTRA_SOUND_FILE) ?: "best"
+                    val soundId = intent.getStringExtra(EXTRA_SOUND_FILE) ?: "best"
                     val isEarly = intent.getBooleanExtra(EXTRA_IS_EARLY, false)
                     val earlyMinutes = intent.getIntExtra(EXTRA_EARLY_MINUTES, 0)
                     
                     Log.d(TAG, "🔔 [ALARM RECEIVER] Alarm parametreleri:")
                     Log.d(TAG, "   - Vakit: $vakitName")
-                    Log.d(TAG, "   - Ses (INTENT'ten): '$intentSound'")
+                    Log.d(TAG, "   - Ses ID: '$soundId'")
                     Log.d(TAG, "   - Erken: $isEarly ($earlyMinutes dk)")
                     
-                    // ÖNEMLİ: Ses zamanlama sırasında Flutter'da doğru seçilip normalize edildi
-                    // Intent'ten gelen sesi DOĞRUDAN kullan - tekrar SharedPreferences'tan okuma yapma
-                    // Sadece son bir normalizasyon yap (güvenlik için)
-                    var soundFile = intentSound.lowercase()
-                        .replace(".mp3", "")
-                        .replace(" ", "_")
-                        .replace("-", "_")
-                        .replace(Regex("[^a-z0-9_]"), "_")
-                        .replace(Regex("_+"), "_")
-                        .trim('_')
-                    
-                    if (soundFile.isEmpty()) soundFile = "best"
-                    
-                    Log.d(TAG, "✅ [ALARM RECEIVER] Final ses: '$intentSound' -> '$soundFile'")
-                    
-                    Log.d(TAG, "🔔 [ALARM RECEIVER] AlarmService başlatılıyor:")
-                    Log.d(TAG, "   - Vakit: $vakitName - $vakitTime")
-                    Log.d(TAG, "   - Ses (FINAL): '$soundFile'")
-                    
-                    // AlarmService'i başlat - ACTION_PRAYER_ALARM set etmeli!
+                    // AlarmService'i başlat
                     val serviceIntent = Intent(context, AlarmService::class.java).apply {
-                        action = ACTION_PRAYER_ALARM // ÖNEMLİ: Action set etmeliyiz!
-        
-                                when (intent.action) {
-                                    ACTION_PRAYER_ALARM -> {
-                                        // Wake lock al
-                                        val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
-                                        val wakeLock = powerManager.newWakeLock(
-                                            PowerManager.PARTIAL_WAKE_LOCK or PowerManager.ACQUIRE_CAUSES_WAKEUP,
-                                            "HuzurVakti::AlarmWakeLock"
-                                        )
-                                        wakeLock.acquire(60_000L) // 1 dakika
-                
-                                        try {
-                                            val alarmId = intent.getIntExtra(EXTRA_ALARM_ID, 0)
-                                            val vakitName = intent.getStringExtra(EXTRA_VAKIT_NAME) ?: "Vakit"
-                                            val vakitTime = intent.getStringExtra(EXTRA_VAKIT_TIME) ?: ""
-                                            val intentSound = intent.getStringExtra(EXTRA_SOUND_FILE) ?: "best"
-                                            val isEarly = intent.getBooleanExtra(EXTRA_IS_EARLY, false)
-                                            val earlyMinutes = intent.getIntExtra(EXTRA_EARLY_MINUTES, 0)
+                        action = ACTION_PRAYER_ALARM
+                        putExtra(EXTRA_ALARM_ID, alarmId)
+                        putExtra(EXTRA_VAKIT_NAME, vakitName)
+                        putExtra(EXTRA_VAKIT_TIME, vakitTime)
+                        putExtra(EXTRA_SOUND_FILE, soundId)
+                        putExtra(EXTRA_IS_EARLY, isEarly)
+                        putExtra(EXTRA_EARLY_MINUTES, earlyMinutes)
+                    }
                     
-                                            Log.d(TAG, "🔔 [ALARM RECEIVER] Alarm parametreleri:")
-                                            Log.d(TAG, "   - Vakit: $vakitName")
-                                            Log.d(TAG, "   - Ses (INTENT'ten): '$intentSound'")
-                                            Log.d(TAG, "   - Erken: $isEarly ($earlyMinutes dk)")
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        context.startForegroundService(serviceIntent)
+                    } else {
+                        context.startService(serviceIntent)
+                    }
                     
-                                            // ÖNEMLİ: Ses zamanlama sırasında Flutter'da doğru seçilip normalize edildi
-                                            // Intent'ten gelen sesi DOĞRUDAN kullan - tekrar SharedPreferences'tan okuma yapma
-                                            // Sadece son bir normalizasyon yap (güvenlik için)
-                                            var soundFile = intentSound.lowercase()
-                                                .replace(".mp3", "")
-                                                .replace(" ", "_")
-                                                .replace("-", "_")
-                                                .replace(Regex("[^a-z0-9_]"), "_")
-                                                .replace(Regex("_+"), "_")
-                                                .trim('_')
-                    
-                                            if (soundFile.isEmpty()) soundFile = "best"
-                    
-                                            Log.d(TAG, "✅ [ALARM RECEIVER] Final ses: '$intentSound' -> '$soundFile'")
-                    
-                                            Log.d(TAG, "🔔 [ALARM RECEIVER] AlarmService başlatılıyor:")
-                                            Log.d(TAG, "   - Vakit: $vakitName - $vakitTime")
-                                            Log.d(TAG, "   - Ses (FINAL): '$soundFile'")
-                    
-                                            // AlarmService'i başlat - ACTION_PRAYER_ALARM set etmeli!
-                                            val serviceIntent = Intent(context, AlarmService::class.java).apply {
-                                                action = ACTION_PRAYER_ALARM // ÖNEMLİ: Action set etmeliyiz!
-                                                putExtra(EXTRA_ALARM_ID, alarmId)
-                                                putExtra(EXTRA_VAKIT_NAME, vakitName)
-                                                putExtra(EXTRA_VAKIT_TIME, vakitTime)
-                                                putExtra(EXTRA_SOUND_FILE, soundFile)
-                                                putExtra(EXTRA_IS_EARLY, isEarly)
-                                                putExtra(EXTRA_EARLY_MINUTES, earlyMinutes)
-                                            }
-                    
-                                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                                                context.startForegroundService(serviceIntent)
-                                            } else {
-                                                context.startService(serviceIntent)
-                                            }
-                    
-                                        } finally {
-                                            if (wakeLock.isHeld) {
-                                                wakeLock.release()
-                                            }
-                                        }
-                                    }
-                                }
-                    context.startService(serviceIntent)
+                } finally {
+                    if (wakeLock.isHeld) {
+                        wakeLock.release()
+                    }
+                }
+            }
+        }
+    }
+}

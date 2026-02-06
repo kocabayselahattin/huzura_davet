@@ -161,49 +161,9 @@ class DailyContentReceiver : BroadcastReceiver() {
                     val notificationId = intent.getIntExtra(EXTRA_NOTIFICATION_ID, 0)
                     val title = intent.getStringExtra(EXTRA_TITLE) ?: "Huzur Vakti"
                     val body = intent.getStringExtra(EXTRA_BODY) ?: ""
-                    var soundFile = intent.getStringExtra(EXTRA_SOUND_FILE) ?: "ding_dong"
+                    val soundId = intent.getStringExtra(EXTRA_SOUND_FILE) ?: "ding_dong"
                     
-                    // ÖNEMLİ: Ses ayarını SharedPreferences'tan yeniden oku (kullanıcı değiştirmiş olabilir)
-                    val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
-                    val savedSound = prefs.getString("flutter.daily_content_notification_sound", null)
-                    
-                    Log.d(TAG, "🔊 Günlük içerik ses kontrolü:")
-                    Log.d(TAG, "   - Intent sound: '$soundFile'")
-                    Log.d(TAG, "   - SharedPreferences sound: '$savedSound'")
-                    
-                    // SharedPreferences'taki güncel ayarı kullan (varsa ve boş değilse)
-                    if (!savedSound.isNullOrEmpty() && savedSound != "custom") {
-                        var normalizedSaved = savedSound.lowercase()
-                            .replace(".mp3", "")
-                            .replace(" ", "_")
-                            .replace("-", "_")
-                            .replace(Regex("[^a-z0-9_]"), "_")
-                            .replace(Regex("_+"), "_")
-                            .trim('_')
-                        
-                        if (normalizedSaved.isNotEmpty()) {
-                            soundFile = normalizedSaved
-                            Log.d(TAG, "✅ SharedPreferences'tan güncel ses alındı: '$savedSound' -> '$soundFile'")
-                        }
-                    } else {
-                        // SharedPreferences'ta yoksa intent sesini normalize et
-                        var normalizedIntent = soundFile.lowercase()
-                            .replace(".mp3", "")
-                            .replace(" ", "_")
-                            .replace("-", "_")
-                            .replace(Regex("[^a-z0-9_]"), "_")
-                            .replace(Regex("_+"), "_")
-                            .trim('_')
-                        
-                        if (normalizedIntent.isNotEmpty()) {
-                            soundFile = normalizedIntent
-                        } else {
-                            soundFile = "ding_dong"
-                        }
-                        Log.d(TAG, "✅ Intent ses normalize edildi: -> '$soundFile'")
-                    }
-                    
-                    Log.d(TAG, "🔔 Günlük içerik için AlarmService başlatılıyor: $title (ses: $soundFile)")
+                    Log.d(TAG, "🔔 Günlük içerik için AlarmService başlatılıyor: $title (ses ID: $soundId)")
                     
                     // AlarmService'i başlat - böylece alarm sesi doğru çalar
                     val serviceIntent = Intent(context, AlarmService::class.java).apply {
@@ -211,7 +171,7 @@ class DailyContentReceiver : BroadcastReceiver() {
                         putExtra(AlarmReceiver.EXTRA_ALARM_ID, notificationId)
                         putExtra(AlarmReceiver.EXTRA_VAKIT_NAME, title)
                         putExtra(AlarmReceiver.EXTRA_VAKIT_TIME, "")
-                        putExtra(AlarmReceiver.EXTRA_SOUND_FILE, soundFile)
+                        putExtra(AlarmReceiver.EXTRA_SOUND_FILE, soundId)
                         putExtra(AlarmReceiver.EXTRA_IS_EARLY, false)
                         putExtra(AlarmReceiver.EXTRA_EARLY_MINUTES, 0)
                         putExtra("content_body", body) // Günlük içerik için body ekstra

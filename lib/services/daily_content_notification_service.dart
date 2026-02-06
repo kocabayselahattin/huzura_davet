@@ -48,7 +48,7 @@ class DailyContentNotificationService {
     await scheduleDailyContentNotifications();
   }
 
-  /// Günlük içerik alarm sesini al
+  /// Günlük içerik alarm sesini al (ses ID'si)
   static Future<String> getDailyContentNotificationSound() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('daily_content_notification_sound') ??
@@ -149,9 +149,8 @@ class DailyContentNotificationService {
           await androidImplementation.requestExactAlarmsPermission();
         }
 
-        // Ses ayarını al ve normalize et
-        final soundFileRaw = await getDailyContentNotificationSound();
-        final soundName = EarlyReminderService.normalizeSoundName(soundFileRaw);
+        // Ses ayarını al - artık ses ID'si direkt kullanılıyor
+        final soundId = await getDailyContentNotificationSound();
 
         // Eski kanalları sil (ses değişikliği için gerekli)
         try {
@@ -179,14 +178,14 @@ class DailyContentNotificationService {
           description: 'Günün ayeti, hadisi ve duası alarmlari',
           importance: Importance.high,
           playSound: true,
-          sound: RawResourceAndroidNotificationSound(soundName),
+          sound: RawResourceAndroidNotificationSound(soundId),
           enableVibration: true,
           enableLights: true,
           showBadge: true,
         );
         await androidImplementation.createNotificationChannel(channel);
         debugPrint(
-          '✅ Günlük içerik alarm kanalı oluşturuldu (ses: $soundName)',
+          '✅ Günlük içerik alarm kanalı oluşturuldu (ses ID: $soundId)',
         );
       }
 
@@ -408,11 +407,10 @@ class DailyContentNotificationService {
       bodyText = languageService[body] ?? body;
     }
 
-    // Ses ayarını al ve normalize et
-    final soundFileRaw = await getDailyContentNotificationSound();
-    final soundFile = EarlyReminderService.normalizeSoundName(soundFileRaw);
+    // Ses ayarını al - artık ses ID'si direkt
+    final soundId = await getDailyContentNotificationSound();
 
-    debugPrint('🔊 Günlük içerik ses: raw=$soundFileRaw, normalized=$soundFile');
+    debugPrint('🔊 Günlük içerik ses ID: $soundId');
 
     // AlarmManager kullanarak zamanla (vakit alarmları gibi kesin çalışır)
     final success = await AlarmService.scheduleDailyContentAlarm(
@@ -420,7 +418,7 @@ class DailyContentNotificationService {
       title: titleText,
       body: bodyText,
       triggerAtMillis: scheduledDate.millisecondsSinceEpoch,
-      soundFile: soundFile,
+      soundFile: soundId,
     );
 
     if (success) {
@@ -535,8 +533,7 @@ class DailyContentNotificationService {
         return;
     }
 
-    final soundFileRaw = await getDailyContentNotificationSound();
-    final soundName = EarlyReminderService.normalizeSoundName(soundFileRaw);
+    final soundId = await getDailyContentNotificationSound();
 
     final androidPlatformChannelSpecifics = AndroidNotificationDetails(
       'daily_content_channel_v4',
@@ -545,7 +542,7 @@ class DailyContentNotificationService {
       importance: Importance.high,
       priority: Priority.high,
       playSound: true,
-      sound: RawResourceAndroidNotificationSound(soundName),
+      sound: RawResourceAndroidNotificationSound(soundId),
       audioAttributesUsage: AudioAttributesUsage.alarm,
       enableVibration: true,
       enableLights: true,
@@ -577,4 +574,3 @@ class DailyContentNotificationService {
     debugPrint('🔔 Test bildirimi gönderildi: $title');
   }
 }
-

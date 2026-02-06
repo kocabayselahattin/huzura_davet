@@ -659,12 +659,12 @@ class _MoonPhasePainter extends CustomPainter {
       // Yeni ay - hiç aydınlık yok, sadece siyah kalacak
       return;
     } else if (phase < 4) {
-      // Büyüyen ay - SOL karanlık, SAĞ aydınlık
+      // Büyüyen ay - SAĞ karanlık, SOL aydınlık (GÜN DÖNÜMÜ İLE AYNI YÖN)
       path.moveTo(center.dx, center.dy - radius);
       path.arcTo(
         Rect.fromCircle(center: center, radius: radius),
         -math.pi / 2,
-        -math.pi,
+        math.pi,
         false,
       );
       final curveWidth = radius * (1 - shadowRatio * 2).abs();
@@ -676,8 +676,8 @@ class _MoonPhasePainter extends CustomPainter {
             center.dx + curveWidth,
             center.dy + radius,
           ),
-          -math.pi / 2,
-          -math.pi,
+          math.pi / 2,
+          math.pi,
           false,
         );
       } else {
@@ -688,18 +688,18 @@ class _MoonPhasePainter extends CustomPainter {
             center.dx + curveWidth,
             center.dy + radius,
           ),
-          -math.pi / 2,
-          math.pi,
+          math.pi / 2,
+          -math.pi,
           false,
         );
       }
     } else {
-      // Küçülen ay - SAĞ karanlık, SOL aydınlık
+      // Küçülen ay - SOL karanlık, SAĞ aydınlık (GÜN DÖNÜMÜ İLE AYNI YÖN)
       path.moveTo(center.dx, center.dy - radius);
       path.arcTo(
         Rect.fromCircle(center: center, radius: radius),
         -math.pi / 2,
-        math.pi,
+        -math.pi,
         false,
       );
       final curveWidth = radius * (1 - shadowRatio * 2).abs();
@@ -711,8 +711,8 @@ class _MoonPhasePainter extends CustomPainter {
             center.dx + curveWidth,
             center.dy + radius,
           ),
-          math.pi / 2,
-          -math.pi,
+          -math.pi / 2,
+          math.pi,
           false,
         );
       } else {
@@ -723,8 +723,8 @@ class _MoonPhasePainter extends CustomPainter {
             center.dx + curveWidth,
             center.dy + radius,
           ),
-          math.pi / 2,
-          math.pi,
+          -math.pi / 2,
+          -math.pi,
           false,
         );
       }
@@ -744,4 +744,3 @@ class _MoonPhasePainter extends CustomPainter {
   bool shouldRepaint(covariant _MoonPhasePainter oldDelegate) =>
       oldDelegate.phase != phase;
 }
-

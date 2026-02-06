@@ -9,7 +9,7 @@ class AlarmService {
   /// Belirli bir vakit için alarm kurar
   /// [prayerName] - Vakit adı (Örn: "Sabah", "Öğle")
   /// [triggerAtMillis] - Alarmın tetikleneceği zaman (Unix timestamp ms)
-  /// [soundPath] - Ses dosyası yolu (null ise varsayılan ses kullanılır)
+  /// [soundPath] - Ses ID'si (örn: "best", "aksam_ezani" - Android raw resource adı)
   /// [useVibration] - Titreşim kullanılsın mı
   /// [alarmId] - Benzersiz alarm ID'si (varsayılan: prayerName.hashCode)
   /// [isEarly] - Erken bildirim mi (vaktinden önce)
@@ -28,7 +28,7 @@ class AlarmService {
       final triggerTime = DateTime.fromMillisecondsSinceEpoch(triggerAtMillis);
 
       debugPrint(
-        '🔔 [ALARM SCHEDULE] prayerName=$prayerName, triggerTime=$triggerTime, soundPath=$soundPath, alarmId=${alarmId ?? prayerName.hashCode}, isEarly=$isEarly, earlyMinutes=$earlyMinutes',
+        '🔔 [ALARM SCHEDULE] prayerName=$prayerName, triggerTime=$triggerTime, soundId=$soundPath, alarmId=${alarmId ?? prayerName.hashCode}, isEarly=$isEarly, earlyMinutes=$earlyMinutes',
       );
 
       if (triggerAtMillis <= now) {
@@ -36,19 +36,12 @@ class AlarmService {
         return false;
       }
 
-      // Ses dosyasını normalize et (uzantısız ve küçük harf)
-      String? normalizedSoundPath = soundPath;
-      if (soundPath != null && soundPath.isNotEmpty) {
-        normalizedSoundPath = soundPath.toLowerCase();
-        if (normalizedSoundPath.endsWith('.mp3')) {
-          normalizedSoundPath = normalizedSoundPath.substring(0, normalizedSoundPath.length - 4);
-        }
-        normalizedSoundPath = normalizedSoundPath.replaceAll(RegExp(r'[^a-z0-9_]'), '_');
-      }
+      // Ses ID'si zaten normalize edilmiş halde geliyor (örn: "best", "aksam_ezani")
+      // Ekstra işlem yapmaya gerek yok
       final result = await _channel.invokeMethod<bool>('scheduleAlarm', {
         'prayerName': prayerName,
         'triggerAtMillis': triggerAtMillis,
-        'soundPath': normalizedSoundPath,
+        'soundPath': soundPath, // Direkt ses ID'si
         'useVibration': useVibration,
         'alarmId': alarmId ?? prayerName.hashCode,
         'isEarly': isEarly,
@@ -167,16 +160,9 @@ class AlarmService {
       final triggerTime = DateTime.fromMillisecondsSinceEpoch(triggerAtMillis);
       final now = DateTime.now().millisecondsSinceEpoch;
 
-      // Ses dosyasını normalize et
-      String normalizedSoundFile = soundFile.toLowerCase();
-      if (normalizedSoundFile.endsWith('.mp3')) {
-        normalizedSoundFile = normalizedSoundFile.substring(0, normalizedSoundFile.length - 4);
-      }
-      normalizedSoundFile = normalizedSoundFile.replaceAll(RegExp(r'[^a-z0-9_]'), '_');
-      if (normalizedSoundFile.isEmpty) normalizedSoundFile = 'ding_dong';
-
+      // Ses ID'si zaten normalize edilmiş halde geliyor
       debugPrint(
-        '📅 [GÜNLÜK İÇERİK ALARM] title=$title, triggerTime=$triggerTime, notificationId=$notificationId, soundFile=$soundFile -> $normalizedSoundFile',
+        '📅 [GÜNLÜK İÇERİK ALARM] title=$title, triggerTime=$triggerTime, notificationId=$notificationId, soundId=$soundFile',
       );
 
       if (triggerAtMillis <= now) {
@@ -184,14 +170,16 @@ class AlarmService {
         return false;
       }
 
-      final result = await _channel
-          .invokeMethod<bool>('scheduleDailyContentAlarm', {
-            'notificationId': notificationId,
-            'title': title,
-            'body': body,
-            'triggerAtMillis': triggerAtMillis,
-            'soundFile': normalizedSoundFile,
-          });
+      final result = await _channel.invokeMethod<bool>(
+        'scheduleDailyContentAlarm',
+        {
+          'notificationId': notificationId,
+          'title': title,
+          'body': body,
+          'triggerAtMillis': triggerAtMillis,
+          'soundFile': soundFile, // Direkt ses ID'si
+        },
+      );
       debugPrint('✅ [GÜNLÜK İÇERİK ALARM RESULT] title=$title, result=$result');
       return result ?? false;
     } catch (e) {
