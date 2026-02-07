@@ -587,7 +587,7 @@ class OzelGunlerService {
         enableLights: true,
         visibility: NotificationVisibility.public,
         autoCancel: false,
-        ongoing: true,
+        ongoing: false,
         largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
       );
 

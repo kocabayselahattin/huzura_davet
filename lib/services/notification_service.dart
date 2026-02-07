@@ -174,7 +174,7 @@ class NotificationService {
         category: AndroidNotificationCategory.alarm,
         visibility: NotificationVisibility.public,
         autoCancel: false,
-        ongoing: true,
+        ongoing: false,
         ticker: 'Vakit bildirimi',
         largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
       );

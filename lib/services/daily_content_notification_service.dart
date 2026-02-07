@@ -547,7 +547,7 @@ class DailyContentNotificationService {
       enableVibration: true,
       enableLights: true,
       visibility: NotificationVisibility.public,
-      autoCancel: true,
+      autoCancel: false,
       ticker: 'Günlük içerik',
       largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
       // BigText style - tam içerik göster

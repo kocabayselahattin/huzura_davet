@@ -204,7 +204,7 @@ class AlarmService : Service() {
         mediaPlayer = null
         isPlaying = false
         vibrator?.cancel()
-        stopForeground(true)
+        stopForeground(false)
         stopSelf()
     }
 
@@ -298,7 +298,7 @@ class AlarmService : Service() {
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setContentIntent(mainPendingIntent)
             .setAutoCancel(false)
-            .setOngoing(true)
+            .setOngoing(false)
             .addAction(R.drawable.ic_launcher_foreground, "Kapat", stopPendingIntent)
             .build()
     }
