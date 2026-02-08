@@ -13,18 +13,18 @@ import 'services/scheduled_notification_service.dart';
 import 'services/daily_content_notification_service.dart';
 import 'services/ozel_gunler_service.dart';
 
-/// İlk kurulumda varsayılan bildirim ayarlarını SharedPreferences'a kaydet
+/// Save default notification settings in SharedPreferences on first run.
 Future<void> _initializeDefaultNotificationSettings(
   SharedPreferences prefs,
 ) async {
-  // Daha önce ayarlar kaydedilmiş mi kontrol et
+  // Check if settings were already initialized.
   final alreadyInitialized =
       prefs.getBool('notification_settings_initialized') ?? false;
   if (alreadyInitialized) return;
 
-  debugPrint('🔔 İlk kurulum: Varsayılan bildirim ayarları kaydediliyor...');
+  debugPrint('🔔 First run: saving default notification settings...');
 
-  // Varsayılan erken bildirim süreleri (dakika)
+  // Default early notification offsets (minutes).
   const defaultErkenBildirim = {
     'imsak': 5,
     'gunes': 45,
@@ -34,8 +34,8 @@ Future<void> _initializeDefaultNotificationSettings(
     'yatsi': 15,
   };
 
-  // Varsayılan bildirim açık durumları
-  // İmsak varsayılan olarak kapalı
+  // Default notification enabled states.
+  // Imsak disabled by default.
   const defaultBildirimAcik = {
     'imsak': false,
     'gunes': true,
@@ -45,7 +45,7 @@ Future<void> _initializeDefaultNotificationSettings(
     'yatsi': true,
   };
 
-  // Varsayılan bildirim sesleri
+  // Default notification sounds.
   const defaultBildirimSesi = {
     'imsak': 'best.mp3',
     'gunes': 'best.mp3',
@@ -55,7 +55,7 @@ Future<void> _initializeDefaultNotificationSettings(
     'yatsi': 'best.mp3',
   };
 
-  // Varsayılan erken bildirim sesleri (vaktinde ile aynı)
+  // Default early notification sounds (same as on-time).
   const defaultErkenBildirimSesi = {
     'imsak': 'best.mp3',
     'gunes': 'best.mp3',
@@ -65,8 +65,8 @@ Future<void> _initializeDefaultNotificationSettings(
     'yatsi': 'best.mp3',
   };
 
-  // Varsayılan vaktinde hatırlat durumları
-  // İmsak ve güneş kapalı, öğle, ikindi, akşam, yatsı açık
+  // Default on-time reminder states.
+  // Imsak and sunrise off; noon, afternoon, sunset, and night on.
   const defaultVaktindeBildirim = {
     'imsak': false,
     'gunes': false,
@@ -76,8 +76,8 @@ Future<void> _initializeDefaultNotificationSettings(
     'yatsi': true,
   };
 
-  // Varsayılan alarm durumları
-  // İmsak kapalı, diğerleri açık (güneş dahil - erken uyarı için)
+  // Default alarm states.
+  // Imsak off, others on (including sunrise for early warning).
   const defaultAlarm = {
     'imsak': false,
     'gunes': true,
@@ -87,117 +87,113 @@ Future<void> _initializeDefaultNotificationSettings(
     'yatsi': true,
   };
 
-  // Her vakit için varsayılan değerleri kaydet
+  // Save defaults for each prayer time.
   for (final vakit in defaultErkenBildirim.keys) {
-    // Erken bildirim süresi
+    // Early notification offset.
     if (!prefs.containsKey('erken_$vakit')) {
       await prefs.setInt('erken_$vakit', defaultErkenBildirim[vakit]!);
     }
-    // Bildirim açık/kapalı
+    // Notification enabled/disabled.
     if (!prefs.containsKey('bildirim_$vakit')) {
       await prefs.setBool('bildirim_$vakit', defaultBildirimAcik[vakit]!);
     }
-    // Bildirim sesi
+    // Notification sound.
     if (!prefs.containsKey('bildirim_sesi_$vakit')) {
       await prefs.setString(
         'bildirim_sesi_$vakit',
         defaultBildirimSesi[vakit]!,
       );
     }
-    // Erken bildirim sesi
+    // Early notification sound.
     if (!prefs.containsKey('erken_bildirim_sesi_$vakit')) {
       await prefs.setString(
         'erken_bildirim_sesi_$vakit',
         defaultErkenBildirimSesi[vakit]!,
       );
     }
-    // Vaktinde hatırlat
+    // On-time reminder.
     if (!prefs.containsKey('vaktinde_$vakit')) {
       await prefs.setBool('vaktinde_$vakit', defaultVaktindeBildirim[vakit]!);
     }
-    // Alarm
+    // Alarm.
     if (!prefs.containsKey('alarm_$vakit')) {
       await prefs.setBool('alarm_$vakit', defaultAlarm[vakit]!);
     }
   }
 
-  // Günlük içerik bildirimleri varsayılan olarak açık
+  // Daily content notifications on by default.
   if (!prefs.containsKey('daily_content_notifications_enabled')) {
     await prefs.setBool('daily_content_notifications_enabled', true);
   }
 
-  // Ayarların başlatıldığını işaretle
+  // Mark settings as initialized.
   await prefs.setBool('notification_settings_initialized', true);
-  debugPrint('✅ Varsayılan bildirim ayarları kaydedildi');
+  debugPrint('✅ Default notification settings saved');
 
-  // Sayaç: İlk kurulumda varsayılan olarak Gündönümü (index 22)
+  // Counter: default to Day Cycle (index 22) on first run.
   if (!prefs.containsKey('aktif_sayac_index')) {
     await prefs.setInt('aktif_sayac_index', 22);
-    debugPrint(
-      '🌞 Sayaç: Varsayılan Gündönümü olarak ayarlandı (aktif_sayac_index=22)',
-    );
+    debugPrint('🌞 Counter set to default Day Cycle (aktif_sayac_index=22)');
   }
   if (!prefs.containsKey('secili_sayac_index')) {
     await prefs.setInt('secili_sayac_index', 22);
-    debugPrint(
-      '🌞 Sayaç: Varsayılan Gündönümü olarak ayarlandı (secili_sayac_index=22)',
-    );
+    debugPrint('🌞 Counter set to default Day Cycle (secili_sayac_index=22)');
   }
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Uygulama dikey yönde sabit kalsın
+  // Lock app orientation to portrait.
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
-  // Tarih formatını Türkçe için başlat
+  // Initialize date formatting for Turkish.
   await initializeDateFormatting('tr_TR', null);
 
-  // Tema servisini başlat
+  // Initialize theme service.
   final temaService = TemaService();
   await temaService.temayiYukle();
 
-  // Dil servisini başlat
+  // Initialize language service.
   final languageService = LanguageService();
   await languageService.load();
 
-  // Home Widget servisini başlat ve arka plan güncellemelerini planla
+  // Initialize Home Widget service and schedule background updates.
   await HomeWidgetService.initialize();
 
-  // Android için arka plan widget güncellemelerini başlat
+  // Start background widget updates on Android.
   if (Platform.isAndroid) {
     try {
       await const MethodChannel(
         'huzur_vakti/widgets',
       ).invokeMethod('scheduleWidgetUpdates');
     } catch (e) {
-      debugPrint('⚠️ Widget arka plan güncellemeleri başlatılamadı: $e');
+      debugPrint('⚠️ Failed to start widget background updates: $e');
     }
   }
 
-  // NOT: DndService artık kullanılmıyor - AlarmService "sessize_al" ayarını kontrol edip
-  // telefonu sessize alıyor. İki sistem çakışıyordu, şimdi sadece AlarmService aktif.
+  // NOTE: DndService is no longer used - AlarmService checks "sessize_al"
+  // and silences the phone. The systems conflicted, now only AlarmService is active.
   final prefs = await SharedPreferences.getInstance();
 
-  // 🔔 İlk kurulumda varsayılan erken bildirim değerlerini kaydet
+  // 🔔 Save default early notification values on first run.
   await _initializeDefaultNotificationSettings(prefs);
 
-  // Bildirim altyapısını başlat
+  // Initialize notification infrastructure.
   await NotificationService.initialize(null);
 
-  // Zamanlanmış bildirim servisini başlat
+  // Initialize scheduled notification service.
   await ScheduledNotificationService.initialize();
 
-  // Günlük içerik bildirimleri servisini başlat
+  // Initialize daily content notification service.
   await DailyContentNotificationService.initialize();
   await DailyContentNotificationService.scheduleDailyContentNotifications();
 
-  // 🔔 Özel gün bildirimleri (kandiller, bayramlar vb.)
+  // 🔔 Special day notifications (holy nights, holidays, etc.).
   await OzelGunlerService.scheduleOzelGunBildirimleri();
 
-  // 🔔 Uygulama başlatıldığında alarmları yeniden zamanla
-  // Bu boot sonrası veya uygulama güncellemesi sonrası alarmları geri yükler
+  // 🔔 Reschedule alarms on app start.
+  // Restores alarms after boot or app updates.
   await ScheduledNotificationService.scheduleAllPrayerNotifications();
 
   runApp(const HuzurVaktiApp());

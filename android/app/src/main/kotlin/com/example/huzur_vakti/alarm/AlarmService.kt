@@ -1,5 +1,6 @@
 package com.example.huzur_vakti.alarm
 
+import android.app.AlarmManager
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -14,6 +15,7 @@ import android.media.AudioManager
 import android.media.MediaPlayer
 import android.media.RingtoneManager
 import android.media.session.MediaSession
+import android.media.session.PlaybackState
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
@@ -27,17 +29,23 @@ import android.view.KeyEvent
 import androidx.core.app.NotificationCompat
 import com.example.huzur_vakti.MainActivity
 import com.example.huzur_vakti.R
+import java.util.Calendar
 
 class AlarmService : Service() {
 
     companion object {
         private const val TAG = "AlarmService"
         const val NOTIFICATION_ID = 1001
+        const val PERSISTENT_NOTIFICATION_ID = 2000 // Alarm bittikten sonra kalan kalıcı bildirim
+        const val SILENT_MODE_NOTIFICATION_ID = 2001 // Sessiz mod bildirimi
         const val CHANNEL_ID_ALARM = "huzur_vakti_alarm_channel" // Sesli alarmlar için
         const val CHANNEL_ID_SILENT = "huzur_vakti_silent_channel" // Titreşimli alarmlar için
+        const val CHANNEL_ID_PERSISTENT = "huzur_vakti_persistent_channel" // Kalıcı bildirimler için
         const val ACTION_STOP_ALARM = "com.example.huzur_vakti.STOP_ALARM"
-        const val ACTION_STAY_SILENT = "com.example.huzur_vakti.STAY_SILENT"  // Kal butonu (compatibility)
-        const val ACTION_EXIT_SILENT = "com.example.huzur_vakti.EXIT_SILENT"  // Çık butonu (compatibility)
+        const val ACTION_STAY_SILENT = "com.example.huzur_vakti.STAY_SILENT"  // Kal butonu
+        const val ACTION_EXIT_SILENT = "com.example.huzur_vakti.EXIT_SILENT"  // Çık butonu
+        const val ACTION_AUTO_EXIT_SILENT = "com.example.huzur_vakti.AUTO_EXIT_SILENT" // Otomatik sessiz moddan çıkış
+        private const val AUTO_EXIT_ALARM_ID = 999888 // Otomatik çıkış alarm ID'si
         
         @Volatile
         private var instance: AlarmService? = null
@@ -56,8 +64,21 @@ class AlarmService : Service() {
     private var vibrator: Vibrator? = null
     private val handler = Handler(Looper.getMainLooper())
     private var wakeLock: PowerManager.WakeLock? = null
-    // isPlaying'i dışarıdan erişilebilir yapmak için
     private var isPlaying = false
+
+    // Alarm bilgilerini saklayarak kalıcı bildirim ve sessiz mod için kullanma
+    private var currentVakitName = ""
+    private var currentIsEarly = false
+    private var currentEarlyMinutes = 0
+    private var currentIsDailyContent = false
+    private var currentContentBody = ""
+    private var wasPhoneSilentBefore = false // Alarm başlamadan önce telefon sessiz miydi
+
+    // Ekran kapanma (güç/kilit tuşu) algılama için BroadcastReceiver
+    private var screenOffReceiver: BroadcastReceiver? = null
+
+    // MediaSession - donanım tuşlarını yakalama (kulaklık, güç tuşu vb.)
+    private var mediaSession: MediaSession? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -74,14 +95,153 @@ class AlarmService : Service() {
         wakeLock?.acquire(3 * 60 * 1000L) // 3 dakika wakelock
         Log.d(TAG, "📢 onStartCommand: ${intent?.action}")
 
-        if (intent?.action == ACTION_STOP_ALARM) {
-            stopAlarm()
-            return START_NOT_STICKY
+        when (intent?.action) {
+            ACTION_STOP_ALARM -> {
+                stopAlarm()
+                return START_NOT_STICKY
+            }
+            ACTION_STAY_SILENT -> {
+                // Sessiz moda al - alarmı durdur, telefonu sessize al
+                Log.d(TAG, "📵 Sessiz moda alınıyor (Kal seçeneği)")
+                try {
+                    val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                    audioManager.ringerMode = AudioManager.RINGER_MODE_SILENT
+                    Log.d(TAG, "✅ Telefon sessize alındı")
+                } catch (e: Exception) {
+                    Log.e(TAG, "❌ Sessize alma hatası: ${e.message}")
+                }
+                stopAlarmInternal()
+                showSilentModeNotification()
+                scheduleSilentModeAutoExit()
+                return START_NOT_STICKY
+            }
+            ACTION_EXIT_SILENT -> {
+                // Sessiz moddan çık - alarmı durdur, telefonu normale döndür
+                Log.d(TAG, "🔊 Sessiz moddan çıkılıyor")
+                cancelSilentModeAutoExit()
+                try {
+                    val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                    audioManager.ringerMode = AudioManager.RINGER_MODE_NORMAL
+                    Log.d(TAG, "✅ Telefon normal moda döndü")
+                } catch (e: Exception) {
+                    Log.e(TAG, "❌ Normal moda dönme hatası: ${e.message}")
+                }
+                stopAlarmInternal()
+                return START_NOT_STICKY
+            }
         }
 
         handleAlarmStart(intent)
         return START_STICKY
     }
+
+    // ===================================================================
+    // GÜÇ/KİLİT TUŞU ALGILAMA
+    // ===================================================================
+
+    /**
+     * Ekran kapanma olayını dinleyen BroadcastReceiver'ı kaydet
+     * Güç/kilit tuşuna basıldığında alarm ses+titreşim durdurulur
+     */
+    private fun registerScreenOffReceiver() {
+        if (screenOffReceiver != null) return // Zaten kayıtlı
+
+        screenOffReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                if (intent?.action == Intent.ACTION_SCREEN_OFF) {
+                    Log.d(TAG, "📴 Ekran kapandı (güç/kilit tuşu), alarm durduruluyor...")
+                    stopAlarm()
+                }
+            }
+        }
+
+        val filter = IntentFilter(Intent.ACTION_SCREEN_OFF)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(screenOffReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            registerReceiver(screenOffReceiver, filter)
+        }
+        Log.d(TAG, "✅ Ekran kapanma dinleyicisi kaydedildi")
+    }
+
+    /**
+     * Ekran kapanma dinleyicisini kaldır
+     */
+    private fun unregisterScreenOffReceiver() {
+        screenOffReceiver?.let {
+            try {
+                unregisterReceiver(it)
+                Log.d(TAG, "✅ Ekran kapanma dinleyicisi kaldırıldı")
+            } catch (e: Exception) {
+                Log.w(TAG, "⚠️ Ekran kapanma dinleyicisi zaten kaldırılmış: ${e.message}")
+            }
+        }
+        screenOffReceiver = null
+    }
+
+    /**
+     * MediaSession oluştur - donanım medya tuşlarını yakalamak için
+     * Bazı cihazlarda güç tuşu MediaSession üzerinden PAUSE/HEADSETHOOK gönderir
+     */
+    private fun setupMediaSession() {
+        try {
+            mediaSession?.release()
+            mediaSession = MediaSession(this, "HuzurVaktiAlarm").apply {
+                setCallback(object : MediaSession.Callback() {
+                    override fun onMediaButtonEvent(mediaButtonIntent: Intent): Boolean {
+                        val keyEvent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            mediaButtonIntent.getParcelableExtra(Intent.EXTRA_KEY_EVENT, KeyEvent::class.java)
+                        } else {
+                            @Suppress("DEPRECATION")
+                            mediaButtonIntent.getParcelableExtra(Intent.EXTRA_KEY_EVENT)
+                        }
+                        if (keyEvent?.action == KeyEvent.ACTION_DOWN) {
+                            when (keyEvent.keyCode) {
+                                KeyEvent.KEYCODE_MEDIA_PAUSE,
+                                KeyEvent.KEYCODE_MEDIA_STOP,
+                                KeyEvent.KEYCODE_HEADSETHOOK,
+                                KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> {
+                                    Log.d(TAG, "🎧 Medya tuşu algılandı: ${keyEvent.keyCode}, alarm durduruluyor...")
+                                    stopAlarm()
+                                    return true
+                                }
+                            }
+                        }
+                        return super.onMediaButtonEvent(mediaButtonIntent)
+                    }
+                })
+                val stateBuilder = PlaybackState.Builder()
+                    .setActions(
+                        PlaybackState.ACTION_PLAY or PlaybackState.ACTION_PAUSE or
+                        PlaybackState.ACTION_STOP or PlaybackState.ACTION_PLAY_PAUSE
+                    )
+                    .setState(PlaybackState.STATE_PLAYING, 0, 1f)
+                setPlaybackState(stateBuilder.build())
+                isActive = true
+            }
+            Log.d(TAG, "✅ MediaSession oluşturuldu ve aktif edildi")
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ MediaSession oluşturma hatası: ${e.message}")
+        }
+    }
+
+    /**
+     * MediaSession'ı temizle
+     */
+    private fun releaseMediaSession() {
+        try {
+            mediaSession?.isActive = false
+            mediaSession?.release()
+            mediaSession = null
+            Log.d(TAG, "✅ MediaSession temizlendi")
+        } catch (e: Exception) {
+            Log.w(TAG, "⚠️ MediaSession temizleme hatası: ${e.message}")
+        }
+    }
+
+    // ===================================================================
+    // ALARM BAŞLATMA
+    // ===================================================================
 
     private fun handleAlarmStart(intent: Intent?) {
         val vakitName = intent?.getStringExtra(AlarmReceiver.EXTRA_VAKIT_NAME) ?: "Vakit"
@@ -91,11 +251,21 @@ class AlarmService : Service() {
         val contentBody = intent?.getStringExtra("content_body") // Günlük içerik için
         val isDailyContent = intent?.action == "DAILY_CONTENT_ALARM"
 
+        // Alarm bilgilerini sakla (kalıcı bildirim ve sessiz mod için)
+        currentVakitName = vakitName
+        currentIsEarly = isEarly
+        currentEarlyMinutes = earlyMinutes
+        currentIsDailyContent = isDailyContent
+        currentContentBody = contentBody ?: ""
+
         Log.d(TAG, "🎶 Gelen ses ID'si: $soundId, Erken: $isEarly, Günlük İçerik: $isDailyContent")
 
         val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         val ringerMode = audioManager.ringerMode
         val isSilentOrVibrate = ringerMode == AudioManager.RINGER_MODE_SILENT || ringerMode == AudioManager.RINGER_MODE_VIBRATE
+
+        // Alarm başlamadan önce telefonun sessiz durumunu kaydet
+        wasPhoneSilentBefore = isSilentOrVibrate
 
         Log.d(TAG, "📱 Telefon modu: $ringerMode (Sessiz/Titreşim: $isSilentOrVibrate)")
         
@@ -108,6 +278,10 @@ class AlarmService : Service() {
             createAlarmNotification(vakitName, isEarly, earlyMinutes, channelId)
         }
         startForeground(NOTIFICATION_ID, notification)
+
+        // Güç/kilit tuşu algılama için dinleyicileri kur
+        registerScreenOffReceiver()
+        setupMediaSession()
 
         if (isSilentOrVibrate) {
             Log.d(TAG, "📳 Telefon sessizde, sadece titreşim.")
@@ -196,7 +370,52 @@ class AlarmService : Service() {
 
     private fun stopAlarm() {
         Log.d(TAG, "🔇 Alarm durduruluyor...")
+
+        // Güç/kilit tuşu dinleyicilerini temizle
+        unregisterScreenOffReceiver()
+        releaseMediaSession()
+
+        // Sessiz mod kontrolü: Vaktinde bildirim + sessiz mod açık + telefon başta sessiz değildi
+        val prefs = getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+        val isSessizeAlEnabled = prefs.getBoolean("flutter.sessize_al", false)
+        val shouldActivateSilentMode = !currentIsEarly && !currentIsDailyContent && isSessizeAlEnabled && !wasPhoneSilentBefore
+
+        if (shouldActivateSilentMode) {
+            // Telefonu sessize al
+            Log.d(TAG, "📵 Sessiz mod aktif ediliyor...")
+            try {
+                val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                audioManager.ringerMode = AudioManager.RINGER_MODE_SILENT
+                Log.d(TAG, "✅ Telefon sessize alındı")
+            } catch (e: Exception) {
+                Log.e(TAG, "❌ Sessize alma hatası: ${e.message}")
+            }
+        }
+
+        // Ses ve titreşimi durdur
+        stopAlarmInternal()
+
+        // Sessiz mod bildirimi veya normal kalıcı bildirim göster
+        if (shouldActivateSilentMode) {
+            showSilentModeNotification()
+            scheduleSilentModeAutoExit()
+        } else {
+            showPersistentNotification()
+        }
+    }
+
+    /**
+     * Sadece ses ve titreşimi durdurur, servisi kapatır
+     * Bildirim göstermez (çağıran metot kendi bildirimini gösterir)
+     */
+    private fun stopAlarmInternal() {
+        Log.d(TAG, "🔇 Ses ve titreşim durduruluyor...")
         handler.removeCallbacksAndMessages(null)
+
+        // Güç/kilit tuşu dinleyicilerini temizle
+        unregisterScreenOffReceiver()
+        releaseMediaSession()
+
         if (mediaPlayer?.isPlaying == true) {
             mediaPlayer?.stop()
         }
@@ -204,8 +423,224 @@ class AlarmService : Service() {
         mediaPlayer = null
         isPlaying = false
         vibrator?.cancel()
-        stopForeground(false)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+        } else {
+            @Suppress("DEPRECATION")
+            stopForeground(true)
+        }
         stopSelf()
+    }
+
+    // ===================================================================
+    // KALICI BİLDİRİMLER
+    // ===================================================================
+
+    /**
+     * Alarm bittikten sonra kalıcı bildirim göster
+     * Bu bildirim kullanıcı elle kapatana kadar kalır
+     */
+    private fun showPersistentNotification() {
+        val notificationManager = getSystemService(NotificationManager::class.java)
+        createPersistentChannel(notificationManager)
+
+        val mainIntent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        val mainPendingIntent = PendingIntent.getActivity(
+            this, 10, mainIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val title: String
+        val body: String
+        when {
+            currentIsDailyContent -> {
+                title = currentVakitName
+                body = currentContentBody.ifEmpty { "Günlük içerik bildirimi" }
+            }
+            currentIsEarly -> {
+                title = "${currentVakitName} Vakti Yaklaşıyor"
+                body = "${currentVakitName} vaktine ${currentEarlyMinutes} dakika kaldı."
+            }
+            else -> {
+                title = "${currentVakitName} Vakti Girdi"
+                body = "Hayırlı ibadetler!"
+            }
+        }
+
+        val notification = NotificationCompat.Builder(this, CHANNEL_ID_PERSISTENT)
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setContentTitle(title)
+            .setContentText(body)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setContentIntent(mainPendingIntent)
+            .setAutoCancel(false) // Ses bitince otomatik kaybolmasın
+            .setOngoing(false) // Kullanıcı kaydırarak kapatabilir
+            .build()
+
+        notificationManager.notify(PERSISTENT_NOTIFICATION_ID, notification)
+        Log.d(TAG, "✅ Kalıcı bildirim gösterildi: $title")
+    }
+
+    /**
+     * Sessiz mod bildirimi göster
+     * "Kal" (sessiz modda kal) ve "Çık" (normale dön) seçenekleri sunar
+     */
+    private fun showSilentModeNotification() {
+        val notificationManager = getSystemService(NotificationManager::class.java)
+        createPersistentChannel(notificationManager)
+
+        val mainIntent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        val mainPendingIntent = PendingIntent.getActivity(
+            this, 10, mainIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        // "Kal" butonu - sessiz modda kal, bildirimi kapat
+        val stayIntent = Intent(this, SilentModeReceiver::class.java).apply {
+            action = ACTION_STAY_SILENT
+        }
+        val stayPendingIntent = PendingIntent.getBroadcast(
+            this, 20, stayIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        // "Çık" butonu - sessiz moddan çık, bildirimi kapat
+        val exitIntent = Intent(this, SilentModeReceiver::class.java).apply {
+            action = ACTION_EXIT_SILENT
+        }
+        val exitPendingIntent = PendingIntent.getBroadcast(
+            this, 21, exitIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        // Cuma günü Öğle vakti = 60 dk, diğerleri = 30 dk
+        val silentDurationMinutes = getSilentDurationMinutes()
+
+        val title = "📵 Sessiz Mod Aktif"
+        val body = "${currentVakitName} vakti nedeniyle telefonunuz sessize alındı.\n${silentDurationMinutes} dakika sonra otomatik olarak sessiz moddan çıkılacak.\nSessiz modda kalmak veya şimdi çıkmak için seçim yapın."
+
+        val notification = NotificationCompat.Builder(this, CHANNEL_ID_PERSISTENT)
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setContentTitle(title)
+            .setContentText(body)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setContentIntent(mainPendingIntent)
+            .setAutoCancel(false) // Butonlara basılmadan kapanmasın
+            .setOngoing(true) // Kaydırarak kapatılamasın, buton seçimi zorunlu
+            .addAction(0, "📵 Kal", stayPendingIntent)
+            .addAction(0, "🔊 Çık", exitPendingIntent)
+            .build()
+
+        notificationManager.notify(SILENT_MODE_NOTIFICATION_ID, notification)
+        Log.d(TAG, "✅ Sessiz mod bildirimi gösterildi ($silentDurationMinutes dk)")
+    }
+
+    /**
+     * Kalıcı bildirimler için kanal oluştur
+     */
+    private fun createPersistentChannel(notificationManager: NotificationManager) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                CHANNEL_ID_PERSISTENT,
+                "Alarm Bildirimleri",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Alarm sonrası kalıcı bildirimler"
+                setSound(null, null)
+                enableVibration(false)
+                lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+            }
+            notificationManager.createNotificationChannel(channel)
+        }
+    }
+
+    // ===================================================================
+    // OTOMATİK SESSİZ MODDAN ÇIKIŞ ZAMANLAYICISI
+    // ===================================================================
+
+    /**
+     * Sessiz mod süresi hesapla
+     * Cuma günü Öğle vakti (Cuma namazı) = 60 dakika
+     * Diğer tüm vakitler = 30 dakika
+     */
+    private fun getSilentDurationMinutes(): Int {
+        val calendar = Calendar.getInstance()
+        val isFriday = calendar.get(Calendar.DAY_OF_WEEK) == Calendar.FRIDAY
+        val normalizedVakit = normalizeVakitName(currentVakitName)
+        val isCumaOgle = isFriday && normalizedVakit == "ogle"
+        val duration = if (isCumaOgle) 60 else 30
+        Log.d(TAG, "⏱️ Sessiz mod süresi: $duration dk (Cuma=${isFriday}, Vakit=${normalizedVakit})")
+        return duration
+    }
+
+    /**
+     * Otomatik sessiz moddan çıkış alarmı zamanla
+     * Süre bitince SilentModeReceiver'a AUTO_EXIT_SILENT gönderilir
+     */
+    private fun scheduleSilentModeAutoExit() {
+        val durationMinutes = getSilentDurationMinutes()
+        val triggerAtMillis = System.currentTimeMillis() + (durationMinutes * 60 * 1000L)
+
+        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(this, SilentModeReceiver::class.java).apply {
+            action = ACTION_AUTO_EXIT_SILENT
+        }
+        val pendingIntent = PendingIntent.getBroadcast(
+            this, AUTO_EXIT_ALARM_ID, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    triggerAtMillis,
+                    pendingIntent
+                )
+            } else {
+                alarmManager.setExact(
+                    AlarmManager.RTC_WAKEUP,
+                    triggerAtMillis,
+                    pendingIntent
+                )
+            }
+            val exitTime = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
+                .format(java.util.Date(triggerAtMillis))
+            Log.d(TAG, "⏰ Sessiz mod otomatik çıkış zamanlandı: $exitTime ($durationMinutes dk sonra)")
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Otomatik çıkış zamanlama hatası: ${e.message}")
+        }
+    }
+
+    /**
+     * Otomatik sessiz moddan çıkış alarmını iptal et
+     * Kullanıcı "Kal" veya "Çık" butonuna bastığında çağrılır
+     */
+    private fun cancelSilentModeAutoExit() {
+        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(this, SilentModeReceiver::class.java).apply {
+            action = ACTION_AUTO_EXIT_SILENT
+        }
+        val pendingIntent = PendingIntent.getBroadcast(
+            this, AUTO_EXIT_ALARM_ID, intent,
+            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+        )
+        if (pendingIntent != null) {
+            alarmManager.cancel(pendingIntent)
+            pendingIntent.cancel()
+            Log.d(TAG, "🚫 Sessiz mod otomatik çıkış alarmı iptal edildi")
+        }
     }
 
     private fun createNotificationChannels() {
@@ -321,7 +756,20 @@ class AlarmService : Service() {
         }
     }
     override fun onDestroy() {
-        stopAlarm()
+        // Ses ve titreşimi temizle
+        handler.removeCallbacksAndMessages(null)
+        if (mediaPlayer?.isPlaying == true) {
+            mediaPlayer?.stop()
+        }
+        mediaPlayer?.release()
+        mediaPlayer = null
+        isPlaying = false
+        vibrator?.cancel()
+
+        // Güç/kilit tuşu dinleyicilerini temizle
+        unregisterScreenOffReceiver()
+        releaseMediaSession()
+
         wakeLock?.release()
         instance = null
         super.onDestroy()

@@ -1,19 +1,19 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 
-/// Android alarm sistemi için Flutter servis sınıfı
-/// Bildirim ayarları ile senkronize çalışır
+  /// Flutter service for Android alarms.
+  /// Syncs with notification settings.
 class AlarmService {
   static const _channel = MethodChannel('huzur_vakti/alarms');
 
-  /// Belirli bir vakit için alarm kurar
-  /// [prayerName] - Vakit adı (Örn: "Sabah", "Öğle")
-  /// [triggerAtMillis] - Alarmın tetikleneceği zaman (Unix timestamp ms)
-  /// [soundPath] - Ses ID'si (örn: "best", "aksam_ezani" - Android raw resource adı)
-  /// [useVibration] - Titreşim kullanılsın mı
-  /// [alarmId] - Benzersiz alarm ID'si (varsayılan: prayerName.hashCode)
-  /// [isEarly] - Erken bildirim mi (vaktinden önce)
-  /// [earlyMinutes] - Erken bildirim için kaç dakika önce
+  /// Schedule an alarm for a prayer.
+  /// [prayerName] - Prayer name
+  /// [triggerAtMillis] - Trigger time (Unix ms)
+  /// [soundPath] - Sound ID (Android raw resource name)
+  /// [useVibration] - Use vibration
+  /// [alarmId] - Unique alarm ID (default: prayerName.hashCode)
+  /// [isEarly] - Early reminder
+  /// [earlyMinutes] - Minutes before
   static Future<bool> scheduleAlarm({
     required String prayerName,
     required int triggerAtMillis,
@@ -32,12 +32,11 @@ class AlarmService {
       );
 
       if (triggerAtMillis <= now) {
-        debugPrint('⚠️ Alarm zamanı geçmiş, atlanıyor');
+        debugPrint('⚠️ Alarm time already passed, skipping');
         return false;
       }
 
-      // Ses ID'si zaten normalize edilmiş halde geliyor (örn: "best", "aksam_ezani")
-      // Ekstra işlem yapmaya gerek yok
+      // Sound ID is already normalized
       final result = await _channel.invokeMethod<bool>('scheduleAlarm', {
         'prayerName': prayerName,
         'triggerAtMillis': triggerAtMillis,
@@ -52,12 +51,12 @@ class AlarmService {
       );
       return result ?? false;
     } catch (e) {
-      debugPrint('❌ Alarm kurma hatası: $e');
+      debugPrint('❌ Alarm scheduling error: $e');
       return false;
     }
   }
 
-  /// Belirli bir alarmı iptal eder
+  /// Cancel a specific alarm.
   static Future<bool> cancelAlarm(int alarmId) async {
     try {
       final result = await _channel.invokeMethod<bool>('cancelAlarm', {
@@ -65,55 +64,52 @@ class AlarmService {
       });
       return result ?? false;
     } catch (e) {
-      print('Alarm iptal hatası: $e');
+      print('Alarm cancel error: $e');
       return false;
     }
   }
 
-  /// Tüm alarmları iptal eder
+  /// Cancel all alarms.
   static Future<bool> cancelAllAlarms() async {
     try {
       final result = await _channel.invokeMethod<bool>('cancelAllAlarms');
       return result ?? false;
     } catch (e) {
-      print('Tüm alarmları iptal hatası: $e');
+      print('Cancel all alarms error: $e');
       return false;
     }
   }
 
-  /// Alarm çalıyor mu kontrol eder
+  /// Check whether an alarm is playing.
   static Future<bool> isAlarmPlaying() async {
     try {
       final result = await _channel.invokeMethod<bool>('isAlarmPlaying');
       return result ?? false;
     } catch (e) {
-      print('Alarm kontrol hatası: $e');
+      print('Alarm status error: $e');
       return false;
     }
   }
 
-  /// Çalan alarmı durdurur
+  /// Stop the active alarm.
   static Future<bool> stopAlarm() async {
     try {
       final result = await _channel.invokeMethod<bool>('stopAlarm');
       return result ?? false;
     } catch (e) {
-      print('Alarm durdurma hatası: $e');
+      print('Stop alarm error: $e');
       return false;
     }
   }
 
-  /// Vakit ID'sinden benzersiz alarm ID'si oluşturur
-  /// Aynı günde farklı vakitler için farklı ID'ler üretir
+  /// Generate a unique alarm ID by prayer and date.
   static int generateAlarmId(String prayerKey, DateTime date) {
     // prayerKey: "imsak", "gunes", "ogle", "ikindi", "aksam", "yatsi"
-    // Tarih ve vakit bazında benzersiz ID
     final dateStr = '${date.year}${date.month}${date.day}';
     return '${dateStr}_$prayerKey'.hashCode.abs();
   }
 
-  /// Özel gün/gece bildirimi için alarm kur
-  /// Bu bildirimler uygulama kapalı olsa bile çalmalı
+  /// Schedule a special day/night alarm.
   static Future<bool> scheduleOzelGunAlarm({
     required String title,
     required String body,
@@ -125,11 +121,11 @@ class AlarmService {
       final now = DateTime.now().millisecondsSinceEpoch;
 
       debugPrint(
-        '🕌 [ÖZEL GÜN ALARM] title=$title, triggerTime=$triggerTime, alarmId=$alarmId',
+        '🕌 [SPECIAL DAY ALARM] title=$title, triggerTime=$triggerTime, alarmId=$alarmId',
       );
 
       if (triggerAtMillis <= now) {
-        debugPrint('⚠️ Özel gün alarm zamanı geçmiş, atlanıyor');
+        debugPrint('⚠️ Special day alarm time passed, skipping');
         return false;
       }
 
@@ -139,16 +135,15 @@ class AlarmService {
         'triggerAtMillis': triggerAtMillis,
         'alarmId': alarmId,
       });
-      debugPrint('✅ [ÖZEL GÜN ALARM RESULT] title=$title, result=$result');
+      debugPrint('✅ [SPECIAL DAY ALARM RESULT] title=$title, result=$result');
       return result ?? false;
     } catch (e) {
-      debugPrint('❌ Özel gün alarm kurma hatası: $e');
+      debugPrint('❌ Special day alarm scheduling error: $e');
       return false;
     }
   }
 
-  /// Günlük içerik bildirimi için alarm kur (AlarmManager kullanır)
-  /// Bu bildirimler uygulama kapalı olsa bile çalmalı
+  /// Schedule a daily content alarm (AlarmManager).
   static Future<bool> scheduleDailyContentAlarm({
     required int notificationId,
     required String title,
@@ -160,13 +155,13 @@ class AlarmService {
       final triggerTime = DateTime.fromMillisecondsSinceEpoch(triggerAtMillis);
       final now = DateTime.now().millisecondsSinceEpoch;
 
-      // Ses ID'si zaten normalize edilmiş halde geliyor
+      // Sound ID is already normalized
       debugPrint(
-        '📅 [GÜNLÜK İÇERİK ALARM] title=$title, triggerTime=$triggerTime, notificationId=$notificationId, soundId=$soundFile',
+        '📅 [DAILY CONTENT ALARM] title=$title, triggerTime=$triggerTime, notificationId=$notificationId, soundId=$soundFile',
       );
 
       if (triggerAtMillis <= now) {
-        debugPrint('⚠️ Günlük içerik alarm zamanı geçmiş, atlanıyor');
+        debugPrint('⚠️ Daily content alarm time passed, skipping');
         return false;
       }
 
@@ -177,18 +172,18 @@ class AlarmService {
           'title': title,
           'body': body,
           'triggerAtMillis': triggerAtMillis,
-          'soundFile': soundFile, // Direkt ses ID'si
+          'soundFile': soundFile, // Raw sound ID
         },
       );
-      debugPrint('✅ [GÜNLÜK İÇERİK ALARM RESULT] title=$title, result=$result');
+      debugPrint('✅ [DAILY CONTENT ALARM RESULT] title=$title, result=$result');
       return result ?? false;
     } catch (e) {
-      debugPrint('❌ Günlük içerik alarm kurma hatası: $e');
+      debugPrint('❌ Daily content alarm scheduling error: $e');
       return false;
     }
   }
 
-  /// Günlük içerik alarmını iptal et
+  /// Cancel a daily content alarm.
   static Future<bool> cancelDailyContentAlarm(int notificationId) async {
     try {
       final result = await _channel.invokeMethod<bool>(
@@ -197,12 +192,12 @@ class AlarmService {
       );
       return result ?? false;
     } catch (e) {
-      debugPrint('❌ Günlük içerik alarm iptal hatası: $e');
+      debugPrint('❌ Daily content alarm cancel error: $e');
       return false;
     }
   }
 
-  /// Tüm günlük içerik alarmlarını iptal et
+  /// Cancel all daily content alarms.
   static Future<bool> cancelAllDailyContentAlarms() async {
     try {
       final result = await _channel.invokeMethod<bool>(
@@ -210,30 +205,29 @@ class AlarmService {
       );
       return result ?? false;
     } catch (e) {
-      debugPrint('❌ Tüm günlük içerik alarmları iptal hatası: $e');
+      debugPrint('❌ Cancel all daily content alarms error: $e');
       return false;
     }
   }
 
-  /// TEST: 5 saniye sonra çalacak test alarmı
-  /// Bu fonksiyon alarm sisteminin çalışıp çalışmadığını test etmek için
+  /// TEST: Trigger a test alarm after 5 seconds.
   static Future<bool> testAlarm() async {
     try {
       final testTime = DateTime.now().add(const Duration(seconds: 5));
-      debugPrint('🧪 TEST ALARM: 5 saniye sonra çalacak - $testTime');
+      debugPrint('🧪 TEST ALARM: will fire in 5 seconds - $testTime');
 
       final result = await scheduleAlarm(
-        prayerName: 'Test Alarmı',
+        prayerName: 'Test Alarm',
         triggerAtMillis: testTime.millisecondsSinceEpoch,
         soundPath: 'ding_dong.mp3',
         useVibration: true,
-        alarmId: 99999, // Test için sabit ID
+        alarmId: 99999, // Fixed ID for test
       );
 
-      debugPrint('🧪 TEST ALARM sonucu: $result');
+      debugPrint('🧪 TEST ALARM result: $result');
       return result;
     } catch (e) {
-      debugPrint('❌ TEST ALARM hatası: $e');
+      debugPrint('❌ TEST ALARM error: $e');
       return false;
     }
   }

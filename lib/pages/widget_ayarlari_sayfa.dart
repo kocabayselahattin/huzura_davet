@@ -125,104 +125,104 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
     ),
   ];
 
-  final List<Map<String, dynamic>> _arkaPlanSecenekleri = [
+  List<Map<String, dynamic>> get _arkaPlanSecenekleri => [
     {
-      'isim': 'Turuncu Gradient',
+      'nameKey': 'color_orange_gradient',
       'renk1': Color(0xFFFF8C42),
       'renk2': Color(0xFFCC5522),
       'key': 'orange',
     },
     {
-      'isim': 'Açık Krem',
+      'nameKey': 'color_light_cream',
       'renk1': Color(0xFFFFF8F0),
       'renk2': Color(0xFFFFE8D8),
       'key': 'light',
     },
     {
-      'isim': 'Koyu Mavi',
+      'nameKey': 'color_dark_blue',
       'renk1': Color(0xFF1A3A5C),
       'renk2': Color(0xFF051525),
       'key': 'dark',
     },
     {
-      'isim': 'Gün Batımı',
+      'nameKey': 'color_sunset',
       'renk1': Color(0xFFFFE4B5),
       'renk2': Color(0xFFFFD0A0),
       'key': 'sunset',
     },
     {
-      'isim': 'Yeşil',
+      'nameKey': 'color_green',
       'renk1': Color(0xFF2E7D32),
       'renk2': Color(0xFF1B5E20),
       'key': 'green',
     },
     {
-      'isim': 'Mor',
+      'nameKey': 'color_purple',
       'renk1': Color(0xFF7B1FA2),
       'renk2': Color(0xFF4A148C),
       'key': 'purple',
     },
     {
-      'isim': 'Kırmızı',
+      'nameKey': 'color_red',
       'renk1': Color(0xFFD32F2F),
       'renk2': Color(0xFFB71C1C),
       'key': 'red',
     },
     {
-      'isim': 'Mavi',
+      'nameKey': 'color_blue',
       'renk1': Color(0xFF1976D2),
       'renk2': Color(0xFF0D47A1),
       'key': 'blue',
     },
     {
-      'isim': 'Turkuaz',
+      'nameKey': 'color_teal',
       'renk1': Color(0xFF00ACC1),
       'renk2': Color(0xFF006064),
       'key': 'teal',
     },
     {
-      'isim': 'Pembe',
+      'nameKey': 'color_pink',
       'renk1': Color(0xFFE91E63),
       'renk2': Color(0xFFC2185B),
       'key': 'pink',
     },
     {
-      'isim': 'Şeffaf',
+      'nameKey': 'color_transparent',
       'renk1': Colors.transparent,
       'renk2': Colors.transparent,
       'key': 'transparent',
     },
     {
-      'isim': 'Yarı Şeffaf Siyah',
+      'nameKey': 'color_semi_black',
       'renk1': Color(0x88000000),
       'renk2': Color(0x88000000),
       'key': 'semi_black',
     },
     {
-      'isim': 'Yarı Şeffaf Beyaz',
+      'nameKey': 'color_semi_white',
       'renk1': Color(0x88FFFFFF),
       'renk2': Color(0x88FFFFFF),
       'key': 'semi_white',
     },
   ];
 
-  final List<Map<String, dynamic>> _yaziRengiSecenekleri = [
-    {'isim': 'Beyaz', 'renk': Colors.white, 'hex': 'FFFFFF'},
-    {'isim': 'Siyah', 'renk': Colors.black, 'hex': '000000'},
-    {'isim': 'Turuncu', 'renk': Color(0xFFFF8C42), 'hex': 'FF8C42'},
-    {'isim': 'Altın', 'renk': Color(0xFFFFD700), 'hex': 'FFD700'},
-    {'isim': 'Açık Mavi', 'renk': Color(0xFFAADDFF), 'hex': 'AADDFF'},
-    {'isim': 'Yeşil', 'renk': Color(0xFF4CAF50), 'hex': '4CAF50'},
-    {'isim': 'Kırmızı', 'renk': Color(0xFFF44336), 'hex': 'F44336'},
-    {'isim': 'Sarı', 'renk': Color(0xFFFFEB3B), 'hex': 'FFEB3B'},
-    {'isim': 'Pembe', 'renk': Color(0xFFE91E63), 'hex': 'E91E63'},
-    {'isim': 'Mor', 'renk': Color(0xFF9C27B0), 'hex': '9C27B0'},
-    {'isim': 'Cyan', 'renk': Color(0xFF00BCD4), 'hex': '00BCD4'},
-    {'isim': 'Gri', 'renk': Color(0xFF9E9E9E), 'hex': '9E9E9E'},
-    {'isim': 'Kahverengi', 'renk': Color(0xFF664422), 'hex': '664422'},
-    {'isim': 'Neon Yeşil', 'renk': Color(0xFF00FF88), 'hex': '00FF88'},
-    {'isim': 'Koyu Gri', 'renk': Color(0xFF212121), 'hex': '212121'},
-    {'isim': 'Grafit', 'renk': Color(0xFF2D3436), 'hex': '2D3436'},
+  List<Map<String, dynamic>> get _yaziRengiSecenekleri => [
+    {'nameKey': 'color_white', 'renk': Colors.white, 'hex': 'FFFFFF'},
+    {'nameKey': 'color_black', 'renk': Colors.black, 'hex': '000000'},
+    {'nameKey': 'color_orange', 'renk': Color(0xFFFF8C42), 'hex': 'FF8C42'},
+    {'nameKey': 'color_gold', 'renk': Color(0xFFFFD700), 'hex': 'FFD700'},
+    {'nameKey': 'color_light_blue', 'renk': Color(0xFFAADDFF), 'hex': 'AADDFF'},
+    {'nameKey': 'color_green', 'renk': Color(0xFF4CAF50), 'hex': '4CAF50'},
+    {'nameKey': 'color_red', 'renk': Color(0xFFF44336), 'hex': 'F44336'},
+    {'nameKey': 'color_yellow', 'renk': Color(0xFFFFEB3B), 'hex': 'FFEB3B'},
+    {'nameKey': 'color_pink', 'renk': Color(0xFFE91E63), 'hex': 'E91E63'},
+    {'nameKey': 'color_purple', 'renk': Color(0xFF9C27B0), 'hex': '9C27B0'},
+    {'nameKey': 'color_cyan', 'renk': Color(0xFF00BCD4), 'hex': '00BCD4'},
+    {'nameKey': 'color_gray', 'renk': Color(0xFF9E9E9E), 'hex': '9E9E9E'},
+    {'nameKey': 'color_brown', 'renk': Color(0xFF664422), 'hex': '664422'},
+    {'nameKey': 'color_neon_green', 'renk': Color(0xFF00FF88), 'hex': '00FF88'},
+    {'nameKey': 'color_dark_gray', 'renk': Color(0xFF212121), 'hex': '212121'},
+    {'nameKey': 'color_graphite', 'renk': Color(0xFF2D3436), 'hex': '2D3436'},
   ];
 
   bool _canPinWidgets = false;
@@ -261,23 +261,23 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
       context: context,
       builder: (context) => AlertDialog(
         title: Text(
-          _languageService['unsaved_changes'] ?? 'Kaydedilmemiş Değişiklikler',
+          _languageService['unsaved_changes'] ?? '',
         ),
         content: Text(
-          '${_languageService['widget_unsaved_changes_message']?.replaceAll('{widget}', widgetIsmi) ?? '$widgetIsmi üzerinde yaptığınız değişiklikler kaydedilsin mi?'}',
+          '${_languageService['widget_unsaved_changes_message']?.replaceAll('{widget}', widgetIsmi) ?? ''}',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, 'discard'),
-            child: Text(_languageService['discard'] ?? 'Kaydetme'),
+            child: Text(_languageService['discard'] ?? ''),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, 'cancel'),
-            child: Text(_languageService['cancel'] ?? 'İptal'),
+            child: Text(_languageService['cancel'] ?? ''),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, 'save'),
-            child: Text(_languageService['save'] ?? 'Kaydet'),
+            child: Text(_languageService['save'] ?? ''),
           ),
         ],
       ),
@@ -298,33 +298,13 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
   /// Widget id'sine göre yerelleştirilmiş isim döndür
   String _getWidgetIsim(String id) {
     final key = 'widget_$id';
-    final fallbacks = {
-      'klasik': 'Klasik Turuncu',
-      'mini': 'Mini Sunset',
-      'glass': 'Glassmorphism',
-      'neon': 'Neon Glow',
-      'cosmic': 'Cosmic',
-      'timeline': 'Timeline',
-      'zen': 'Zen',
-      'origami': 'Origami',
-    };
-    return _languageService[key] ?? fallbacks[id] ?? id;
+    return _languageService[key] ?? id;
   }
 
   /// Widget id'sine göre yerelleştirilmiş açıklama döndür
   String _getWidgetAciklama(String id) {
     final key = 'widget_${id}_desc';
-    final fallbacks = {
-      'klasik': 'Sıcak turuncu tonları ile klasik tasarım',
-      'mini': 'Gün batımı renkleriyle kompakt tasarım',
-      'glass': 'Şeffaf cam efektli modern tasarım',
-      'neon': 'Parlayan neon efektli modern tasarım',
-      'cosmic': 'Kozmik mor tonları ile uzay teması',
-      'timeline': 'Koyu temalı timeline tasarımı',
-      'zen': 'Minimal ve huzurlu açık tasarım',
-      'origami': 'Kağıt katlama estetiği ile zarif tasarım',
-    };
-    return _languageService[key] ?? fallbacks[id] ?? '';
+    return _languageService[key] ?? '';
   }
 
   @override
@@ -440,7 +420,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            '${_getWidgetIsim(widgetId)} ${_languageService['settings_applied'] ?? 'ayarları kaydedildi'}',
+            '${_getWidgetIsim(widgetId)} ${_languageService['settings_applied'] ?? ''}',
           ),
           backgroundColor: Colors.green,
         ),
@@ -468,7 +448,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            '${_getWidgetIsim(widget.id)} ${_languageService['reset_to_original'] ?? 'orijinal tasarımına döndürüldü'}',
+            '${_getWidgetIsim(widget.id)} ${_languageService['reset_to_original'] ?? ''}',
           ),
           backgroundColor: Colors.orange,
         ),
@@ -495,8 +475,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            _languageService['all_widgets_reset'] ??
-                'Tüm widget\'lar orijinal tasarımlarına döndürüldü',
+            _languageService['all_widgets_reset'] ?? '',
           ),
           backgroundColor: Colors.orange,
         ),
@@ -520,7 +499,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                '${_getWidgetIsim(widget.id)} ${_languageService['add'] ?? 'Ekle'}',
+                '${_getWidgetIsim(widget.id)} ${_languageService['add'] ?? ''}',
                 style: const TextStyle(fontSize: 18),
               ),
             ),
@@ -531,7 +510,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '${_getWidgetIsim(widget.id)} ${_languageService['add_widget_question'] ?? 'widget\'ını ana ekranınıza eklemek istiyor musunuz?'}',
+              '${_getWidgetIsim(widget.id)} ${_languageService['add_widget_question'] ?? ''}',
               style: const TextStyle(fontSize: 15),
             ),
             const SizedBox(height: 16),
@@ -552,8 +531,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      _languageService['widget_pin_warning'] ??
-                          'Kabul ederseniz ana ekranınızdaki uygulama kısayollarının yeri değişebilir.',
+                      _languageService['widget_pin_warning'] ?? '',
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.orange.shade800,
@@ -568,12 +546,12 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text(_languageService['cancel'] ?? 'İptal'),
+            child: Text(_languageService['cancel'] ?? ''),
           ),
           ElevatedButton.icon(
             onPressed: () => Navigator.pop(context, true),
             icon: const Icon(Icons.add, size: 18),
-            label: Text(_languageService['add'] ?? 'Ekle'),
+            label: Text(_languageService['add'] ?? ''),
             style: ElevatedButton.styleFrom(
               backgroundColor: Theme.of(context).colorScheme.primary,
               foregroundColor: Theme.of(context).colorScheme.onPrimary,
@@ -595,7 +573,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                '${_getWidgetIsim(widget.id)} ${_languageService['widget_pin_sent'] ?? 'ekleme isteği gönderildi'}',
+                '${_getWidgetIsim(widget.id)} ${_languageService['widget_pin_sent'] ?? ''}',
               ),
               backgroundColor: Colors.green,
             ),
@@ -604,8 +582,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                _languageService['widget_pin_not_supported'] ??
-                    'Bu cihaz widget eklemeyi desteklemiyor',
+                _languageService['widget_pin_not_supported'] ?? '',
               ),
               backgroundColor: Colors.red,
             ),
@@ -632,7 +609,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
       child: Scaffold(
         appBar: AppBar(
           title: Text(
-            _languageService['widget_settings_title'] ?? 'Widget Ayarları',
+            _languageService['widget_settings_title'] ?? '',
           ),
           bottom: TabBar(
             controller: _tabController,
@@ -662,8 +639,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
                       const Icon(Icons.restore, size: 20),
                       const SizedBox(width: 8),
                       Text(
-                        _languageService['reset_all_widgets'] ??
-                            'Tümünü Varsayılana Dön',
+                        _languageService['reset_all_widgets'] ?? '',
                       ),
                     ],
                   ),
@@ -754,10 +730,9 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
         // Şeffaf Tema Switch
         Card(
           child: SwitchListTile(
-            title: Text(_languageService['transparent_theme'] ?? 'Şeffaf Tema'),
+            title: Text(_languageService['transparent_theme'] ?? ''),
             subtitle: Text(
-              _languageService['transparent_theme_description'] ??
-                  'Arka planı tamamen şeffaf yapar',
+              _languageService['transparent_theme_description'] ?? '',
             ),
             value: seffafTema,
             onChanged: (value) {
@@ -779,7 +754,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
         // Arka Plan Rengi Seçimi
         if (!seffafTema) ...[
           Text(
-            _languageService['background_color'] ?? 'Arka Plan Rengi',
+            _languageService['background_color'] ?? '',
             style: Theme.of(
               context,
             ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
@@ -790,7 +765,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
 
           // Şeffaflık Ayarı
           Text(
-            '${_languageService['opacity'] ?? 'Şeffaflık'}: ${(seffaflik * 100).toInt()}%',
+            '${_languageService['opacity'] ?? ''}: ${(seffaflik * 100).toInt()}%',
             style: Theme.of(
               context,
             ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
@@ -812,7 +787,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
 
         // Yazı Rengi Seçimi
         Text(
-          _languageService['text_color'] ?? 'Yazı Rengi',
+          _languageService['text_color'] ?? '',
           style: Theme.of(
             context,
           ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
@@ -841,7 +816,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
                 Expanded(
                   child: Text(
                     _languageService['widget_specific_info'] ??
-                        'Bu ayarlar sadece seçili widget\'a uygulanır. Widget\'ı kaldırıp tekrar ekleyin.',
+                      '',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ),
@@ -856,7 +831,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
           onPressed: () => _widgetVarsayilanaGetir(id),
           icon: const Icon(Icons.restore),
           label: Text(
-            '${_getWidgetIsim(widget.id)} ${_languageService['reset_to_default'] ?? 'Varsayılana Dön'}',
+            '${_getWidgetIsim(widget.id)} ${_languageService['reset_to_default'] ?? ''}',
           ),
           style: OutlinedButton.styleFrom(
             padding: const EdgeInsets.symmetric(vertical: 16),
@@ -870,7 +845,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
         ElevatedButton.icon(
           onPressed: () => _widgetAyarlariniKaydet(id),
           icon: const Icon(Icons.save),
-          label: Text(_languageService['save_settings'] ?? 'Ayarları Kaydet'),
+          label: Text(_languageService['save_settings'] ?? ''),
           style: ElevatedButton.styleFrom(
             padding: const EdgeInsets.symmetric(vertical: 16),
             backgroundColor: Theme.of(context).colorScheme.primary,
@@ -885,7 +860,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
             onPressed: () => _widgetEkranaEkleDialoguGoster(id),
             icon: const Icon(Icons.add_to_home_screen),
             label: Text(
-              _languageService['add_to_home_screen'] ?? 'Ana Ekrana Ekle',
+              _languageService['add_to_home_screen'] ?? '',
             ),
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
@@ -1018,6 +993,14 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
     }
   }
 
+  String _previewText(String key) => _languageService[key] ?? '';
+
+  String _previewWithVakit(String templateKey, String vakitKey) {
+    final template = _previewText(templateKey);
+    final vakit = _previewText(vakitKey);
+    return template.replaceAll('{vakit}', vakit);
+  }
+
   // ==================== KLASİK TURUNCU WİDGET ====================
   Widget _buildKlasikOnizleme(
     Color renk1,
@@ -1042,7 +1025,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
             Row(
               children: [
                 Text(
-                  'NAMAZ',
+                  _previewText('widget_preview_prayer_title'),
                   style: TextStyle(
                     color: yaziRengi,
                     fontSize: 10,
@@ -1050,12 +1033,15 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
                   ),
                 ),
                 Text(
-                  ' VAKTİ',
+                  ' ${_previewText('widget_preview_prayer_subtitle')}',
                   style: TextStyle(color: yaziRengiSecondary, fontSize: 10),
                 ),
                 const Spacer(),
                 Text(
-                  'İmsak Vaktine Kalan',
+                  _previewWithVakit(
+                    'widget_preview_time_remaining_to_prayer',
+                    'imsak',
+                  ),
                   style: TextStyle(color: yaziRengiSecondary, fontSize: 9),
                 ),
               ],
@@ -1077,11 +1063,11 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      '28 Recep 1447',
+                      _previewText('widget_preview_hijri_date'),
                       style: TextStyle(color: yaziRengi, fontSize: 11),
                     ),
                     Text(
-                      'İSTANBUL',
+                      _previewText('widget_preview_city').toUpperCase(),
                       style: TextStyle(
                         color: yaziRengiSecondary,
                         fontSize: 9,
@@ -1098,42 +1084,42 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _vakitKutusu(
-                  'İmsak',
+                  _previewText('imsak'),
                   '05:47',
                   yaziRengi,
                   yaziRengiSecondary,
                   true,
                 ),
                 _vakitKutusu(
-                  'Güneş',
+                  _previewText('gunes'),
                   '07:22',
                   yaziRengi,
                   yaziRengiSecondary,
                   false,
                 ),
                 _vakitKutusu(
-                  'Öğle',
+                  _previewText('ogle'),
                   '12:30',
                   yaziRengi,
                   yaziRengiSecondary,
                   false,
                 ),
                 _vakitKutusu(
-                  'İkindi',
+                  _previewText('ikindi'),
                   '15:14',
                   yaziRengi,
                   yaziRengiSecondary,
                   false,
                 ),
                 _vakitKutusu(
-                  'Akşam',
+                  _previewText('aksam'),
                   '17:32',
                   yaziRengi,
                   yaziRengiSecondary,
                   false,
                 ),
                 _vakitKutusu(
-                  'Yatsı',
+                  _previewText('yatsi'),
                   '18:57',
                   yaziRengi,
                   yaziRengiSecondary,
@@ -1199,7 +1185,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
             Row(
               children: [
                 Text(
-                  'İstanbul, Küçükçekmece',
+                  _previewText('widget_preview_city_district'),
                   style: TextStyle(
                     color: yaziRengi,
                     fontSize: 11,
@@ -1208,7 +1194,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
                 ),
                 const Spacer(),
                 Text(
-                  '28 Recep • 17 Ocak',
+                  _previewText('widget_preview_hijri_gregorian_short'),
                   style: TextStyle(color: yaziRengiSecondary, fontSize: 9),
                 ),
               ],
@@ -1227,7 +1213,10 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
                 ),
                 const Spacer(),
                 Text(
-                  'Akşam Vaktine Kalan',
+                  _previewWithVakit(
+                    'widget_preview_time_remaining_to_prayer',
+                    'aksam',
+                  ),
                   style: TextStyle(color: yaziRengiSecondary, fontSize: 10),
                 ),
               ],
@@ -1237,7 +1226,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
             Row(
               children: [
                 Text(
-                  'ECİR',
+                  _previewText('widget_preview_reward'),
                   style: TextStyle(
                     color: const Color(0xFF00C853),
                     fontSize: 9,
@@ -1301,23 +1290,23 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
             Text(
               _languageService['widget_preview_now_in']?.replaceAll(
                     '{vakit}',
-                    'Güneş',
+                    _previewText('gunes'),
                   ) ??
-                  'Şu an Güneş vaktinde',
+                  '',
               style: TextStyle(color: yaziRengiSecondary, fontSize: 10),
             ),
             Text(
-              '28 Recep 1447',
+              _previewText('widget_preview_hijri_date'),
               style: TextStyle(color: yaziRengi, fontSize: 11),
             ),
             Text(
-              '21 Ocak 2026',
+              _previewText('widget_preview_gregorian_date'),
               style: TextStyle(color: yaziRengiSecondary, fontSize: 10),
             ),
             const Spacer(),
             // Orta
             Text(
-              "Öğle'ye",
+              _previewWithVakit('widget_preview_time_to_prayer', 'ogle'),
               style: TextStyle(
                 color: yaziRengi,
                 fontSize: 14,
@@ -1336,8 +1325,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
             const Spacer(),
             // Alt: Progress
             Text(
-              _languageService['widget_preview_prayer_progress'] ??
-                  'Vakit İlerlemesi',
+              _languageService['widget_preview_prayer_progress'] ?? '',
               style: TextStyle(color: yaziRengiSecondary, fontSize: 8),
             ),
             const SizedBox(height: 4),
@@ -1361,7 +1349,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
             const SizedBox(height: 8),
             // Konum
             Text(
-              'İstanbul',
+              _previewText('widget_preview_city'),
               style: TextStyle(color: yaziRengiSecondary, fontSize: 10),
             ),
           ],
@@ -1409,7 +1397,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
                       ),
                     ),
                     child: Text(
-                      'Güneş',
+                      _previewText('gunes'),
                       style: TextStyle(
                         color: neonColor,
                         fontSize: 9,
@@ -1421,7 +1409,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
                 const Spacer(),
                 // Orta
                 Text(
-                  'ÖĞLE',
+                  _previewText('ogle').toUpperCase(),
                   style: TextStyle(
                     color: pinkNeon,
                     fontSize: 18,
@@ -1446,7 +1434,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
                 Row(
                   children: [
                     Text(
-                      '⚡ VAKİT İLERLEMESİ',
+                      '⚡ ${_previewText('widget_preview_prayer_progress')}',
                       style: TextStyle(
                         color: pinkNeon,
                         fontSize: 8,
@@ -1479,15 +1467,15 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'İstanbul',
+                      _previewText('widget_preview_city'),
                       style: TextStyle(color: yaziRengiSecondary, fontSize: 9),
                     ),
                     Text(
-                      '28 Recep 1447',
+                      _previewText('widget_preview_hijri_date'),
                       style: TextStyle(color: yaziRengiSecondary, fontSize: 9),
                     ),
                     Text(
-                      '21 Ocak 2026',
+                      _previewText('widget_preview_gregorian_date'),
                       style: TextStyle(color: yaziRengiSecondary, fontSize: 9),
                     ),
                   ],
@@ -1529,7 +1517,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'İstanbul',
+                      _previewText('widget_preview_city'),
                       style: TextStyle(
                         color: purpleAccent,
                         fontSize: 11,
@@ -1537,11 +1525,11 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
                       ),
                     ),
                     Text(
-                      '28 Recep 1447',
+                      _previewText('widget_preview_hijri_date'),
                       style: TextStyle(color: yaziRengiSecondary, fontSize: 10),
                     ),
                     Text(
-                      '21 Ocak 2026',
+                      _previewText('widget_preview_gregorian_date'),
                       style: TextStyle(
                         color: yaziRengiSecondary.withValues(alpha: 0.5),
                         fontSize: 9,
@@ -1556,7 +1544,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
             const Spacer(),
             // Orta
             Text(
-              '✦ Güneş ✦',
+              '✦ ${_previewText('gunes')} ✦',
               style: TextStyle(
                 color: purpleAccent,
                 fontSize: 10,
@@ -1573,7 +1561,10 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
               ),
             ),
             Text(
-              "Öğle'ye kalan",
+              _previewWithVakit(
+                'widget_preview_time_remaining_to_prayer',
+                'ogle',
+              ),
               style: TextStyle(color: yaziRengiSecondary, fontSize: 10),
             ),
             const Spacer(),
@@ -1636,7 +1627,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'İstanbul',
+                      _previewText('widget_preview_city'),
                       style: TextStyle(
                         color: yaziRengi,
                         fontSize: 11,
@@ -1644,11 +1635,11 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
                       ),
                     ),
                     Text(
-                      '28 Recep 1447',
+                      _previewText('widget_preview_hijri_date'),
                       style: TextStyle(color: yaziRengiSecondary, fontSize: 10),
                     ),
                     Text(
-                      '21 Ocak 2026',
+                      _previewText('widget_preview_gregorian_date'),
                       style: TextStyle(
                         color: yaziRengiSecondary.withValues(alpha: 0.6),
                         fontSize: 9,
@@ -1661,7 +1652,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      "Öğle'ye",
+                      _previewWithVakit('widget_preview_time_to_prayer', 'ogle'),
                       style: TextStyle(
                         color: greenAccent,
                         fontSize: 10,
@@ -1707,21 +1698,21 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
                   child: Column(
                     children: [
                       _timelineVakit(
-                        'İmsak',
+                        _previewText('imsak'),
                         '05:47',
                         yaziRengi,
                         yaziRengiSecondary,
                         true,
                       ),
                       _timelineVakit(
-                        'Güneş',
+                        _previewText('gunes'),
                         '07:22',
                         yaziRengi,
                         yaziRengiSecondary,
                         false,
                       ),
                       _timelineVakit(
-                        'Öğle',
+                        _previewText('ogle'),
                         '12:30',
                         yaziRengi,
                         yaziRengiSecondary,
@@ -1734,21 +1725,21 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
                   child: Column(
                     children: [
                       _timelineVakit(
-                        'İkindi',
+                        _previewText('ikindi'),
                         '15:14',
                         yaziRengi,
                         yaziRengiSecondary,
                         false,
                       ),
                       _timelineVakit(
-                        'Akşam',
+                        _previewText('aksam'),
                         '17:32',
                         yaziRengi,
                         yaziRengiSecondary,
                         false,
                       ),
                       _timelineVakit(
-                        'Yatsı',
+                        _previewText('yatsi'),
                         '18:57',
                         yaziRengi,
                         yaziRengiSecondary,
@@ -1828,7 +1819,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'İSTANBUL',
+              _previewText('widget_preview_city').toUpperCase(),
               style: TextStyle(
                 color: yaziRengiSecondary,
                 fontSize: 10,
@@ -1849,7 +1840,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Öğle',
+                  _previewText('ogle'),
                   style: TextStyle(
                     color: Colors.blue,
                     fontSize: 12,
@@ -1857,7 +1848,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
                   ),
                 ),
                 Text(
-                  ' vaktine',
+                  ' ${_previewText('time_to')}',
                   style: TextStyle(color: yaziRengiSecondary, fontSize: 12),
                 ),
               ],
@@ -1934,7 +1925,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'İstanbul',
+                          _previewText('widget_preview_city'),
                           style: TextStyle(
                             color: yaziRengi,
                             fontSize: 12,
@@ -1943,7 +1934,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
                           ),
                         ),
                         Text(
-                          '٢٨ رجب ١٤٤٧',
+                          _previewText('widget_preview_hijri_date'),
                           style: TextStyle(
                             color: yaziRengiSecondary,
                             fontSize: 11,
@@ -1951,7 +1942,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
                           ),
                         ),
                         Text(
-                          '21 Ocak 2026',
+                          _previewText('widget_preview_gregorian_date'),
                           style: TextStyle(
                             color: yaziRengiSecondary.withValues(alpha: 0.8),
                             fontSize: 10,
@@ -1984,7 +1975,10 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Güneş Vakti',
+                      _previewWithVakit(
+                        'widget_preview_prayer_time_name',
+                        'gunes',
+                      ),
                       style: TextStyle(
                         color: yaziRengiSecondary,
                         fontSize: 10,
@@ -2012,7 +2006,10 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
                   ),
                 ),
                 Text(
-                  "Öğle'ye kalan",
+                  _previewWithVakit(
+                    'widget_preview_time_remaining_to_prayer',
+                    'ogle',
+                  ),
                   style: TextStyle(
                     color: yaziRengiSecondary,
                     fontSize: 10,
@@ -2142,7 +2139,7 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
                   ),
                 Center(
                   child: Text(
-                    secenek['isim'].split(' ').first,
+                    (_languageService[secenek['nameKey']] ?? '').split(' ').first,
                     style: TextStyle(
                       color:
                           isTransparent ||

@@ -15,7 +15,7 @@ class _TemaAyarlariSayfaState extends State<TemaAyarlariSayfa>
   final LanguageService _languageService = LanguageService();
   late TabController _tabController;
 
-  // Özel tema için seçilen renkler
+  // Selected colors for the custom theme
   Color _ozelArkaPlan = const Color(0xFF1B2741);
   Color _ozelKartArkaPlan = const Color(0xFF2B3151);
   Color _ozelVurgu = const Color(0xFF00BCD4);
@@ -56,7 +56,7 @@ class _TemaAyarlariSayfaState extends State<TemaAyarlariSayfa>
       backgroundColor: renkler.arkaPlan,
       appBar: AppBar(
         title: Text(
-          _languageService['theme_settings'] ?? 'Tema Ayarları',
+          _languageService['theme_settings'] ?? '',
           style: TextStyle(color: renkler.yaziPrimary),
         ),
         backgroundColor: Colors.transparent,
@@ -68,8 +68,14 @@ class _TemaAyarlariSayfaState extends State<TemaAyarlariSayfa>
           labelColor: renkler.vurgu,
           unselectedLabelColor: renkler.yaziSecondary,
           tabs: [
-            Tab(text: _languageService['preset_themes'] ?? 'Hazır Temalar', icon: const Icon(Icons.palette)),
-            Tab(text: _languageService['custom_theme'] ?? 'Özel Tema', icon: const Icon(Icons.color_lens)),
+            Tab(
+              text: _languageService['preset_themes'] ?? '',
+              icon: const Icon(Icons.palette),
+            ),
+            Tab(
+              text: _languageService['custom_theme'] ?? '',
+              icon: const Icon(Icons.color_lens),
+            ),
           ],
         ),
       ),
@@ -81,10 +87,12 @@ class _TemaAyarlariSayfaState extends State<TemaAyarlariSayfa>
   }
 
   Widget _buildHazirTemalar(TemaRenkleri renkler) {
+    final temaList =
+        AppTema.values.where((tema) => tema != AppTema.ozel).toList();
+
     return Column(
       children: [
         _buildFontSecimi(renkler),
-        // Sayaç temasına dön butonu (eğer manuel tema seçiliyse göster)
         if (!_temaService.sayacTemasiKullan)
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -93,70 +101,44 @@ class _TemaAyarlariSayfaState extends State<TemaAyarlariSayfa>
               borderRadius: BorderRadius.circular(12),
               child: InkWell(
                 borderRadius: BorderRadius.circular(12),
-                onTap: () async {
-                  await _temaService.sayacTemasiKullanAyarla(true);
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          _languageService['theme_reset_to_counter'] ?? 
-                          'Tema sayaç rengine göre ayarlandı',
-                        ),
-                        backgroundColor: renkler.vurgu,
-                      ),
-                    );
-                  }
-                },
+                onTap: () => _temaService.sayacTemasiKullanAyarla(true),
                 child: Padding(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   child: Row(
                     children: [
-                      Icon(Icons.refresh, color: renkler.vurgu),
+                      Icon(Icons.restore, color: renkler.vurgu),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _languageService['reset_to_counter_theme'] ?? 
-                              'Varsayılan Ayarlara Dön',
-                              style: TextStyle(
-                                color: renkler.yaziPrimary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            Text(
-                              _languageService['counter_theme_desc'] ?? 
-                              'Tema, seçili sayaca göre otomatik değişsin',
-                              style: TextStyle(
-                                color: renkler.yaziSecondary,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
+                        child: Text(
+                          _languageService['reset_to_counter_theme'] ?? '',
+                          style: TextStyle(
+                            color: renkler.vurgu,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
-                      Icon(Icons.arrow_forward_ios, 
-                        color: renkler.yaziSecondary, size: 16),
+                      Icon(Icons.chevron_right, color: renkler.yaziSecondary),
                     ],
                   ),
                 ),
               ),
             ),
           ),
-        // Önizleme
-        _buildOnizleme(renkler),
-        // Tema listesi
         Expanded(
           child: ListView.builder(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            itemCount: AppTema.values.length - 1, // Özel tema hariç
+            itemCount: temaList.length + 1,
             itemBuilder: (context, index) {
-              final tema = AppTema.values[index];
+              if (index == 0) {
+                return _buildOnizleme(renkler);
+              }
+              final tema = temaList[index - 1];
               final temaRenkleri = TemaService.temalar[tema]!;
-              final secili = !_temaService.sayacTemasiKullan && 
-                             _temaService.mevcutTema == tema;
-
+              final secili = !_temaService.sayacTemasiKullan &&
+                  _temaService.mevcutTema == tema;
               return _buildTemaKarti(tema, temaRenkleri, secili);
             },
           ),
@@ -165,416 +147,415 @@ class _TemaAyarlariSayfaState extends State<TemaAyarlariSayfa>
     );
   }
 
-  Widget _buildOnizleme(TemaRenkleri renkler) {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: renkler.kartArkaPlan,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: renkler.vurgu.withOpacity(0.3), width: 2),
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(renkler.ikon, color: renkler.vurgu, size: 28),
-              const SizedBox(width: 12),
-              Text(
-                renkler.isim,
-                style: TextStyle(
-                  color: renkler.yaziPrimary,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            renkler.aciklama,
-            style: TextStyle(color: renkler.yaziSecondary, fontSize: 13),
-          ),
-          const SizedBox(height: 12),
-          // Örnek vakit satırı
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: renkler.vurgu.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Row(
+    Widget _buildOnizleme(TemaRenkleri renkler) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: renkler.kartArkaPlan,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: renkler.vurgu.withOpacity(0.3), width: 2),
+        ),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.wb_sunny, color: renkler.vurgu, size: 22),
+                Icon(renkler.ikon, color: renkler.vurgu, size: 28),
                 const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Güneş',
-                    style: TextStyle(
-                      color: renkler.vurgu,
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
                 Text(
-                  '07:45',
+                  _languageService[renkler.isim] ?? renkler.isim,
                   style: TextStyle(
-                    color: renkler.vurgu,
-                    fontSize: 16,
+                    color: renkler.yaziPrimary,
+                    fontSize: 22,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ],
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTemaKarti(AppTema tema, TemaRenkleri temaRenkleri, bool secili) {
-    return GestureDetector(
-      onTap: () => _temaService.temayiDegistir(tema),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          gradient: temaRenkleri.arkaPlanGradient,
-          color: temaRenkleri.arkaPlanGradient == null
-              ? temaRenkleri.arkaPlan
-              : null,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: secili ? temaRenkleri.vurgu : temaRenkleri.ayirac,
-            width: secili ? 2 : 1,
-          ),
-          boxShadow: secili
-              ? [
-                  BoxShadow(
-                    color: temaRenkleri.vurgu.withOpacity(0.25),
-                    blurRadius: 8,
-                    spreadRadius: 1,
-                  ),
-                ]
-              : null,
-        ),
-        child: Row(
-          children: [
+            const SizedBox(height: 8),
+            Text(
+              _languageService[renkler.aciklama] ?? renkler.aciklama,
+              style: TextStyle(color: renkler.yaziSecondary, fontSize: 13),
+            ),
+            const SizedBox(height: 12),
             Container(
-              width: 44,
-              height: 44,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: temaRenkleri.kartArkaPlan,
+                color: renkler.vurgu.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(
-                temaRenkleri.ikon,
-                color: temaRenkleri.vurgu,
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
                 children: [
-                  Text(
-                    temaRenkleri.isim,
-                    style: TextStyle(
-                      color: temaRenkleri.yaziPrimary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                  Icon(Icons.wb_sunny, color: renkler.vurgu, size: 22),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      _languageService['gunes'] ?? '',
+                      style: TextStyle(
+                        color: renkler.vurgu,
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   Text(
-                    temaRenkleri.aciklama,
+                    '07:45',
                     style: TextStyle(
-                      color: temaRenkleri.yaziSecondary,
-                      fontSize: 11,
+                      color: renkler.vurgu,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
               ),
             ),
-            // Renk örnekleri
-            Row(
-              children: [
-                _renkDairesi(temaRenkleri.vurgu, 14),
-                const SizedBox(width: 3),
-                _renkDairesi(temaRenkleri.vurguSecondary, 14),
-              ],
-            ),
-            const SizedBox(width: 10),
-            if (secili)
-              Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  color: temaRenkleri.vurgu,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.check,
-                  color: temaRenkleri.arkaPlan,
-                  size: 16,
-                ),
-              )
-            else
-              Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  border: Border.all(color: temaRenkleri.ayirac, width: 2),
-                  shape: BoxShape.circle,
-                ),
-              ),
           ],
         ),
-      ),
-    );
-  }
+      );
+    }
 
-  Widget _buildOzelTema(TemaRenkleri renkler) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildFontSecimi(renkler),
-          const SizedBox(height: 16),
-          // Özel tema önizleme
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: _ozelKartArkaPlan,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: _ozelVurgu.withOpacity(0.5)),
+    Widget _buildTemaKarti(AppTema tema, TemaRenkleri temaRenkleri, bool secili) {
+      return GestureDetector(
+        onTap: () => _temaService.temayiDegistir(tema),
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            gradient: temaRenkleri.arkaPlanGradient,
+            color:
+                temaRenkleri.arkaPlanGradient == null ? temaRenkleri.arkaPlan : null,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: secili ? temaRenkleri.vurgu : temaRenkleri.ayirac,
+              width: secili ? 2 : 1,
             ),
-            child: Column(
-              children: [
-                Text(
-                  _languageService['custom_theme_preview'] ?? 'Özel Tema Önizleme',
-                  style: TextStyle(
-                    color: _ozelVurgu,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: _ozelVurgu.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.access_time, color: _ozelVurgu),
-                      const SizedBox(width: 12),
-                      Text(
-                        _languageService['sample_time'] ?? 'Örnek Vakit',
-                        style: TextStyle(
-                          color: _ozelYaziPrimary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const Spacer(),
-                      Text(
-                        '12:00',
-                        style: TextStyle(color: _ozelYaziSecondary),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 24),
-
-          // Hazır paletler
-          Text(
-            _languageService['preset_palettes'] ?? 'Hazır Paletler',
-            style: TextStyle(
-              color: renkler.yaziPrimary,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            height: 180,
-            child: GridView.builder(
-              scrollDirection: Axis.horizontal,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                mainAxisSpacing: 8,
-                crossAxisSpacing: 8,
-                childAspectRatio: 0.75,
-              ),
-              itemCount: TemaService.hazirPaletler.length,
-              itemBuilder: (context, index) {
-                final palet = TemaService.hazirPaletler[index];
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _ozelArkaPlan = palet['arkaPlan'] as Color;
-                      _ozelKartArkaPlan = Color.lerp(
-                        _ozelArkaPlan,
-                        Colors.white,
-                        0.08,
-                      )!;
-                      _ozelVurgu = palet['vurgu'] as Color;
-                      _ozelVurguSecondary = Color.lerp(
-                        _ozelVurgu,
-                        Colors.white,
-                        0.3,
-                      )!;
-                    });
-                  },
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: palet['arkaPlan'] as Color,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: _ozelArkaPlan == palet['arkaPlan']
-                            ? (palet['vurgu'] as Color)
-                            : (palet['vurgu'] as Color).withOpacity(0.5),
-                        width: _ozelArkaPlan == palet['arkaPlan'] ? 3 : 2,
-                      ),
-                      boxShadow: _ozelArkaPlan == palet['arkaPlan']
-                          ? [
-                              BoxShadow(
-                                color: (palet['vurgu'] as Color).withOpacity(
-                                  0.4,
-                                ),
-                                blurRadius: 8,
-                              ),
-                            ]
-                          : null,
+            boxShadow: secili
+                ? [
+                    BoxShadow(
+                      color: temaRenkleri.vurgu.withOpacity(0.25),
+                      blurRadius: 8,
+                      spreadRadius: 1,
                     ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                  ]
+                : null,
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: temaRenkleri.kartArkaPlan,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  temaRenkleri.ikon,
+                  color: temaRenkleri.vurgu,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _languageService[temaRenkleri.isim] ?? temaRenkleri.isim,
+                      style: TextStyle(
+                        color: temaRenkleri.yaziPrimary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _languageService[temaRenkleri.aciklama] ??
+                          temaRenkleri.aciklama,
+                      style: TextStyle(
+                        color: temaRenkleri.yaziSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              Row(
+                children: [
+                  _renkDairesi(temaRenkleri.vurgu, 14),
+                  const SizedBox(width: 3),
+                  _renkDairesi(temaRenkleri.vurguSecondary, 14),
+                ],
+              ),
+              const SizedBox(width: 10),
+              if (secili)
+                Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: temaRenkleri.vurgu,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.check,
+                    color: temaRenkleri.arkaPlan,
+                    size: 16,
+                  ),
+                )
+              else
+                Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: temaRenkleri.ayirac, width: 2),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    Widget _buildOzelTema(TemaRenkleri renkler) {
+      return SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildFontSecimi(renkler),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: _ozelKartArkaPlan,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: _ozelVurgu.withOpacity(0.5)),
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    _languageService['custom_theme_preview'] ?? '',
+                    style: TextStyle(
+                      color: _ozelVurgu,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: _ozelVurgu.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
                       children: [
-                        Container(
-                          width: 28,
-                          height: 28,
-                          decoration: BoxDecoration(
-                            color: palet['vurgu'] as Color,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: (palet['vurgu'] as Color).withOpacity(
-                                  0.5,
-                                ),
-                                blurRadius: 8,
-                              ),
-                            ],
+                        Icon(Icons.access_time, color: _ozelVurgu),
+                        const SizedBox(width: 12),
+                        Text(
+                          _languageService['sample_time'] ?? '',
+                          style: TextStyle(
+                            color: _ozelYaziPrimary,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(height: 6),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                          child: Text(
-                            palet['isim'] as String,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 9,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            textAlign: TextAlign.center,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                        const Spacer(),
+                        Text(
+                          '12:00',
+                          style: TextStyle(color: _ozelYaziSecondary),
                         ),
                       ],
                     ),
                   ),
-                );
-              },
+                ],
+              ),
             ),
-          ),
-
-          const SizedBox(height: 24),
-
-          // Renk seçiciler
-          Text(
-            _languageService['customize_colors'] ?? 'Renkleri Özelleştir',
-            style: TextStyle(
-              color: renkler.yaziPrimary,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
+            const SizedBox(height: 24),
+            Text(
+              _languageService['preset_palettes'] ?? '',
+              style: TextStyle(
+                color: renkler.yaziPrimary,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
-
-          _buildRenkSecici(_languageService['background'] ?? 'Arka Plan', _ozelArkaPlan, (color) {
-            setState(() {
-              _ozelArkaPlan = color;
-              _ozelKartArkaPlan = Color.lerp(color, Colors.white, 0.08)!;
-            });
-          }),
-          _buildRenkSecici(_languageService['accent_color'] ?? 'Vurgu Rengi', _ozelVurgu, (color) {
-            setState(() {
-              _ozelVurgu = color;
-              _ozelVurguSecondary = Color.lerp(color, Colors.white, 0.3)!;
-            });
-          }),
-          _buildRenkSecici(_languageService['text_color'] ?? 'Yazı Rengi', _ozelYaziPrimary, (color) {
-            setState(() {
-              _ozelYaziPrimary = color;
-            });
-          }),
-          _buildRenkSecici(_languageService['text_secondary'] ?? 'Yazı İkincil', _ozelYaziSecondary, (color) {
-            setState(() {
-              _ozelYaziSecondary = color;
-            });
-          }),
-
-          const SizedBox(height: 20),
-
-          // Kaydet butonu
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () async {
-                await _temaService.ozelTemayiKaydet(
-                  arkaPlan: _ozelArkaPlan,
-                  kartArkaPlan: _ozelKartArkaPlan,
-                  vurgu: _ozelVurgu,
-                  vurguSecondary: _ozelVurguSecondary,
-                  yaziPrimary: _ozelYaziPrimary,
-                  yaziSecondary: _ozelYaziSecondary,
-                );
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(_languageService['custom_theme_saved'] ?? 'Özel tema kaydedildi!'),
-                      backgroundColor: _ozelVurgu,
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 180,
+              child: GridView.builder(
+                scrollDirection: Axis.horizontal,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 8,
+                  crossAxisSpacing: 8,
+                  childAspectRatio: 0.75,
+                ),
+                itemCount: TemaService.hazirPaletler.length,
+                itemBuilder: (context, index) {
+                  final palet = TemaService.hazirPaletler[index];
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _ozelArkaPlan = palet['arkaPlan'] as Color;
+                        _ozelKartArkaPlan =
+                            Color.lerp(_ozelArkaPlan, Colors.white, 0.08)!;
+                        _ozelVurgu = palet['vurgu'] as Color;
+                        _ozelVurguSecondary =
+                            Color.lerp(_ozelVurgu, Colors.white, 0.3)!;
+                      });
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: palet['arkaPlan'] as Color,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _ozelArkaPlan == palet['arkaPlan']
+                              ? (palet['vurgu'] as Color)
+                              : (palet['vurgu'] as Color).withOpacity(0.5),
+                          width: _ozelArkaPlan == palet['arkaPlan'] ? 3 : 2,
+                        ),
+                        boxShadow: _ozelArkaPlan == palet['arkaPlan']
+                            ? [
+                                BoxShadow(
+                                  color: (palet['vurgu'] as Color)
+                                      .withOpacity(0.4),
+                                  blurRadius: 8,
+                                ),
+                              ]
+                            : null,
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              color: palet['vurgu'] as Color,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: (palet['vurgu'] as Color)
+                                      .withOpacity(0.5),
+                                  blurRadius: 8,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: Text(
+                              _languageService[palet['isim'] as String] ??
+                                  (palet['isim'] as String),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 9,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              textAlign: TextAlign.center,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   );
-                }
+                },
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              _languageService['customize_colors'] ?? '',
+              style: TextStyle(
+                color: renkler.yaziPrimary,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            _buildRenkSecici(
+              _languageService['background'] ?? '',
+              _ozelArkaPlan,
+              (color) {
+                setState(() {
+                  _ozelArkaPlan = color;
+                  _ozelKartArkaPlan = Color.lerp(color, Colors.white, 0.08)!;
+                });
               },
-              icon: const Icon(Icons.save),
-              label: Text(_languageService['save_custom_theme'] ?? 'Özel Temayı Kaydet ve Uygula'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _ozelVurgu,
-                foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+            ),
+            _buildRenkSecici(
+              _languageService['accent_color'] ?? '',
+              _ozelVurgu,
+              (color) {
+                setState(() {
+                  _ozelVurgu = color;
+                  _ozelVurguSecondary = Color.lerp(color, Colors.white, 0.3)!;
+                });
+              },
+            ),
+            _buildRenkSecici(
+              _languageService['text_color'] ?? '',
+              _ozelYaziPrimary,
+              (color) {
+                setState(() {
+                  _ozelYaziPrimary = color;
+                });
+              },
+            ),
+            _buildRenkSecici(
+              _languageService['text_secondary'] ?? '',
+              _ozelYaziSecondary,
+              (color) {
+                setState(() {
+                  _ozelYaziSecondary = color;
+                });
+              },
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  await _temaService.ozelTemayiKaydet(
+                    arkaPlan: _ozelArkaPlan,
+                    kartArkaPlan: _ozelKartArkaPlan,
+                    vurgu: _ozelVurgu,
+                    vurguSecondary: _ozelVurguSecondary,
+                    yaziPrimary: _ozelYaziPrimary,
+                    yaziSecondary: _ozelYaziSecondary,
+                  );
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          _languageService['custom_theme_saved'] ?? '',
+                        ),
+                        backgroundColor: _ozelVurgu,
+                      ),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.save),
+                label: Text(_languageService['save_custom_theme'] ?? ''),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _ozelVurgu,
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ),
-          ),
-          // Alt boşluk (telefon tuşlarına denk gelmemesi için)
-          const SizedBox(height: 24),
-        ],
-      ),
-    );
-  }
+            const SizedBox(height: 24),
+          ],
+        ),
+      );
+    }
 
   Widget _buildRenkSecici(
     String label,
@@ -624,7 +605,7 @@ class _TemaAyarlariSayfaState extends State<TemaAyarlariSayfa>
       ),
       child: Row(
         children: [
-          Text(_languageService['font_family'] ?? 'Yazı Tipi', style: TextStyle(color: renkler.yaziPrimary)),
+          Text(_languageService['font_family'] ?? '', style: TextStyle(color: renkler.yaziPrimary)),
           const Spacer(),
           DropdownButtonHideUnderline(
             child: DropdownButton<String>(
@@ -649,27 +630,27 @@ class _TemaAyarlariSayfaState extends State<TemaAyarlariSayfa>
   }
 
   void _showColorPicker(Color currentColor, Function(Color) onColorSelected) {
-    // Tüm renkler - arka plan ve vurgu renkleri birleştirilmiş
+    // All colors - background and accent colors combined
     final List<Color> tumRenkler = [
-      // Siyahlar & Karanlık
+      // Blacks & darks
       const Color(0xFF000000), const Color(0xFF0D0D0D), const Color(0xFF121212),
       const Color(0xFF1A1A1A), const Color(0xFF1C1C1E), const Color(0xFF212121),
-      // Mavi Tonları
+      // Blue tones
       const Color(0xFF0A192F), const Color(0xFF0A1628), const Color(0xFF1B2741),
       const Color(0xFF0D2137), const Color(0xFF141B21), const Color(0xFF1565C0),
-      // Mor & Mor-Mavi
+      // Purple & purple-blue
       const Color(0xFF0B0B1A), const Color(0xFF14081F), const Color(0xFF150A1F),
       const Color(0xFF1E1A26), const Color(0xFF2D1B4E), const Color(0xFF2E1F47),
-      // Yeşil Tonları
+      // Green tones
       const Color(0xFF081A12), const Color(0xFF0D1F0D), const Color(0xFF0A140A),
       const Color(0xFF142021), const Color(0xFF1B3D2F), const Color(0xFF2E3D1B),
-      // Kırmızı & Bordo
+      // Red & burgundy
       const Color(0xFF1A0A0F), const Color(0xFF1A080A), const Color(0xFF3E1A1A),
       const Color(0xFF4A1C1C), const Color(0xFF3D2429), const Color(0xFF2D1B2D),
-      // Kahverengi & Toprak
+      // Brown & earth
       const Color(0xFF1A1215), const Color(0xFF1F1710), const Color(0xFF211A17),
       const Color(0xFF2D1F14), const Color(0xFF1A1408), const Color(0xFF3E2723),
-      // Parlak Renkler
+      // Bright colors
       const Color(0xFFFF1744), const Color(0xFFE53935), const Color(0xFFD32F2F),
       const Color(0xFFFF4081), const Color(0xFFEC407A), const Color(0xFFE91E63),
       const Color(0xFFAA00FF), const Color(0xFF7B1FA2), const Color(0xFF6A1B9A),
@@ -681,7 +662,7 @@ class _TemaAyarlariSayfaState extends State<TemaAyarlariSayfa>
       const Color(0xFFC6FF00), const Color(0xFFAEEA00), const Color(0xFF8BC34A),
       const Color(0xFFFFFF00), const Color(0xFFFFD700), const Color(0xFFFFCA28),
       const Color(0xFFFFAB40), const Color(0xFFFF9100), const Color(0xFFFF7043),
-      // Beyaz ve Gri tonları
+      // White and gray tones
       const Color(0xFFFFFFFF), const Color(0xFFFAFAFA), const Color(0xFFE0E0E0),
       const Color(0xFFB0BEC5), const Color(0xFF78909C), const Color(0xFF455A64),
     ];
@@ -705,7 +686,7 @@ class _TemaAyarlariSayfaState extends State<TemaAyarlariSayfa>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Sürükleme çubuğu
+                  // Slider
                   Container(
                     width: 40,
                     height: 4,
@@ -716,7 +697,7 @@ class _TemaAyarlariSayfaState extends State<TemaAyarlariSayfa>
                     ),
                   ),
                   Text(
-                    _languageService['select_color'] ?? 'Renk Seçin',
+                    _languageService['select_color'] ?? '',
                     style: TextStyle(
                       color: _temaService.renkler.yaziPrimary,
                       fontSize: 18,
@@ -724,7 +705,7 @@ class _TemaAyarlariSayfaState extends State<TemaAyarlariSayfa>
                     ),
                   ),
                   const SizedBox(height: 16),
-                  // Seçili renk önizleme
+                  // Selected color preview
                   Container(
                     width: 60,
                     height: 60,
@@ -742,7 +723,7 @@ class _TemaAyarlariSayfaState extends State<TemaAyarlariSayfa>
                       ],
                     ),
                   ),
-                  // Renk grid'i
+                  // Color grid
                   Expanded(
                     child: GridView.builder(
                       controller: scrollController,

@@ -10,14 +10,14 @@ import '../services/language_service.dart';
 import '../services/vibration_service.dart';
 import '../services/konum_service.dart';
 
-/// Pusula stilleri enum
+/// Compass style enum.
 enum PusulaStili {
-  modern, // Varsayılan modern stil
-  klasik, // Klasik pusula görünümü
-  islami, // İslami motifli
-  minimal, // Minimalist tasarım
-  luks, // Lüks altın tasarım
-  dijital, // Dijital/Siber tasarım
+  modern, // Default modern style.
+  klasik, // Classic compass look.
+  islami, // Islamic motif.
+  minimal, // Minimalist design.
+  luks, // Luxury gold design.
+  dijital, // Digital/cyber design.
 }
 
 class KibleSayfa extends StatefulWidget {
@@ -41,15 +41,15 @@ class _KibleSayfaState extends State<KibleSayfa> {
   double? _declination;
   bool _pusulaDestegi = true;
 
-  // Pusula stili
+  // Compass style.
   PusulaStili _pusulaStili = PusulaStili.modern;
 
-  // Doğru yön geri bildirimi için
+  // Correct-direction feedback state.
   bool _wasCorrectDirection = false;
   AudioPlayer? _audioPlayer;
   DateTime? _lastFeedbackTime;
 
-  // Kabe koordinatları
+  // Kaaba coordinates.
   static const double kabeEnlem = 21.4225;
   static const double kabeBoylam = 39.8262;
 
@@ -107,7 +107,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
           _heading = heading;
         });
 
-        // Doğru yön kontrolü ve geri bildirim
+        // Correct-direction check and feedback.
         _checkCorrectDirection();
       },
       onError: (_) {
@@ -119,7 +119,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
     );
   }
 
-  /// Doğru yönde olup olmadığını kontrol et ve geri bildirim ver
+  /// Check whether the device is aligned and trigger feedback.
   void _checkCorrectDirection() {
     if (_kibleDerece == null || _heading == null || _declination == null) {
       return;
@@ -131,7 +131,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
     final relative = _normalizeAngle(_kibleDerece! - trueHeading);
     final isCorrectDirection = relative.abs() < 3 || (360 - relative).abs() < 3;
 
-    // Yeni doğru yöne girdiğinde ses ve titreşim
+    // Trigger feedback on entering correct alignment.
     if (isCorrectDirection && !_wasCorrectDirection) {
       _playDirectionFeedback();
     }
@@ -139,9 +139,9 @@ class _KibleSayfaState extends State<KibleSayfa> {
     _wasCorrectDirection = isCorrectDirection;
   }
 
-  /// Doğru yönde olunca ses çal ve titret
+  /// Play sound and vibrate when aligned.
   Future<void> _playDirectionFeedback() async {
-    // Rate limiting - en az 2 saniye arayla çalsın
+    // Rate limit: at least 2 seconds between alerts.
     final now = DateTime.now();
     if (_lastFeedbackTime != null &&
         now.difference(_lastFeedbackTime!).inMilliseconds < 2000) {
@@ -150,13 +150,13 @@ class _KibleSayfaState extends State<KibleSayfa> {
     _lastFeedbackTime = now;
 
     try {
-      // Güçlü titreşim pattern'i
+      // Strong vibration pattern.
       await VibrationService.vibratePattern([0, 150, 100, 150, 100, 200]);
 
-      // Ses efekti
+      // Sound effect.
       await _audioPlayer?.play(AssetSource('sounds/ding_dong.mp3'));
     } catch (e) {
-      debugPrint('⚠️ Kıble geri bildirim hatası: $e');
+      debugPrint('⚠️ Qibla feedback error: $e');
     }
   }
 
@@ -173,18 +173,18 @@ class _KibleSayfaState extends State<KibleSayfa> {
     });
 
     try {
-      // Konum izni kontrolü
+      // Check location permission.
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
           setState(() {
             _hata =
-                _languageService['location_permission_denied'] ??
-                'Konum izni reddedildi';
+              _languageService['location_permission_denied'] ??
+              'Location permission denied';
             _hataAksiyon = Geolocator.openAppSettings;
             _hataAksiyonLabel =
-                _languageService['go_to_settings'] ?? 'Ayarlara Git';
+              _languageService['go_to_settings'] ?? 'Go to Settings';
             _yukleniyor = false;
           });
           return;
@@ -193,52 +193,52 @@ class _KibleSayfaState extends State<KibleSayfa> {
 
       if (permission == LocationPermission.deniedForever) {
         setState(() {
-          _hata =
+            _hata =
               _languageService['location_permission_denied_forever'] ??
-              'Konum izni kalıcı olarak reddedildi. Ayarlardan izin verin.';
+              'Location permission permanently denied. Grant it in settings.';
           _hataAksiyon = Geolocator.openAppSettings;
-          _hataAksiyonLabel =
-              _languageService['go_to_settings'] ?? 'Ayarlara Git';
+            _hataAksiyonLabel =
+              _languageService['go_to_settings'] ?? 'Go to Settings';
           _yukleniyor = false;
         });
         return;
       }
 
-      // Konum servisinin açık olup olmadığını kontrol et
+      // Check whether location services are enabled.
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         setState(() {
-          _hata =
+            _hata =
               _languageService['location_service_disabled'] ??
-              'Konum servisi kapalı. Lütfen açın.';
+              'Location services are disabled. Please enable them.';
           _hataAksiyon = Geolocator.openLocationSettings;
-          _hataAksiyonLabel =
-              _languageService['location_settings'] ?? 'Konum Ayarları';
+            _hataAksiyonLabel =
+              _languageService['location_settings'] ?? 'Location Settings';
           _yukleniyor = false;
         });
         return;
       }
 
-      // Önce son bilinen konumu al (hızlı başlangıç için)
+      // Get last known location first (fast start).
       Position? lastKnown = await Geolocator.getLastKnownPosition();
       Position? position;
 
       try {
-        // Konum al (30 saniye timeout)
+        // Request location (30s timeout).
         position = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high,
           timeLimit: const Duration(seconds: 30),
         );
       } catch (e) {
-        // getCurrentPosition başarısızsa son bilinen konumu kullan
+        // Use last known location when getCurrentPosition fails.
         if (lastKnown != null) {
           position = lastKnown;
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  _languageService['last_known_location_used'] ??
-                      'Canlı konum alınamadı, son bilinen konum kullanıldı.',
+                    _languageService['last_known_location_used'] ??
+                      'Live location unavailable, using last known location.',
                 ),
                 backgroundColor: Colors.orange,
               ),
@@ -247,17 +247,18 @@ class _KibleSayfaState extends State<KibleSayfa> {
         } else {
           setState(() {
             _hata =
-                '${_languageService['location_error_gps'] ?? 'Konum alınamadı. Lütfen GPS\'i açık alanda tekrar deneyin.'}\n${_languageService['error'] ?? 'Hata'}: $e';
+              '${_languageService['location_error_gps'] ?? 'Location unavailable. Please try again with GPS in an open area.'}\n${_languageService['error'] ?? 'Error'}: $e';
             _hataAksiyon = _konumuAl;
-            _hataAksiyonLabel = _languageService['try_again'] ?? 'Tekrar Dene';
+            _hataAksiyonLabel =
+              _languageService['try_again'] ?? 'Try Again';
             _yukleniyor = false;
           });
           return;
         }
       }
 
-      // Position artık null olamaz (ya getCurrentPosition ya da lastKnown)
-      // Kıble açısını hesapla
+      // Position is not null now (getCurrentPosition or lastKnown).
+      // Calculate qibla angle.
       final kibleAcisi = _kibleHesapla(position.latitude, position.longitude);
 
       final declination = _hesaplaManyetikSapma(
@@ -275,22 +276,22 @@ class _KibleSayfaState extends State<KibleSayfa> {
     } catch (e) {
       setState(() {
         _hata =
-            '${_languageService['location_error'] ?? 'Konum alınamadı'}: $e';
+          '${_languageService['location_error'] ?? 'Location error'}: $e';
         _hataAksiyon = _konumuAl;
-        _hataAksiyonLabel = _languageService['try_again'] ?? 'Tekrar Dene';
+        _hataAksiyonLabel = _languageService['try_again'] ?? 'Try Again';
         _yukleniyor = false;
       });
     }
   }
 
   double _kibleHesapla(double enlem, double boylam) {
-    // Dereceyi radyana çevir
+    // Convert degrees to radians.
     final lat1 = _toRadians(enlem);
     final lon1 = _toRadians(boylam);
     final lat2 = _toRadians(kabeEnlem);
     final lon2 = _toRadians(kabeBoylam);
 
-    // Standart bearing formülü (Great Circle)
+    // Standard bearing formula (great circle).
     final dLon = lon2 - lon1;
 
     final y = math.sin(dLon) * math.cos(lat2);
@@ -300,7 +301,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
 
     double derece = _toDegrees(math.atan2(y, x));
 
-    // 0-360 aralığına normalize et
+    // Normalize to the 0-360 range.
     derece = (derece + 360) % 360;
 
     return derece;
@@ -339,7 +340,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
       backgroundColor: renkler.arkaPlan,
       appBar: AppBar(
         title: Text(
-          _languageService['qibla_direction'] ?? 'Kıble Yönü',
+          _languageService['qibla_direction'] ?? 'Qibla Direction',
           style: TextStyle(color: renkler.yaziPrimary),
         ),
         backgroundColor: Colors.transparent,
@@ -349,12 +350,12 @@ class _KibleSayfaState extends State<KibleSayfa> {
           IconButton(
             icon: const Icon(Icons.palette_outlined),
             onPressed: _pusulaStiliSec,
-            tooltip: _languageService['compass_style'] ?? 'Pusula Stili',
+            tooltip: _languageService['compass_style'] ?? 'Compass Style',
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _konumuAl,
-            tooltip: _languageService['refresh_location'] ?? 'Konumu yenile',
+            tooltip: _languageService['refresh_location'] ?? 'Refresh Location',
           ),
         ],
       ),
@@ -366,7 +367,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
                   CircularProgressIndicator(color: renkler.vurgu),
                   const SizedBox(height: 16),
                   Text(
-                    _languageService['getting_location'] ?? 'Konum alınıyor...',
+                    _languageService['getting_location'] ?? 'Getting location...',
                     style: TextStyle(
                       color: renkler.yaziSecondary,
                       fontSize: 16,
@@ -454,7 +455,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
     );
   }
 
-  /// Seçili pusula stiline göre uygun pusulayı döndürür
+  /// Returns the compass widget for the selected style.
   Widget _seciliPusula(
     TemaRenkleri renkler,
     double? relative,
@@ -476,7 +477,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
     }
   }
 
-  /// Pusula stili seçme dialog'u
+  /// Compass style selection dialog.
   void _pusulaStiliSec() {
     final renkler = _temaService.renkler;
 
@@ -498,7 +499,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
                   Icon(Icons.palette, color: renkler.vurgu),
                   const SizedBox(width: 12),
                   Text(
-                    _languageService['compass_style'] ?? 'Pusula Stili',
+                    _languageService['compass_style'] ?? 'Compass Style',
                     style: TextStyle(
                       color: renkler.yaziPrimary,
                       fontSize: 20,
@@ -605,7 +606,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
         };
       case PusulaStili.klasik:
         return {
-          'name': _languageService['compass_classic'] ?? 'Klasik',
+          'name': _languageService['compass_classic'] ?? 'Classic',
           'icon': Icons.navigation,
           'iconColor': const Color(0xFF8B4513),
           'borderColor': const Color(0xFFD4A574),
@@ -615,7 +616,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
         };
       case PusulaStili.islami:
         return {
-          'name': _languageService['compass_islamic'] ?? 'İslami',
+          'name': _languageService['compass_islamic'] ?? 'Islamic',
           'icon': Icons.mosque,
           'iconColor': Colors.white,
           'borderColor': const Color(0xFF00695C),
@@ -634,7 +635,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
         };
       case PusulaStili.luks:
         return {
-          'name': _languageService['compass_luxury'] ?? 'Lüks',
+          'name': _languageService['compass_luxury'] ?? 'Luxury',
           'icon': Icons.star,
           'iconColor': Colors.white,
           'borderColor': const Color(0xFFFFD700),
@@ -644,7 +645,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
         };
       case PusulaStili.dijital:
         return {
-          'name': _languageService['compass_digital'] ?? 'Dijital',
+          'name': _languageService['compass_digital'] ?? 'Digital',
           'icon': Icons.memory,
           'iconColor': const Color(0xFF00FF00),
           'borderColor': const Color(0xFF00FF00),
@@ -672,7 +673,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
               Icon(Icons.location_on, color: renkler.vurgu, size: 20),
               const SizedBox(width: 8),
               Text(
-                _languageService['current_location'] ?? 'Mevcut Konum',
+                _languageService['current_location'] ?? 'Current Location',
                 style: TextStyle(
                   color: renkler.yaziPrimary,
                   fontSize: 16,
@@ -684,12 +685,12 @@ class _KibleSayfaState extends State<KibleSayfa> {
           const SizedBox(height: 12),
           if (_konum != null) ...[
             Text(
-              '${_languageService['latitude'] ?? 'Enlem'}: ${_konum!.latitude.toStringAsFixed(4)}°',
+              '${_languageService['latitude'] ?? 'Latitude'}: ${_konum!.latitude.toStringAsFixed(4)}°',
               style: TextStyle(color: renkler.yaziSecondary, fontSize: 14),
             ),
             const SizedBox(height: 4),
             Text(
-              '${_languageService['longitude'] ?? 'Boylam'}: ${_konum!.longitude.toStringAsFixed(4)}°',
+              '${_languageService['longitude'] ?? 'Longitude'}: ${_konum!.longitude.toStringAsFixed(4)}°',
               style: TextStyle(color: renkler.yaziSecondary, fontSize: 14),
             ),
           ],
@@ -707,7 +708,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
         ? '--'
         : '${trueHeading.toStringAsFixed(0)}° ${_getYonKisaltma(trueHeading)}';
     final isCorrectDirection = relativeAngle != null && relativeAngle.abs() < 3;
-    // Kabe simgesi için açı (kıble açısı - cihaz yönü)
+    // Angle for the Kaaba marker (qibla angle - device heading).
     final double kabeAngle = (_kibleDerece ?? 0) - (trueHeading ?? 0);
 
     return Container(
@@ -735,7 +736,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
             child: Stack(
               alignment: Alignment.center,
               children: [
-                // Pusula halkası cihaz yönüne göre döner
+                // The compass ring rotates with the device heading.
                 AnimatedRotation(
                   turns: -(trueHeading ?? 0) / 360,
                   duration: const Duration(milliseconds: 300),
@@ -751,7 +752,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
                     ),
                   ),
                 ),
-                // Kabe simgesi pusula üzerinde kıble açısına göre döner
+                // Kaaba marker rotates to the qibla angle on the compass.
                 Transform.rotate(
                   angle: _toRadians(kabeAngle),
                   child: Align(
@@ -762,7 +763,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
                         const Text('🕋', style: TextStyle(fontSize: 38)),
                         const SizedBox(height: 4),
                         Text(
-                          _languageService['kabe'] ?? 'Kabe',
+                          _languageService['kabe'] ?? 'Kaaba',
                           style: const TextStyle(
                             color: Colors.brown,
                             fontWeight: FontWeight.bold,
@@ -772,10 +773,10 @@ class _KibleSayfaState extends State<KibleSayfa> {
                     ),
                   ),
                 ),
-                // Ok sabit, her zaman yukarıyı gösterir
+                // The arrow is fixed and always points up.
                 _northTriangle(),
                 _qiblaArrow(),
-                // Doğru yön efekti
+                // Correct-direction effect.
                 if (isCorrectDirection)
                   Positioned(
                     bottom: 32,
@@ -806,8 +807,8 @@ class _KibleSayfaState extends State<KibleSayfa> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              _languageService['correct_direction'] ??
-                                  'Doğru Yön',
+                                _languageService['correct_direction'] ??
+                                  'Correct Direction',
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
@@ -819,7 +820,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
                       ),
                     ),
                   ),
-                // Kalibrasyon göstergesi
+                // Calibration indicator.
                 if (relativeAngle == null)
                   Positioned(
                     bottom: 60,
@@ -835,8 +836,8 @@ class _KibleSayfaState extends State<KibleSayfa> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          _languageService['calibrating_compass'] ??
-                              'Pusula kalibre ediliyor...',
+                            _languageService['calibrating_compass'] ??
+                              'Calibrating compass...',
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.8),
                             fontSize: 12,
@@ -853,7 +854,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
     );
   }
 
-  /// Klasik Pusula - Vintage/Antika tarzı
+  /// Classic compass - vintage/antique style.
   Widget _klasikPusula(
     TemaRenkleri renkler,
     double? relativeAngle,
@@ -917,9 +918,9 @@ class _KibleSayfaState extends State<KibleSayfa> {
                     ),
                   ),
                 ),
-                // Yön oku - kullanıcının baktığı yön
+                // Direction arrow for the user's heading.
                 _directionArrow(color: const Color(0xFF8B4513)),
-                // Merkez klasik iğne
+                // Center classic needle.
                 Container(
                   width: 12,
                   height: 12,
@@ -941,7 +942,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
     );
   }
 
-  /// İslami Pusula - Yeşil tonlar ve motifler
+  /// Islamic compass - green tones and motifs.
   Widget _islamiPusula(
     TemaRenkleri renkler,
     double? relativeAngle,
@@ -1001,9 +1002,9 @@ class _KibleSayfaState extends State<KibleSayfa> {
                     ),
                   ),
                 ),
-                // Yön oku - kullanıcının baktığı yön
+                // Direction arrow for the user's heading.
                 _directionArrow(color: const Color(0xFF00695C)),
-                // Merkez hilal
+                // Center crescent.
                 Container(
                   width: 40,
                   height: 40,
@@ -1032,7 +1033,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
     );
   }
 
-  /// Minimal Pusula - Sade ve temiz
+  /// Minimal compass - clean and simple.
   Widget _minimalPusula(
     TemaRenkleri renkler,
     double? relativeAngle,
@@ -1085,7 +1086,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
                     ),
                   ),
                 ),
-                // Yön oku - kullanıcının baktığı yön
+                // Direction arrow for the user's heading.
                 _directionArrow(color: Colors.grey.shade700),
                 if (isCorrectDirection)
                   _correctDirectionBadge(color: Colors.grey.shade600),
@@ -1097,7 +1098,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
     );
   }
 
-  /// Lüks Pusula - Altın premium tasarım
+  /// Luxury compass - premium gold design.
   Widget _luksPusula(
     TemaRenkleri renkler,
     double? relativeAngle,
@@ -1167,7 +1168,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
                     ),
                   ),
                 ),
-                // Merkez elmas
+                // Center diamond.
                 Container(
                   width: 20,
                   height: 20,
@@ -1178,7 +1179,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
                     ),
                   ),
                 ),
-                // Yön oku - kullanıcının baktığı yön
+                // Direction arrow for the user's heading.
                 _directionArrow(color: const Color(0xFFFFD700)),
                 if (isCorrectDirection)
                   _correctDirectionBadge(color: const Color(0xFFFFD700)),
@@ -1190,7 +1191,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
     );
   }
 
-  /// Dijital Pusula - Siber/Matrix tarzı
+  /// Digital compass - cyber/Matrix style.
   Widget _dijitalPusula(
     TemaRenkleri renkler,
     double? relativeAngle,
@@ -1207,7 +1208,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          // Dijital heading göstergesi
+          // Digital heading indicator.
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             decoration: BoxDecoration(
@@ -1285,7 +1286,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
                     ),
                   ),
                 ),
-                // Yön oku - kullanıcının baktığı yön
+                // Direction arrow for the user's heading.
                 _directionArrow(color: const Color(0xFF00FF00)),
                 if (isCorrectDirection)
                   _correctDirectionBadge(color: const Color(0xFF00FF00)),
@@ -1297,7 +1298,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
     );
   }
 
-  /// Doğru yön badge'i - tüm pusulalar için ortak
+  /// Correct-direction badge shared across compasses.
   Widget _correctDirectionBadge({Color color = Colors.green}) {
     return Positioned(
       bottom: 32,
@@ -1319,7 +1320,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
               const Icon(Icons.check_circle, color: Colors.white, size: 20),
               const SizedBox(width: 8),
               Text(
-                _languageService['correct_direction'] ?? 'Doğru Yön',
+                _languageService['correct_direction'] ?? 'Correct Direction',
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -1346,7 +1347,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
     );
   }
 
-  /// Yön oku - kullanıcının baktığı yönü gösterir
+  /// Direction arrow that shows the user's heading.
   Widget _directionArrow({required Color color}) {
     return Positioned(
       top: 0,
@@ -1366,7 +1367,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
             ),
             const SizedBox(height: 2),
             Text(
-              _languageService['your_direction'] ?? 'Yönünüz',
+              _languageService['your_direction'] ?? 'Your Direction',
               style: TextStyle(
                 color: color,
                 fontSize: 10,
@@ -1432,7 +1433,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
       child: Column(
         children: [
           Text(
-            _languageService['qibla_angle'] ?? 'Kıble Açısı',
+            _languageService['qibla_angle'] ?? 'Qibla Angle',
             style: TextStyle(color: renkler.yaziSecondary, fontSize: 14),
           ),
           const SizedBox(height: 8),
@@ -1451,7 +1452,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
           ),
           const SizedBox(height: 8),
           Text(
-            '${_languageService['compass_heading'] ?? 'Pusula'}: $headingText',
+            '${_languageService['compass_heading'] ?? 'Compass'}: $headingText',
             style: TextStyle(color: renkler.yaziSecondary, fontSize: 12),
           ),
           const SizedBox(height: 4),
@@ -1478,8 +1479,8 @@ class _KibleSayfaState extends State<KibleSayfa> {
             ),
             const SizedBox(height: 20),
             Text(
-              _languageService['compass_not_found'] ??
-                  'Cihazda pusula sensörü bulunamadı.',
+                _languageService['compass_not_found'] ??
+                  'Compass sensor not found on this device.',
               textAlign: TextAlign.center,
               style: TextStyle(color: renkler.yaziPrimary, fontSize: 16),
             ),
@@ -1491,27 +1492,27 @@ class _KibleSayfaState extends State<KibleSayfa> {
 
   String _getYonAdi(double derece) {
     if (derece >= 337.5 || derece < 22.5) {
-      return _languageService['direction_north'] ?? 'Kuzey';
+      return _languageService['direction_north'] ?? 'North';
     }
     if (derece >= 22.5 && derece < 67.5) {
-      return _languageService['direction_northeast'] ?? 'Kuzeydoğu';
+      return _languageService['direction_northeast'] ?? 'Northeast';
     }
     if (derece >= 67.5 && derece < 112.5) {
-      return _languageService['direction_east'] ?? 'Doğu';
+      return _languageService['direction_east'] ?? 'East';
     }
     if (derece >= 112.5 && derece < 157.5) {
-      return _languageService['direction_southeast'] ?? 'Güneydoğu';
+      return _languageService['direction_southeast'] ?? 'Southeast';
     }
     if (derece >= 157.5 && derece < 202.5) {
-      return _languageService['direction_south'] ?? 'Güney';
+      return _languageService['direction_south'] ?? 'South';
     }
     if (derece >= 202.5 && derece < 247.5) {
-      return _languageService['direction_southwest'] ?? 'Güneybatı';
+      return _languageService['direction_southwest'] ?? 'Southwest';
     }
     if (derece >= 247.5 && derece < 292.5) {
-      return _languageService['direction_west'] ?? 'Batı';
+      return _languageService['direction_west'] ?? 'West';
     }
-    return _languageService['direction_northwest'] ?? 'Kuzeybatı';
+    return _languageService['direction_northwest'] ?? 'Northwest';
   }
 
   Widget _bilgiNotu(TemaRenkleri renkler, bool hasHeading) {
@@ -1531,9 +1532,9 @@ class _KibleSayfaState extends State<KibleSayfa> {
             child: Text(
               hasHeading
                   ? (_languageService['qibla_info_note'] ??
-                        'Telefonunuzu yatay tutun. Yeşil Kabe ibresi kıble yönünü gösterir. Kalibrasyon için telefonu 8 çizerek hareket ettirin.')
+                    'Hold your phone horizontally. The green Kaaba needle shows the qibla direction. Move the phone in a figure-8 to calibrate.')
                   : (_languageService['compass_no_data'] ??
-                        'Pusula verisi alınamıyor. Cihazınızın sensör desteğini kontrol edin.'),
+                    'Compass data is unavailable. Check your device sensor support.'),
               style: TextStyle(
                 color: renkler.yaziSecondary,
                 fontSize: 13,
@@ -1634,7 +1635,7 @@ class _CompassDialPainter extends CustomPainter {
       textPainter.paint(canvas, offset);
     }
 
-    // Yön harfleri - dil desteği ile
+    // Direction letters with locale support.
     for (int i = 0; i < 4; i++) {
       final angle = (i * 90 - 90) * math.pi / 180;
       final textPainter = TextPainter(
@@ -1642,7 +1643,7 @@ class _CompassDialPainter extends CustomPainter {
           text: directions[i],
           style: TextStyle(
             color:
-                (i == 0 || i == 2) // N ve S için kırmızı
+                (i == 0 || i == 2) // Red for N and S.
                 ? const Color(0xFFE4504D)
                 : Colors.white,
             fontSize: 16,
@@ -1665,7 +1666,7 @@ class _CompassDialPainter extends CustomPainter {
   }
 }
 
-/// Klasik Pusula Painter - Vintage tarzı
+/// Classic compass painter - vintage style.
 class _KlasikCompassPainter extends CustomPainter {
   final List<String> directions;
 
@@ -1676,14 +1677,14 @@ class _KlasikCompassPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2;
 
-    // Dış çerçeve - altın rengi
+    // Outer ring - gold tone.
     final outerRing = Paint()
       ..color = const Color(0xFFD4A574)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 4;
     canvas.drawCircle(center, radius - 2, outerRing);
 
-    // İç arka plan gradient
+    // Inner background gradient.
     final bgPaint = Paint()
       ..shader = RadialGradient(
         colors: [
@@ -1694,7 +1695,7 @@ class _KlasikCompassPainter extends CustomPainter {
       ).createShader(Rect.fromCircle(center: center, radius: radius));
     canvas.drawCircle(center, radius - 6, bgPaint);
 
-    // Tick çizgileri
+    // Tick marks.
     final tickPaint = Paint()
       ..color = const Color(0xFF5D4E37)
       ..strokeWidth = 1.5
@@ -1715,9 +1716,9 @@ class _KlasikCompassPainter extends CustomPainter {
       canvas.drawLine(inner, outer, tickPaint);
     }
 
-    // Yön harfleri - vintage stil
+    // Direction letters - vintage style.
     final dirColors = [
-      const Color(0xFF8B0000), // N - Koyu kırmızı
+      const Color(0xFF8B0000), // N - dark red.
       const Color(0xFF5D4E37), // E
       const Color(0xFF5D4E37), // S
       const Color(0xFF5D4E37), // W
@@ -1749,7 +1750,7 @@ class _KlasikCompassPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-/// İslami Pusula Painter - Yeşil tonlar ve İslami motifler
+/// Islamic compass painter - green tones and motifs.
 class _IslamiCompassPainter extends CustomPainter {
   final List<String> directions;
 
@@ -1760,21 +1761,21 @@ class _IslamiCompassPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2;
 
-    // Dış çerçeve - zümrüt yeşili
+    // Outer ring - emerald green.
     final outerRing = Paint()
       ..color = const Color(0xFF00695C)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 5;
     canvas.drawCircle(center, radius - 2, outerRing);
 
-    // İkinci çerçeve - altın
+    // Second ring - gold.
     final goldRing = Paint()
       ..color = const Color(0xFFD4AF37)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
     canvas.drawCircle(center, radius - 8, goldRing);
 
-    // Arka plan gradient
+    // Background gradient.
     final bgPaint = Paint()
       ..shader = RadialGradient(
         colors: [
@@ -1785,7 +1786,7 @@ class _IslamiCompassPainter extends CustomPainter {
       ).createShader(Rect.fromCircle(center: center, radius: radius));
     canvas.drawCircle(center, radius - 12, bgPaint);
 
-    // İslami geometrik desenler (8 köşeli yıldız efekti)
+    // Islamic geometric pattern (8-point star effect).
     final patternPaint = Paint()
       ..color = const Color(0xFFD4AF37).withOpacity(0.3)
       ..style = PaintingStyle.stroke
@@ -1804,7 +1805,7 @@ class _IslamiCompassPainter extends CustomPainter {
       canvas.drawLine(start, end, patternPaint);
     }
 
-    // Tick çizgileri
+    // Tick marks.
     final tickPaint = Paint()
       ..color = const Color(0xFFD4AF37)
       ..strokeWidth = 1.5
@@ -1825,7 +1826,7 @@ class _IslamiCompassPainter extends CustomPainter {
       canvas.drawLine(inner, outer, tickPaint);
     }
 
-    // Yön harfleri
+    // Direction letters.
     for (int i = 0; i < 4; i++) {
       final angle = (i * 90 - 90) * math.pi / 180;
       final textPainter = TextPainter(
@@ -1851,7 +1852,7 @@ class _IslamiCompassPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-/// Minimal Pusula Painter - Sade ve temiz
+/// Minimal compass painter - clean and simple.
 class _MinimalCompassPainter extends CustomPainter {
   final List<String> directions;
 
@@ -1862,18 +1863,18 @@ class _MinimalCompassPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2;
 
-    // Arka plan - beyaz
+    // Background - white.
     final bgPaint = Paint()..color = Colors.white;
     canvas.drawCircle(center, radius - 2, bgPaint);
 
-    // İnce çerçeve
+    // Thin ring.
     final ringPaint = Paint()
       ..color = Colors.grey.shade300
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
     canvas.drawCircle(center, radius - 2, ringPaint);
 
-    // Sadece ana yön çizgileri
+    // Main cardinal lines only.
     final linePaint = Paint()
       ..color = Colors.grey.shade400
       ..strokeWidth = 1;
@@ -1891,7 +1892,7 @@ class _MinimalCompassPainter extends CustomPainter {
       canvas.drawLine(inner, outer, linePaint);
     }
 
-    // Yön harfleri - minimal
+    // Direction letters - minimal.
     for (int i = 0; i < 4; i++) {
       final angle = (i * 90 - 90) * math.pi / 180;
       final textPainter = TextPainter(
@@ -1912,7 +1913,7 @@ class _MinimalCompassPainter extends CustomPainter {
       textPainter.paint(canvas, offset);
     }
 
-    // Merkez nokta
+    // Center dot.
     canvas.drawCircle(center, 4, Paint()..color = Colors.grey.shade400);
   }
 
@@ -1920,7 +1921,7 @@ class _MinimalCompassPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-/// Lüks Pusula Painter - Altın ve premium görünüm
+/// Luxury compass painter - gold/premium look.
 class _LuksCompassPainter extends CustomPainter {
   final List<String> directions;
 
@@ -1931,7 +1932,7 @@ class _LuksCompassPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2;
 
-    // Dış altın çerçeve
+    // Outer gold ring.
     final goldGradient = Paint()
       ..shader = SweepGradient(
         colors: [
@@ -1944,7 +1945,7 @@ class _LuksCompassPainter extends CustomPainter {
       ).createShader(Rect.fromCircle(center: center, radius: radius));
     canvas.drawCircle(center, radius - 2, goldGradient);
 
-    // İç koyu arka plan
+    // Inner dark background.
     final bgPaint = Paint()
       ..shader = RadialGradient(
         colors: [
@@ -1955,7 +1956,7 @@ class _LuksCompassPainter extends CustomPainter {
       ).createShader(Rect.fromCircle(center: center, radius: radius - 8));
     canvas.drawCircle(center, radius - 8, bgPaint);
 
-    // Elmas şekilli tickler
+    // Diamond-shaped tick marks.
     final diamondPaint = Paint()..color = const Color(0xFFFFD700);
     for (int i = 0; i < 360; i += 30) {
       final angle = (i - 90) * math.pi / 180;
@@ -1974,7 +1975,7 @@ class _LuksCompassPainter extends CustomPainter {
       canvas.drawPath(path, diamondPaint);
     }
 
-    // Yön harfleri - lüks altın
+    // Direction letters - luxury gold.
     for (int i = 0; i < 4; i++) {
       final angle = (i * 90 - 90) * math.pi / 180;
       final textPainter = TextPainter(
@@ -2003,7 +2004,7 @@ class _LuksCompassPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-/// Dijital Pusula Painter - Siber/Matrix tarzı
+/// Digital compass painter - cyber/Matrix style.
 class _DijitalCompassPainter extends CustomPainter {
   final List<String> directions;
 
@@ -2014,18 +2015,18 @@ class _DijitalCompassPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2;
 
-    // Arka plan - koyu
+    // Background - dark.
     final bgPaint = Paint()..color = const Color(0xFF0D0D0D);
     canvas.drawCircle(center, radius - 2, bgPaint);
 
-    // Neon yeşil çerçeve
+    // Neon green ring.
     final ringPaint = Paint()
       ..color = const Color(0xFF00FF00)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
     canvas.drawCircle(center, radius - 4, ringPaint);
 
-    // İç çerçeve
+    // Inner rings.
     final innerRing = Paint()
       ..color = const Color(0xFF00FF00).withOpacity(0.3)
       ..style = PaintingStyle.stroke
@@ -2033,7 +2034,7 @@ class _DijitalCompassPainter extends CustomPainter {
     canvas.drawCircle(center, radius - 30, innerRing);
     canvas.drawCircle(center, radius - 60, innerRing);
 
-    // Dijital tickler
+    // Digital tick marks.
     final tickPaint = Paint()
       ..color = const Color(0xFF00FF00)
       ..strokeWidth = 1.5
@@ -2058,7 +2059,7 @@ class _DijitalCompassPainter extends CustomPainter {
       canvas.drawLine(inner, outer, tickPaint..color = color);
     }
 
-    // Derece numaraları - dijital font stil
+    // Degree labels - digital font style.
     for (int i = 0; i < 360; i += 30) {
       final angle = (i - 90) * math.pi / 180;
       final textPainter = TextPainter(
@@ -2080,7 +2081,7 @@ class _DijitalCompassPainter extends CustomPainter {
       textPainter.paint(canvas, offset);
     }
 
-    // Yön harfleri - neon
+    // Direction letters - neon.
     for (int i = 0; i < 4; i++) {
       final angle = (i * 90 - 90) * math.pi / 180;
       final textPainter = TextPainter(
@@ -2110,7 +2111,7 @@ class _DijitalCompassPainter extends CustomPainter {
       textPainter.paint(canvas, offset);
     }
 
-    // Merkez crosshair
+    // Center crosshair.
     final crossPaint = Paint()
       ..color = const Color(0xFF00FF00)
       ..strokeWidth = 1;

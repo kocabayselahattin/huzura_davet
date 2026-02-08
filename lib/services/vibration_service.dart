@@ -2,87 +2,87 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
 
-/// Titreşim servisini yöneten sınıf
+/// Service that manages vibration
 class VibrationService {
   static const MethodChannel _channel = MethodChannel('huzur_vakti/vibration');
 
-  /// Hafif titreşim (her tıklamada)
+  /// Light vibration (on each tap)
   static Future<void> light() async {
     if (Platform.isAndroid) {
-      // Android'de doğrudan native titreşim kullan (daha güvenilir)
+      // Use native vibration on Android (more reliable)
       try {
         await _channel.invokeMethod('vibrate', {'duration': 25});
         return;
       } catch (e) {
-        debugPrint('⚠️ Native hafif titreşim hatası: $e');
+        debugPrint('⚠️ Native light vibration error: $e');
       }
     }
-    // iOS veya hata durumunda HapticFeedback dene
+    // Fallback to HapticFeedback on iOS or errors
     try {
       await HapticFeedback.lightImpact();
     } catch (e) {
-      debugPrint('⚠️ HapticFeedback hatası: $e');
+      debugPrint('⚠️ HapticFeedback error: $e');
     }
   }
 
-  /// Orta şiddette titreşim (normal tıklama)
+  /// Medium vibration (normal tap)
   static Future<void> medium() async {
     if (Platform.isAndroid) {
       try {
         await _channel.invokeMethod('vibrate', {'duration': 50});
         return;
       } catch (e) {
-        debugPrint('⚠️ Native orta titreşim hatası: $e');
+        debugPrint('⚠️ Native medium vibration error: $e');
       }
     }
     try {
       await HapticFeedback.mediumImpact();
     } catch (e) {
-      debugPrint('⚠️ HapticFeedback hatası: $e');
+      debugPrint('⚠️ HapticFeedback error: $e');
     }
   }
 
-  /// Güçlü titreşim (tur tamamlama, sıfırlama)
+  /// Heavy vibration (lap complete, reset)
   static Future<void> heavy() async {
     if (Platform.isAndroid) {
       try {
         await _channel.invokeMethod('vibrate', {'duration': 80});
         return;
       } catch (e) {
-        debugPrint('⚠️ Native güçlü titreşim hatası: $e');
+        debugPrint('⚠️ Native heavy vibration error: $e');
       }
     }
     try {
       await HapticFeedback.heavyImpact();
     } catch (e) {
-      debugPrint('⚠️ HapticFeedback hatası: $e');
+      debugPrint('⚠️ HapticFeedback error: $e');
     }
   }
 
-  /// Seçim değişikliği titreşimi
+  /// Selection change vibration
   static Future<void> selection() async {
     if (Platform.isAndroid) {
       try {
         await _channel.invokeMethod('vibrate', {'duration': 15});
         return;
       } catch (e) {
-        debugPrint('⚠️ Native seçim titreşimi hatası: $e');
+        debugPrint('⚠️ Native selection vibration error: $e');
       }
     }
     try {
       await HapticFeedback.selectionClick();
     } catch (e) {
-      debugPrint('⚠️ Seçim titreşimi hatası: $e');
+      debugPrint('⚠️ Selection vibration error: $e');
     }
   }
 
-  /// Özel süreli titreşim (Android native)
+  /// Custom duration vibration (Android native)
   static Future<void> vibrate(int durationMs) async {
     if (Platform.isAndroid) {
       try {
         await _channel.invokeMethod('vibrate', {'duration': durationMs});
       } catch (e) {
-        debugPrint('⚠️ Native titreşim hatası: $e');
+        debugPrint('⚠️ Native vibration error: $e');
         await HapticFeedback.selectionClick();
       }
     } else {
@@ -90,21 +90,21 @@ class VibrationService {
     }
   }
 
-  /// Pattern titreşim (Android native)
+  /// Pattern vibration (Android native)
   static Future<void> vibratePattern(List<int> pattern) async {
     if (Platform.isAndroid) {
       try {
         await _channel.invokeMethod('vibratePattern', {'pattern': pattern});
       } catch (e) {
-        debugPrint('⚠️ Pattern titreşim hatası: $e');
+        debugPrint('⚠️ Pattern vibration error: $e');
       }
     }
   }
 
-  /// Başarı titreşimi (2 kez kesik kesik)
+  /// Success vibration (two short pulses)
   static Future<void> success() async {
     if (Platform.isAndroid) {
-      // 2 kez kesik kesik titreşim: bekleme-titreşim-bekleme-titreşim
+      // Two short pulses: wait-vibrate-wait-vibrate
       await vibratePattern([0, 80, 100, 80]);
     } else {
       await HapticFeedback.heavyImpact();

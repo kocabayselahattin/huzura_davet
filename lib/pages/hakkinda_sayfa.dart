@@ -47,7 +47,7 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
             iconTheme: const IconThemeData(color: Colors.white),
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
-                _languageService['about'] ?? 'Hakkında',
+                _languageService['about'] ?? '',
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -79,40 +79,38 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
             ),
           ),
 
-          // İçerik
+          // Content
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Uygulama Logosu ve Adı
+                  // App logo and name
                   _uygulamaBilgisi(renkler),
                   const SizedBox(height: 24),
 
-                  // Açıklama
+                  // Description
                   _baslikVeMetin(
-                    _languageService['what_is_huzur_vakti'] ??
-                        'Huzur Vakti Nedir?',
-                    _languageService['about_desc'] ??
-                        'Huzur Vakti; Diyanet İşleri Başkanlığı verileriyle konuma göre namaz vakitlerini gösterir, bildirim ve alarm ile hatırlatma yapar. Kıble pusulası ve yakın camiler, imsakiye ve özel gün bildirimleri, zikir ve içerik bölümleri (Kur\'an, hadis, dualar, farzlar, Esmaül Hüsna) sunar. Otomatik sessize alma, çoklu konum, tema/dil seçenekleri ve ana ekran sayaç & widget desteği içerir.',
+                    _languageService['what_is_huzur_vakti'] ?? '',
+                    _languageService['about_desc'] ?? '',
                     renkler,
                   ),
                   const SizedBox(height: 24),
 
-                  // Özellikler
+                  // Features
                   _ozelliklerBolumu(renkler),
                   const SizedBox(height: 24),
 
-                  // Önemli Bilgiler
+                  // Important notes
                   _onemliNotlar(renkler),
                   const SizedBox(height: 24),
 
-                  // İletişim
+                  // Contact
                   _iletisimBolumu(renkler),
                   const SizedBox(height: 24),
 
-                  // Versiyon ve Telif
+                  // Version and copyright
                   _altBilgi(renkler),
                 ],
               ),
@@ -158,7 +156,7 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
           ),
           const SizedBox(height: 16),
           Text(
-            _languageService['app_name'] ?? 'Huzur Vakti',
+            _languageService['app_name'] ?? '',
             style: TextStyle(
               color: renkler.yaziPrimary,
               fontSize: 28,
@@ -167,14 +165,13 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
           ),
           const SizedBox(height: 8),
           Text(
-            _languageService['prayer_times_assistant'] ??
-                'Namaz Vakitleri, bildirimler, alarm, kıble pusulası, yakın camiler, imsakiye, özel günler, zikirmatik, Kur\'an, hadis, dualar, Esmaül Hüsna, otomatik sessize alma, çoklu konum, tema/dil seçenekleri ve ana ekran sayaç & widget desteği ile kapsamlı bir ibadet asistanı.',
+            _languageService['prayer_times_assistant'] ?? '',
             style: TextStyle(color: renkler.yaziSecondary, fontSize: 14),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 4),
           Text(
-            '${_languageService['version'] ?? 'Versiyon'} 1.0.0+1',
+            '${_languageService['version'] ?? ''} 1.0.0+1',
             style: TextStyle(
               color: renkler.yaziSecondary.withValues(alpha: 0.7),
               fontSize: 12,
@@ -212,133 +209,117 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
 
   Widget _ozelliklerBolumu(TemaRenkleri renkler) {
     final ozellikler = [
-      // Ana Özellikler
+      // Core features
       {
         'ikon': Icons.access_time,
         'renk': Colors.blue,
-        'baslik': _languageService['feature_prayer_times'] ?? 'Namaz Vakitleri',
+        'baslik': _languageService['feature_prayer_times'] ?? '',
         'aciklama':
-            _languageService['feature_prayer_times_desc'] ??
-            'Diyanet verileriyle konuma göre günlük vakitler',
+          _languageService['feature_prayer_times_desc'] ?? '',
       },
       {
         'ikon': Icons.calendar_month,
         'renk': Colors.green,
-        'baslik': _languageService['feature_imsakiye'] ?? 'İmsakiye',
+        'baslik': _languageService['feature_imsakiye'] ?? '',
         'aciklama':
-            _languageService['feature_imsakiye_desc'] ??
-            'Aylık vakit tablosu ve güncelleme',
+          _languageService['feature_imsakiye_desc'] ?? '',
       },
       {
         'ikon': Icons.alarm,
         'renk': Colors.red,
         'baslik':
-            _languageService['feature_notifications'] ?? 'Bildirim ve Alarm',
+          _languageService['feature_notifications'] ?? '',
         'aciklama':
-            _languageService['feature_notifications_desc'] ??
-            'Erken hatırlatma, vaktinde alarm ve ses seçimi',
+          _languageService['feature_notifications_desc'] ?? '',
       },
       {
         'ikon': Icons.do_not_disturb_on,
         'renk': Colors.amber,
         'baslik':
-            _languageService['feature_auto_silent'] ?? 'Otomatik Sessiz Mod',
+          _languageService['feature_auto_silent'] ?? '',
         'aciklama':
-            _languageService['feature_auto_silent_desc'] ??
-            'Vakitlerde otomatik sessize alma',
+          _languageService['feature_auto_silent_desc'] ?? '',
       },
       {
         'ikon': Icons.explore,
         'renk': Colors.green,
-        'baslik': _languageService['feature_qibla'] ?? 'Kıble Pusulası',
+        'baslik': _languageService['feature_qibla'] ?? '',
         'aciklama':
-            _languageService['feature_qibla_desc'] ??
-            'GPS ve pusula ile Kıble yönü',
+          _languageService['feature_qibla_desc'] ?? '',
       },
       {
         'ikon': Icons.mosque,
         'renk': Colors.lightGreen,
         'baslik':
-            _languageService['feature_nearby_mosques'] ?? 'Yakındaki Camiler',
+          _languageService['feature_nearby_mosques'] ?? '',
         'aciklama':
-            _languageService['feature_nearby_mosques_desc'] ??
-            'Harita üzerinde çevredeki camiler',
+          _languageService['feature_nearby_mosques_desc'] ?? '',
       },
       {
         'ikon': Icons.menu_book,
         'renk': Colors.deepOrange,
-        'baslik': _languageService['feature_content'] ?? 'Dini İçerikler',
+        'baslik': _languageService['feature_content'] ?? '',
         'aciklama':
-            _languageService['feature_content_desc'] ??
-            'Kur\'an, hadis, dualar, farzlar, Esmaül Hüsna',
+          _languageService['feature_content_desc'] ?? '',
       },
       {
         'ikon': Icons.blur_circular,
         'renk': Colors.purple,
-        'baslik': _languageService['feature_dhikr'] ?? 'Zikir Matik',
+        'baslik': _languageService['feature_dhikr'] ?? '',
         'aciklama':
-            _languageService['feature_dhikr_desc'] ??
-            'Dijital tesbih ve zikir yönetimi',
+          _languageService['feature_dhikr_desc'] ?? '',
       },
       {
         'ikon': Icons.auto_awesome,
         'renk': Colors.indigo,
-        'baslik': _languageService['feature_special_days'] ?? 'Özel Günler',
+        'baslik': _languageService['feature_special_days'] ?? '',
         'aciklama':
-            _languageService['feature_special_days_desc'] ??
-            'Kandiller, bayramlar ve önemli günler',
+          _languageService['feature_special_days_desc'] ?? '',
       },
       {
         'ikon': Icons.date_range,
         'renk': Colors.deepOrange,
         'baslik':
-            _languageService['feature_dual_calendar'] ??
-            'Miladi & Hicri Takvim',
+          _languageService['feature_dual_calendar'] ?? '',
         'aciklama':
-            _languageService['feature_dual_calendar_desc'] ??
-            'Tarihler ve günün hicri bilgisi',
+          _languageService['feature_dual_calendar_desc'] ?? '',
       },
       {
         'ikon': Icons.palette,
         'renk': Colors.pinkAccent,
-        'baslik': _languageService['feature_themes'] ?? 'Tema Seçenekleri',
+        'baslik': _languageService['feature_themes'] ?? '',
         'aciklama':
-            _languageService['feature_themes_desc'] ??
-            'Uygulama teması ve görünüm seçenekleri',
+          _languageService['feature_themes_desc'] ?? '',
       },
       {
         'ikon': Icons.language,
         'renk': Colors.blueGrey,
-        'baslik': _languageService['feature_languages'] ?? 'Çoklu Dil Desteği',
+        'baslik': _languageService['feature_languages'] ?? '',
         'aciklama':
-            _languageService['feature_languages_desc'] ??
-            'TR, EN, DE, FR, AR, FA',
+          _languageService['feature_languages_desc'] ?? '',
       },
       {
         'ikon': Icons.location_city,
         'renk': Colors.blue,
         'baslik':
-            _languageService['feature_multiple_locations'] ?? 'Çoklu Konum',
+          _languageService['feature_multiple_locations'] ?? '',
         'aciklama':
-            _languageService['feature_multiple_locations_desc'] ??
-            'Birden fazla şehir/ilçe kaydı',
+          _languageService['feature_multiple_locations_desc'] ?? '',
       },
       {
         'ikon': Icons.timer,
         'renk': Colors.cyan,
-        'baslik': _languageService['feature_counters'] ?? 'Sayaç ve Görünümler',
+        'baslik': _languageService['feature_counters'] ?? '',
         'aciklama':
-            _languageService['feature_counters_desc'] ??
-            'Farklı sayaç temaları ve görünümler',
+          _languageService['feature_counters_desc'] ?? '',
       },
       {
         'ikon': Icons.widgets,
         'renk': Colors.pink,
         'baslik':
-            _languageService['feature_widgets'] ?? 'Ana Ekran Widget\'ları',
+          _languageService['feature_widgets'] ?? '',
         'aciklama':
-            _languageService['feature_widgets_desc'] ??
-            'Ana ekranda vakit ve sayaç gösterimi',
+          _languageService['feature_widgets_desc'] ?? '',
       },
     ];
 
@@ -346,7 +327,7 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          _languageService['features'] ?? 'Özellikler',
+          _languageService['features'] ?? '',
           style: TextStyle(
             color: renkler.yaziPrimary,
             fontSize: 20,
@@ -440,7 +421,7 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
               Icon(Icons.info_outline, color: Colors.amber[700], size: 24),
               const SizedBox(width: 12),
               Text(
-                _languageService['important_info'] ?? 'Önemli Bilgiler',
+                _languageService['important_info'] ?? '',
                 style: TextStyle(
                   color: renkler.yaziPrimary,
                   fontSize: 18,
@@ -451,19 +432,19 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
           ),
           const SizedBox(height: 12),
           _notSatiri(
-            '• ${_languageService['diyanet_data_note'] ?? 'Vakit hesaplamaları Diyanet İşleri Başkanlığı verilerine göre yapılmaktadır.'}',
+            '• ${_languageService['diyanet_data_note'] ?? ''}',
             renkler,
           ),
           _notSatiri(
-            '• ${_languageService['battery_optimization_note'] ?? 'Bildirimlerin düzgün çalışması için pil optimizasyonu izinlerini ayarlamanız önerilir.'}',
+            '• ${_languageService['battery_optimization_note'] ?? ''}',
             renkler,
           ),
           _notSatiri(
-            '• ${_languageService['location_permission_note'] ?? 'Konum izni verilmediğinde manuel şehir seçimi yapmanız gerekmektedir.'}',
+            '• ${_languageService['location_permission_note'] ?? ''}',
             renkler,
           ),
           _notSatiri(
-            '• ${_languageService['internet_note'] ?? 'İnternet bağlantısı sadece ilk kurulumda ve konum güncellemelerinde gereklidir.'}',
+            '• ${_languageService['internet_note'] ?? ''}',
             renkler,
           ),
         ],
@@ -496,7 +477,7 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            _languageService['contact_support'] ?? 'İletişim ve Destek',
+            _languageService['contact_support'] ?? '',
             style: TextStyle(
               color: renkler.yaziPrimary,
               fontSize: 18,
@@ -506,19 +487,19 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
           const SizedBox(height: 12),
           _iletisimSatiri(
             Icons.email,
-            _languageService['email'] ?? 'E-posta',
+            _languageService['email'] ?? '',
             ' ',
             renkler,
           ),
           _iletisimSatiri(
             Icons.web,
-            _languageService['web'] ?? 'Web',
+            _languageService['web'] ?? '',
             ' ',
             renkler,
           ),
           _iletisimSatiri(
             Icons.bug_report,
-            _languageService['bug_report'] ?? 'Hata Bildirimi',
+            _languageService['bug_report'] ?? '',
             ' ',
             renkler,
           ),
@@ -565,17 +546,16 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
         Divider(color: renkler.ayirac),
         const SizedBox(height: 16),
 
-        // Play Store düğmesi
+        // Play Store button
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
           child: ElevatedButton.icon(
             onPressed: () {
-              // Play Store linki (şimdilik devre dışı)
+              // Play Store link (currently disabled)
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
-                    _languageService['coming_soon_playstore'] ??
-                        'Yakında Play Store\'da!',
+                    _languageService['coming_soon_playstore'] ?? '',
                   ),
                   duration: const Duration(seconds: 2),
                 ),
@@ -583,8 +563,7 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
             },
             icon: const Icon(Icons.shop, size: 20),
             label: Text(
-              _languageService['rate_on_playstore'] ??
-                  'Play Store\'da Değerlendir',
+              _languageService['rate_on_playstore'] ?? '',
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.green,
@@ -599,7 +578,7 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
 
         const SizedBox(height: 8),
         Text(
-          '© 2026 ${_languageService['app_name'] ?? 'Huzur Vakti'}',
+          '© 2026 ${_languageService['app_name'] ?? ''}',
           style: TextStyle(
             color: renkler.yaziSecondary,
             fontSize: 14,
@@ -608,7 +587,7 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
         ),
         const SizedBox(height: 8),
         Text(
-          _languageService['all_rights_reserved'] ?? 'Tüm hakları saklıdır.',
+          _languageService['all_rights_reserved'] ?? '',
           style: TextStyle(
             color: renkler.yaziSecondary.withValues(alpha: 0.7),
             fontSize: 12,
@@ -616,8 +595,7 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
         ),
         const SizedBox(height: 16),
         Text(
-          _languageService['for_allah'] ??
-              'Allah\'ın (C.C) rızası için hazırlanmıştır.',
+          _languageService['for_allah'] ?? '',
           style: TextStyle(
             color: renkler.vurgu,
             fontSize: 13,
@@ -627,8 +605,7 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
         ),
         const SizedBox(height: 8),
         Text(
-          _languageService['developer_name'] ??
-              'Geliştirici: Selahattin Kocabay',
+          _languageService['developer_name'] ?? '',
           style: TextStyle(
             color: renkler.yaziSecondary.withValues(alpha: 0.6),
             fontSize: 11,

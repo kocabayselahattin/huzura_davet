@@ -8,7 +8,7 @@ import '../services/konum_service.dart';
 import '../services/tema_service.dart';
 import '../services/language_service.dart';
 
-/// Matrix Sayaç - Matrix filmi tarzı düşen kod efektli hacker teması
+/// Matrix counter with falling code effect
 class MatrixSayacWidget extends StatefulWidget {
   final bool shouldLoadData;
   const MatrixSayacWidget({super.key, this.shouldLoadData = true});
@@ -32,7 +32,7 @@ class _MatrixSayacWidgetState extends State<MatrixSayacWidget>
   final List<_MatrixColumn> _columns = [];
   final math.Random _random = math.Random();
 
-  // Matrix karakterleri
+  // Matrix characters
   static const String _matrixChars = 'ﺍﺏﺕﺙﺝﺡﺥﺩﺫﺭﺯﺱﺵﺹﺽﻁﻅﻉﻍﻑﻕﻙﻝﻡﻥﻩﻭﻱ0123456789';
 
   @override
@@ -44,10 +44,10 @@ class _MatrixSayacWidgetState extends State<MatrixSayacWidget>
       vsync: this,
     )..repeat(reverse: true);
 
-    // Matrix sütunlarını başlat
+    // Initialize matrix columns
     _initMatrixColumns();
 
-    // Matrix animasyonu için timer (pil tasarrufu için 100ms)
+    // Timer for the matrix animation (100ms to save battery)
     _matrixTimer = Timer.periodic(const Duration(milliseconds: 100), (_) {
       _updateMatrixColumns();
     });
@@ -143,27 +143,27 @@ class _MatrixSayacWidgetState extends State<MatrixSayacWidget>
 
     final vakitListesi = [
       {
-        'adi': _languageService['imsak'] ?? 'İmsak',
+        'adi': _languageService['imsak'] ?? '',
         'saat': _vakitSaatleri['imsak']!,
       },
       {
-        'adi': _languageService['gunes'] ?? 'Güneş',
+        'adi': _languageService['gunes'] ?? '',
         'saat': _vakitSaatleri['gunes']!,
       },
       {
-        'adi': _languageService['ogle'] ?? 'Öğle',
+        'adi': _languageService['ogle'] ?? '',
         'saat': _vakitSaatleri['ogle']!,
       },
       {
-        'adi': _languageService['ikindi'] ?? 'İkindi',
+        'adi': _languageService['ikindi'] ?? '',
         'saat': _vakitSaatleri['ikindi']!,
       },
       {
-        'adi': _languageService['aksam'] ?? 'Akşam',
+        'adi': _languageService['aksam'] ?? '',
         'saat': _vakitSaatleri['aksam']!,
       },
       {
-        'adi': _languageService['yatsi'] ?? 'Yatsı',
+        'adi': _languageService['yatsi'] ?? '',
         'saat': _vakitSaatleri['yatsi']!,
       },
     ];
@@ -198,7 +198,7 @@ class _MatrixSayacWidgetState extends State<MatrixSayacWidget>
         int.parse(imsakParts[0]),
         int.parse(imsakParts[1]),
       );
-      sonrakiVakitAdi = _languageService['imsak'] ?? 'İmsak';
+      sonrakiVakitAdi = _languageService['imsak'] ?? '';
       final yatsiSaniye = vakitSaniyeleri.last;
       final imsakSaniye = vakitSaniyeleri.first;
       final toplamSure = (24 * 3600 - yatsiSaniye) + imsakSaniye;
@@ -213,7 +213,7 @@ class _MatrixSayacWidgetState extends State<MatrixSayacWidget>
         int.parse(imsakParts[0]),
         int.parse(imsakParts[1]),
       );
-      sonrakiVakitAdi = _languageService['imsak'] ?? 'İmsak';
+      sonrakiVakitAdi = _languageService['imsak'] ?? '';
       final yatsiSaniye = vakitSaniyeleri.last;
       final imsakSaniye = vakitSaniyeleri.first;
       final toplamSure = (24 * 3600 - yatsiSaniye) + imsakSaniye;
@@ -345,7 +345,7 @@ class _MatrixSayacWidgetState extends State<MatrixSayacWidget>
                             ),
                           ),
                           Text(
-                            '// ${_languageService['time_remaining'] ?? 'Kalan Süre'}',
+                            '// ${_languageService['time_remaining'] ?? ''}',
                             textScaler: TextScaler.noScaling,
                             style: TextStyle(
                               color: darkGreen,
@@ -505,7 +505,7 @@ class _MatrixSayacWidgetState extends State<MatrixSayacWidget>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '// ${_languageService['gregorian_date'] ?? 'Miladi'}',
+                            '// ${_languageService['gregorian_date'] ?? ''}',
                             style: TextStyle(
                               color: darkGreen,
                               fontSize: 10,
@@ -526,7 +526,7 @@ class _MatrixSayacWidgetState extends State<MatrixSayacWidget>
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            '// ${_languageService['hijri_date'] ?? 'Hicri'}',
+                            '// ${_languageService['hijri_date'] ?? ''}',
                             style: TextStyle(
                               color: darkGreen,
                               fontSize: 10,
@@ -555,22 +555,8 @@ class _MatrixSayacWidgetState extends State<MatrixSayacWidget>
   }
 
   String _getHicriAyAdi(int ay) {
-    const aylar = [
-      '',
-      'Muharrem',
-      'Safer',
-      'Rebiülevvel',
-      'Rebiülahir',
-      'Cemaziyelevvel',
-      'Cemaziyelahir',
-      'Recep',
-      'Şaban',
-      'Ramazan',
-      'Şevval',
-      'Zilkade',
-      'Zilhicce',
-    ];
-    return aylar[ay];
+    if (ay < 1 || ay > 12) return '';
+    return _languageService['hijri_month_$ay'] ?? '';
   }
 
   Widget _buildDigit(String value, Color color) {

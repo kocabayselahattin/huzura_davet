@@ -8,8 +8,8 @@ import '../services/diyanet_api_service.dart';
 import '../services/tema_service.dart';
 import '../services/language_service.dart';
 
-/// Kristal/Cam efektli sayaç widget'ı
-/// Şeffaf cam görünümü, ışık kırılmaları ve parıltılar
+/// Crystal/glass effect counter widget
+/// Transparent glass look with refractions and sparkles
 class KristalSayacWidget extends StatefulWidget {
   final bool shouldLoadData;
   const KristalSayacWidget({super.key, this.shouldLoadData = true});
@@ -106,27 +106,27 @@ class _KristalSayacWidgetState extends State<KristalSayacWidget>
 
     final vakitSaatleri = [
       {
-        'adi': _languageService['imsak'] ?? 'İmsak',
+        'adi': _languageService['imsak'],
         'saat': _vakitSaatleri['Imsak']!,
       },
       {
-        'adi': _languageService['gunes'] ?? 'Güneş',
+        'adi': _languageService['gunes'],
         'saat': _vakitSaatleri['Gunes']!,
       },
       {
-        'adi': _languageService['ogle'] ?? 'Öğle',
+        'adi': _languageService['ogle'],
         'saat': _vakitSaatleri['Ogle']!,
       },
       {
-        'adi': _languageService['ikindi'] ?? 'İkindi',
+        'adi': _languageService['ikindi'],
         'saat': _vakitSaatleri['Ikindi']!,
       },
       {
-        'adi': _languageService['aksam'] ?? 'Akşam',
+        'adi': _languageService['aksam'],
         'saat': _vakitSaatleri['Aksam']!,
       },
       {
-        'adi': _languageService['yatsi'] ?? 'Yatsı',
+        'adi': _languageService['yatsi'],
         'saat': _vakitSaatleri['Yatsi']!,
       },
     ];
@@ -205,22 +205,8 @@ class _KristalSayacWidgetState extends State<KristalSayacWidget>
   }
 
   String _getHicriAyAdi(int ay) {
-    final aylar = [
-      '',
-      'Muharrem',
-      'Safer',
-      'Rebiülevvel',
-      'Rebiülahir',
-      'Cemaziyelevvel',
-      'Cemaziyelahir',
-      'Recep',
-      'Şaban',
-      'Ramazan',
-      'Şevval',
-      'Zilkade',
-      'Zilhicce',
-    ];
-    return aylar[ay];
+    if (ay < 1 || ay > 12) return '';
+    return _languageService['hijri_month_$ay'] ?? '';
   }
 
   @override
@@ -233,13 +219,13 @@ class _KristalSayacWidgetState extends State<KristalSayacWidget>
     final hicri = HijriCalendar.now();
     final hicriTarih =
         '${hicri.hDay} ${_getHicriAyAdi(hicri.hMonth)} ${hicri.hYear}';
-    final miladiTarih = DateFormat('dd MMMM yyyy', 'tr_TR').format(now);
+    final miladiTarih = DateFormat('dd MMMM yyyy', _getLocale()).format(now);
 
-    // Tema kontrolü: Varsayılansa orijinal, değilse tema renkleri
+    // Theme check: use default or themed colors
     final kullanTemaRenkleri = !_temaService.sayacTemasiKullan;
     final temaRenkleri = _temaService.renkler;
 
-    // Orijinal renkler veya tema renkleri
+    // Default colors or theme colors
     final primaryColor = kullanTemaRenkleri
         ? temaRenkleri.vurgu
         : const Color(0xFF5C6BC0);
@@ -274,7 +260,7 @@ class _KristalSayacWidgetState extends State<KristalSayacWidget>
         borderRadius: BorderRadius.circular(24),
         child: Stack(
           children: [
-            // Arka plan - Açık gri gradient
+            // Background - light gray gradient
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -289,7 +275,7 @@ class _KristalSayacWidgetState extends State<KristalSayacWidget>
               ),
             ),
 
-            // Cam yüzey efektleri
+            // Glass surface effects
             Positioned(
               top: -50,
               left: -50,
@@ -308,13 +294,13 @@ class _KristalSayacWidgetState extends State<KristalSayacWidget>
               ),
             ),
 
-            // Işık kırılması çizgileri
+            // Refraction lines
             CustomPaint(
               size: const Size(double.infinity, 240),
               painter: _CrystalFacetPainter(),
             ),
 
-            // Animasyonlu parıltılar
+            // Animated sparkles
             AnimatedBuilder(
               animation: _sparkleController,
               builder: (context, child) {
@@ -325,7 +311,7 @@ class _KristalSayacWidgetState extends State<KristalSayacWidget>
               },
             ),
 
-            // Cam kenar efekti
+            // Glass edge effect
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(24),
@@ -346,13 +332,13 @@ class _KristalSayacWidgetState extends State<KristalSayacWidget>
               ),
             ),
 
-            // İçerik
+            // Content
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Üst: Vakit etiketi
+                  // Top: prayer label
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
@@ -399,13 +385,13 @@ class _KristalSayacWidgetState extends State<KristalSayacWidget>
 
                   const SizedBox(height: 8),
 
-                  // Sayaç - Kristal görünümlü
+                  // Counter - crystal style
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       _buildCrystalTimeUnit(
                         hours.toString().padLeft(2, '0'),
-                        'SA',
+                        (_languageService['hour_short'] ?? '').toUpperCase(),
                         primaryColor,
                         secondaryColor,
                         textColor,
@@ -425,7 +411,7 @@ class _KristalSayacWidgetState extends State<KristalSayacWidget>
                       ),
                       _buildCrystalTimeUnit(
                         minutes.toString().padLeft(2, '0'),
-                        'DK',
+                        (_languageService['minute_short'] ?? '').toUpperCase(),
                         primaryColor,
                         secondaryColor,
                         textColor,
@@ -445,7 +431,7 @@ class _KristalSayacWidgetState extends State<KristalSayacWidget>
                       ),
                       _buildCrystalTimeUnit(
                         seconds.toString().padLeft(2, '0'),
-                        'SN',
+                        (_languageService['second_short'] ?? '').toUpperCase(),
                         primaryColor,
                         secondaryColor,
                         textColor,
@@ -455,7 +441,7 @@ class _KristalSayacWidgetState extends State<KristalSayacWidget>
 
                   const SizedBox(height: 10),
 
-                  // Alt: Tarihler
+                  // Bottom: dates
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
@@ -503,7 +489,7 @@ class _KristalSayacWidgetState extends State<KristalSayacWidget>
 
                   const SizedBox(height: 4),
 
-                  // İlerleme Barı
+                  // Progress bar
                   _buildProgressBar(primaryColor, secondaryColor, textColor),
                 ],
               ),
@@ -512,6 +498,25 @@ class _KristalSayacWidgetState extends State<KristalSayacWidget>
         ),
       ),
     );
+  }
+
+  String _getLocale() {
+    switch (_languageService.currentLanguage) {
+      case 'tr':
+        return 'tr_TR';
+      case 'en':
+        return 'en_US';
+      case 'de':
+        return 'de_DE';
+      case 'fr':
+        return 'fr_FR';
+      case 'ar':
+        return 'ar_SA';
+      case 'fa':
+        return 'fa_IR';
+      default:
+        return 'tr_TR';
+    }
   }
 
   Widget _buildProgressBar(
@@ -646,7 +651,7 @@ class _CrystalFacetPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round
       ..isAntiAlias = true;
 
-    // Çapraz çizgiler - kristal yüzey efekti
+    // Diagonal lines - crystal surface effect
     for (int i = 0; i < 5; i++) {
       final startX = size.width * 0.1 + i * (size.width * 0.2);
       canvas.drawLine(
@@ -686,7 +691,7 @@ class _SparklePainter extends CustomPainter {
           ..color = Colors.white.withOpacity(opacity * 0.8)
           ..isAntiAlias = true;
 
-        // Yıldız şekli
+        // Star shape
         _drawSparkle(canvas, sparklePositions[i], 4 * scale, paint);
       }
     }

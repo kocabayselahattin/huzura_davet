@@ -187,11 +187,7 @@ class _RamazanBannerWidgetState extends State<RamazanBannerWidget> {
     }
 
     final renkler = _temaService.renkler;
-    final label =
-        _languageService[_labelKey] ??
-        (_labelKey == 'iftar_remaining'
-            ? 'İftara kalan süre'
-            : 'İmsaka kalan süre');
+    final label = _languageService[_labelKey];
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),

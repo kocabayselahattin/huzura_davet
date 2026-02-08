@@ -2,6 +2,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/foundation.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:app_settings/app_settings.dart';
+import 'language_service.dart';
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin =
@@ -34,11 +35,11 @@ class NotificationService {
     'yatsi_ezani_ussak',
   ];
 
-  // Ses dosyası adını Android raw kaynağı adına dönüştür
+  // Convert sound file name to Android raw resource name
   static String _getSoundResourceName(String? soundAsset) {
     if (soundAsset == null || soundAsset.isEmpty) return 'ding_dong';
 
-    // Dosya adını al ve uzantıyı kaldır
+    // Get file name and remove extension
     String name = soundAsset.toLowerCase();
     if (name.contains('/')) {
       name = name.split('/').last;
@@ -47,7 +48,7 @@ class NotificationService {
       name = name.substring(0, name.length - 4);
     }
 
-    // Android resource adı için geçersiz karakterleri temizle
+    // Remove invalid characters for Android resource name
     name = name.replaceAll(RegExp(r'[^a-z0-9_]'), '_');
 
     return name;
@@ -56,7 +57,7 @@ class NotificationService {
   static Future<AudioPlayer> _getAudioPlayer() async {
     if (_audioPlayer == null) {
       _audioPlayer = AudioPlayer();
-      // AudioPlayer ayarları
+      // AudioPlayer settings
       await _audioPlayer!.setReleaseMode(ReleaseMode.stop);
       await _audioPlayer!.setPlayerMode(PlayerMode.mediaPlayer);
     }
@@ -66,6 +67,19 @@ class NotificationService {
   static Future<void> initialize([dynamic context]) async {
     if (_initialized) return;
 
+    final languageService = LanguageService();
+    await languageService.load();
+    final onTimeChannelName =
+      languageService['on_time_channel_name'] ?? 'On-time notifications';
+    final onTimeChannelDesc =
+      languageService['on_time_channel_desc'] ??
+      'Notifications shown at prayer times';
+    final earlyChannelName =
+      languageService['early_channel_name'] ?? 'Early notifications';
+    final earlyChannelDesc =
+      languageService['early_channel_desc'] ??
+      'Notifications shown before prayer times';
+
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
     const InitializationSettings initializationSettings =
@@ -74,7 +88,7 @@ class NotificationService {
     await _notificationsPlugin.initialize(
       settings: initializationSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) {
-        debugPrint('Bildirime tıklandı: ${response.payload}');
+        debugPrint('Notification tapped: ${response.payload}');
       },
     );
 
@@ -84,22 +98,22 @@ class NotificationService {
         >();
 
     if (androidImplementation != null) {
-      // Bildirim iznini kontrol et ve logla
+        // Check notification permission and log
       final hasPermission =
           await androidImplementation.areNotificationsEnabled() ?? false;
-      debugPrint('📱 Bildirim izni durumu: $hasPermission');
+        debugPrint('📱 Notification permission status: $hasPermission');
 
       if (!hasPermission) {
         debugPrint(
-          '⚠️ Bildirim izni verilmemiş! Kullanıcıdan izin isteniyor...',
+          '⚠️ Notification permission missing. Requesting permission...',
         );
         final granted =
             await androidImplementation.requestNotificationsPermission() ??
             false;
-        debugPrint('📱 Bildirim izni sonucu: $granted');
+        debugPrint('📱 Notification permission result: $granted');
         if (!granted) {
           debugPrint(
-            '⚠️ Kullanıcı bildirim izni vermedi, ayarlara yönlendiriliyor...',
+            '⚠️ Notification permission denied, opening settings...',
           );
           AppSettings.openAppSettings(type: AppSettingsType.notification);
         }
@@ -117,8 +131,8 @@ class NotificationService {
       if (!_createdChannels.contains(_onTimeChannelId)) {
         final channel = AndroidNotificationChannel(
           _onTimeChannelId,
-          'Vaktinde Bildirimler',
-          description: 'Vakitlerinde gosterilen bildirimler',
+          onTimeChannelName,
+          description: onTimeChannelDesc,
           importance: Importance.max,
           playSound: false,
           enableVibration: true,
@@ -132,8 +146,8 @@ class NotificationService {
       if (!_createdChannels.contains(_earlyChannelId)) {
         final channel = AndroidNotificationChannel(
           _earlyChannelId,
-          'Erken Bildirimler',
-          description: 'Vakitlerden once gosterilen bildirimler',
+          earlyChannelName,
+          description: earlyChannelDesc,
           importance: Importance.max,
           playSound: false,
           enableVibration: true,
@@ -154,15 +168,27 @@ class NotificationService {
     String? soundAsset,
   }) async {
     try {
-      // Ses kaynağı adını al
+        // Get sound resource name
       final soundResourceName = _getSoundResourceName(soundAsset);
-      debugPrint('🔊 Ses kaynağı (bildirim): $soundResourceName');
+        debugPrint('🔊 Notification sound resource: $soundResourceName');
+
+        final languageService = LanguageService();
+        await languageService.load();
+        final prayerChannelName =
+          languageService['prayer_notification_channel_name'] ??
+          'Prayer notifications';
+        final prayerChannelDesc =
+          languageService['prayer_notification_channel_desc'] ??
+          'Notifications for prayer times';
+        final prayerChannelTicker =
+          languageService['prayer_notification_channel_ticker'] ??
+          'Prayer notification';
 
       final channelId = _onTimeChannelId;
       final androidPlatformChannelSpecifics = AndroidNotificationDetails(
         channelId,
-        'Vakit Bildirimleri',
-        channelDescription: 'Namaz vakitleri için bildirimler',
+        prayerChannelName,
+        channelDescription: prayerChannelDesc,
         importance: Importance.max,
         priority: Priority.high,
         playSound: false,
@@ -175,7 +201,7 @@ class NotificationService {
         visibility: NotificationVisibility.public,
         autoCancel: false,
         ongoing: false,
-        ticker: 'Vakit bildirimi',
+        ticker: prayerChannelTicker,
         largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
       );
 
@@ -194,14 +220,14 @@ class NotificationService {
         notificationDetails: notificationDetails,
       );
       debugPrint(
-        '✅ Bildirim gönderildi: $title - $body (ID: $notificationId, Ses: $soundResourceName)',
+        '✅ Notification sent: $title - $body (ID: $notificationId, sound: $soundResourceName)',
       );
     } catch (e) {
-      debugPrint('❌ Bildirim gönderilemedi: $e');
+      debugPrint('❌ Notification send failed: $e');
     }
   }
 
-  /// Sesi test et (uygulama açıkken)
+  /// Test sound (while app is open)
   static Future<void> testSound(String soundAsset) async {
     try {
       final player = await _getAudioPlayer();
@@ -215,20 +241,20 @@ class NotificationService {
       await player.setVolume(1.0);
       await player.setPlayerMode(PlayerMode.mediaPlayer);
       await player.play(AssetSource(assetPath));
-      debugPrint('🔊 Test sesi çalındı: $assetPath');
+      debugPrint('🔊 Test sound played: $assetPath');
     } catch (e) {
-      debugPrint('⚠️ Test sesi çalınamadı: $e');
+      debugPrint('⚠️ Test sound failed: $e');
     }
   }
 
-  /// Sesi durdur
+  /// Stop sound
   static Future<void> stopSound() async {
     if (_audioPlayer != null) {
       await _audioPlayer!.stop();
     }
   }
 
-  /// Kaynakları temizle
+  /// Dispose resources
   static Future<void> dispose() async {
     if (_audioPlayer != null) {
       await _audioPlayer!.dispose();

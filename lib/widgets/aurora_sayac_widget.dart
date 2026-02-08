@@ -8,8 +8,8 @@ import '../services/diyanet_api_service.dart';
 import '../services/tema_service.dart';
 import '../services/language_service.dart';
 
-/// Aurora (Kuzey Işıkları) temalı sayaç widget'ı
-/// Mor, yeşil, mavi renk geçişleri ve dalgalanan efektler
+/// Aurora (Northern Lights) themed countdown widget.
+/// Purple, green, and blue transitions with wave effects.
 class AuroraSayacWidget extends StatefulWidget {
   final bool shouldLoadData;
   const AuroraSayacWidget({super.key, this.shouldLoadData = true});
@@ -119,27 +119,27 @@ class _AuroraSayacWidgetState extends State<AuroraSayacWidget>
 
     final vakitSaatleri = [
       {
-        'adi': _languageService['imsak'] ?? 'İmsak',
+        'adi': _languageService['imsak'] ?? '',
         'saat': _vakitSaatleri['Imsak']!,
       },
       {
-        'adi': _languageService['gunes'] ?? 'Güneş',
+        'adi': _languageService['gunes'] ?? '',
         'saat': _vakitSaatleri['Gunes']!,
       },
       {
-        'adi': _languageService['ogle'] ?? 'Öğle',
+        'adi': _languageService['ogle'] ?? '',
         'saat': _vakitSaatleri['Ogle']!,
       },
       {
-        'adi': _languageService['ikindi'] ?? 'İkindi',
+        'adi': _languageService['ikindi'] ?? '',
         'saat': _vakitSaatleri['Ikindi']!,
       },
       {
-        'adi': _languageService['aksam'] ?? 'Akşam',
+        'adi': _languageService['aksam'] ?? '',
         'saat': _vakitSaatleri['Aksam']!,
       },
       {
-        'adi': _languageService['yatsi'] ?? 'Yatsı',
+        'adi': _languageService['yatsi'] ?? '',
         'saat': _vakitSaatleri['Yatsi']!,
       },
     ];
@@ -225,22 +225,27 @@ class _AuroraSayacWidgetState extends State<AuroraSayacWidget>
   }
 
   String _getHicriAyAdi(int ay) {
-    final aylar = [
-      '',
-      'Muharrem',
-      'Safer',
-      'Rebiülevvel',
-      'Rebiülahir',
-      'Cemaziyelevvel',
-      'Cemaziyelahir',
-      'Recep',
-      'Şaban',
-      'Ramazan',
-      'Şevval',
-      'Zilkade',
-      'Zilhicce',
-    ];
-    return aylar[ay];
+    if (ay < 1 || ay > 12) return '';
+    return _languageService['hijri_month_$ay'] ?? '';
+  }
+
+  String _getLocale() {
+    switch (_languageService.currentLanguage) {
+      case 'tr':
+        return 'tr_TR';
+      case 'en':
+        return 'en_US';
+      case 'de':
+        return 'de_DE';
+      case 'fr':
+        return 'fr_FR';
+      case 'ar':
+        return 'ar_SA';
+      case 'fa':
+        return 'fa_IR';
+      default:
+        return 'tr_TR';
+    }
   }
 
   @override
@@ -253,13 +258,13 @@ class _AuroraSayacWidgetState extends State<AuroraSayacWidget>
     final hicri = HijriCalendar.now();
     final hicriTarih =
         '${hicri.hDay} ${_getHicriAyAdi(hicri.hMonth)} ${hicri.hYear}';
-    final miladiTarih = DateFormat('dd MMMM yyyy', 'tr_TR').format(now);
+    final miladiTarih = DateFormat('dd MMMM yyyy', _getLocale()).format(now);
 
-    // Tema kontrolü: Varsayılansa orijinal, değilse tema renkleri
+    // Theme toggle: use original palette or theme colors.
     final kullanTemaRenkleri = !_temaService.sayacTemasiKullan;
     final temaRenkleri = _temaService.renkler;
 
-    // Orijinal renkler veya tema renkleri
+    // Original colors or theme colors.
     final primaryColor = kullanTemaRenkleri
         ? temaRenkleri.vurgu
         : const Color(0xFF00D4AA);
@@ -298,7 +303,7 @@ class _AuroraSayacWidgetState extends State<AuroraSayacWidget>
         borderRadius: BorderRadius.circular(24),
         child: Stack(
           children: [
-            // Arka plan - Koyu gece
+            // Background - dark night sky.
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -315,7 +320,7 @@ class _AuroraSayacWidgetState extends State<AuroraSayacWidget>
               ),
             ),
 
-            // Aurora dalgaları
+            // Aurora waves.
             AnimatedBuilder(
               animation: _waveController,
               builder: (context, child) {
@@ -330,7 +335,7 @@ class _AuroraSayacWidgetState extends State<AuroraSayacWidget>
               },
             ),
 
-            // Yıldızlar
+            // Stars.
             ...List.generate(20, (index) {
               final random = math.Random(index);
               return Positioned(
@@ -349,13 +354,13 @@ class _AuroraSayacWidgetState extends State<AuroraSayacWidget>
               );
             }),
 
-            // İçerik
+            // Content.
             Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Üst: Vakit bilgisi
+                  // Top: prayer time info.
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -370,7 +375,7 @@ class _AuroraSayacWidgetState extends State<AuroraSayacWidget>
                             ),
                           ),
                           Text(
-                            _languageService['widget_now_at'] ?? 'Şu an',
+                            _languageService['widget_now_at'] ?? '',
                             style: TextStyle(
                               color: textColor.withOpacity(0.4),
                               fontSize: 10,
@@ -410,7 +415,7 @@ class _AuroraSayacWidgetState extends State<AuroraSayacWidget>
 
                   const SizedBox(height: 20),
 
-                  // Sayaç
+                  // Countdown.
                   AnimatedBuilder(
                     animation: _shimmerAnimation,
                     builder: (context, child) {
@@ -488,7 +493,7 @@ class _AuroraSayacWidgetState extends State<AuroraSayacWidget>
 
                   const SizedBox(height: 20),
 
-                  // Alt: Tarihler
+                  // Bottom: dates.
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -517,7 +522,7 @@ class _AuroraSayacWidgetState extends State<AuroraSayacWidget>
 
                   const SizedBox(height: 12),
 
-                  // İlerleme Barı
+                  // Progress bar.
                   _buildProgressBar(primaryColor, secondaryColor, textColor),
                 ],
               ),
@@ -542,7 +547,7 @@ class _AuroraSayacWidgetState extends State<AuroraSayacWidget>
       ),
       child: Stack(
         children: [
-          // Arka plan çizgileri
+          // Background lines.
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: CustomPaint(
@@ -552,7 +557,7 @@ class _AuroraSayacWidgetState extends State<AuroraSayacWidget>
               ),
             ),
           ),
-          // Dolu kısım - tema renkleriyle gradient
+          // Filled section - gradient with theme colors.
           FractionallySizedBox(
             widthFactor: _ilerlemeOrani.clamp(0.0, 1.0),
             child: Container(
@@ -623,7 +628,7 @@ class _AuroraPainter extends CustomPainter {
       ..style = PaintingStyle.fill
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 30);
 
-    // Aurora 1 - Yeşil
+    // Aurora 1 - green.
     final path1 = Path();
     path1.moveTo(0, size.height * 0.5);
     for (double x = 0; x <= size.width; x += 10) {
@@ -649,7 +654,7 @@ class _AuroraPainter extends CustomPainter {
     ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
     canvas.drawPath(path1, paint);
 
-    // Aurora 2 - Mor
+    // Aurora 2 - purple.
     final path2 = Path();
     path2.moveTo(0, size.height * 0.6);
     for (double x = 0; x <= size.width; x += 10) {

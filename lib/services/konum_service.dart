@@ -8,63 +8,97 @@ class KonumService {
   static const String _ilIdKey = 'selected_il_id';
   static const String _ilceKey = 'selected_ilce';
   static const String _ilceIdKey = 'selected_ilce_id';
-  static const String _konumlarKey = 'saved_locations'; // Çoklu konum listesi
+  static const String _konumlarKey = 'saved_locations'; // Multi-location list
   static const String _aktifKonumIndexKey =
-      'active_location_index'; // Aktif konum indeksi
+      'active_location_index'; // Active location index
+  static const String _manualKonumPrefix = 'manual:';
+  static const String _manualKonumKeyPrefix = 'manual_konum_';
 
-  // Seçilen il bilgisini kaydet
+  static bool isManualIlceId(String? ilceId) {
+    return ilceId != null && ilceId.startsWith(_manualKonumPrefix);
+  }
+
+  static Future<void> setManualKonumData({
+    required String key,
+    required double lat,
+    required double lon,
+    required String city,
+    required String country,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final payload = jsonEncode({
+      'lat': lat,
+      'lon': lon,
+      'city': city,
+      'country': country,
+    });
+    await prefs.setString('$_manualKonumKeyPrefix$key', payload);
+  }
+
+  static Future<Map<String, dynamic>?> getManualKonumData(String key) async {
+    final prefs = await SharedPreferences.getInstance();
+    final payload = prefs.getString('$_manualKonumKeyPrefix$key');
+    if (payload == null || payload.isEmpty) return null;
+    try {
+      return jsonDecode(payload) as Map<String, dynamic>;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Save selected city
   static Future<void> setIl(String ilAdi, String ilId) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_ilKey, ilAdi);
     await prefs.setString(_ilIdKey, ilId);
   }
 
-  // Seçilen ilçe bilgisini kaydet
+  // Save selected district
   static Future<void> setIlce(String ilceAdi, String ilceId) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_ilceKey, ilceAdi);
     await prefs.setString(_ilceIdKey, ilceId);
   }
 
-  // Kaydedilen il adını getir
+  // Get saved city name
   static Future<String?> getIl() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_ilKey);
   }
 
-  // Kaydedilen il ID'sini getir
+  // Get saved city ID
   static Future<String?> getIlId() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_ilIdKey);
   }
 
-  // Kaydedilen ilçe adını getir
+  // Get saved district name
   static Future<String?> getIlce() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_ilceKey);
   }
 
-  // Kaydedilen ilçe ID'sini getir
+  // Get saved district ID
   static Future<String?> getIlceId() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_ilceIdKey);
   }
 
-  // İlçe ID'sinin geçerli olup olmadığını kontrol et
-  // Bazı eski ilçe ID'leri API'de çalışmıyor (örn: 1219, 1823, 1421 vb.)
+  // Check if district ID is valid
+  // Some legacy IDs do not work in the API (e.g. 1219, 1823, 1421)
   static Future<bool> isIlceIdValid(String? ilceId) async {
     if (ilceId == null || ilceId.isEmpty) return false;
 
-    // Bilinen geçersiz ID'ler (eski lokal veri ID'leri, API'de 500/400 hatası veren)
+    // Known invalid IDs (legacy local IDs that cause 500/400 errors in API)
     const invalidIds = [
-      '1219', '1823', '1020', '1003', '1421', // Eski sistem ID'leri
-      '1200', '1201', '1202', '1203', '1204', '1205', // Diğer eski ID'ler
+      '1219', '1823', '1020', '1003', '1421', // Legacy system IDs
+      '1200', '1201', '1202', '1203', '1204', '1205', // Other legacy IDs
     ];
     if (invalidIds.contains(ilceId)) {
       return false;
     }
 
-    // Geçerli ID'ler genelde 9000-18000 aralığında (yeni sistem)
+    // Valid IDs are usually in 9000-18000 range (new system)
     try {
       final idNum = int.parse(ilceId);
       if (idNum < 9000 || idNum > 20000) {
@@ -77,14 +111,14 @@ class KonumService {
     return true;
   }
 
-  // Geçersiz konum varsa temizle
+  // Clear if location is invalid
   static Future<bool> validateAndClearIfInvalid() async {
     final ilceId = await getIlceId();
     final isValid = await isIlceIdValid(ilceId);
 
     if (!isValid && ilceId != null) {
       debugPrint(
-        '⚠️ Geçersiz ilçe ID tespit edildi: $ilceId - Temizleniyor...',
+        '⚠️ Invalid district ID detected: $ilceId - clearing...',
       );
       await clearKonum();
       return false;
@@ -93,7 +127,7 @@ class KonumService {
     return isValid;
   }
 
-  // Tüm konum bilgilerini temizle
+  // Clear all location data
   static Future<void> clearKonum() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_ilKey);
@@ -102,15 +136,15 @@ class KonumService {
     await prefs.remove(_ilceIdKey);
   }
 
-  // ============ ÇOKLU KONUM SİSTEMİ ============
+  // ============ MULTI-LOCATION SYSTEM ============
 
-  // Tüm kayıtlı konumları getir
+  // Get all saved locations
   static Future<List<KonumModel>> getKonumlar() async {
     final prefs = await SharedPreferences.getInstance();
     final jsonList = prefs.getStringList(_konumlarKey) ?? [];
 
     if (jsonList.isEmpty) {
-      // Eğer eski sistemden konum varsa, onu listeye ekle
+      // If a legacy location exists, add it to the list
       final il = prefs.getString(_ilKey);
       final ilId = prefs.getString(_ilIdKey);
       final ilce = prefs.getString(_ilceKey);
@@ -124,7 +158,7 @@ class KonumService {
           ilceId: ilceId,
           aktif: true,
         );
-        // Doğrudan kaydet - addKonum kullanma (sonsuz döngü önleme)
+        // Save directly - do not call addKonum (avoid infinite loop)
         await prefs.setStringList(_konumlarKey, [
           jsonEncode(eskiKonum.toJson()),
         ]);
@@ -138,7 +172,7 @@ class KonumService {
         .toList();
   }
 
-  // Yeni konum ekle
+  // Add new location
   static Future<void> addKonum(KonumModel konum) async {
     final prefs = await SharedPreferences.getInstance();
     final jsonList = prefs.getStringList(_konumlarKey) ?? [];
@@ -146,19 +180,19 @@ class KonumService {
         .map((json) => KonumModel.fromJson(jsonDecode(json)))
         .toList();
 
-    // Aynı konum zaten varsa ekleme
+    // Do not add duplicates
     if (konumlar.any((k) => k.ilceId == konum.ilceId && k.ilId == konum.ilId)) {
-      debugPrint('⚠️ Bu konum zaten kayıtlı: ${konum.tamAd}');
+      debugPrint('⚠️ Location already saved: ${konum.tamAd}');
       return;
     }
 
-    // Yeni konum ekle
+    // Add new location
     konumlar.add(konum);
     await _saveKonumlar(konumlar);
-    debugPrint('✅ Yeni konum eklendi: ${konum.tamAd}');
+    debugPrint('✅ Location added: ${konum.tamAd}');
   }
 
-  // Konum sil
+  // Remove location
   static Future<void> removeKonum(int index) async {
     final konumlar = await getKonumlar();
 
@@ -167,38 +201,38 @@ class KonumService {
       konumlar.removeAt(index);
       await _saveKonumlar(konumlar);
 
-      // Eğer aktif konum silindiyse, ilk konumu aktif yap
+      // If active location was removed, make the first active
       final aktifIndex = await getAktifKonumIndex();
       if (aktifIndex == index && konumlar.isNotEmpty) {
         await setAktifKonumIndex(0);
       }
 
-      debugPrint('✅ Konum silindi: ${silinenKonum.tamAd}');
+      debugPrint('✅ Location removed: ${silinenKonum.tamAd}');
     }
   }
 
-  // Aktif konum indeksini getir
+  // Get active location index
   static Future<int> getAktifKonumIndex() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getInt(_aktifKonumIndexKey) ?? 0;
   }
 
-  // Aktif konum indeksini ayarla
+  // Set active location index
   static Future<void> setAktifKonumIndex(int index) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_aktifKonumIndexKey, index);
 
-    // Aktif konumu eski sisteme de kaydet (uyumluluk için)
+    // Also save active location to legacy system (compatibility)
     final konumlar = await getKonumlar();
     if (index >= 0 && index < konumlar.length) {
       final aktifKonum = konumlar[index];
       await setIl(aktifKonum.ilAdi, aktifKonum.ilId);
       await setIlce(aktifKonum.ilceAdi, aktifKonum.ilceId);
-      debugPrint('✅ Aktif konum değiştirildi: ${aktifKonum.tamAd}');
+      debugPrint('✅ Active location changed: ${aktifKonum.tamAd}');
     }
   }
 
-  // Aktif konumu getir
+  // Get active location
   static Future<KonumModel?> getAktifKonum() async {
     final konumlar = await getKonumlar();
     final index = await getAktifKonumIndex();
@@ -210,23 +244,23 @@ class KonumService {
     return konumlar.first;
   }
 
-  // Konumları kaydet (private)
+  // Save locations (private)
   static Future<void> _saveKonumlar(List<KonumModel> konumlar) async {
     final prefs = await SharedPreferences.getInstance();
     final jsonList = konumlar.map((k) => jsonEncode(k.toJson())).toList();
     await prefs.setStringList(_konumlarKey, jsonList);
   }
 
-  // ============ PUSULA STİLİ ============
+  // ============ COMPASS STYLE ============
   static const String _pusulaStiliKey = 'compass_style';
 
-  // Pusula stilini kaydet
+  // Save compass style
   static Future<void> setPusulaStili(int styleIndex) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_pusulaStiliKey, styleIndex);
   }
 
-  // Pusula stilini getir (varsayılan: 0 - Modern)
+  // Get compass style (default: 0 - Modern)
   static Future<int> getPusulaStili() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getInt(_pusulaStiliKey) ?? 0;

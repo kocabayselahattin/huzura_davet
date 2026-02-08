@@ -3,14 +3,15 @@ import 'package:flutter/foundation.dart';
 import 'alarm_service.dart';
 import 'konum_service.dart';
 import 'diyanet_api_service.dart';
+import 'language_service.dart';
 
-/// Erken hatırlatma alarm servisi
-/// Her vakit için bağımsız erken hatırlatma alarmı kurar
-/// Ses dosyası, süre gibi ayarları yönetir
+/// Early reminder alarm service.
+/// Schedules independent early reminder alarms for each prayer time.
+/// Manages sound and duration settings.
 class EarlyReminderService {
   static bool _initialized = false;
 
-  // Vakit isimleri (API uyumlu)
+  // Prayer time names (API compatible)
   static const List<String> _vakitler = [
     'Imsak',
     'Gunes',
@@ -20,17 +21,7 @@ class EarlyReminderService {
     'Yatsi',
   ];
 
-  // Vakit Türkçe isimleri
-  static const Map<String, String> _vakitTurkce = {
-    'Imsak': 'İmsak',
-    'Gunes': 'Güneş',
-    'Ogle': 'Öğle',
-    'Ikindi': 'İkindi',
-    'Aksam': 'Akşam',
-    'Yatsi': 'Yatsı',
-  };
-
-  // Varsayılan erken bildirim süreleri (dakika)
+  // Default early reminder durations (minutes)
   static const Map<String, int> varsayilanErkenSureler = {
     'imsak': 15,
     'gunes': 45,
@@ -40,110 +31,113 @@ class EarlyReminderService {
     'yatsi': 15,
   };
 
-  // Varsayılan ses ID'si
+  // Default sound ID
   static const String varsayilanSes = 'best';
 
-  /// Servisi başlat
+  /// Initialize service.
   static Future<void> initialize() async {
     if (_initialized) return;
     _initialized = true;
-    debugPrint('✅ Erken hatırlatma servisi başlatıldı');
+    debugPrint('✅ Early reminder service initialized');
   }
 
   // =============================================
-  // AYAR YÖNETİMİ
+  // SETTINGS
   // =============================================
 
-  /// Erken hatırlatma süresini al (dakika)
+  /// Get early reminder duration (minutes).
   static Future<int> getErkenSure(String vakitKey) async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getInt('erken_$vakitKey') ??
         (varsayilanErkenSureler[vakitKey] ?? 15);
   }
 
-  /// Erken hatırlatma süresini ayarla (dakika)
+  /// Set early reminder duration (minutes).
   static Future<void> setErkenSure(String vakitKey, int dakika) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('erken_$vakitKey', dakika);
-    debugPrint('💾 Erken süre kaydedildi: $vakitKey = $dakika dk');
+    debugPrint('💾 Early duration saved: $vakitKey = $dakika');
   }
 
-  /// Erken hatırlatma alarm sesini al (ses ID'si)
+  /// Get early reminder sound (sound ID).
   static Future<String> getErkenSes(String vakitKey) async {
     final prefs = await SharedPreferences.getInstance();
     final ses = prefs.getString('erken_bildirim_sesi_$vakitKey');
     if (ses != null && ses.isNotEmpty) return ses;
-    // Kayıtlı ses yoksa vaktinde sesini kullan
+    // If no saved sound, use on-time sound
     final vaktindeSes = prefs.getString('bildirim_sesi_$vakitKey');
     return vaktindeSes ?? varsayilanSes;
   }
 
-  /// Erken hatırlatma alarm sesini ayarla (ses ID'si)
+  /// Set early reminder sound (sound ID).
   static Future<void> setErkenSes(String vakitKey, String sesId) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('erken_bildirim_sesi_$vakitKey', sesId);
-    debugPrint('💾 Erken ses kaydedildi: $vakitKey = $sesId');
+    debugPrint('💾 Early sound saved: $vakitKey = $sesId');
   }
 
-  /// Ses dosyası adını Android raw resource adına normalize et
-  /// Örn: "best.mp3" → "best", "akşam_ezanı.mp3" → "aksam_ezani"
+  /// Normalize sound file name to Android raw resource name
+  /// e.g. "best.mp3" -> "best", "aksam_ezani.mp3" -> "aksam_ezani"
   static String normalizeSoundName(String soundFile) {
     if (soundFile.isEmpty) return 'best';
     String name = soundFile.toLowerCase();
-    // Yol varsa sondaki dosya adını al
+    // If path exists, take last segment
     if (name.contains('/')) {
       name = name.split('/').last;
     }
-    // .mp3 uzantısını kaldır
+    // Remove .mp3 extension
     if (name.endsWith('.mp3')) {
       name = name.substring(0, name.length - 4);
     }
-    // Geçersiz karakterleri temizle
+    // Remove invalid characters
     name = name.replaceAll(RegExp(r'[^a-z0-9_]'), '_');
-    // Birden fazla alt çizgiyi teke indir
+    // Collapse multiple underscores
     name = name.replaceAll(RegExp(r'_+'), '_');
-    // Baş ve sondaki alt çizgileri kaldır
+    // Trim leading/trailing underscores
     name = name.replaceAll(RegExp(r'^_+|_+$'), '');
     if (name.isEmpty) return 'best';
     return name;
   }
 
   // =============================================
-  // ALARM ZAMANLAMA
+  // ALARM SCHEDULING
   // =============================================
 
-  /// Tüm vakitler için erken hatırlatma alarmlarını zamanla (7 günlük)
+  /// Schedule early reminder alarms for all times (7 days)
   static Future<int> scheduleAllEarlyReminders() async {
     try {
       if (!_initialized) await initialize();
 
-      debugPrint('⏰ ===== ERKEN HATIRLATMA ZAMANLAMA BAŞLIYOR =====');
+      final languageService = LanguageService();
+      final minuteShort = languageService['minute_short'] ?? 'min';
 
-      // Mevcut erken alarmları iptal et
+      debugPrint('⏰ ===== EARLY REMINDER SCHEDULING START =====');
+
+      // Cancel existing early alarms
       await cancelAllEarlyReminders();
 
-      // Konum ID'sini al
+      // Get location ID
       final ilceId = await KonumService.getIlceId();
       if (ilceId == null || ilceId.isEmpty) {
-        debugPrint('❌ KONUM SEÇİLMEMİŞ! Erken hatırlatmalar zamanlanamıyor.');
-        debugPrint('⚠️ Lütfen ana sayfadan konum seçin.');
+        debugPrint('❌ Location not selected. Early reminders cannot be scheduled.');
+        debugPrint('⚠️ Please select a location from the home screen.');
         debugPrint('==========================================');
         return 0;
       }
-      debugPrint('📍 Konum ID: $ilceId');
+      debugPrint('📍 Location ID: $ilceId');
 
-      // 7 günlük vakit bilgisi al
+      // Fetch 7-day prayer data
       final now = DateTime.now();
-      debugPrint('🕐 Şimdiki zaman: $now');
+      debugPrint('🕐 Current time: $now');
 
       final aylikVakitler = await DiyanetApiService.getAylikVakitler(
         ilceId,
         now.year,
         now.month,
       );
-      debugPrint('📅 Bu ay vakit sayısı: ${aylikVakitler.length}');
+      debugPrint('📅 Prayer count this month: ${aylikVakitler.length}');
 
-      // Gelecek ay da lazım olabilir
+      // Next month may be needed
       List<Map<String, dynamic>> sonrakiAyVakitler = [];
       if (now.day > 24) {
         final sonrakiAy = now.month == 12 ? 1 : now.month + 1;
@@ -153,38 +147,38 @@ class EarlyReminderService {
           sonrakiYil,
           sonrakiAy,
         );
-        debugPrint('📅 Gelecek ay vakit sayısı: ${sonrakiAyVakitler.length}');
+        debugPrint('📅 Prayer count next month: ${sonrakiAyVakitler.length}');
       }
 
       final tumVakitler = [...aylikVakitler, ...sonrakiAyVakitler];
       if (tumVakitler.isEmpty) {
-        debugPrint('❌ VAKİT BİLGİSİ ALINAMADI!');
-        debugPrint('⚠️ İnternet bağlantısını kontrol edin.');
+        debugPrint('❌ Prayer data could not be retrieved.');
+        debugPrint('⚠️ Check your internet connection.');
         debugPrint('==========================================');
         return 0;
       }
-      debugPrint('📊 Toplam vakit bilgisi: ${tumVakitler.length} gün');
+      debugPrint('📊 Total prayer data days: ${tumVakitler.length}');
 
       final prefs = await SharedPreferences.getInstance();
       int alarmCount = 0;
       int skippedCount = 0;
 
-      // 7 gün için döngü
+      // Loop for 7 days
       for (int gun = 0; gun < 7; gun++) {
         final hedefTarih = now.add(Duration(days: gun));
         final hedefTarihStr =
             '${hedefTarih.day.toString().padLeft(2, '0')}.${hedefTarih.month.toString().padLeft(2, '0')}.${hedefTarih.year}';
 
-        debugPrint('\\n📆 Gün $gun: $hedefTarihStr');
+        debugPrint('\\n📆 Day $gun: $hedefTarihStr');
 
-        // O güne ait vakitleri bul
+        // Find prayer data for the day
         final gunVakitler = tumVakitler.firstWhere(
           (v) => v['MiladiTarihKisa'] == hedefTarihStr,
           orElse: () => <String, dynamic>{},
         );
 
         if (gunVakitler.isEmpty) {
-          debugPrint('   ⚠️ Bu gün için vakit bilgisi yok');
+          debugPrint('   ⚠️ No prayer data for this day');
           continue;
         }
 
@@ -192,32 +186,32 @@ class EarlyReminderService {
           final vakitKey = _vakitler[i];
           final vakitKeyLower = vakitKey.toLowerCase();
 
-          // Ana bildirim switch'i - kapalıysa erken hatırlatma da kapalı
+          // Skip early reminder if main notification is off
           final bildirimAcik = prefs.getBool('bildirim_$vakitKeyLower') ?? true;
           if (!bildirimAcik) {
             debugPrint(
-              '   ⏭️ $vakitKey ana bildirimi kapalı, erken hatırlatma atlanıyor',
+              '   ⏭️ $vakitKey main notification off, skipping early reminder',
             );
             skippedCount++;
             continue;
           }
 
-          // Erken hatırlatma süresi
+              // Early reminder duration
           final erkenDakika =
               prefs.getInt('erken_$vakitKeyLower') ??
               (varsayilanErkenSureler[vakitKeyLower] ?? 15);
 
-          // Erken dakika 0 ise kullanıcı kapatmış demektir
+          // Early minutes 0 means disabled
           if (erkenDakika <= 0) {
-            debugPrint('   ⏭️ $vakitKey erken hatırlatma kapalı (0 dk)');
+            debugPrint('   ⏭️ $vakitKey early reminder off (0 min)');
             skippedCount++;
             continue;
           }
 
-          // Vakit saatini al
+          // Get prayer time
           final vakitSaati = gunVakitler[vakitKey]?.toString();
           if (vakitSaati == null || vakitSaati == '—:—' || vakitSaati.isEmpty) {
-            debugPrint('   ⚠️ $vakitKey saati bulunamadı');
+            debugPrint('   ⚠️ $vakitKey time not found');
             continue;
           }
 
@@ -227,12 +221,12 @@ class EarlyReminderService {
           final dakika = int.tryParse(parts[1]);
           if (saat == null || dakika == null) continue;
 
-          // Vakit saatini kaydet (BootReceiver için) - ÖNEMLI!
+          // Save prayer time for BootReceiver
           final dateKey =
               '${hedefTarih.year}-${hedefTarih.month.toString().padLeft(2, '0')}-${hedefTarih.day.toString().padLeft(2, '0')}';
           await prefs.setString('vakit_${vakitKeyLower}_$dateKey', vakitSaati);
 
-          // Tam vakit zamanı
+          // Exact prayer time
           final vakitZamani = DateTime(
             hedefTarih.year,
             hedefTarih.month,
@@ -241,38 +235,41 @@ class EarlyReminderService {
             dakika,
           );
 
-          // Erken alarm zamanı
+          // Early alarm time
           final erkenAlarmZamani = vakitZamani.subtract(
             Duration(minutes: erkenDakika),
           );
 
           if (!erkenAlarmZamani.isAfter(now)) {
             debugPrint(
-              '   ⏭️ $vakitKey erken alarm zamanı geçmiş ($erkenAlarmZamani)',
+              '   ⏭️ $vakitKey early alarm time passed ($erkenAlarmZamani)',
             );
             skippedCount++;
             continue;
           }
 
-          // Erken alarm sesini al - ARTIK SES ID'Sİ KULLANIYORUZ
+          // Get early alarm sound ID
           final erkenSesId =
               prefs.getString('erken_bildirim_sesi_$vakitKeyLower') ??
               prefs.getString('bildirim_sesi_$vakitKeyLower') ??
               varsayilanSes;
 
-          // Benzersiz alarm ID'si oluştur
+          // Create unique alarm ID
           final erkenAlarmId = AlarmService.generateAlarmId(
             '${vakitKeyLower}_erken',
             erkenAlarmZamani,
           );
 
           debugPrint(
-            '   ⏰ $vakitKey erken alarm: $erkenAlarmZamani ($erkenDakika dk önce), ses: $erkenSesId, ID: $erkenAlarmId',
+            '   ⏰ $vakitKey early alarm: $erkenAlarmZamani ($erkenDakika min), sound: $erkenSesId, ID: $erkenAlarmId',
           );
 
-          // Alarmı zamanla - SES ID'SİNİ DİREKT GÖNDERİYORUZ
+          final prayerLabel = _getPrayerLabel(languageService, vakitKey);
+          final prayerName = '$prayerLabel ($erkenDakika $minuteShort)';
+
+          // Schedule alarm - send sound ID directly
           final success = await AlarmService.scheduleAlarm(
-            prayerName: '${_vakitTurkce[vakitKey]} ($erkenDakika dk)',
+            prayerName: prayerName,
             triggerAtMillis: erkenAlarmZamani.millisecondsSinceEpoch,
             soundPath: erkenSesId, // Ses ID'si
             useVibration: true,
@@ -283,28 +280,28 @@ class EarlyReminderService {
 
           if (success) {
             alarmCount++;
-            debugPrint('      ✅ Erken alarm zamanlandı');
+            debugPrint('      ✅ Early alarm scheduled');
           } else {
-            debugPrint('      ❌ Erken alarm zamanlanamadı');
+            debugPrint('      ❌ Early alarm scheduling failed');
             skippedCount++;
           }
         }
       }
 
-      debugPrint('\\n⏰ ===== ERKEN HATIRLATMA ZAMANLAMA BİTTİ =====');
-      debugPrint('✅ Kurulan alarm sayısı: $alarmCount');
-      debugPrint('⏭️ Atlanan/başarısız: $skippedCount');
+      debugPrint('\\n⏰ ===== EARLY REMINDER SCHEDULING END =====');
+      debugPrint('✅ Alarms scheduled: $alarmCount');
+      debugPrint('⏭️ Skipped/failed: $skippedCount');
       debugPrint('==========================================\\n');
       return alarmCount;
     } catch (e, stackTrace) {
-      debugPrint('❌ ERKEN HATIRLATMA ZAMANLAMA HATASI: $e');
+      debugPrint('❌ EARLY REMINDER SCHEDULING ERROR: $e');
       debugPrint('📋 Stack trace: $stackTrace');
       debugPrint('==========================================');
       return 0;
     }
   }
 
-  /// Tüm erken hatırlatma alarmlarını iptal et
+  /// Cancel all early reminder alarms.
   static Future<void> cancelAllEarlyReminders() async {
     final now = DateTime.now();
     for (int gun = 0; gun < 7; gun++) {
@@ -318,10 +315,10 @@ class EarlyReminderService {
         await AlarmService.cancelAlarm(erkenAlarmId);
       }
     }
-    debugPrint('🗑️ Tüm erken hatırlatma alarmları iptal edildi');
+    debugPrint('🗑️ All early reminder alarms canceled');
   }
 
-  /// Belirli bir vakit için erken hatırlatma alarmını iptal et
+  /// Cancel early reminder alarm for a specific prayer.
   static Future<void> cancelEarlyReminder(String vakitKeyLower) async {
     final now = DateTime.now();
     for (int gun = 0; gun < 7; gun++) {
@@ -332,32 +329,51 @@ class EarlyReminderService {
       );
       await AlarmService.cancelAlarm(erkenAlarmId);
     }
-    debugPrint('🗑️ $vakitKeyLower erken hatırlatma alarmı iptal edildi');
+    debugPrint('🗑️ $vakitKeyLower early reminder alarm canceled');
   }
 
-  /// Ayarları topluca kaydet ve alarmları yeniden zamanla
-  /// Returns: Kurulan alarm sayısı
+  /// Save settings and reschedule alarms.
+  /// Returns: number of scheduled alarms.
   static Future<int> saveAndReschedule({
     required Map<String, int> erkenSureler,
     required Map<String, String> erkenSesler,
   }) async {
     final prefs = await SharedPreferences.getInstance();
 
-    debugPrint('💾 Erken hatırlatma ayarları kaydediliyor...');
+    debugPrint('💾 Saving early reminder settings...');
     for (final entry in erkenSureler.entries) {
       await prefs.setInt('erken_${entry.key}', entry.value);
-      debugPrint('   - ${entry.key}: ${entry.value} dakika');
+      debugPrint('   - ${entry.key}: ${entry.value} minutes');
     }
 
     for (final entry in erkenSesler.entries) {
       await prefs.setString('erken_bildirim_sesi_${entry.key}', entry.value);
     }
 
-    debugPrint('💾 Erken hatırlatma ayarları kaydedildi');
+    debugPrint('💾 Early reminder settings saved');
 
-    // Alarmları yeniden zamanla ve kurulan alarm sayısını döndür
+    // Reschedule alarms and return scheduled count
     final alarmCount = await scheduleAllEarlyReminders();
-    debugPrint('🔔 Toplam $alarmCount erken hatırlatma alarmı kuruldu');
+    debugPrint('🔔 Total early reminders scheduled: $alarmCount');
     return alarmCount;
+  }
+
+  static String _getPrayerLabel(LanguageService languageService, String key) {
+    switch (key) {
+      case 'Imsak':
+        return languageService['imsak'] ?? key;
+      case 'Gunes':
+        return languageService['gunes'] ?? key;
+      case 'Ogle':
+        return languageService['ogle'] ?? key;
+      case 'Ikindi':
+        return languageService['ikindi'] ?? key;
+      case 'Aksam':
+        return languageService['aksam'] ?? key;
+      case 'Yatsi':
+        return languageService['yatsi'] ?? key;
+      default:
+        return key;
+    }
   }
 }

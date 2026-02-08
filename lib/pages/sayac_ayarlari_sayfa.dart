@@ -429,7 +429,7 @@ class _SayacAyarlariSayfaState extends State<SayacAyarlariSayfa> {
             padding: const EdgeInsets.all(16),
             child: Text(
               _languageService['counter_settings_desc'] ??
-                  'Ana ekranda gösterilecek vakit sayacını seçin. Kaydırarak diğer sayaçları önizleyebilirsiniz.',
+                  'Ana ekranda gösterilecek vakit sayacını seçin.',
               style: TextStyle(color: renkler.yaziSecondary, fontSize: 14),
               textAlign: TextAlign.center,
             ),

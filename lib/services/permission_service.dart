@@ -22,11 +22,11 @@ class PermissionService {
       );
       _notificationsInitialized = true;
     } catch (e) {
-      debugPrint('⚠️ Bildirim init hatası: $e');
+      debugPrint('⚠️ Notification init error: $e');
     }
   }
 
-  /// Konum izni kontrolü
+  /// Check location permission.
   static Future<bool> checkLocationPermission() async {
     if (!Platform.isAndroid) return false;
     try {
@@ -38,11 +38,11 @@ class PermissionService {
     }
   }
 
-  /// Konum izni iste
+  /// Request location permission.
   static Future<bool> requestLocationPermission() async {
     if (!Platform.isAndroid) return false;
     try {
-      // Önce servis durumunu kontrol et
+      // Check service status first
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         await Geolocator.openLocationSettings();
@@ -57,12 +57,12 @@ class PermissionService {
       return permission == LocationPermission.always ||
           permission == LocationPermission.whileInUse;
     } catch (e) {
-      debugPrint('⚠️ Konum izni hatası: $e');
+      debugPrint('⚠️ Location permission error: $e');
       return false;
     }
   }
 
-  /// Bildirim izni kontrolü
+  /// Check notification permission.
   static Future<bool> checkNotificationPermission() async {
     if (!Platform.isAndroid) return true;
     try {
@@ -81,7 +81,7 @@ class PermissionService {
     }
   }
 
-  /// Bildirim izni iste
+  /// Request notification permission.
   static Future<bool> requestNotificationPermission() async {
     if (!Platform.isAndroid) return true;
     try {
@@ -98,32 +98,32 @@ class PermissionService {
       }
       return true;
     } catch (e) {
-      debugPrint('⚠️ Bildirim izni hatası: $e');
+      debugPrint('⚠️ Notification permission error: $e');
       return true;
     }
   }
 
-  /// Tüm gerekli izinleri iste (sıralı olarak, çakışma önlemek için)
+  /// Request all permissions in sequence.
   static Future<void> requestAllPermissions() async {
     if (!Platform.isAndroid) return;
 
     try {
-      // Android 13+ için bildirim izni - timeout ile
+      // Android 13+ notification permission with timeout
       final hasNotification = await requestNotificationPermission().timeout(
         const Duration(seconds: 3),
         onTimeout: () => false,
       );
       debugPrint(
-        '📱 Bildirim izni: ${hasNotification ? "verildi" : "istendi/reddedildi"}',
+        '📱 Notification permission: ${hasNotification ? "granted" : "requested/denied"}',
       );
 
-      debugPrint('✅ İzinler kontrol edildi');
+      debugPrint('✅ Permissions checked');
     } catch (e) {
-      debugPrint('⚠️ İzin kontrolü hatası: $e');
+      debugPrint('⚠️ Permission check error: $e');
     }
   }
 
-  /// Overlay (diğer uygulamaların üstünde) izni kontrolü
+  /// Check overlay permission.
   static Future<bool> hasOverlayPermission() async {
     if (!Platform.isAndroid) return false;
     try {
@@ -134,17 +134,17 @@ class PermissionService {
     }
   }
 
-  /// Overlay izin ayarlarını aç
+  /// Open overlay settings.
   static Future<void> openOverlaySettings() async {
     if (!Platform.isAndroid) return;
     try {
       await _channel.invokeMethod<void>('openOverlaySettings');
     } catch (e) {
-      debugPrint('⚠️ Overlay ayarları açılamadı: $e');
+      debugPrint('⚠️ Overlay settings open failed: $e');
     }
   }
 
-  /// Exact alarm izni kontrolü (Android 12+)
+  /// Check exact alarm permission (Android 12+).
   static Future<bool> hasExactAlarmPermission() async {
     if (!Platform.isAndroid) return true;
     try {
@@ -161,7 +161,7 @@ class PermissionService {
     }
   }
 
-  /// Exact alarm izni iste
+  /// Request exact alarm permission.
   static Future<bool> requestExactAlarmPermission() async {
     if (!Platform.isAndroid) return true;
     try {
@@ -175,22 +175,22 @@ class PermissionService {
       }
       return true;
     } catch (e) {
-      debugPrint('⚠️ Exact alarm izni hatası: $e');
+      debugPrint('⚠️ Exact alarm permission error: $e');
       return true;
     }
   }
 
-  /// Exact alarm ayarlarını aç
+  /// Open exact alarm settings.
   static Future<void> openExactAlarmSettings() async {
     if (!Platform.isAndroid) return;
     try {
       await _channel.invokeMethod<void>('openExactAlarmSettings');
     } catch (e) {
-      debugPrint('⚠️ Alarm ayarları açılamadı: $e');
+      debugPrint('⚠️ Exact alarm settings open failed: $e');
     }
   }
 
-  /// Pil optimizasyonu devre dışı bırakma kontrolü
+  /// Check battery optimization exemption.
   static Future<bool> isBatteryOptimizationDisabled() async {
     if (!Platform.isAndroid) return true;
     try {
@@ -203,45 +203,45 @@ class PermissionService {
     }
   }
 
-  /// Pil optimizasyonu muafiyeti iste
+  /// Request battery optimization exemption.
   static Future<void> requestBatteryOptimizationExemption() async {
     if (!Platform.isAndroid) return;
     try {
       await _channel.invokeMethod<void>('requestBatteryOptimizationExemption');
     } catch (e) {
-      debugPrint('⚠️ Pil optimizasyonu muafiyeti istenemedi: $e');
+      debugPrint('⚠️ Battery optimization exemption request failed: $e');
     }
   }
 
-  /// Pil optimizasyonu ayarlarını aç
+  /// Open battery optimization settings.
   static Future<void> openBatteryOptimizationSettings() async {
     if (!Platform.isAndroid) return;
     try {
       await _channel.invokeMethod<void>('openBatteryOptimizationSettings');
     } catch (e) {
-      debugPrint('⚠️ Pil ayarları açılamadı: $e');
+      debugPrint('⚠️ Battery settings could not be opened: $e');
     }
   }
 
-  /// Rahatsız Etme Modu (DND) politika erişimi kontrolü
+  /// Check Do Not Disturb (DND) policy access
   static Future<bool> hasDndPolicyAccess() async {
     if (!Platform.isAndroid) return false;
     try {
       final result = await _channel.invokeMethod<bool>('hasDndPolicyAccess');
       return result ?? false;
     } catch (e) {
-      debugPrint('⚠️ DND izin kontrolü hatası: $e');
+      debugPrint('⚠️ DND permission check error: $e');
       return false;
     }
   }
 
-  /// Rahatsız Etme Modu (DND) politika ayarlarını aç
+  /// Open Do Not Disturb (DND) policy settings
   static Future<void> openDndPolicySettings() async {
     if (!Platform.isAndroid) return;
     try {
       await _channel.invokeMethod<void>('openDndPolicySettings');
     } catch (e) {
-      debugPrint('⚠️ DND ayarları açılamadı: $e');
+      debugPrint('⚠️ DND settings could not be opened: $e');
     }
   }
 }

@@ -45,7 +45,7 @@ class _AyarlarSayfaState extends State<AyarlarSayfa> {
       backgroundColor: renkler.arkaPlan,
       appBar: AppBar(
         title: Text(
-          _languageService['settings'] ?? 'Ayarlar',
+          _languageService['settings'] ?? '',
           style: TextStyle(color: renkler.yaziPrimary),
         ),
         backgroundColor: Colors.transparent,
@@ -55,14 +55,13 @@ class _AyarlarSayfaState extends State<AyarlarSayfa> {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          // Bildirimler
+          // Notifications
           _ayarSatiri(
             icon: Icons.notifications,
             iconColor: renkler.vurgu,
-            baslik: _languageService['notifications'] ?? 'Bildirimler',
+            baslik: _languageService['notifications'] ?? '',
             altBaslik:
-                _languageService['notification_settings'] ??
-                'Bildirim ayarları',
+              _languageService['notification_settings'] ?? '',
             onTap: () {
               Navigator.push(
                 context,
@@ -75,12 +74,12 @@ class _AyarlarSayfaState extends State<AyarlarSayfa> {
           ),
           Divider(color: renkler.ayirac),
 
-          // Konum Ayarları
+          // Location settings
           _ayarSatiri(
             icon: Icons.location_on,
             iconColor: renkler.vurgu,
-            baslik: _languageService['location'] ?? 'Konum',
-            altBaslik: _languageService['select_location'] ?? 'Konum seç',
+            baslik: _languageService['location'] ?? '',
+            altBaslik: _languageService['select_location'] ?? '',
             onTap: () {
               Navigator.push(
                 context,
@@ -91,11 +90,11 @@ class _AyarlarSayfaState extends State<AyarlarSayfa> {
           ),
           Divider(color: renkler.ayirac),
 
-          // Dil Seçimi
+          // Language selection
           _ayarSatiri(
             icon: Icons.language,
             iconColor: Colors.blue,
-            baslik: _languageService['language'] ?? 'Dil',
+            baslik: _languageService['language'] ?? '',
             altBaslik: _languageService.supportedLanguages.firstWhere(
               (lang) => lang['code'] == _languageService.currentLanguage,
             )['name']!,
@@ -117,12 +116,14 @@ class _AyarlarSayfaState extends State<AyarlarSayfa> {
           ),
           Divider(color: renkler.ayirac),
 
-          // Tema
+          // Theme
           _ayarSatiri(
             icon: Icons.palette,
             iconColor: renkler.vurgu,
-            baslik: _languageService['theme'] ?? 'Tema',
-            altBaslik: '${renkler.isim} - ${renkler.aciklama}',
+            baslik: _languageService['theme'] ?? '',
+            altBaslik:
+              '${_languageService[renkler.isim] ?? renkler.isim} - '
+              '${_languageService[renkler.aciklama] ?? renkler.aciklama}',
             onTap: () {
               Navigator.push(
                 context,
@@ -150,14 +151,13 @@ class _AyarlarSayfaState extends State<AyarlarSayfa> {
           ),
           Divider(color: renkler.ayirac),
 
-          // Vakit Sayaçları
+          // Prayer counters
           _ayarSatiri(
             icon: Icons.timer,
             iconColor: Colors.cyan,
-            baslik: _languageService['counter_settings'] ?? 'Vakit Sayaçları',
+            baslik: _languageService['counter_settings'] ?? '',
             altBaslik:
-                _languageService['counter_settings_short'] ??
-                'Ana ekran sayacını seç',
+              _languageService['counter_settings_short'] ?? '',
             onTap: () {
               Navigator.push(
                 context,
@@ -170,13 +170,12 @@ class _AyarlarSayfaState extends State<AyarlarSayfa> {
           ),
           Divider(color: renkler.ayirac),
 
-          // Widget Ayarları
+          // Widget settings
           _ayarSatiri(
             icon: Icons.widgets,
             iconColor: renkler.vurgu,
-            baslik: _languageService['widget_settings'] ?? 'Widget Ayarları',
-            altBaslik:
-                _languageService['background_color'] ?? 'Arka plan rengi',
+            baslik: _languageService['widget_settings'] ?? '',
+            altBaslik: _languageService['background_color'] ?? '',
             onTap: () {
               Navigator.push(
                 context,
@@ -189,12 +188,12 @@ class _AyarlarSayfaState extends State<AyarlarSayfa> {
           ),
           Divider(color: renkler.ayirac),
 
-          // Hakkında
+          // About
           _ayarSatiri(
             icon: Icons.info,
             iconColor: renkler.vurgu,
-            baslik: _languageService['about'] ?? 'Hakkında',
-            altBaslik: _languageService['about_app'] ?? 'Uygulama hakkında',
+            baslik: _languageService['about'] ?? '',
+            altBaslik: _languageService['about_app'] ?? '',
             onTap: () {
               Navigator.push(
                 context,
@@ -220,8 +219,7 @@ class _AyarlarSayfaState extends State<AyarlarSayfa> {
               const Icon(Icons.language, color: Colors.blue),
               const SizedBox(width: 12),
               Text(
-                _languageService['select_language'] ??
-                    'Dil Seçin / Select Language',
+                _languageService['select_language'] ?? '',
                 style: TextStyle(color: renkler.yaziPrimary, fontSize: 18),
               ),
             ],
@@ -260,7 +258,7 @@ class _AyarlarSayfaState extends State<AyarlarSayfa> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
-                        '${lang['flag']} ${lang['name']} ${_languageService['selected'] ?? 'seçildi'}',
+                        '${lang['flag']} ${lang['name']} ${_languageService['selected'] ?? ''}',
                       ),
                       duration: const Duration(seconds: 2),
                     ),
@@ -273,7 +271,7 @@ class _AyarlarSayfaState extends State<AyarlarSayfa> {
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: Text(
-                _languageService['close'] ?? 'Kapat',
+                _languageService['close'] ?? '',
                 style: TextStyle(color: renkler.vurgu),
               ),
             ),

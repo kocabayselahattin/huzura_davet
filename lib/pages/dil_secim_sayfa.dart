@@ -27,7 +27,7 @@ class _DilSecimSayfaState extends State<DilSecimSayfa> {
 
   @override
   Widget build(BuildContext context) {
-    print('🌍 DilSecimSayfa: build çağrıldı');
+    print('🌍 DilSecimSayfa: build called');
     return Scaffold(
       backgroundColor: const Color(0xFF1B2741),
       body: Container(
@@ -47,7 +47,7 @@ class _DilSecimSayfaState extends State<DilSecimSayfa> {
               children: [
                 const SizedBox(height: 40),
 
-                // Başlık
+                // Title
                 Center(
                   child: Column(
                     children: [
@@ -59,8 +59,7 @@ class _DilSecimSayfaState extends State<DilSecimSayfa> {
                       const SizedBox(height: 24),
                       Text(
                         _languageService['select_language_title'] ??
-                            (_languageService['select_language'] ??
-                                'Select Language'),
+                          (_languageService['select_language'] ?? ''),
                         style: Theme.of(context).textTheme.headlineSmall
                             ?.copyWith(
                               fontWeight: FontWeight.bold,
@@ -70,8 +69,7 @@ class _DilSecimSayfaState extends State<DilSecimSayfa> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        _languageService['select_language_desc'] ??
-                            'Please select app language',
+                        _languageService['select_language_desc'] ?? '',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: const Color(0xFF00BCD4).withOpacity(0.7),
                         ),
@@ -83,7 +81,7 @@ class _DilSecimSayfaState extends State<DilSecimSayfa> {
 
                 const SizedBox(height: 48),
 
-                // Dil listesi
+                // Language list
                 Expanded(
                   child: ListView.builder(
                     itemCount: _languageService.supportedLanguages.length,
@@ -148,7 +146,7 @@ class _DilSecimSayfaState extends State<DilSecimSayfa> {
                   ),
                 ),
 
-                // Devam et butonu
+                // Continue button
                 SizedBox(
                   width: double.infinity,
                   height: 56,
@@ -171,7 +169,7 @@ class _DilSecimSayfaState extends State<DilSecimSayfa> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          _languageService['continue'] ?? 'Continue',
+                          _languageService['continue'] ?? '',
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,

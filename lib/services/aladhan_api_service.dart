@@ -5,17 +5,20 @@ class AladhanApiService {
   static const _baseUrl = 'https://api.aladhan.com/v1';
   static final Map<String, List<Map<String, dynamic>>> _cache = {};
 
-  // Örnek: Türkiye için Ankara (lat: 39.9334, long: 32.8597)
+  // Example: Ankara, Turkey (lat: 39.9334, long: 32.8597)
   static Future<Map<String, String>?> getBugunVakitler({
     double latitude = 39.9334,
     double longitude = 32.8597,
-    String method = '13', // Diyanet İşleri Başkanlığı
+    String method = '13', // Diyanet Affairs (Turkey)
+    String? timeZone,
     DateTime? date,
   }) async {
     final dt = date ?? DateTime.now();
     final dateStr = '${dt.day.toString().padLeft(2, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.year}';
+    final timeZoneParam =
+        timeZone == null || timeZone.isEmpty ? '' : '&timezonestring=$timeZone';
     final url =
-        '$_baseUrl/timings/$dateStr?latitude=$latitude&longitude=$longitude&method=$method&school=1&timezonestring=Europe/Istanbul';
+        '$_baseUrl/timings/$dateStr?latitude=$latitude&longitude=$longitude&method=$method&school=1$timeZoneParam';
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
@@ -31,12 +34,12 @@ class AladhanApiService {
         };
       }
     } catch (e) {
-      print('Aladhan API hata: $e');
+      print('Aladhan API error: $e');
     }
     return null;
   }
 
-  /// Belirli bir ay için vakitleri getir (İmsakiye için)
+  /// Fetch times for a specific month (for timetable)
   static Future<List<Map<String, dynamic>>> getAylikVakitler({
     required int yil,
     required int ay,
@@ -45,19 +48,19 @@ class AladhanApiService {
   }) async {
     final cacheKey = '$city-$yil-$ay';
     
-    // Cache kontrolü
+    // Cache check
     if (_cache.containsKey(cacheKey)) {
       print('📦 Aladhan cache: $cacheKey');
       return _cache[cacheKey]!;
     }
 
     try {
-      // Method 13 = Diyanet İşleri Başkanlığı (Türkiye)
+      // Method 13 = Diyanet Affairs (Turkey)
       final uri = Uri.parse(
         '$_baseUrl/calendarByCity/$yil/$ay?city=$city&country=$country&method=13'
       );
       
-      print('🌍 Aladhan API İsteği: $uri');
+      print('🌍 Aladhan API request: $uri');
       
       final response = await http.get(uri, headers: {
         'Accept': 'application/json',
@@ -92,27 +95,27 @@ class AladhanApiService {
           
           if (vakitler.isNotEmpty) {
             _cache[cacheKey] = vakitler;
-            print('✅ Aladhan API başarılı: $cacheKey (${vakitler.length} gün)');
+            print('✅ Aladhan API success: $cacheKey (${vakitler.length} days)');
             return vakitler;
           }
         }
       }
     } catch (e) {
-      print('⚠️ Aladhan API hatası ($cacheKey): $e');
+      print('⚠️ Aladhan API error ($cacheKey): $e');
     }
 
     return [];
   }
 
-  /// Saat bilgisini temizle (timezone bilgisini kaldır)
+  /// Clean time string (remove timezone)
   static String _cleanTime(String time) {
     // "07:30 (EET)" -> "07:30"
     return time.split(' ')[0];
   }
 
-  /// Cache'i temizle
+  /// Clear cache
   static void clearCache() {
     _cache.clear();
-    print('✅ Aladhan API cache temizlendi');
+    print('✅ Aladhan API cache cleared');
   }
 }

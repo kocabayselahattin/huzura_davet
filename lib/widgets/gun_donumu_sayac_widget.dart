@@ -6,9 +6,10 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../services/konum_service.dart';
 import '../services/diyanet_api_service.dart';
+import '../services/language_service.dart';
 
-/// Gün Dönümü Sayacı - Modern ve Gerçekçi Tasarım
-/// Gerçek güneş/ay resimleri, ay evreleri ve dinamik arka plan
+/// Day Cycle Countdown - modern and realistic design.
+/// Real sun/moon images, moon phases, and dynamic background.
 class GunDonumuSayacWidget extends StatefulWidget {
   const GunDonumuSayacWidget({super.key});
 
@@ -18,30 +19,31 @@ class GunDonumuSayacWidget extends StatefulWidget {
 
 class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
     with TickerProviderStateMixin {
-  // Hava durumuna göre vakit yazı rengi
+  final LanguageService _languageService = LanguageService();
+  // Prayer time text color based on weather.
   Color _getVakitTextColor(String vakit, bool isAktif) {
-    // Gece: Yatsı, İmsak, Güneşten önce/sonra
+    // Night: Yatsi, Imsak, before/after sunrise.
     final hour = _now.hour;
     if (vakit == 'Yatsi' || vakit == 'Imsak' || (hour < 6 || hour >= 22)) {
       return isAktif ? Colors.white : Colors.white70;
     }
-    // Güneş: Sarımsı ve koyu gölgeli
+    // Sunrise: warm yellow with darker shadows.
     if (vakit == 'Gunes') {
       return isAktif ? const Color(0xFFFFF176) : const Color(0xFFFFF9C4);
     }
-    // Akşam: Turuncu/kızıl tonlar
+    // Sunset: orange/red tones.
     if (vakit == 'Aksam') {
       return isAktif ? const Color(0xFFFF7043) : const Color(0xFFFFAB91);
     }
-    // Öğle/İkindi: Açık mavi/gri
+    // Noon/Afternoon: light blue/gray.
     if (vakit == 'Ogle' || vakit == 'Ikindi') {
       return isAktif ? const Color(0xFF1976D2) : const Color(0xFF90CAF9);
     }
-    // Gündüz: Siyah veya koyu gri
+    // Daytime: black or dark gray.
     if (hour >= 6 && hour < 18) {
       return isAktif ? Colors.black : Colors.black.withOpacity(0.85);
     }
-    // Varsayılan
+    // Fallback.
     return isAktif ? Colors.white : Colors.white70;
   }
 
@@ -50,15 +52,15 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
   String? _weatherMain;
   Map<String, String> _vakitler = {};
 
-  // Animasyon controller'ları
+  // Animation controllers.
   late AnimationController _breathController;
   late AnimationController _floatController;
 
-  // Hava parçacıkları
+  // Weather particles.
   final List<_Particle> _particles = [];
 
-  // Hava durumu cache için static değişkenler
-  // Uygulama açık olduğu sürece sadece 1 kez API'den çekilir
+  // Weather cache static values.
+  // Fetch from API only once per app session.
   static String? _cachedWeather;
   static DateTime? _lastWeatherFetch;
 
@@ -67,13 +69,13 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
     super.initState();
     _now = DateTime.now();
 
-    // Nefes animasyonu (güneş/ay için)
+    // Breathing animation (sun/moon).
     _breathController = AnimationController(
       duration: const Duration(seconds: 4),
       vsync: this,
     )..repeat(reverse: true);
 
-    // Yüzme animasyonu
+    // Floating animation.
     _floatController = AnimationController(
       duration: const Duration(seconds: 6),
       vsync: this,
@@ -89,7 +91,7 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
     });
 
     _vakitleriYukle();
-    _loadWeather(); // Cache kontrolü ile hava durumu yükle
+    _loadWeather(); // Load weather with cache check.
     _initParticles();
   }
 
@@ -118,23 +120,39 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
 
   Future<void> _vakitleriYukle() async {
     try {
-      final konumlar = await KonumService.getKonumlar();
-      final aktifIndex = await KonumService.getAktifKonumIndex();
+      final ilceId = await KonumService.getIlceId();
+      if (ilceId == null || ilceId.isEmpty) {
+        _setDefaultTimes();
+        return;
+      }
 
-      if (konumlar.isEmpty || aktifIndex >= konumlar.length) return;
-
-      final konum = konumlar[aktifIndex];
-      final vakitler = await DiyanetApiService.getBugunVakitler(konum.ilceId);
-
+      final vakitler = await DiyanetApiService.getBugunVakitler(ilceId);
       if (mounted && vakitler != null) {
         setState(() => _vakitler = vakitler);
+      } else {
+        _setDefaultTimes();
       }
     } catch (e) {
-      debugPrint('Vakitler yüklenemedi: $e');
+      debugPrint('Failed to load prayer times: $e');
+      _setDefaultTimes();
     }
   }
 
-  // İl koordinatları haritası
+  void _setDefaultTimes() {
+    if (!mounted) return;
+    setState(() {
+      _vakitler = {
+        'Imsak': '05:30',
+        'Gunes': '07:00',
+        'Ogle': '12:30',
+        'Ikindi': '15:30',
+        'Aksam': '18:00',
+        'Yatsi': '19:30',
+      };
+    });
+  }
+
+  // Province coordinates map.
   static const Map<String, List<double>> _ilKoordinatlari = {
     'Adana': [37.0, 35.32],
     'Adıyaman': [37.76, 38.28],
@@ -219,10 +237,10 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
     'Düzce': [40.85, 31.17],
   };
 
-  /// Hava durumunu yükle - önce cache kontrol et, yoksa API'den çek
-  /// Uygulama açık olduğu sürece sadece 1 kez API'den çeker
+  /// Load weather: check cache first, otherwise fetch from the API.
+  /// Fetch only once per app session.
   Future<void> _loadWeather() async {
-    // Cache varsa ve bugün içinde çekildiyse, cache'den kullan
+    // If cache exists and was fetched today, use it.
     if (_cachedWeather != null && _lastWeatherFetch != null) {
       final now = DateTime.now();
       final isSameDay =
@@ -231,50 +249,50 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
           _lastWeatherFetch!.day == now.day;
 
       if (isSameDay) {
-        debugPrint('🌤️ Hava durumu cache\'den yüklendi: $_cachedWeather');
+        debugPrint('🌤️ Weather loaded from cache: $_cachedWeather');
         if (mounted) setState(() => _weatherMain = _cachedWeather);
         return;
       }
     }
 
-    // Cache yoksa veya güncel değilse API'den çek
+    // If cache is missing or stale, fetch from the API.
     await _fetchWeatherFromApi();
   }
 
-  /// API'den hava durumu çek ve cache'e kaydet
-  /// Önce seçili konum koordinatlarını kontrol et, yoksa il/ilçe verilerinden al
+  /// Fetch weather from the API and save to cache.
+  /// Check selected coordinates first, otherwise use province/district data.
   Future<void> _fetchWeatherFromApi() async {
     try {
-      double lat = 41.02; // Varsayılan İstanbul
+      double lat = 41.02; // Default Istanbul.
       double lon = 29.0;
-      String konumKaynagi = 'varsayılan';
+      String konumKaynagi = 'default';
 
-      // 1. Önce seçili konumları kontrol et
+      // 1) Check selected locations first.
       final konumlar = await KonumService.getKonumlar();
       final aktifIndex = await KonumService.getAktifKonumIndex();
 
       if (konumlar.isNotEmpty && aktifIndex < konumlar.length) {
         final konum = konumlar[aktifIndex];
 
-        // İl adından koordinat al
+        // Get coordinates by province name.
         final ilAdi = konum.ilAdi;
         if (_ilKoordinatlari.containsKey(ilAdi)) {
           lat = _ilKoordinatlari[ilAdi]![0];
           lon = _ilKoordinatlari[ilAdi]![1];
-          konumKaynagi = 'il koordinatları ($ilAdi)';
+          konumKaynagi = 'province coordinates ($ilAdi)';
         } else {
-          // Büyük/küçük harf farkını kontrol et
+          // Handle case-insensitive match.
           for (final entry in _ilKoordinatlari.entries) {
             if (entry.key.toLowerCase() == ilAdi.toLowerCase()) {
               lat = entry.value[0];
               lon = entry.value[1];
-              konumKaynagi = 'il koordinatları (${entry.key})';
+              konumKaynagi = 'province coordinates (${entry.key})';
               break;
             }
           }
         }
       } else {
-        // 4. Konum yoksa il/ilçe seçiminden bak
+        // 4) If no location, use province/district selection.
         await KonumService.getIlceId();
         final ilAdi = await KonumService.getIl();
 
@@ -282,13 +300,13 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
           if (_ilKoordinatlari.containsKey(ilAdi)) {
             lat = _ilKoordinatlari[ilAdi]![0];
             lon = _ilKoordinatlari[ilAdi]![1];
-            konumKaynagi = 'seçili il ($ilAdi)';
+            konumKaynagi = 'selected province ($ilAdi)';
           } else {
             for (final entry in _ilKoordinatlari.entries) {
               if (entry.key.toLowerCase() == ilAdi.toLowerCase()) {
                 lat = entry.value[0];
                 lon = entry.value[1];
-                konumKaynagi = 'seçili il (${entry.key})';
+                konumKaynagi = 'selected province (${entry.key})';
                 break;
               }
             }
@@ -297,7 +315,7 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
       }
 
       debugPrint(
-        '🌤️ Hava durumu API\'den çekiliyor... (lat: $lat, lon: $lon, kaynak: $konumKaynagi)',
+        '🌤️ Fetching weather from API... (lat: $lat, lon: $lon, source: $konumKaynagi)',
       );
 
       final url = Uri.parse(
@@ -322,15 +340,15 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
           type = 'cloudy';
         }
 
-        // Cache'e kaydet
+        // Save to cache.
         _cachedWeather = type;
         _lastWeatherFetch = DateTime.now();
-        debugPrint('🌤️ Hava durumu API\'den çekildi ve cache\'lendi: $type');
+        debugPrint('🌤️ Weather fetched and cached: $type');
 
         if (mounted) setState(() => _weatherMain = type);
       }
     } catch (e) {
-      debugPrint('Hava durumu hatası: $e');
+      debugPrint('Weather error: $e');
     }
   }
 
@@ -348,22 +366,20 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
     return int.parse(parts[0]) * 60 + int.parse(parts[1]);
   }
 
-  /// Ay fazını hesapla (0-7 arası 8 faz)
-  /// 0=Yeni Ay, 1=Hilal (büyüyen), 2=İlk Dördün, 3=Dolmak Üzere
-  /// 4=Dolunay, 5=Küçülmeye Başlayan, 6=Son Dördün, 7=Hilal (küçülen)
-  int _getMoonPhaseIndex(DateTime date) {
-    // Bilinen yeni ay tarihi: 29 Aralık 2024 (daha güncel referans)
+  /// Calculate moon phase fraction (0.0-1.0).
+  /// 0.0=new moon, 0.5=full moon, 1.0=new moon.
+  double _getMoonPhaseFraction(DateTime date) {
+    // Known new moon date: Dec 29, 2024 (updated reference).
     final reference = DateTime.utc(2024, 12, 30, 22, 27);
     const synodicMonth = 29.53058867;
 
     final daysDiff = date.difference(reference).inHours / 24.0;
     final phase = (daysDiff % synodicMonth) / synodicMonth;
 
-    // 0-1 arasındaki değeri 0-7 faz indeksine çevir
-    return ((phase * 8) % 8).floor();
+    return phase;
   }
 
-  /// Aktif vakit
+  /// Active prayer time.
   String _getAktifVakit() {
     if (_vakitler.isEmpty) return 'Ogle';
     final now = _now.hour * 60 + _now.minute;
@@ -376,7 +392,7 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
     return 'Yatsi';
   }
 
-  /// Sonraki vakit bilgisi (saniye hassasiyetli)
+  /// Next prayer time info (second precision).
   Map<String, dynamic> _getSonrakiVakit() {
     if (_vakitler.isEmpty) return {'vakit': '', 'kalan': Duration.zero};
 
@@ -386,9 +402,12 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
     for (final v in sira) {
       final t = _vakitler[v];
       if (t != null) {
-        final m = _timeToMinutes(t) * 60; // Saniyeye çevir
+        final m = _timeToMinutes(t) * 60; // Convert to seconds.
         if (m > nowSec) {
-          return {'vakit': v, 'kalan': Duration(seconds: m - nowSec)};
+          return {
+            'vakit': v,
+            'kalan': Duration(seconds: m - nowSec),
+          };
         }
       }
     }
@@ -427,20 +446,20 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
     final width = size.width;
     const height = 240.0;
 
-    // Zaman hesaplamaları
+    // Time calculations.
     final sunriseMin = _timeToMinutes(_vakitler['Gunes'] ?? '06:30');
     final sunsetMin = _timeToMinutes(_vakitler['Aksam'] ?? '18:00');
     final nowMin = _now.hour * 60 + _now.minute;
     final isDay = nowMin >= sunriseMin && nowMin < sunsetMin;
 
-    // Görünmez elips üzerinde konum (3mm = ~12px kenar boşluğu)
+    // Position on invisible ellipse (3mm ~ 12px padding).
     const padding = 12.0;
     final ellipseW = width - (padding * 2) - 60;
     final ellipseH = height * 0.45;
     final centerX = width / 2;
     final centerY = height * 0.52;
 
-    // Güneş/Ay açısı hesaplama
+    // Sun/moon angle calculation.
     double progress;
     if (isDay) {
       progress = (nowMin - sunriseMin) / (sunsetMin - sunriseMin);
@@ -453,7 +472,7 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
       }
     }
 
-    // Elips üzerinde açı: gündüz üstte (sol->sağ), gece altta (sağ->sol)
+    // Ellipse angle: day across top (left->right), night across bottom (right->left).
     final angle = isDay
         ? math.pi - (progress * math.pi)
         : -(progress * math.pi);
@@ -463,15 +482,15 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
 
     final aktifVakit = _getAktifVakit();
     final sonraki = _getSonrakiVakit();
-    final moonPhase = _getMoonPhaseIndex(_now);
+    final moonPhase = _getMoonPhaseFraction(_now);
 
-    final vakitIsimleri = {
-      'Imsak': 'İmsak',
-      'Gunes': 'Güneş',
-      'Ogle': 'Öğle',
-      'Ikindi': 'İkindi',
-      'Aksam': 'Akşam',
-      'Yatsi': 'Yatsı',
+    final Map<String, String> vakitIsimleri = {
+      'Imsak': _languageService['imsak'] ?? 'Imsak',
+      'Gunes': _languageService['gunes'] ?? 'Gunes',
+      'Ogle': _languageService['ogle'] ?? 'Ogle',
+      'Ikindi': _languageService['ikindi'] ?? 'Ikindi',
+      'Aksam': _languageService['aksam'] ?? 'Aksam',
+      'Yatsi': _languageService['yatsi'] ?? 'Yatsi',
     };
 
     return Container(
@@ -491,7 +510,7 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
         borderRadius: BorderRadius.circular(24),
         child: Stack(
           children: [
-            // === ARKA PLAN: Gerçek gökyüzü resmi ===
+            // === BACKGROUND: real sky image ===
             Positioned.fill(
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 800),
@@ -503,7 +522,7 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
                   fit: BoxFit.cover,
                   width: width,
                   height: height,
-                  errorBuilder: (_, _, __) => Container(
+                  errorBuilder: (context, error, stackTrace) => Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
@@ -521,7 +540,7 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
               ),
             ),
 
-            // === HAVA DURUMU OVERLAY ===
+            // === WEATHER OVERLAY ===
             if (_weatherMain != null && _weatherMain != 'clear')
               Positioned.fill(
                 child: WeatherBg(
@@ -531,14 +550,14 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
                 ),
               ),
 
-            // === GECE YILDIZLARI ===
+            // === NIGHT STARS ===
             if (!isDay) ..._buildStars(width, height),
 
-            // === HAVA PARÇACIKLARI ===
+            // === WEATHER PARTICLES ===
             if (_weatherMain == 'snow' || _weatherMain == 'rain')
               ..._particles.map((p) => _buildParticle(p, width, height)),
 
-            // === UFUK ÇİZGİSİ (Subtle) ===
+            // === HORIZON LINE (subtle) ===
             Positioned(
               bottom: height * 0.25,
               left: 0,
@@ -557,7 +576,7 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
               ),
             ),
 
-            // === GÜNEŞ VEYA AY (Gerçek Resim) ===
+            // === SUN OR MOON (real image) ===
             AnimatedBuilder(
               animation: Listenable.merge([
                 _breathController,
@@ -595,9 +614,10 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
                             ? Image.asset(
                                 'assets/icon/sun.png',
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, _, __) => _fallbackSun(),
+                                errorBuilder: (context, error, stackTrace) =>
+                                  _fallbackSun(),
                               )
-                            : _buildMoonWithPhase(8 - moonPhase),
+                            : _buildMoonWithPhase(moonPhase),
                       ),
                     ),
                   ),
@@ -605,7 +625,7 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
               },
             ),
 
-            // === VAKİT İŞARETÇİLERİ (Görünmez elips üzerinde) ===
+            // === PRAYER MARKERS (on invisible ellipse) ===
             ..._buildVakitIndicators(
               centerX,
               centerY,
@@ -618,7 +638,7 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
               isDay,
             ),
 
-            // === ALT GERİ SAYIM ===
+            // === BOTTOM COUNTDOWN ===
             Positioned(
               bottom: 20,
               left: 0,
@@ -631,7 +651,7 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
     );
   }
 
-  /// Yıldızlar (gece için)
+  /// Stars (night only).
   List<Widget> _buildStars(double width, double height) {
     final random = math.Random(42);
     return List.generate(30, (i) {
@@ -645,7 +665,7 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
         top: y,
         child: AnimatedBuilder(
           animation: _breathController,
-          builder: (_, __) {
+          builder: (context, child) {
             final twinkle = 0.5 + (_breathController.value * 0.5);
             return Container(
               width: size,
@@ -667,7 +687,7 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
     });
   }
 
-  /// Hava parçacıkları
+  /// Weather particles.
   Widget _buildParticle(_Particle p, double width, double height) {
     if (_weatherMain == 'snow') {
       return Positioned(
@@ -709,18 +729,18 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
     return const SizedBox.shrink();
   }
 
-  /// Ay fazına göre ay görseli
-  Widget _buildMoonWithPhase(int phase) {
-    // Gerçek ay resmi üzerine gölge ile faz simülasyonu
+  /// Moon rendering by phase.
+  Widget _buildMoonWithPhase(double phase) {
+    // Simulate phase with a shadow over the moon image.
     return Stack(
       children: [
-        // Ana ay resmi
+        // Base moon image.
         Image.asset(
           'assets/icon/moon.png',
           fit: BoxFit.cover,
-          errorBuilder: (_, _, __) => _fallbackMoon(phase),
+          errorBuilder: (context, error, stackTrace) => _fallbackMoon(phase),
         ),
-        // Faz gölgesi
+        // Phase shadow.
         CustomPaint(
           size: const Size(64, 64),
           painter: _MoonPhasePainter(phase: phase),
@@ -729,7 +749,7 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
     );
   }
 
-  /// Fallback güneş
+  /// Fallback sun.
   Widget _fallbackSun() {
     return Container(
       decoration: const BoxDecoration(
@@ -742,8 +762,8 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
     );
   }
 
-  /// Fallback ay
-  Widget _fallbackMoon(int phase) {
+  /// Fallback moon.
+  Widget _fallbackMoon(double phase) {
     return Container(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
@@ -762,7 +782,7 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
     );
   }
 
-  /// Vakit işaretçileri - profesyonel dizilim
+  /// Prayer markers - tuned layout.
   List<Widget> _buildVakitIndicators(
     double centerX,
     double centerY,
@@ -785,7 +805,7 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
       final isAktif = vakit == aktifVakit;
       final isGunduzVakit = vakitMin >= sunriseMin && vakitMin < sunsetMin;
 
-      // Açı hesapla
+      // Angle calculation.
       double angle;
       if (isGunduzVakit) {
         final prog = (vakitMin - sunriseMin) / (sunsetMin - sunriseMin);
@@ -804,13 +824,13 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
       final x = centerX + math.cos(angle) * (ellipseW / 2);
       final y = centerY - math.sin(angle) * (ellipseH / 2);
 
-      // Renk
+      // Color.
       final color = _getVakitColor(vakit);
 
-      // İşaretçi boyutu
+      // Marker size.
       final markerSize = isAktif ? 18.0 : 12.0;
 
-      // İşaretçi
+      // Marker.
       widgets.add(
         Positioned(
           left: x - markerSize / 2,
@@ -837,34 +857,34 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
         ),
       );
 
-      // Vakit etiketi - pozisyona göre akıllı yerleşim
+      // Prayer label - smart placement by position.
       double labelX = x;
       double labelY = y;
 
-      // Her vakit için özel pozisyon
+      // Custom position per prayer.
       switch (vakit) {
         case 'Imsak':
           labelX = x - 8;
           labelY = y + 16;
           break;
         case 'Gunes':
-          labelX = x - 9; // 3mm sol (3mm ≈ 9px)
-          labelY = y - 30; // 1cm yukarı (30px)
+          labelX = x - 9; // 3mm left (3mm ≈ 9px)
+          labelY = y - 30; // 1cm up (30px)
           break;
         case 'Ogle':
           labelX = x;
           labelY = y - 40;
           break;
         case 'Ikindi':
-          labelX = x + 8; // bir tık daha sola (4px sola)
-          labelY = y - 32; // biraz daha yukarı (4px yukarı)
+          labelX = x + 8; // slightly more left (4px)
+          labelY = y - 32; // slightly higher (4px)
           break;
         case 'Aksam':
-          labelX = x + 12 - 20; // daha sola (4px daha sola)
-          labelY = y - 35; // aynı yükseklik
+          labelX = x + 12 - 20; // further left (4px)
+          labelY = y - 35; // same height
           break;
         case 'Yatsi':
-          labelX = x + 8 - 9; // 3mm sola (3mm ≈ 9px)
+          labelX = x + 8 - 9; // 3mm left (3mm ≈ 9px)
           labelY = y + 16;
           break;
       }
@@ -879,7 +899,7 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Vakit adı (saat yok)
+                // Prayer name (no time).
                 Text(
                   vakitIsimleri[vakit] ?? vakit,
                   textAlign: TextAlign.center,
@@ -911,7 +931,7 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
     return widgets;
   }
 
-  /// Basit geri sayım göstergesi
+  /// Simple countdown display.
   Widget _buildSimpleCountdown(
     Map<String, dynamic> sonraki,
     Map<String, String> vakitIsimleri,
@@ -936,16 +956,18 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Vakit adı
+            // Prayer name.
             Text(
-              '$vakitAdi vaktine ',
+              (_languageService['time_until_prayer'] ??
+                      '{prayer} time in ')
+                  .replaceAll('{prayer}', vakitAdi),
               style: TextStyle(
                 color: Colors.white.withOpacity(0.9),
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
             ),
-            // Geri sayım
+            // Countdown.
             Text(
               '$h:$m:$s',
               style: TextStyle(
@@ -965,24 +987,24 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
   Color _getVakitColor(String vakit) {
     switch (vakit) {
       case 'Imsak':
-        return const Color(0xFF5E35B1); // Derin mor
+        return const Color(0xFF5E35B1); // Deep purple.
       case 'Gunes':
-        return const Color(0xFFFF8F00); // Turuncu
+        return const Color(0xFFFF8F00); // Orange.
       case 'Ogle':
-        return const Color(0xFFFFC107); // Altın
+        return const Color(0xFFFFC107); // Gold.
       case 'Ikindi':
-        return const Color(0xFFFF7043); // Mercan
+        return const Color(0xFFFF7043); // Coral.
       case 'Aksam':
-        return const Color(0xFFE91E63); // Pembe-kırmızı
+        return const Color(0xFFE91E63); // Pink-red.
       case 'Yatsi':
-        return const Color(0xFF3949AB); // İndigo
+        return const Color(0xFF3949AB); // Indigo.
       default:
         return const Color(0xFF607D8B);
     }
   }
 }
 
-/// Hava parçacığı
+/// Weather particle.
 class _Particle {
   double x, y, size, speed, opacity, drift;
 
@@ -1012,9 +1034,9 @@ class _Particle {
   }
 }
 
-/// Ay fazı çizici - gerçekçi görünüm
+/// Moon phase painter - realistic look.
 class _MoonPhasePainter extends CustomPainter {
-  final int phase;
+  final double phase;
 
   _MoonPhasePainter({required this.phase});
 
@@ -1023,14 +1045,21 @@ class _MoonPhasePainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2 - 1;
 
-    // Önce tüm ayı karanlık (siyah) boya
+    // Paint the moon fully dark first.
     final darkPaint = Paint()
       ..color = const Color(0xFF0A0A15).withOpacity(0.92)
       ..style = PaintingStyle.fill;
     canvas.drawCircle(center, radius, darkPaint);
 
-    // Dolunay ise tamamen aydınlık (beyaz) boya
-    if (phase == 4) {
+    // Illumination amount from 0.0 to 1.0.
+    final illumination = phase <= 0.5 ? (phase * 2) : ((1 - phase) * 2);
+    if (illumination <= 0.001) {
+      // New moon - keep it dark.
+      return;
+    }
+
+    // If full moon, paint fully bright.
+    if (illumination >= 0.999) {
       final lightPaint = Paint()
         ..color = const Color(0xFFFFFFFF)
         ..style = PaintingStyle.fill;
@@ -1038,17 +1067,13 @@ class _MoonPhasePainter extends CustomPainter {
       return;
     }
 
-    // Faz değerine göre aydınlık bölgenin genişliği
-    final illumination = (phase <= 4) ? phase / 4.0 : (8 - phase) / 4.0;
     final shadowRatio = 1 - math.pow(illumination, 0.35).toDouble();
+    final isWaxing = phase < 0.5;
 
     final path = Path();
 
-    if (phase == 0 || phase == 8) {
-      // Yeni ay - hiç aydınlık yok, sadece siyah kalacak
-      return;
-    } else if (phase < 4) {
-      // Büyüyen ay - SOL karanlık, SAĞ aydınlık
+    if (isWaxing) {
+      // Waxing moon - left dark, right bright.
       path.moveTo(center.dx, center.dy - radius);
       path.arcTo(
         Rect.fromCircle(center: center, radius: radius),
@@ -1057,7 +1082,7 @@ class _MoonPhasePainter extends CustomPainter {
         false,
       );
       final curveWidth = radius * (1 - shadowRatio * 2).abs();
-      if (phase < 2) {
+      if (illumination < 0.5) {
         path.arcTo(
           Rect.fromLTRB(
             center.dx - curveWidth,
@@ -1083,7 +1108,7 @@ class _MoonPhasePainter extends CustomPainter {
         );
       }
     } else {
-      // Küçülen ay - SAĞ karanlık, SOL aydınlık
+      // Waning moon - right dark, left bright.
       path.moveTo(center.dx, center.dy - radius);
       path.arcTo(
         Rect.fromCircle(center: center, radius: radius),
@@ -1092,7 +1117,7 @@ class _MoonPhasePainter extends CustomPainter {
         false,
       );
       final curveWidth = radius * (1 - shadowRatio * 2).abs();
-      if (phase > 6) {
+      if (illumination < 0.5) {
         path.arcTo(
           Rect.fromLTRB(
             center.dx - curveWidth,
@@ -1119,7 +1144,7 @@ class _MoonPhasePainter extends CustomPainter {
       }
     }
 
-    // Aydınlık kısmı clip et ve beyaz boya
+    // Clip the bright area and paint it white.
     canvas.save();
     canvas.clipPath(path);
     final lightPaint = Paint()

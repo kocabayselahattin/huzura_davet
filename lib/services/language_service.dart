@@ -15,7 +15,7 @@ class LanguageService extends ChangeNotifier {
   String get currentLanguage => _currentLanguage;
 
   List<Map<String, String>> get supportedLanguages => [
-    {'code': 'tr', 'name': 'Türkçe', 'flag': '🇹🇷'},
+    {'code': 'tr', 'name': 'Turkish', 'flag': '🇹🇷'},
     {'code': 'en', 'name': 'English', 'flag': '🇬🇧'},
     {'code': 'de', 'name': 'Deutsch', 'flag': '🇩🇪'},
     {'code': 'fr', 'name': 'Français', 'flag': '🇫🇷'},
@@ -33,11 +33,11 @@ class LanguageService extends ChangeNotifier {
       );
       _localizedStrings = json.decode(jsonString);
 
-      // NOT: Dil tercihini burada kaydetmiyoruz - kullanıcı seçmeli
-      // Sadece dil zaten seçilmişse (changeLanguage ile) kaydedilir
+      // NOTE: Do not persist language selection here - user must choose.
+      // Only save if already selected via changeLanguage.
     } catch (e) {
       print(
-        '⚠️ Dil dosyası yüklenemedi ($_currentLanguage), Türkçe yükleniyor: $e',
+        '⚠️ Language file load failed ($_currentLanguage), falling back to Turkish: $e',
       );
       _currentLanguage = 'tr';
       String jsonString = await rootBundle.loadString('assets/lang/tr.json');
@@ -77,7 +77,7 @@ class LanguageService extends ChangeNotifier {
     return null;
   }
 
-  /// String olmayan değerleri de (List, Map vb.) döndürmek için
+  /// Return non-string values (List, Map, etc.)
   dynamic get(String key) {
     return _localizedStrings.containsKey(key)
         ? _localizedStrings[key]

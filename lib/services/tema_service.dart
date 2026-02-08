@@ -3,22 +3,22 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 enum AppTema {
-  gece, // Varsayılan koyu mavi
-  seher, // Mor-pembe tonları (sahur vakti)
-  tan, // Turuncu-sarı tonları (güneş doğuşu)
-  ogle, // Açık mavi tonları (gündüz)
-  aksam, // Kırmızı-turuncu tonları (gün batımı)
-  yildizli, // Derin siyah + yıldız efekti
-  zumrut, // Yeşil tonları (huzur)
-  okyanus, // Derin mavi-yeşil
-  lavanta, // Yumuşak mor tonları
-  altin, // Altın sarısı lüks tema
-  karbon, // Siyah-gri minimalist
-  sakura, // Pembe-beyaz (bahar)
-  ozel, // Kullanıcının özel teması
+  gece, // Default deep blue
+  seher, // Purple-pink (predawn)
+  tan, // Orange-yellow (sunrise)
+  ogle, // Light blue (daytime)
+  aksam, // Red-orange (sunset)
+  yildizli, // Deep black + star effect
+  zumrut, // Green tones (calm)
+  okyanus, // Deep blue-green
+  lavanta, // Soft purple tones
+  altin, // Luxury gold theme
+  karbon, // Black-gray minimalist
+  sakura, // Pink-white (spring)
+  ozel, // User custom theme
 }
 
-/// Sayaç bazlı tema tanımları
+/// Counter-based theme definitions
 enum SayacTema {
   dijital,
   premium,
@@ -108,8 +108,8 @@ class TemaService extends ChangeNotifier {
   AppTema _mevcutTema = AppTema.gece;
   TemaRenkleri? _ozelTema;
   String _fontFamily = 'Poppins';
-  bool _sayacTemasiKullan = true; // Sayaç temasını kullan
-  int _aktifSayacIndex = 22; // Varsayılan: Gündönümü sayaç
+  bool _sayacTemasiKullan = true; // Use counter theme
+  int _aktifSayacIndex = 22; // Default: solstice counter
 
   static const List<String> fontFamilies = [
     'Poppins',
@@ -135,9 +135,9 @@ class TemaService extends ChangeNotifier {
   bool get sayacTemasiKullan => _sayacTemasiKullan;
   int get aktifSayacIndex => _aktifSayacIndex;
 
-  /// Sayaç bazlı tema renkleri (Yeni sıra: İslami temalar önce)
+  /// Counter theme colors (new order: Islamic themes first)
   static const Map<int, TemaRenkleri> sayacTemalari = {
-    // 0: İslami - Yeşil ve Altın
+    // 0: Islamic - green and gold
     0: TemaRenkleri(
       arkaPlan: Color(0xFF0D2818),
       kartArkaPlan: Color(0xFF1A3D28),
@@ -146,11 +146,11 @@ class TemaService extends ChangeNotifier {
       yaziPrimary: Colors.white,
       yaziSecondary: Color(0xFFA5D6A7),
       ayirac: Color(0xFF2E5238),
-      isim: 'İslami',
-      aciklama: 'İslami yeşil ve altın',
+      isim: 'counter_theme_islamic_name',
+      aciklama: 'counter_theme_islamic_desc',
       ikon: Icons.mosque,
     ),
-    // 1: Kalem - Koyu Yeşil tonları
+    // 1: Pen - dark green tones
     1: TemaRenkleri(
       arkaPlan: Color(0xFF1B4332),
       kartArkaPlan: Color(0xFF2D6A4F),
@@ -159,11 +159,11 @@ class TemaService extends ChangeNotifier {
       yaziPrimary: Colors.white,
       yaziSecondary: Color(0xFFB7E4C7),
       ayirac: Color(0xFF40916C),
-      isim: 'Kalem',
-      aciklama: 'İlim ve bereket yeşili',
+      isim: 'counter_theme_kalem_name',
+      aciklama: 'counter_theme_kalem_desc',
       ikon: Icons.edit,
     ),
-    // 2: Nur - Mavi tonları
+    // 2: Nur - blue tones
     2: TemaRenkleri(
       arkaPlan: Color(0xFF1A237E),
       kartArkaPlan: Color(0xFF283593),
@@ -172,11 +172,11 @@ class TemaService extends ChangeNotifier {
       yaziPrimary: Colors.white,
       yaziSecondary: Color(0xFFC5CAE9),
       ayirac: Color(0xFF3949AB),
-      isim: 'Nur',
-      aciklama: 'Işık temalı mavi',
+      isim: 'counter_theme_nur_name',
+      aciklama: 'counter_theme_nur_desc',
       ikon: Icons.wb_sunny,
     ),
-    // 3: Hilal - Gece mavisi
+    // 3: Crescent - night blue
     3: TemaRenkleri(
       arkaPlan: Color(0xFF0D1B2A),
       kartArkaPlan: Color(0xFF1B263B),
@@ -185,11 +185,11 @@ class TemaService extends ChangeNotifier {
       yaziPrimary: Colors.white,
       yaziSecondary: Color(0xFFE0E1DD),
       ayirac: Color(0xFF415A77),
-      isim: 'Hilal',
-      aciklama: 'Yıldızlı gece',
+      isim: 'counter_theme_hilal_name',
+      aciklama: 'counter_theme_hilal_desc',
       ikon: Icons.nights_stay,
     ),
-    // 4: Mihrap - Kahverengi tonları
+    // 4: Mihrab - brown tones
     4: TemaRenkleri(
       arkaPlan: Color(0xFF2C1810),
       kartArkaPlan: Color(0xFF5D4037),
@@ -198,11 +198,11 @@ class TemaService extends ChangeNotifier {
       yaziPrimary: Colors.white,
       yaziSecondary: Color(0xFFD7CCC8),
       ayirac: Color(0xFF6D4C41),
-      isim: 'Mihrap',
-      aciklama: 'Ahşap ve cami mimarisi',
+      isim: 'counter_theme_mihrap_name',
+      aciklama: 'counter_theme_mihrap_desc',
       ikon: Icons.architecture,
     ),
-    // 5: Dijital - Cyan tonları
+    // 5: Digital - cyan tones
     5: TemaRenkleri(
       arkaPlan: Color(0xFF1B2741),
       kartArkaPlan: Color(0xFF2B3151),
@@ -211,11 +211,11 @@ class TemaService extends ChangeNotifier {
       yaziPrimary: Colors.white,
       yaziSecondary: Color(0xFFB0BEC5),
       ayirac: Color(0xFF3D4466),
-      isim: 'Dijital',
-      aciklama: 'Cyan dijital tonları',
+      isim: 'counter_theme_digital_name',
+      aciklama: 'counter_theme_digital_desc',
       ikon: Icons.access_time,
     ),
-    // 6: Premium - Altın tonları
+    // 6: Premium - gold tones
     6: TemaRenkleri(
       arkaPlan: Color(0xFF1A1A1A),
       kartArkaPlan: Color(0xFF242424),
@@ -224,11 +224,11 @@ class TemaService extends ChangeNotifier {
       yaziPrimary: Colors.white,
       yaziSecondary: Color(0xFFC0C0C0),
       ayirac: Color(0xFF3A3A3A),
-      isim: 'Premium',
-      aciklama: 'Lüks altın tonları',
+      isim: 'counter_theme_premium_name',
+      aciklama: 'counter_theme_premium_desc',
       ikon: Icons.star,
     ),
-    // 7: Galaksi - Mor tonları
+    // 7: Galaxy - purple tones
     7: TemaRenkleri(
       arkaPlan: Color(0xFF0F0326),
       kartArkaPlan: Color(0xFF1A0B2E),
@@ -237,11 +237,11 @@ class TemaService extends ChangeNotifier {
       yaziPrimary: Colors.white,
       yaziSecondary: Color(0xFFB8B8FF),
       ayirac: Color(0xFF2D1450),
-      isim: 'Galaksi',
-      aciklama: 'Uzay mor tonları',
+      isim: 'counter_theme_galaxy_name',
+      aciklama: 'counter_theme_galaxy_desc',
       ikon: Icons.blur_circular,
     ),
-    // 8: Neon - Elektrik pembe
+    // 8: Neon - electric pink
     8: TemaRenkleri(
       arkaPlan: Color(0xFF0D0D0D),
       kartArkaPlan: Color(0xFF1A1A1A),
@@ -250,11 +250,11 @@ class TemaService extends ChangeNotifier {
       yaziPrimary: Colors.white,
       yaziSecondary: Color(0xFFFFB3D9),
       ayirac: Color(0xFF2D0D1F),
-      isim: 'Neon',
-      aciklama: 'Canlı neon tonları',
+      isim: 'counter_theme_neon_name',
+      aciklama: 'counter_theme_neon_desc',
       ikon: Icons.flashlight_on,
     ),
-    // 9: Okyanus - Mavi derinlik
+    // 9: Ocean - blue depth
     9: TemaRenkleri(
       arkaPlan: Color(0xFF0B3954),
       kartArkaPlan: Color(0xFF154360),
@@ -263,11 +263,11 @@ class TemaService extends ChangeNotifier {
       yaziPrimary: Colors.white,
       yaziSecondary: Color(0xFFAED6F1),
       ayirac: Color(0xFF1A5276),
-      isim: 'Okyanus',
-      aciklama: 'Derin mavi tonları',
+      isim: 'counter_theme_ocean_name',
+      aciklama: 'counter_theme_ocean_desc',
       ikon: Icons.water,
     ),
-    // 10: Minimal - Beyaz tonları
+    // 10: Minimal - white tones
     10: TemaRenkleri(
       arkaPlan: Color(0xFFF5F5F5),
       kartArkaPlan: Color(0xFFFFFFFF),
@@ -276,11 +276,11 @@ class TemaService extends ChangeNotifier {
       yaziPrimary: Color(0xFF212121),
       yaziSecondary: Color(0xFF757575),
       ayirac: Color(0xFFE0E0E0),
-      isim: 'Minimal',
-      aciklama: 'Sade beyaz tonları',
+      isim: 'counter_theme_minimal_name',
+      aciklama: 'counter_theme_minimal_desc',
       ikon: Icons.crop_square,
     ),
-    // 11: Retro - LCD yeşil
+    // 11: Retro - LCD green
     11: TemaRenkleri(
       arkaPlan: Color(0xFF0D1F0D),
       kartArkaPlan: Color(0xFF142414),
@@ -289,11 +289,11 @@ class TemaService extends ChangeNotifier {
       yaziPrimary: Color(0xFF00FF41),
       yaziSecondary: Color(0xFF00CC33),
       ayirac: Color(0xFF1A2E1A),
-      isim: 'Retro',
-      aciklama: 'Nostaljik LCD yeşili',
+      isim: 'counter_theme_retro_name',
+      aciklama: 'counter_theme_retro_desc',
       ikon: Icons.tv,
     ),
-    // 12: Aurora - Kuzey ışıkları
+    // 12: Aurora - northern lights
     12: TemaRenkleri(
       arkaPlan: Color(0xFF0A0A1A),
       kartArkaPlan: Color(0xFF0D1B2A),
@@ -302,11 +302,11 @@ class TemaService extends ChangeNotifier {
       yaziPrimary: Colors.white,
       yaziSecondary: Color(0xFF9CA3AF),
       ayirac: Color(0xFF1B263B),
-      isim: 'Aurora',
-      aciklama: 'Kuzey ışıkları tonları',
+      isim: 'counter_theme_aurora_name',
+      aciklama: 'counter_theme_aurora_desc',
       ikon: Icons.nights_stay,
     ),
-    // 13: Kristal - Cam efekti
+    // 13: Crystal - glass effect
     13: TemaRenkleri(
       arkaPlan: Color(0xFFE8EDF2),
       kartArkaPlan: Color(0xFFF5F7FA),
@@ -315,11 +315,11 @@ class TemaService extends ChangeNotifier {
       yaziPrimary: Color(0xFF3D4F6F),
       yaziSecondary: Color(0xFF6B7D9A),
       ayirac: Color(0xFFDAE2EB),
-      isim: 'Kristal',
-      aciklama: 'Cam kristal tonları',
+      isim: 'counter_theme_crystal_name',
+      aciklama: 'counter_theme_crystal_desc',
       ikon: Icons.diamond_outlined,
     ),
-    // 14: Volkanik - Ateş tonları
+    // 14: Volcanic - fire tones
     14: TemaRenkleri(
       arkaPlan: Color(0xFF1A0A00),
       kartArkaPlan: Color(0xFF2D1810),
@@ -328,11 +328,11 @@ class TemaService extends ChangeNotifier {
       yaziPrimary: Color(0xFFFFAA00),
       yaziSecondary: Color(0xFFFF8C00),
       ayirac: Color(0xFF3D1F15),
-      isim: 'Volkanik',
-      aciklama: 'Ateş ve lav tonları',
+      isim: 'counter_theme_volcanic_name',
+      aciklama: 'counter_theme_volcanic_desc',
       ikon: Icons.local_fire_department,
     ),
-    // 15: Zen - Doğa tonları
+    // 15: Zen - nature tones
     15: TemaRenkleri(
       arkaPlan: Color(0xFFE8E4D9),
       kartArkaPlan: Color(0xFFF5F5DC),
@@ -341,11 +341,11 @@ class TemaService extends ChangeNotifier {
       yaziPrimary: Color(0xFF2D3A29),
       yaziSecondary: Color(0xFF5C6B54),
       ayirac: Color(0xFFD4CFC4),
-      isim: 'Zen',
-      aciklama: 'Huzurlu doğa tonları',
+      isim: 'counter_theme_zen_name',
+      aciklama: 'counter_theme_zen_desc',
       ikon: Icons.spa,
     ),
-    // 16: Siber - Cyberpunk
+    // 16: Cyber - cyberpunk
     16: TemaRenkleri(
       arkaPlan: Color(0xFF0D0221),
       kartArkaPlan: Color(0xFF1A0533),
@@ -354,11 +354,11 @@ class TemaService extends ChangeNotifier {
       yaziPrimary: Colors.white,
       yaziSecondary: Color(0xFFB388FF),
       ayirac: Color(0xFF2D0845),
-      isim: 'Siber',
-      aciklama: 'Cyberpunk neon tonları',
+      isim: 'counter_theme_cyber_name',
+      aciklama: 'counter_theme_cyber_desc',
       ikon: Icons.memory,
     ),
-    // 17: Gece - Ay ışığı
+    // 17: Night - moonlight
     17: TemaRenkleri(
       arkaPlan: Color(0xFF0A1628),
       kartArkaPlan: Color(0xFF1E3A5F),
@@ -367,11 +367,11 @@ class TemaService extends ChangeNotifier {
       yaziPrimary: Colors.white,
       yaziSecondary: Color(0xFFB0BEC5),
       ayirac: Color(0xFF2D4A6F),
-      isim: 'Gece',
-      aciklama: 'Ay ışığı tonları',
+      isim: 'counter_theme_night_name',
+      aciklama: 'counter_theme_night_desc',
       ikon: Icons.nightlight_round,
     ),
-    // 18: Matrix - Hacker yeşil
+    // 18: Matrix - hacker green
     18: TemaRenkleri(
       arkaPlan: Color(0xFF000000),
       kartArkaPlan: Color(0xFF0A0A0A),
@@ -380,11 +380,11 @@ class TemaService extends ChangeNotifier {
       yaziPrimary: Color(0xFF00FF00),
       yaziSecondary: Color(0xFF009900),
       ayirac: Color(0xFF003300),
-      isim: 'Matrix',
-      aciklama: 'Hacker yeşil tonları',
+      isim: 'counter_theme_matrix_name',
+      aciklama: 'counter_theme_matrix_desc',
       ikon: Icons.code,
     ),
-    // 19: Nefes - Meditasyon mavisi
+    // 19: Breath - meditation blue
     19: TemaRenkleri(
       arkaPlan: Color(0xFF0A1628),
       kartArkaPlan: Color(0xFF142238),
@@ -393,11 +393,11 @@ class TemaService extends ChangeNotifier {
       yaziPrimary: Colors.white,
       yaziSecondary: Color(0xFFB0C4DE),
       ayirac: Color(0xFF1E3A5F),
-      isim: 'Nefes',
-      aciklama: 'Huzurlu meditasyon tonları',
+      isim: 'counter_theme_breath_name',
+      aciklama: 'counter_theme_breath_desc',
       ikon: Icons.air,
     ),
-    // 20: Geometrik - Sacred Geometry
+    // 20: Geometric - sacred geometry
     20: TemaRenkleri(
       arkaPlan: Color(0xFF1A0A2E),
       kartArkaPlan: Color(0xFF2D1B4E),
@@ -406,11 +406,11 @@ class TemaService extends ChangeNotifier {
       yaziPrimary: Colors.white,
       yaziSecondary: Color(0xFFDDA0DD),
       ayirac: Color(0xFF3D2B5E),
-      isim: 'Geometrik',
-      aciklama: 'Kutsal geometri tonları',
+      isim: 'counter_theme_geometric_name',
+      aciklama: 'counter_theme_geometric_desc',
       ikon: Icons.hexagon_outlined,
     ),
-    // 21: Tesla - Elektrik mavisi
+    // 21: Tesla - electric blue
     21: TemaRenkleri(
       arkaPlan: Color(0xFF030318),
       kartArkaPlan: Color(0xFF0A0A28),
@@ -419,11 +419,11 @@ class TemaService extends ChangeNotifier {
       yaziPrimary: Colors.white,
       yaziSecondary: Color(0xFF87CEEB),
       ayirac: Color(0xFF141438),
-      isim: 'Tesla',
-      aciklama: 'Elektrik enerji tonları',
+      isim: 'counter_theme_tesla_name',
+      aciklama: 'counter_theme_tesla_desc',
       ikon: Icons.bolt,
     ),
-    // 22: Gündönümü - Gece ve altın vurgular
+    // 22: Solstice - night with gold accents
     22: TemaRenkleri(
       arkaPlan: Color(0xFF0B0F1E),
       kartArkaPlan: Color(0xFF141A2E),
@@ -432,14 +432,14 @@ class TemaService extends ChangeNotifier {
       yaziPrimary: Color(0xFFE9ECEF),
       yaziSecondary: Color(0xFFB6C2CC),
       ayirac: Color(0xFF1E2740),
-      isim: 'Gündönümü',
-      aciklama: 'Gece-gündüz geçişli altın tema',
+      isim: 'counter_theme_solstice_name',
+      aciklama: 'counter_theme_solstice_desc',
       ikon: Icons.change_circle_outlined,
     ),
   };
 
   static const Map<AppTema, TemaRenkleri> temalar = {
-    // 1. Gece - Varsayılan
+    // 1. Night - default
     AppTema.gece: TemaRenkleri(
       arkaPlan: Color(0xFF1B2741),
       kartArkaPlan: Color(0xFF2B3151),
@@ -448,8 +448,8 @@ class TemaService extends ChangeNotifier {
       yaziPrimary: Colors.white,
       yaziSecondary: Color(0xFFB0BEC5),
       ayirac: Color(0xFF3D4466),
-      isim: 'Gece',
-      aciklama: 'Huzurlu gece mavisi',
+      isim: 'app_theme_night_name',
+      aciklama: 'app_theme_night_desc',
       ikon: Icons.nights_stay,
       dekoratifRenkler: [
         Color(0xFF00838F),
@@ -458,7 +458,7 @@ class TemaService extends ChangeNotifier {
       ],
     ),
 
-    // 2. Seher - Sahur vakti
+    // 2. Predawn - suhoor time
     AppTema.seher: TemaRenkleri(
       arkaPlan: Color(0xFF2D1B4E),
       kartArkaPlan: Color(0xFF3D2B5E),
@@ -472,8 +472,8 @@ class TemaService extends ChangeNotifier {
         end: Alignment.bottomCenter,
         colors: [Color(0xFF2D1B4E), Color(0xFF1A0F2E)],
       ),
-      isim: 'Seher',
-      aciklama: 'Sahur vakti huzuru',
+      isim: 'app_theme_predawn_name',
+      aciklama: 'app_theme_predawn_desc',
       ikon: Icons.brightness_3,
       dekoratifRenkler: [
         Color(0xFF9C27B0),
@@ -482,7 +482,7 @@ class TemaService extends ChangeNotifier {
       ],
     ),
 
-    // 3. Tan - Güneş doğuşu
+    // 3. Dawn - sunrise
     AppTema.tan: TemaRenkleri(
       arkaPlan: Color(0xFF3E2723),
       kartArkaPlan: Color(0xFF4E3A31),
@@ -496,8 +496,8 @@ class TemaService extends ChangeNotifier {
         end: Alignment.bottomLeft,
         colors: [Color(0xFF5D4037), Color(0xFF3E2723)],
       ),
-      isim: 'Tan',
-      aciklama: 'Güneş doğuşu sıcaklığı',
+      isim: 'app_theme_dawn_name',
+      aciklama: 'app_theme_dawn_desc',
       ikon: Icons.wb_sunny,
       dekoratifRenkler: [
         Color(0xFFFF6F00),
@@ -506,7 +506,7 @@ class TemaService extends ChangeNotifier {
       ],
     ),
 
-    // 4. Öğle - Gündüz
+    // 4. Noon - daytime
     AppTema.ogle: TemaRenkleri(
       arkaPlan: Color(0xFF1565C0),
       kartArkaPlan: Color(0xFF1976D2),
@@ -520,8 +520,8 @@ class TemaService extends ChangeNotifier {
         end: Alignment.bottomCenter,
         colors: [Color(0xFF42A5F5), Color(0xFF1565C0)],
       ),
-      isim: 'Öğle',
-      aciklama: 'Berrak gökyüzü',
+      isim: 'app_theme_noon_name',
+      aciklama: 'app_theme_noon_desc',
       ikon: Icons.light_mode,
       dekoratifRenkler: [
         Color(0xFF0097A7),
@@ -530,7 +530,7 @@ class TemaService extends ChangeNotifier {
       ],
     ),
 
-    // 5. Akşam - Gün batımı
+    // 5. Evening - sunset
     AppTema.aksam: TemaRenkleri(
       arkaPlan: Color(0xFF4A1C1C),
       kartArkaPlan: Color(0xFF5A2C2C),
@@ -544,8 +544,8 @@ class TemaService extends ChangeNotifier {
         end: Alignment.bottomRight,
         colors: [Color(0xFF6D3030), Color(0xFF4A1C1C), Color(0xFF2C1010)],
       ),
-      isim: 'Akşam',
-      aciklama: 'Gün batımı kızıllığı',
+      isim: 'app_theme_evening_name',
+      aciklama: 'app_theme_evening_desc',
       ikon: Icons.wb_twilight,
       dekoratifRenkler: [
         Color(0xFFD84315),
@@ -554,7 +554,7 @@ class TemaService extends ChangeNotifier {
       ],
     ),
 
-    // 6. Yıldızlı - Gece gökyüzü
+    // 6. Starry - night sky
     AppTema.yildizli: TemaRenkleri(
       arkaPlan: Color(0xFF0D0D1A),
       kartArkaPlan: Color(0xFF1A1A2E),
@@ -568,8 +568,8 @@ class TemaService extends ChangeNotifier {
         end: Alignment.bottomCenter,
         colors: [Color(0xFF16162D), Color(0xFF0D0D1A)],
       ),
-      isim: 'Yıldızlı',
-      aciklama: 'Derin gece gökyüzü',
+      isim: 'app_theme_starry_name',
+      aciklama: 'app_theme_starry_desc',
       ikon: Icons.star,
       dekoratifRenkler: [
         Color(0xFF7C4DFF),
@@ -578,7 +578,7 @@ class TemaService extends ChangeNotifier {
       ],
     ),
 
-    // 7. Zümrüt - Huzur ve doğa
+    // 7. Emerald - calm and nature
     AppTema.zumrut: TemaRenkleri(
       arkaPlan: Color(0xFF1B3D2F),
       kartArkaPlan: Color(0xFF264D3B),
@@ -592,8 +592,8 @@ class TemaService extends ChangeNotifier {
         end: Alignment.bottomRight,
         colors: [Color(0xFF1B5E20), Color(0xFF1B3D2F)],
       ),
-      isim: 'Zümrüt',
-      aciklama: 'Cennet bahçesi huzuru',
+      isim: 'app_theme_emerald_name',
+      aciklama: 'app_theme_emerald_desc',
       ikon: Icons.eco,
       dekoratifRenkler: [
         Color(0xFF00E676),
@@ -602,7 +602,7 @@ class TemaService extends ChangeNotifier {
       ],
     ),
 
-    // 8. Okyanus - Derin deniz
+    // 8. Ocean - deep sea
     AppTema.okyanus: TemaRenkleri(
       arkaPlan: Color(0xFF0D2137),
       kartArkaPlan: Color(0xFF163354),
@@ -616,8 +616,8 @@ class TemaService extends ChangeNotifier {
         end: Alignment.bottomCenter,
         colors: [Color(0xFF1A5276), Color(0xFF0D2137), Color(0xFF051420)],
       ),
-      isim: 'Okyanus',
-      aciklama: 'Derin deniz mavisi',
+      isim: 'app_theme_ocean_name',
+      aciklama: 'app_theme_ocean_desc',
       ikon: Icons.water,
       dekoratifRenkler: [
         Color(0xFF00ACC1),
@@ -626,7 +626,7 @@ class TemaService extends ChangeNotifier {
       ],
     ),
 
-    // 9. Lavanta - Yumuşak mor
+    // 9. Lavender - soft purple
     AppTema.lavanta: TemaRenkleri(
       arkaPlan: Color(0xFF2E2240),
       kartArkaPlan: Color(0xFF3D3055),
@@ -640,8 +640,8 @@ class TemaService extends ChangeNotifier {
         end: Alignment.bottomLeft,
         colors: [Color(0xFF4A3F6B), Color(0xFF2E2240)],
       ),
-      isim: 'Lavanta',
-      aciklama: 'Sakinleştirici lavanta',
+      isim: 'app_theme_lavender_name',
+      aciklama: 'app_theme_lavender_desc',
       ikon: Icons.local_florist,
       dekoratifRenkler: [
         Color(0xFFAB47BC),
@@ -650,7 +650,7 @@ class TemaService extends ChangeNotifier {
       ],
     ),
 
-    // 10. Altın - Lüks görünüm
+    // 10. Gold - luxury look
     AppTema.altin: TemaRenkleri(
       arkaPlan: Color(0xFF1A1A1A),
       kartArkaPlan: Color(0xFF2D2D2D),
@@ -664,8 +664,8 @@ class TemaService extends ChangeNotifier {
         end: Alignment.bottomCenter,
         colors: [Color(0xFF2D2D2D), Color(0xFF1A1A1A)],
       ),
-      isim: 'Altın',
-      aciklama: 'Zarif altın parıltısı',
+      isim: 'app_theme_gold_name',
+      aciklama: 'app_theme_gold_desc',
       ikon: Icons.diamond,
       dekoratifRenkler: [
         Color(0xFFFFB300),
@@ -674,7 +674,7 @@ class TemaService extends ChangeNotifier {
       ],
     ),
 
-    // 11. Karbon - Minimalist siyah
+    // 11. Carbon - minimalist black
     AppTema.karbon: TemaRenkleri(
       arkaPlan: Color(0xFF121212),
       kartArkaPlan: Color(0xFF1E1E1E),
@@ -683,8 +683,8 @@ class TemaService extends ChangeNotifier {
       yaziPrimary: Color(0xFFE0E0E0),
       yaziSecondary: Color(0xFF9E9E9E),
       ayirac: Color(0xFF2C2C2C),
-      isim: 'Karbon',
-      aciklama: 'Modern minimalist',
+      isim: 'app_theme_carbon_name',
+      aciklama: 'app_theme_carbon_desc',
       ikon: Icons.dark_mode,
       dekoratifRenkler: [
         Color(0xFF00BFA5),
@@ -693,7 +693,7 @@ class TemaService extends ChangeNotifier {
       ],
     ),
 
-    // 12. Sakura - Bahar çiçeği
+    // 12. Sakura - spring blossom
     AppTema.sakura: TemaRenkleri(
       arkaPlan: Color(0xFF2D2133),
       kartArkaPlan: Color(0xFF3D3143),
@@ -707,8 +707,8 @@ class TemaService extends ChangeNotifier {
         end: Alignment.bottomRight,
         colors: [Color(0xFF3D3143), Color(0xFF2D2133)],
       ),
-      isim: 'Sakura',
-      aciklama: 'Bahar çiçeği pembesi',
+      isim: 'app_theme_sakura_name',
+      aciklama: 'app_theme_sakura_desc',
       ikon: Icons.spa,
       dekoratifRenkler: [
         Color(0xFFF48FB1),
@@ -717,7 +717,7 @@ class TemaService extends ChangeNotifier {
       ],
     ),
 
-    // 13. Özel - Kullanıcı tanımlı
+    // 13. Custom - user defined
     AppTema.ozel: TemaRenkleri(
       arkaPlan: Color(0xFF1B2741),
       kartArkaPlan: Color(0xFF2B3151),
@@ -726,8 +726,8 @@ class TemaService extends ChangeNotifier {
       yaziPrimary: Colors.white,
       yaziSecondary: Color(0xFFB0BEC5),
       ayirac: Color(0xFF3D4466),
-      isim: 'Özel Tema',
-      aciklama: 'Kendi renkleriniz',
+      isim: 'app_theme_custom_name',
+      aciklama: 'app_theme_custom_desc',
       ikon: Icons.palette,
       dekoratifRenkler: [
         Color(0xFF00838F),
@@ -780,8 +780,8 @@ class TemaService extends ChangeNotifier {
         yaziPrimary: Color(yaziPrimary ?? Colors.white.value),
         yaziSecondary: Color(yaziSecondary ?? const Color(0xFFB0BEC5).value),
         ayirac: Color(kartArkaPlan ?? arkaPlan).withOpacity(0.5),
-        isim: 'Özel Tema',
-        aciklama: 'Sizin seçtiğiniz renkler',
+        isim: 'app_theme_custom_name',
+        aciklama: 'app_theme_custom_desc',
         ikon: Icons.palette,
       );
     }
@@ -796,25 +796,25 @@ class TemaService extends ChangeNotifier {
 
   Future<void> temayiDegistir(AppTema yeniTema) async {
     _mevcutTema = yeniTema;
-    _sayacTemasiKullan = false; // Manuel tema seçildi
+    _sayacTemasiKullan = false; // Manual theme selected
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('tema_index', yeniTema.index);
     await prefs.setBool('sayac_temasi_kullan', false);
     notifyListeners();
   }
 
-  /// Sayaç değiştiğinde temayı güncelle
+  /// Update theme when counter changes
   Future<void> sayacTemasiGuncelle(int sayacIndex) async {
     _aktifSayacIndex = sayacIndex;
     _sayacTemasiKullan =
-        true; // Sayaç değiştirildiğinde tema sayaca göre güncellenmeli
+      true; // When counter changes, theme should follow the counter
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('secili_sayac_index', sayacIndex);
     await prefs.setBool('sayac_temasi_kullan', true);
     notifyListeners();
   }
 
-  /// Sayaç teması modunu aç/kapat
+  /// Toggle counter theme mode
   Future<void> sayacTemasiKullanAyarla(bool kullan) async {
     _sayacTemasiKullan = kullan;
     final prefs = await SharedPreferences.getInstance();
@@ -846,8 +846,8 @@ class TemaService extends ChangeNotifier {
       yaziPrimary: yaziPrimary,
       yaziSecondary: yaziSecondary,
       ayirac: kartArkaPlan.withOpacity(0.5),
-      isim: 'Özel Tema',
-      aciklama: 'Sizin seçtiğiniz renkler',
+      isim: 'app_theme_custom_name',
+      aciklama: 'app_theme_custom_desc',
       ikon: Icons.palette,
     );
 
@@ -856,172 +856,176 @@ class TemaService extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Hazır renk paletleri
+  // Preset color palettes
   static const List<Map<String, dynamic>> hazirPaletler = [
-    // Klasik Tonlar
+    // Classic tones
     {
-      'isim': 'Gece Mavisi',
+      'isim': 'palette_night_blue',
       'arkaPlan': Color(0xFF1B2741),
       'vurgu': Color(0xFF00BCD4),
     },
     {
-      'isim': 'Orman Yeşili',
+      'isim': 'palette_forest_green',
       'arkaPlan': Color(0xFF1B3D2F),
       'vurgu': Color(0xFF4CAF50),
     },
     {
-      'isim': 'Bordo',
+      'isim': 'palette_burgundy',
       'arkaPlan': Color(0xFF3E1A1A),
       'vurgu': Color(0xFFE53935),
     },
     {
-      'isim': 'Mor Rüya',
+      'isim': 'palette_purple_dream',
       'arkaPlan': Color(0xFF2E1F47),
       'vurgu': Color(0xFF9C27B0),
     },
     {
-      'isim': 'Turkuaz',
+      'isim': 'palette_turquoise',
       'arkaPlan': Color(0xFF0D3B3E),
       'vurgu': Color(0xFF00BCD4),
     },
     {
-      'isim': 'Karamel',
+      'isim': 'palette_caramel',
       'arkaPlan': Color(0xFF3E2723),
       'vurgu': Color(0xFFFF9800),
     },
     {
-      'isim': 'Gül Kurusu',
+      'isim': 'palette_rosewood',
       'arkaPlan': Color(0xFF3D2429),
       'vurgu': Color(0xFFE91E63),
     },
     {
-      'isim': 'Zeytin',
+      'isim': 'palette_olive',
       'arkaPlan': Color(0xFF2E3D1B),
       'vurgu': Color(0xFF8BC34A),
     },
 
-    // Lüks & Elegant
+    // Luxury & elegant
     {
-      'isim': 'Altın Siyah',
+      'isim': 'palette_gold_black',
       'arkaPlan': Color(0xFF0D0D0D),
       'vurgu': Color(0xFFFFD700),
     },
     {
-      'isim': 'Rose Gold',
+      'isim': 'palette_rose_gold',
       'arkaPlan': Color(0xFF1A1215),
       'vurgu': Color(0xFFB76E79),
     },
     {
-      'isim': 'Platin',
+      'isim': 'palette_platinum',
       'arkaPlan': Color(0xFF1C1C1E),
       'vurgu': Color(0xFFE5E4E2),
     },
     {
-      'isim': 'Bronz',
+      'isim': 'palette_bronze',
       'arkaPlan': Color(0xFF1F1710),
       'vurgu': Color(0xFFCD7F32),
     },
 
-    // Doğa Tonları
+    // Nature tones
     {
-      'isim': 'Okyanus',
+      'isim': 'palette_ocean',
       'arkaPlan': Color(0xFF0A192F),
       'vurgu': Color(0xFF64FFDA),
     },
     {
-      'isim': 'Orman Gece',
+      'isim': 'palette_forest_night',
       'arkaPlan': Color(0xFF0D1F0D),
       'vurgu': Color(0xFF00E676),
     },
     {
-      'isim': 'Çöl Gece',
+      'isim': 'palette_desert_night',
       'arkaPlan': Color(0xFF2D1F14),
       'vurgu': Color(0xFFFFAB40),
     },
     {
-      'isim': 'Gün Batımı',
+      'isim': 'palette_sunset',
       'arkaPlan': Color(0xFF2D1B2D),
       'vurgu': Color(0xFFFF6B6B),
     },
 
-    // Neon & Cyberpunk
+    // Neon & cyberpunk
     {
-      'isim': 'Neon Pembe',
+      'isim': 'palette_neon_pink',
       'arkaPlan': Color(0xFF0F0A1A),
       'vurgu': Color(0xFFFF00FF),
     },
     {
-      'isim': 'Neon Mavi',
+      'isim': 'palette_neon_blue',
       'arkaPlan': Color(0xFF0A0A14),
       'vurgu': Color(0xFF00FFFF),
     },
     {
-      'isim': 'Neon Yeşil',
+      'isim': 'palette_neon_green',
       'arkaPlan': Color(0xFF0A140A),
       'vurgu': Color(0xFF00FF41),
     },
     {
-      'isim': 'Elektrik Mor',
+      'isim': 'palette_electric_purple',
       'arkaPlan': Color(0xFF14081F),
       'vurgu': Color(0xFF9D00FF),
     },
 
-    // Pastel & Soft
+    // Pastel & soft
     {
-      'isim': 'Lavanta',
+      'isim': 'palette_lavender',
       'arkaPlan': Color(0xFF1E1A26),
       'vurgu': Color(0xFFB39DDB),
     },
-    {'isim': 'Mint', 'arkaPlan': Color(0xFF142021), 'vurgu': Color(0xFF80CBC4)},
     {
-      'isim': 'Şeftali',
+      'isim': 'palette_mint',
+      'arkaPlan': Color(0xFF142021),
+      'vurgu': Color(0xFF80CBC4),
+    },
+    {
+      'isim': 'palette_peach',
       'arkaPlan': Color(0xFF211A17),
       'vurgu': Color(0xFFFFAB91),
     },
     {
-      'isim': 'Buz Mavisi',
+      'isim': 'palette_ice_blue',
       'arkaPlan': Color(0xFF141B21),
       'vurgu': Color(0xFF81D4FA),
     },
 
-    // Premium & Özel
+    // Premium & special
     {
-      'isim': 'Galaksi',
+      'isim': 'palette_galaxy',
       'arkaPlan': Color(0xFF0B0B1A),
       'vurgu': Color(0xFF7C4DFF),
     },
     {
-      'isim': 'Aurora',
+      'isim': 'palette_aurora',
       'arkaPlan': Color(0xFF0D1418),
       'vurgu': Color(0xFF00E5FF),
     },
     {
-      'isim': 'Nar Çiçeği',
+      'isim': 'palette_pomegranate_blossom',
       'arkaPlan': Color(0xFF1A0A0F),
       'vurgu': Color(0xFFFF4081),
     },
     {
-      'isim': 'Safir',
+      'isim': 'palette_sapphire',
       'arkaPlan': Color(0xFF0A1628),
       'vurgu': Color(0xFF448AFF),
     },
     {
-      'isim': 'Kehribar',
+      'isim': 'palette_amber',
       'arkaPlan': Color(0xFF1A1408),
       'vurgu': Color(0xFFFFB300),
     },
     {
-      'isim': 'Yakut',
+      'isim': 'palette_ruby',
       'arkaPlan': Color(0xFF1A080A),
       'vurgu': Color(0xFFFF1744),
     },
     {
-      'isim': 'Zümrüt',
+      'isim': 'palette_emerald',
       'arkaPlan': Color(0xFF081A12),
       'vurgu': Color(0xFF00E676),
     },
     {
-      'isim': 'Ametist',
+      'isim': 'palette_amethyst',
       'arkaPlan': Color(0xFF150A1F),
       'vurgu': Color(0xFFAA00FF),
     },
@@ -1029,13 +1033,13 @@ class TemaService extends ChangeNotifier {
 
   ThemeData buildThemeData() {
     final r = renkler;
-    // Font yüklerken try-catch kullan - bazı fontlar yüklenemeyebilir
+    // Use try-catch while loading fonts - some fonts may fail to load
     TextTheme fontTextTheme;
     try {
       fontTextTheme = GoogleFonts.getTextTheme(_fontFamily);
     } catch (e) {
       print(
-        '⚠️ Font yüklenemedi ($_fontFamily), varsayılan font kullanılıyor: $e',
+        '⚠️ Font failed to load ($_fontFamily), using default font: $e',
       );
       fontTextTheme = GoogleFonts.poppinsTextTheme();
       _fontFamily = 'Poppins';

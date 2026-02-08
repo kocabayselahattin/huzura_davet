@@ -8,7 +8,7 @@ import '../services/konum_service.dart';
 import '../services/tema_service.dart';
 import '../services/language_service.dart';
 
-/// Geometrik Sayaç - Sacred Geometry temalı mistik ve hipnotik tasarım
+/// Geometric Countdown - sacred geometry themed mystical design.
 class GeometrikSayacWidget extends StatefulWidget {
   final bool shouldLoadData;
   const GeometrikSayacWidget({super.key, this.shouldLoadData = true});
@@ -102,12 +102,12 @@ class _GeometrikSayacWidgetState extends State<GeometrikSayacWidget>
     final nowTotalSeconds = now.hour * 3600 + now.minute * 60 + now.second;
 
     final vakitListesi = [
-      {'adi': _languageService['imsak'] ?? 'İmsak', 'saat': _vakitSaatleri['imsak']!},
-      {'adi': _languageService['gunes'] ?? 'Güneş', 'saat': _vakitSaatleri['gunes']!},
-      {'adi': _languageService['ogle'] ?? 'Öğle', 'saat': _vakitSaatleri['ogle']!},
-      {'adi': _languageService['ikindi'] ?? 'İkindi', 'saat': _vakitSaatleri['ikindi']!},
-      {'adi': _languageService['aksam'] ?? 'Akşam', 'saat': _vakitSaatleri['aksam']!},
-      {'adi': _languageService['yatsi'] ?? 'Yatsı', 'saat': _vakitSaatleri['yatsi']!},
+      {'adi': _languageService['imsak'] ?? '', 'saat': _vakitSaatleri['imsak']!},
+      {'adi': _languageService['gunes'] ?? '', 'saat': _vakitSaatleri['gunes']!},
+      {'adi': _languageService['ogle'] ?? '', 'saat': _vakitSaatleri['ogle']!},
+      {'adi': _languageService['ikindi'] ?? '', 'saat': _vakitSaatleri['ikindi']!},
+      {'adi': _languageService['aksam'] ?? '', 'saat': _vakitSaatleri['aksam']!},
+      {'adi': _languageService['yatsi'] ?? '', 'saat': _vakitSaatleri['yatsi']!},
     ];
 
     List<int> vakitSaniyeleri = [];
@@ -133,7 +133,7 @@ class _GeometrikSayacWidgetState extends State<GeometrikSayacWidget>
       final imsakParts = _vakitSaatleri['imsak']!.split(':');
       sonrakiVakitZamani = DateTime(yarin.year, yarin.month, yarin.day,
           int.parse(imsakParts[0]), int.parse(imsakParts[1]));
-      sonrakiVakitAdi = _languageService['imsak'] ?? 'İmsak';
+      sonrakiVakitAdi = _languageService['imsak'] ?? '';
       final yatsiSaniye = vakitSaniyeleri.last;
       final imsakSaniye = vakitSaniyeleri.first;
       final toplamSure = (24 * 3600 - yatsiSaniye) + imsakSaniye;
@@ -143,7 +143,7 @@ class _GeometrikSayacWidgetState extends State<GeometrikSayacWidget>
       final imsakParts = _vakitSaatleri['imsak']!.split(':');
       sonrakiVakitZamani = DateTime(now.year, now.month, now.day,
           int.parse(imsakParts[0]), int.parse(imsakParts[1]));
-      sonrakiVakitAdi = _languageService['imsak'] ?? 'İmsak';
+      sonrakiVakitAdi = _languageService['imsak'] ?? '';
       final yatsiSaniye = vakitSaniyeleri.last;
       final imsakSaniye = vakitSaniyeleri.first;
       final toplamSure = (24 * 3600 - yatsiSaniye) + imsakSaniye;
@@ -175,13 +175,13 @@ class _GeometrikSayacWidgetState extends State<GeometrikSayacWidget>
     final minutes = _kalanSure.inMinutes % 60;
     final seconds = _kalanSure.inSeconds % 60;
 
-    // Takvim bilgileri
+    // Calendar info.
     final now = DateTime.now();
     final miladiTarih = DateFormat('dd.MM.yyyy').format(now);
     final hicri = HijriCalendar.now();
     final hicriTarih = '${hicri.hDay} ${_getHicriAyAdi(hicri.hMonth)} ${hicri.hYear}';
 
-    // Tema renklerini kullan
+    // Use theme colors.
     final primaryColor = renkler.vurgu;
     final secondaryColor = renkler.vurguSecondary;
     final bgColor = renkler.arkaPlan;
@@ -205,7 +205,7 @@ class _GeometrikSayacWidgetState extends State<GeometrikSayacWidget>
         borderRadius: BorderRadius.circular(24),
         child: Stack(
           children: [
-            // Sacred Geometry arka plan
+            // Sacred geometry background.
             AnimatedBuilder(
               animation: Listenable.merge([_rotateController, _pulseController]),
               builder: (context, child) {
@@ -220,13 +220,13 @@ class _GeometrikSayacWidgetState extends State<GeometrikSayacWidget>
               },
             ),
 
-            // İçerik
+            // Content.
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Üst bilgi
+                  // Top info.
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -248,7 +248,7 @@ class _GeometrikSayacWidgetState extends State<GeometrikSayacWidget>
                             ),
                           ),
                           Text(
-                            _languageService['time_remaining'] ?? 'Kalan Süre',
+                            _languageService['time_remaining'] ?? '',
                             style: TextStyle(
                               color: primaryColor.withOpacity(0.5),
                               fontSize: 12,
@@ -256,7 +256,7 @@ class _GeometrikSayacWidgetState extends State<GeometrikSayacWidget>
                           ),
                         ],
                       ),
-                      // Flower of Life mini ikon
+                      // Mini Flower of Life icon.
                       AnimatedBuilder(
                         animation: _rotateController,
                         builder: (context, child) {
@@ -276,7 +276,7 @@ class _GeometrikSayacWidgetState extends State<GeometrikSayacWidget>
 
                   const SizedBox(height: 16),
 
-                  // Zaman göstergesi - Altıgen içinde
+                  // Time display - inside a hexagon.
                   Expanded(
                     child: Center(
                       child: AnimatedBuilder(
@@ -325,12 +325,12 @@ class _GeometrikSayacWidgetState extends State<GeometrikSayacWidget>
 
                   const SizedBox(height: 12),
 
-                  // İlerleme çubuğu
+                  // Progress bar.
                   _buildProgressBar(primaryColor, primaryColor),
 
                   const SizedBox(height: 10),
 
-                  // Miladi ve Hicri Takvim
+                  // Gregorian and Hijri dates.
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -338,7 +338,7 @@ class _GeometrikSayacWidgetState extends State<GeometrikSayacWidget>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _languageService['gregorian_date'] ?? 'Miladi',
+                            _languageService['gregorian_date'] ?? '',
                             style: TextStyle(
                               color: primaryColor.withOpacity(0.4),
                               fontSize: 9,
@@ -353,7 +353,7 @@ class _GeometrikSayacWidgetState extends State<GeometrikSayacWidget>
                           ),
                         ],
                       ),
-                      // İlerleme yüzdesi
+                      // Progress percent.
                       Text(
                         '${(_ilerlemeOrani * 100).toInt()}%',
                         style: TextStyle(
@@ -366,7 +366,7 @@ class _GeometrikSayacWidgetState extends State<GeometrikSayacWidget>
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            _languageService['hijri_date'] ?? 'Hicri',
+                            _languageService['hijri_date'] ?? '',
                             style: TextStyle(
                               color: primaryColor.withOpacity(0.4),
                               fontSize: 9,
@@ -393,10 +393,8 @@ class _GeometrikSayacWidgetState extends State<GeometrikSayacWidget>
   }
 
   String _getHicriAyAdi(int ay) {
-    const aylar = ['', 'Muharrem', 'Safer', 'Rebiülevvel', 'Rebiülahir', 
-      'Cemaziyelevvel', 'Cemaziyelahir', 'Recep', 'Şaban', 'Ramazan', 
-      'Şevval', 'Zilkade', 'Zilhicce'];
-    return aylar[ay];
+    if (ay < 1 || ay > 12) return '';
+    return _languageService['hijri_month_$ay'] ?? '';
   }
 
   Widget _buildGoldenDigit(String value, Color primary, Color secondary) {
@@ -468,7 +466,7 @@ class _GeometrikSayacWidgetState extends State<GeometrikSayacWidget>
   }
 }
 
-// Sacred Geometry çizici
+// Sacred geometry painter.
 class _SacredGeometryPainter extends CustomPainter {
   final double rotation;
   final double pulse;
@@ -484,7 +482,7 @@ class _SacredGeometryPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     
-    // Dönen dış daireler
+    // Rotating outer circles.
     for (int i = 0; i < 6; i++) {
       final angle = rotation + (i * math.pi / 3);
       final radius = 60.0 + pulse * 10;
@@ -503,24 +501,24 @@ class _SacredGeometryPainter extends CustomPainter {
       );
     }
 
-    // Merkez Flower of Life
+    // Center Flower of Life.
     _drawFlowerOfLife(canvas, center, 50 + pulse * 5, color.withOpacity(0.15));
 
-    // Dönen üçgenler (Merkaba benzeri)
+    // Rotating triangles (Merkaba-like).
     canvas.save();
     canvas.translate(center.dx, center.dy);
     canvas.rotate(rotation);
     
-    // Yukarı bakan üçgen
+    // Upward triangle.
     _drawTriangle(canvas, 0, 70 + pulse * 10, color.withOpacity(0.1));
     
-    // Aşağı bakan üçgen
+    // Downward triangle.
     canvas.rotate(math.pi);
     _drawTriangle(canvas, 0, 70 + pulse * 10, color.withOpacity(0.08));
     
     canvas.restore();
 
-    // Dış altıgen
+    // Outer hexagon.
     canvas.save();
     canvas.translate(center.dx, center.dy);
     canvas.rotate(-rotation * 0.5);
@@ -534,10 +532,10 @@ class _SacredGeometryPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
 
-    // Merkez daire
+    // Center circle.
     canvas.drawCircle(center, radius * 0.4, paint);
 
-    // 6 çevre dairesi
+    // Six surrounding circles.
     for (int i = 0; i < 6; i++) {
       final angle = i * math.pi / 3;
       final circleCenter = Offset(
@@ -595,7 +593,7 @@ class _SacredGeometryPainter extends CustomPainter {
   }
 }
 
-// Flower of Life mini çizici
+// Mini Flower of Life painter.
 class _FlowerOfLifeMiniPainter extends CustomPainter {
   final Color color;
 
@@ -611,10 +609,10 @@ class _FlowerOfLifeMiniPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
 
-    // Merkez
+    // Center.
     canvas.drawCircle(center, radius, paint);
 
-    // 6 çevre
+    // Six surrounding circles.
     for (int i = 0; i < 6; i++) {
       final angle = i * math.pi / 3;
       final circleCenter = Offset(

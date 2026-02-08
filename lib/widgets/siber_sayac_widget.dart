@@ -126,12 +126,12 @@ class _SiberSayacWidgetState extends State<SiberSayacWidget>
     final nowTotalSeconds = now.hour * 3600 + now.minute * 60 + now.second;
 
     final vakitSaatleri = [
-      {'adi': _languageService['imsak'] ?? 'İmsak', 'saat': _vakitSaatleri['Imsak']!},
-      {'adi': _languageService['gunes'] ?? 'Güneş', 'saat': _vakitSaatleri['Gunes']!},
-      {'adi': _languageService['ogle'] ?? 'Öğle', 'saat': _vakitSaatleri['Ogle']!},
-      {'adi': _languageService['ikindi'] ?? 'İkindi', 'saat': _vakitSaatleri['Ikindi']!},
-      {'adi': _languageService['aksam'] ?? 'Akşam', 'saat': _vakitSaatleri['Aksam']!},
-      {'adi': _languageService['yatsi'] ?? 'Yatsı', 'saat': _vakitSaatleri['Yatsi']!},
+      {'adi': _languageService['imsak'], 'saat': _vakitSaatleri['Imsak']!},
+      {'adi': _languageService['gunes'], 'saat': _vakitSaatleri['Gunes']!},
+      {'adi': _languageService['ogle'], 'saat': _vakitSaatleri['Ogle']!},
+      {'adi': _languageService['ikindi'], 'saat': _vakitSaatleri['Ikindi']!},
+      {'adi': _languageService['aksam'], 'saat': _vakitSaatleri['Aksam']!},
+      {'adi': _languageService['yatsi'], 'saat': _vakitSaatleri['Yatsi']!},
     ];
 
     DateTime? sonrakiVakitZamani;
@@ -187,12 +187,8 @@ class _SiberSayacWidgetState extends State<SiberSayacWidget>
   }
 
   String _getHicriAyAdi(int ay) {
-    final aylar = [
-      '', 'Muharrem', 'Safer', 'Rebiülevvel', 'Rebiülahir',
-      'Cemaziyelevvel', 'Cemaziyelahir', 'Recep', 'Şaban', 'Ramazan',
-      'Şevval', 'Zilkade', 'Zilhicce'
-    ];
-    return aylar[ay];
+    if (ay < 1 || ay > 12) return '';
+    return _languageService['hijri_month_$ay'] ?? '';
   }
 
   @override
@@ -204,7 +200,7 @@ class _SiberSayacWidgetState extends State<SiberSayacWidget>
     final now = DateTime.now();
     final hicri = HijriCalendar.now();
     final hicriTarih = '${hicri.hDay} ${_getHicriAyAdi(hicri.hMonth)} ${hicri.hYear}';
-    final miladiTarih = DateFormat('dd MMMM yyyy', 'tr_TR').format(now);
+    final miladiTarih = DateFormat('dd MMMM yyyy', _getLocale()).format(now);
 
     // Tema kontrolü: Varsayılansa orijinal, değilse tema renkleri
     final kullanTemaRenkleri = !_temaService.sayacTemasiKullan;
@@ -416,6 +412,25 @@ class _SiberSayacWidgetState extends State<SiberSayacWidget>
         ),
       ),
     );
+  }
+
+  String _getLocale() {
+    switch (_languageService.currentLanguage) {
+      case 'tr':
+        return 'tr_TR';
+      case 'en':
+        return 'en_US';
+      case 'de':
+        return 'de_DE';
+      case 'fr':
+        return 'fr_FR';
+      case 'ar':
+        return 'ar_SA';
+      case 'fa':
+        return 'fa_IR';
+      default:
+        return 'tr_TR';
+    }
   }
 
   Widget _buildCyberTimeUnit(String value, Color primaryColor, Color secondaryColor, Color textColor) {

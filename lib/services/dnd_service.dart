@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'diyanet_api_service.dart';
 import 'konum_service.dart';
+import 'language_service.dart';
 
 class DndService {
   static const MethodChannel _channel = MethodChannel('huzur_vakti/dnd');
@@ -22,20 +23,20 @@ class DndService {
   static Future<bool> schedulePrayerDnd() async {
     if (!Platform.isAndroid) return false;
 
-    // Önce izin var mı kontrol et
+    // Check permission
     final hasAccess = await hasPolicyAccess();
     if (!hasAccess) {
-      debugPrint('⚠️ DND izni yok! Kullanıcı ayarlardan izin vermelidir.');
+      debugPrint('⚠️ DND permission missing. User must grant it in settings.');
       return false;
     }
 
     final entries = await _buildEntries();
     if (entries.isEmpty) {
-      debugPrint('⚠️ DND planlanacak vakit bulunamadı.');
+      debugPrint('⚠️ No DND entries to schedule.');
       return false;
     }
 
-    debugPrint('📵 ${entries.length} vakit için DND planlanıyor...');
+    debugPrint('📵 Scheduling DND for ${entries.length} entries...');
 
     final payload = entries
         .map(
@@ -51,7 +52,7 @@ class DndService {
       'entries': payload,
     });
 
-    debugPrint(result == true ? '✅ DND planlandı' : '❌ DND planlanamadı');
+    debugPrint(result == true ? '✅ DND scheduled' : '❌ DND scheduling failed');
     return result ?? false;
   }
 
@@ -93,11 +94,13 @@ class DndService {
     final result = <_DndEntry>[];
     final isFriday = day.weekday == DateTime.friday;
 
-    const vakitler = [
-      {'key': 'Ogle', 'label': 'Öğle', 'isCumaVakti': true},
-      {'key': 'Ikindi', 'label': 'İkindi', 'isCumaVakti': false},
-      {'key': 'Aksam', 'label': 'Akşam', 'isCumaVakti': false},
-      {'key': 'Yatsi', 'label': 'Yatsı', 'isCumaVakti': false},
+    final languageService = LanguageService();
+    final fridayLabel = languageService['friday'] ?? 'Friday';
+    final vakitler = [
+      {'key': 'Ogle', 'label': languageService['ogle'] ?? 'Dhuhr', 'isCumaVakti': true},
+      {'key': 'Ikindi', 'label': languageService['ikindi'] ?? 'Asr', 'isCumaVakti': false},
+      {'key': 'Aksam', 'label': languageService['aksam'] ?? 'Maghrib', 'isCumaVakti': false},
+      {'key': 'Yatsi', 'label': languageService['yatsi'] ?? 'Isha', 'isCumaVakti': false},
     ];
 
     for (final vakit in vakitler) {
@@ -108,7 +111,7 @@ class DndService {
         continue;
       }
 
-      // Sadece Cuma günü Öğle vakti (Cuma namazı) 60 dakika, diğerleri 30 dakika
+      // Friday Dhuhr is 60 minutes, others 30.
       final isCumaVakti = isFriday && (vakit['isCumaVakti'] as bool);
       final duration = isCumaVakti ? 60 : 30;
 
@@ -116,7 +119,7 @@ class DndService {
         _DndEntry(
           startAt: startAt,
           durationMinutes: duration,
-          label: isCumaVakti ? 'Cuma' : vakit['label'] as String,
+          label: isCumaVakti ? fridayLabel : vakit['label'] as String,
         ),
       );
     }

@@ -63,12 +63,12 @@ class _AnaSayfaState extends State<AnaSayfa> {
   int _currentSayacIndex = 22;
   bool _sayacYuklendi = false;
 
-  // Çoklu konum sistemi
+  // Multi-location system
   List<KonumModel> _konumlar = [];
   int _aktifKonumIndex = 0;
   PageController? _konumPageController;
 
-  // Widget yenileme için key
+  // Key for widget refresh
   Key _vakitListesiKey = UniqueKey();
 
   @override
@@ -78,12 +78,12 @@ class _AnaSayfaState extends State<AnaSayfa> {
     _konumYukle();
     _temaService.addListener(_onTemaChanged);
     _languageService.addListener(_onTemaChanged);
-    // Özel gün popup kontrolü
+    // Special day popup check
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkOzelGun();
-      // Zamanlanmış bildirimleri ayarla
+      // Schedule notifications
       _scheduleNotifications();
-      // Konum otomatik güncelleme kontrolü
+      // Auto location update check
       _checkLocationChange();
     });
   }
@@ -92,54 +92,54 @@ class _AnaSayfaState extends State<AnaSayfa> {
     try {
       await ScheduledNotificationService.scheduleAllPrayerNotifications();
     } catch (e) {
-      debugPrint('⚠️ Bildirim zamanlama hatası: $e');
+      debugPrint('⚠️ Notification scheduling error: $e');
     }
   }
 
-  /// Konum değişikliği kontrolü - kullanıcı farklı bir şehre gittiyse uyarı göster
+  /// Check location changes and notify if city changed.
   Future<void> _checkLocationChange() async {
     try {
-      // Mevcut kayıtlı konumu al
+      // Get current saved location
       final aktifKonum = await KonumService.getAktifKonum();
       if (aktifKonum == null) {
-        debugPrint('📍 Kayıtlı konum yok, kontrol atlanıyor');
+        debugPrint('📍 No saved location, skipping check');
         return;
       }
 
-      // GPS izni kontrolü
+      // GPS permission check
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        debugPrint('📍 GPS kapalı, konum kontrolü atlanıyor');
+        debugPrint('📍 GPS disabled, skipping location check');
         return;
       }
 
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
-        debugPrint('📍 Konum izni yok, kontrol atlanıyor');
+        debugPrint('📍 Location permission missing, skipping check');
         return;
       }
 
-      // Mevcut konumu al
+      // Get current location
       Position? position;
       try {
         position = await Geolocator.getCurrentPosition(
           desiredAccuracy:
-              LocationAccuracy.low, // Hızlı sonuç için düşük hassasiyet
+              LocationAccuracy.low, // Low accuracy for faster result
           timeLimit: const Duration(seconds: 10),
         );
       } catch (e) {
-        debugPrint('📍 Konum alınamadı: $e');
+        debugPrint('📍 Location fetch failed: $e');
         return;
       }
 
-      // Reverse geocoding ile şehir bilgisini al
+      // Reverse geocode to get city info
       final locationInfo = await _reverseGeocode(
         position.latitude,
         position.longitude,
       );
       if (locationInfo == null) {
-        debugPrint('📍 Şehir bilgisi alınamadı');
+        debugPrint('📍 City info not available');
         return;
       }
 
@@ -147,35 +147,36 @@ class _AnaSayfaState extends State<AnaSayfa> {
       final currentDistrict = locationInfo['district']?.toString() ?? '';
       final savedCity = aktifKonum.ilAdi.toUpperCase();
 
-      // Türkçe karakterleri normalize et
+      // Normalize locale-specific characters
       final normalizedCurrentCity = _normalizeString(currentCity);
       final normalizedSavedCity = _normalizeString(savedCity);
 
-      debugPrint('📍 Mevcut şehir: $currentCity ($normalizedCurrentCity)');
-      debugPrint('📍 Kayıtlı şehir: $savedCity ($normalizedSavedCity)');
+      debugPrint('📍 Current city: $currentCity ($normalizedCurrentCity)');
+      debugPrint('📍 Saved city: $savedCity ($normalizedSavedCity)');
 
-      // Şehir değişmiş mi kontrol et
+      // Check if city changed
       if (normalizedCurrentCity.isNotEmpty &&
           normalizedSavedCity.isNotEmpty &&
           !normalizedCurrentCity.contains(normalizedSavedCity) &&
           !normalizedSavedCity.contains(normalizedCurrentCity)) {
-        debugPrint('🔄 Şehir değişikliği tespit edildi!');
+        debugPrint('🔄 City change detected!');
 
-        // Kullanıcıya soru sor
+        // Ask the user
         if (mounted) {
           _showLocationChangeDialog(currentCity, currentDistrict, savedCity);
         }
       }
     } catch (e) {
-      debugPrint('📍 Konum kontrol hatası: $e');
+      debugPrint('📍 Location check error: $e');
     }
   }
 
-  /// Reverse geocoding ile koordinatlardan şehir/ilçe bilgisi al
+  /// Reverse geocode coordinates to city/district.
   Future<Map<String, String>?> _reverseGeocode(double lat, double lon) async {
     try {
+      final languageCode = _languageService.currentLanguage;
       final url =
-          'https://nominatim.openstreetmap.org/reverse?format=json&lat=$lat&lon=$lon&zoom=10&addressdetails=1&accept-language=tr';
+          'https://nominatim.openstreetmap.org/reverse?format=json&lat=$lat&lon=$lon&zoom=10&addressdetails=1&accept-language=$languageCode';
 
       final response = await http
           .get(Uri.parse(url), headers: {'User-Agent': 'HuzurVakti/2.0'})
@@ -203,12 +204,12 @@ class _AnaSayfaState extends State<AnaSayfa> {
         }
       }
     } catch (e) {
-      debugPrint('⚠️ Reverse geocoding hatası: $e');
+      debugPrint('⚠️ Reverse geocoding error: $e');
     }
     return null;
   }
 
-  /// Türkçe karakterleri normalize et
+  /// Normalize locale-specific characters
   String _normalizeString(String input) {
     return input
         .replaceAll('İ', 'I')
@@ -228,7 +229,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
         .trim();
   }
 
-  /// Konum değişikliği dialogu göster
+  /// Show location change dialog
   void _showLocationChangeDialog(
     String newCity,
     String newDistrict,
@@ -247,7 +248,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
             const SizedBox(width: 12),
             Flexible(
               child: Text(
-                _languageService['location_changed'] ?? 'Konum Değişti',
+                _languageService['location_changed'] ?? '',
                 style: TextStyle(color: renkler.yaziPrimary, fontSize: 18),
               ),
             ),
@@ -258,8 +259,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              _languageService['location_change_detected'] ??
-                  'Farklı bir şehirde olduğunuzu tespit ettik.',
+                _languageService['location_change_detected'] ?? '',
               style: TextStyle(color: renkler.yaziSecondary),
             ),
             const SizedBox(height: 16),
@@ -277,7 +277,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
                       const SizedBox(width: 8),
                       Flexible(
                         child: Text(
-                          '${_languageService['current_location'] ?? 'Mevcut'}: $newCity${newDistrict.isNotEmpty ? ' / $newDistrict' : ''}',
+                          '${_languageService['current_location'] ?? ''}: $newCity${newDistrict.isNotEmpty ? ' / $newDistrict' : ''}',
                           style: TextStyle(
                             color: renkler.yaziPrimary,
                             fontSize: 13,
@@ -297,7 +297,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
                       const SizedBox(width: 8),
                       Flexible(
                         child: Text(
-                          '${_languageService['saved_location'] ?? 'Kayıtlı'}: $savedCity',
+                          '${_languageService['saved_location'] ?? ''}: $savedCity',
                           style: TextStyle(
                             color: renkler.yaziSecondary,
                             fontSize: 13,
@@ -311,8 +311,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
             ),
             const SizedBox(height: 12),
             Text(
-              _languageService['update_location_question'] ??
-                  'Namaz vakitlerini yeni konuma göre güncellemek ister misiniz?',
+                _languageService['update_location_question'] ?? '',
               style: TextStyle(color: renkler.yaziSecondary, fontSize: 13),
             ),
           ],
@@ -321,7 +320,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text(
-              _languageService['no_keep_current'] ?? 'Hayır, Mevcut Kalsın',
+              _languageService['no_keep_current'] ?? '',
               style: TextStyle(color: renkler.yaziSecondary),
             ),
           ),
@@ -335,16 +334,16 @@ class _AnaSayfaState extends State<AnaSayfa> {
             ),
             onPressed: () {
               Navigator.pop(ctx);
-              // Konum seçim sayfasına git
+              // Navigate to location selection
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const IlIlceSecSayfa()),
               ).then((_) {
-                // Geri dönünce konumu yeniden yükle
+                // Reload location on return
                 _konumYukle();
               });
             },
-            child: Text(_languageService['yes_update'] ?? 'Evet, Güncelle'),
+            child: Text(_languageService['yes_update'] ?? ''),
           ),
         ],
       ),
@@ -358,7 +357,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
   }
 
   Future<void> _loadSayacIndex() async {
-    // TemaService'den sayaç index'ini al
+    // Get counter index from TemaService
     final index = _temaService.aktifSayacIndex;
     if (mounted) {
       setState(() {
@@ -379,7 +378,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
   void _onTemaChanged() {
     if (mounted) {
       setState(() {
-        // Sayaç değiştiğinde güncelle
+        // Update when counter changes
         _currentSayacIndex = _temaService.aktifSayacIndex;
       });
     }
@@ -395,9 +394,8 @@ class _AnaSayfaState extends State<AnaSayfa> {
         _aktifKonumIndex = aktifIndex < konumlar.length ? aktifIndex : 0;
 
         if (konumlar.isEmpty) {
-          konumBasligi =
-              _languageService['location_not_selected_upper'] ??
-              "KONUM SEÇİLMEDİ";
+            konumBasligi =
+              (_languageService['location_not_selected'] ?? '').toUpperCase();
         } else {
           final aktifKonum = konumlar[_aktifKonumIndex];
           konumBasligi = "${aktifKonum.ilAdi} / ${aktifKonum.ilceAdi}";
@@ -408,7 +406,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
     }
   }
 
-  // Konum değiştirme fonksiyonu
+  // Change location
   Future<void> _konumDegistir(int yeniIndex) async {
     if (yeniIndex >= 0 && yeniIndex < _konumlar.length) {
       await KonumService.setAktifKonumIndex(yeniIndex);
@@ -418,21 +416,21 @@ class _AnaSayfaState extends State<AnaSayfa> {
         konumBasligi = "${aktifKonum.ilAdi} / ${aktifKonum.ilceAdi}";
       });
 
-      // Widget'ları güncelle
+      // Update widgets
       await HomeWidgetService.updateAllWidgets();
-      debugPrint('✅ Aktif konum değiştirildi: ${_konumlar[yeniIndex].tamAd}');
+      debugPrint('✅ Active location changed: ${_konumlar[yeniIndex].tamAd}');
 
-      // Vakit listesini ve tüm widgetları yenile
+      // Refresh prayer list and widgets
       if (mounted) {
         setState(() {
           _vakitListesiKey =
-              UniqueKey(); // Vakit listesini zorla yeniden oluştur
+              UniqueKey(); // Force rebuild prayer list
         });
       }
     }
   }
 
-  // Uygulama bilgi popup'ı
+  // App info popup
   void _showAppInfoDialog() {
     final renkler = _temaService.renkler;
 
@@ -469,7 +467,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
             ),
             const SizedBox(height: 16),
             Text(
-              _languageService['app_name'] ?? 'Huzur Vakti',
+              _languageService['app_name'] ?? '',
               style: TextStyle(
                 color: renkler.yaziPrimary,
                 fontSize: 24,
@@ -478,13 +476,12 @@ class _AnaSayfaState extends State<AnaSayfa> {
             ),
             const SizedBox(height: 8),
             Text(
-              '${_languageService['version'] ?? 'Versiyon'}: 1.0.0+1',
+              '${_languageService['version'] ?? ''}: 1.0.0+1',
               style: TextStyle(color: renkler.yaziSecondary, fontSize: 14),
             ),
             const SizedBox(height: 4),
             Text(
-              _languageService['prayer_times_assistant'] ??
-                  'Namaz Vakitleri, bildirimler, alarm, kıble pusulası, yakın camiler, imsakiye, özel günler, zikirmatik, Kur\'an, hadis, dualar, Esmaül Hüsna, otomatik sessize alma, çoklu konum, tema/dil seçenekleri ve ana ekran sayaç & widget desteği ile kapsamlı bir ibadet asistanı.',
+                _languageService['prayer_times_assistant'] ?? '',
               style: TextStyle(color: renkler.yaziSecondary, fontSize: 12),
               textAlign: TextAlign.center,
             ),
@@ -508,7 +505,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
                     size: 18,
                   ),
                   label: Text(
-                    _languageService['about'] ?? 'Hakkında',
+                    _languageService['about'] ?? '',
                     style: TextStyle(color: renkler.vurgu),
                   ),
                 ),
@@ -520,7 +517,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
                     size: 18,
                   ),
                   label: Text(
-                    _languageService['close'] ?? 'Kapat',
+                    _languageService['close'] ?? '',
                     style: TextStyle(color: renkler.yaziSecondary),
                   ),
                 ),
@@ -532,7 +529,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
     );
   }
 
-  // Konum seçim popup dialogu
+  // Location selection popup dialog
   void _showKonumSecimDialog() {
     final renkler = _temaService.renkler;
 
@@ -546,7 +543,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
             Icon(Icons.location_on, color: renkler.vurgu),
             const SizedBox(width: 12),
             Text(
-              _languageService['saved_locations_title'] ?? 'Kayıtlı Konumlar',
+              _languageService['saved_locations_title'] ?? '',
               style: TextStyle(color: renkler.yaziPrimary, fontSize: 18),
             ),
           ],
@@ -555,8 +552,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
           width: double.maxFinite,
           child: _konumlar.isEmpty
               ? Text(
-                  _languageService['no_saved_locations'] ??
-                      'Henüz kayıtlı konum yok',
+                    _languageService['no_saved_locations'] ?? '',
                   style: TextStyle(color: renkler.yaziSecondary),
                 )
               : ListView.builder(
@@ -609,8 +605,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
                         ),
                         subtitle: isAktif
                             ? Text(
-                                _languageService['active_location'] ??
-                                    'Aktif Konum',
+                                _languageService['active_location'] ?? '',
                                 style: TextStyle(
                                   color: renkler.vurgu,
                                   fontSize: 11,
@@ -632,13 +627,13 @@ class _AnaSayfaState extends State<AnaSayfa> {
                                       backgroundColor: renkler.kartArkaPlan,
                                       title: Text(
                                         _languageService['delete_location'] ??
-                                            'Konumu Sil',
+                                          '',
                                         style: TextStyle(
                                           color: renkler.yaziPrimary,
                                         ),
                                       ),
                                       content: Text(
-                                        '${konum.tamAd} ${_languageService['delete_location_confirm'] ?? 'konumunu silmek istediğinize emin misiniz?'}',
+                                        '${konum.tamAd} ${_languageService['delete_location_confirm'] ?? ''}',
                                         style: TextStyle(
                                           color: renkler.yaziSecondary,
                                         ),
@@ -648,8 +643,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
                                           onPressed: () =>
                                               Navigator.pop(ctx, false),
                                           child: Text(
-                                            _languageService['cancel'] ??
-                                                'İptal',
+                                            _languageService['cancel'] ?? '',
                                             style: TextStyle(
                                               color: renkler.yaziSecondary,
                                             ),
@@ -659,7 +653,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
                                           onPressed: () =>
                                               Navigator.pop(ctx, true),
                                           child: Text(
-                                            _languageService['delete'] ?? 'Sil',
+                                            _languageService['delete'] ?? '',
                                             style: const TextStyle(
                                               color: Colors.red,
                                             ),
@@ -697,7 +691,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
-              _languageService['close'] ?? 'Kapat',
+              _languageService['close'] ?? '',
               style: TextStyle(color: renkler.vurgu),
             ),
           ),
@@ -779,10 +773,10 @@ class _AnaSayfaState extends State<AnaSayfa> {
         ),
         centerTitle: true,
         actions: [
-          // Kıble Pusulası ikonu
+          // Qibla compass icon
           IconButton(
             icon: Icon(Icons.explore, color: renkler.vurgu, size: 26),
-            tooltip: _languageService['qibla'] ?? 'Kıble Yönü',
+            tooltip: _languageService['qibla'] ?? '',
             onPressed: () {
               Navigator.push(
                 context,
@@ -790,10 +784,10 @@ class _AnaSayfaState extends State<AnaSayfa> {
               );
             },
           ),
-          // Konum ekle ikonu
+          // Add location icon
           IconButton(
             icon: Icon(Icons.add_location_alt, color: renkler.vurgu, size: 26),
-            tooltip: _languageService['add_location'] ?? 'Konum Ekle',
+            tooltip: _languageService['add_location'] ?? '',
             onPressed: () async {
               final result = await Navigator.push(
                 context,
@@ -816,7 +810,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              // --- KONUM UYARISI (Eğer konum seçilmemişse) ---
+              // --- LOCATION WARNING (when location not selected) ---
               if (_konumlar.isEmpty)
                 Container(
                   margin: const EdgeInsets.all(16),
@@ -839,8 +833,8 @@ class _AnaSayfaState extends State<AnaSayfa> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              _languageService['location_not_selected'] ??
-                                  'Konum Seçilmedi',
+                                _languageService['location_not_selected'] ??
+                                  '',
                               style: TextStyle(
                                 color: renkler.yaziPrimary,
                                 fontSize: 16,
@@ -849,8 +843,8 @@ class _AnaSayfaState extends State<AnaSayfa> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              _languageService['select_location_hint'] ??
-                                  'Namaz vakitlerini görmek için ayarlardan il/ilçe seçin',
+                                _languageService['select_location_prompt'] ??
+                                  '',
                               style: TextStyle(
                                 color: renkler.yaziSecondary,
                                 fontSize: 12,
@@ -877,7 +871,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
                   ),
                 ),
 
-              // --- SAYAÇ BÖLÜMÜ ---
+              // --- COUNTER SECTION ---
               SizedBox(
                 height: 240,
                 width: double.infinity,
@@ -898,17 +892,17 @@ class _AnaSayfaState extends State<AnaSayfa> {
 
               const SizedBox(height: 10),
 
-              // --- ÖZEL GÜN BANNER ---
+              // --- SPECIAL DAY BANNER ---
               const OzelGunBannerWidget(),
 
               const SizedBox(height: 10),
 
-              // --- VAKİT LİSTESİ ---
+              // --- PRAYER TIMES LIST ---
               VakitListesiWidget(key: _vakitListesiKey),
 
               const SizedBox(height: 20),
 
-              // --- GÜNÜN İÇERİĞİ ---
+              // --- TODAY'S CONTENT ---
               const GununIcerigiWidget(),
 
               const SizedBox(height: 50),
@@ -1013,8 +1007,8 @@ class _AnaSayfaState extends State<AnaSayfa> {
                     size: 28,
                   ),
                   const SizedBox(width: 12),
-                  const Text(
-                    'MENÜ',
+                  Text(
+                    _languageService['menu_title'] ?? '',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -1041,7 +1035,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
                   children: [
                     _buildMenuCard(
                       icon: Icons.schedule,
-                      title: _languageService['calendar'] ?? 'İmsakiye',
+                      title: _languageService['calendar'] ?? '',
                       color: Colors.blue,
                       onTap: () {
                         Navigator.pop(context);
@@ -1055,7 +1049,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
                     ),
                     _buildMenuCard(
                       icon: Icons.auto_awesome,
-                      title: _languageService['dhikr'] ?? 'Zikir Matik',
+                      title: _languageService['dhikr'] ?? '',
                       color: Colors.purple,
                       onTap: () {
                         Navigator.pop(context);
@@ -1069,7 +1063,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
                     ),
                     _buildMenuCard(
                       icon: Icons.mosque,
-                      title: _languageService['worship'] ?? 'İbadet',
+                      title: _languageService['worship'] ?? '',
                       color: Colors.green,
                       onTap: () {
                         Navigator.pop(context);
@@ -1083,7 +1077,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
                     ),
                     _buildMenuCard(
                       icon: Icons.explore,
-                      title: _languageService['qibla'] ?? 'Kıble Yönü',
+                      title: _languageService['qibla'] ?? '',
                       color: Colors.orange,
                       onTap: () {
                         Navigator.pop(context);
@@ -1097,8 +1091,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
                     ),
                     _buildMenuCard(
                       icon: Icons.place,
-                      title:
-                          _languageService['nearby_mosques'] ?? 'Yakın Camiler',
+                        title: _languageService['nearby_mosques'] ?? '',
                       color: Colors.red,
                       onTap: () {
                         Navigator.pop(context);
@@ -1112,7 +1105,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
                     ),
                     _buildMenuCard(
                       icon: Icons.celebration,
-                      title: _languageService['special_days'] ?? 'Özel Günler',
+                      title: _languageService['special_days'] ?? '',
                       color: Colors.pink,
                       onTap: () {
                         Navigator.pop(context);
@@ -1126,7 +1119,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
                     ),
                     _buildMenuCard(
                       icon: Icons.menu_book,
-                      title: _languageService['hadith'] ?? '40 Hadis',
+                      title: _languageService['hadith'] ?? '',
                       color: Colors.teal,
                       onTap: () {
                         Navigator.pop(context);
@@ -1140,7 +1133,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
                     ),
                     _buildMenuCard(
                       icon: Icons.auto_stories,
-                      title: _languageService['quran'] ?? 'Kur\'an-ı Kerim',
+                      title: _languageService['quran'] ?? '',
                       color: Colors.indigo,
                       onTap: () {
                         Navigator.pop(context);
@@ -1154,7 +1147,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
                     ),
                     _buildMenuCard(
                       icon: Icons.settings,
-                      title: _languageService['settings'] ?? 'Ayarlar',
+                      title: _languageService['settings'] ?? '',
                       color: Colors.blueGrey,
                       onTap: () {
                         Navigator.pop(context);
@@ -1168,7 +1161,7 @@ class _AnaSayfaState extends State<AnaSayfa> {
                     ),
                     _buildMenuCard(
                       icon: Icons.info,
-                      title: _languageService['about'] ?? 'Hakkında',
+                      title: _languageService['about'] ?? '',
                       color: Colors.amber,
                       onTap: () {
                         Navigator.pop(context);

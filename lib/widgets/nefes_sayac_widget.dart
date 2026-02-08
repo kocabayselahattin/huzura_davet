@@ -103,12 +103,12 @@ class _NefesSayacWidgetState extends State<NefesSayacWidget>
     final nowTotalSeconds = now.hour * 3600 + now.minute * 60 + now.second;
 
     final vakitListesi = [
-      {'adi': _languageService['imsak'] ?? 'İmsak', 'saat': _vakitSaatleri['imsak']!},
-      {'adi': _languageService['gunes'] ?? 'Güneş', 'saat': _vakitSaatleri['gunes']!},
-      {'adi': _languageService['ogle'] ?? 'Öğle', 'saat': _vakitSaatleri['ogle']!},
-      {'adi': _languageService['ikindi'] ?? 'İkindi', 'saat': _vakitSaatleri['ikindi']!},
-      {'adi': _languageService['aksam'] ?? 'Akşam', 'saat': _vakitSaatleri['aksam']!},
-      {'adi': _languageService['yatsi'] ?? 'Yatsı', 'saat': _vakitSaatleri['yatsi']!},
+      {'adi': _languageService['imsak'] ?? '', 'saat': _vakitSaatleri['imsak']!},
+      {'adi': _languageService['gunes'] ?? '', 'saat': _vakitSaatleri['gunes']!},
+      {'adi': _languageService['ogle'] ?? '', 'saat': _vakitSaatleri['ogle']!},
+      {'adi': _languageService['ikindi'] ?? '', 'saat': _vakitSaatleri['ikindi']!},
+      {'adi': _languageService['aksam'] ?? '', 'saat': _vakitSaatleri['aksam']!},
+      {'adi': _languageService['yatsi'] ?? '', 'saat': _vakitSaatleri['yatsi']!},
     ];
 
     List<int> vakitSaniyeleri = [];
@@ -134,7 +134,7 @@ class _NefesSayacWidgetState extends State<NefesSayacWidget>
       final imsakParts = _vakitSaatleri['imsak']!.split(':');
       sonrakiVakitZamani = DateTime(yarin.year, yarin.month, yarin.day,
           int.parse(imsakParts[0]), int.parse(imsakParts[1]));
-      sonrakiVakitAdi = _languageService['imsak'] ?? 'İmsak';
+      sonrakiVakitAdi = _languageService['imsak'] ?? '';
       final yatsiSaniye = vakitSaniyeleri.last;
       final imsakSaniye = vakitSaniyeleri.first;
       final toplamSure = (24 * 3600 - yatsiSaniye) + imsakSaniye;
@@ -144,7 +144,7 @@ class _NefesSayacWidgetState extends State<NefesSayacWidget>
       final imsakParts = _vakitSaatleri['imsak']!.split(':');
       sonrakiVakitZamani = DateTime(now.year, now.month, now.day,
           int.parse(imsakParts[0]), int.parse(imsakParts[1]));
-      sonrakiVakitAdi = _languageService['imsak'] ?? 'İmsak';
+      sonrakiVakitAdi = _languageService['imsak'] ?? '';
       final yatsiSaniye = vakitSaniyeleri.last;
       final imsakSaniye = vakitSaniyeleri.first;
       final toplamSure = (24 * 3600 - yatsiSaniye) + imsakSaniye;
@@ -258,7 +258,7 @@ class _NefesSayacWidgetState extends State<NefesSayacWidget>
                             ),
                           ),
                           Text(
-                            _languageService['time_remaining'] ?? 'Kalan Süre',
+                            _languageService['time_remaining'] ?? '',
                             style: TextStyle(
                               color: secondaryColor.withOpacity(0.7),
                               fontSize: 12,
@@ -311,7 +311,9 @@ class _NefesSayacWidgetState extends State<NefesSayacWidget>
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                isInhale ? 'Nefes Al' : 'Nefes Ver',
+                                isInhale
+                                  ? (_languageService['breath_in'] ?? '')
+                                  : (_languageService['breath_out'] ?? ''),
                                 style: TextStyle(
                                   color: accentColor.withOpacity(0.7),
                                   fontSize: 8,
@@ -371,11 +373,20 @@ class _NefesSayacWidgetState extends State<NefesSayacWidget>
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      _buildTimeSegment(hours.toString().padLeft(2, '0'), 'SA'),
+                                      _buildTimeSegment(
+                                        hours.toString().padLeft(2, '0'),
+                                        _languageService['hour_short'] ?? '',
+                                      ),
                                       _buildSeparator(),
-                                      _buildTimeSegment(minutes.toString().padLeft(2, '0'), 'DK'),
+                                      _buildTimeSegment(
+                                        minutes.toString().padLeft(2, '0'),
+                                        _languageService['minute_short'] ?? '',
+                                      ),
                                       _buildSeparator(),
-                                      _buildTimeSegment(seconds.toString().padLeft(2, '0'), 'SN'),
+                                      _buildTimeSegment(
+                                        seconds.toString().padLeft(2, '0'),
+                                        _languageService['second_short'] ?? '',
+                                      ),
                                     ],
                                   ),
                                 ],
@@ -402,7 +413,7 @@ class _NefesSayacWidgetState extends State<NefesSayacWidget>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _languageService['gregorian_date'] ?? 'Miladi',
+                            _languageService['gregorian_date'] ?? '',
                             style: TextStyle(
                               color: accentColor.withOpacity(0.5),
                               fontSize: 9,
@@ -437,7 +448,7 @@ class _NefesSayacWidgetState extends State<NefesSayacWidget>
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            _languageService['hijri_date'] ?? 'Hicri',
+                            _languageService['hijri_date'] ?? '',
                             style: TextStyle(
                               color: accentColor.withOpacity(0.5),
                               fontSize: 9,
@@ -464,10 +475,8 @@ class _NefesSayacWidgetState extends State<NefesSayacWidget>
   }
 
   String _getHicriAyAdi(int ay) {
-    const aylar = ['', 'Muharrem', 'Safer', 'Rebiülevvel', 'Rebiülahir', 
-      'Cemaziyelevvel', 'Cemaziyelahir', 'Recep', 'Şaban', 'Ramazan', 
-      'Şevval', 'Zilkade', 'Zilhicce'];
-    return aylar[ay];
+    if (ay < 1 || ay > 12) return '';
+    return _languageService['hijri_month_$ay'] ?? '';
   }
 
   Widget _buildTimeSegment(String value, String label) {

@@ -137,12 +137,12 @@ class _OkyanusSayacWidgetState extends State<OkyanusSayacWidget>
     final nowTotalSeconds = now.hour * 3600 + now.minute * 60 + now.second;
 
     final vakitListesi = [
-      {'adi': _languageService['imsak'] ?? 'İmsak', 'saat': _vakitSaatleri['imsak']!},
-      {'adi': _languageService['gunes'] ?? 'Güneş', 'saat': _vakitSaatleri['gunes']!},
-      {'adi': _languageService['ogle'] ?? 'Öğle', 'saat': _vakitSaatleri['ogle']!},
-      {'adi': _languageService['ikindi'] ?? 'İkindi', 'saat': _vakitSaatleri['ikindi']!},
-      {'adi': _languageService['aksam'] ?? 'Akşam', 'saat': _vakitSaatleri['aksam']!},
-      {'adi': _languageService['yatsi'] ?? 'Yatsı', 'saat': _vakitSaatleri['yatsi']!},
+      {'adi': _languageService['imsak'], 'saat': _vakitSaatleri['imsak']!},
+      {'adi': _languageService['gunes'], 'saat': _vakitSaatleri['gunes']!},
+      {'adi': _languageService['ogle'], 'saat': _vakitSaatleri['ogle']!},
+      {'adi': _languageService['ikindi'], 'saat': _vakitSaatleri['ikindi']!},
+      {'adi': _languageService['aksam'], 'saat': _vakitSaatleri['aksam']!},
+      {'adi': _languageService['yatsi'], 'saat': _vakitSaatleri['yatsi']!},
     ];
 
     // Vakit saniyelerini hesapla
@@ -172,8 +172,8 @@ class _OkyanusSayacWidgetState extends State<OkyanusSayacWidget>
       final imsakParts = _vakitSaatleri['imsak']!.split(':');
       sonrakiVakitZamani = DateTime(yarin.year, yarin.month, yarin.day,
           int.parse(imsakParts[0]), int.parse(imsakParts[1]));
-      sonrakiVakitAdi = _languageService['imsak'] ?? 'İmsak';
-      mevcutVakitAdi = _languageService['yatsi'] ?? 'Yatsı';
+      sonrakiVakitAdi = _languageService['imsak'];
+      mevcutVakitAdi = _languageService['yatsi'];
       
       // Yatsıdan yarın imsaka kadar ilerleme
       final yatsiSaniye = vakitSaniyeleri.last;
@@ -186,8 +186,8 @@ class _OkyanusSayacWidgetState extends State<OkyanusSayacWidget>
       final imsakParts = _vakitSaatleri['imsak']!.split(':');
       sonrakiVakitZamani = DateTime(now.year, now.month, now.day,
           int.parse(imsakParts[0]), int.parse(imsakParts[1]));
-      sonrakiVakitAdi = _languageService['imsak'] ?? 'İmsak';
-      mevcutVakitAdi = _languageService['yatsi'] ?? 'Yatsı';
+      sonrakiVakitAdi = _languageService['imsak'];
+      mevcutVakitAdi = _languageService['yatsi'];
       
       // Dün yatsıdan bugün imsaka kadar ilerleme
       final yatsiSaniye = vakitSaniyeleri.last;
@@ -514,7 +514,7 @@ class _OkyanusSayacWidgetState extends State<OkyanusSayacWidget>
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          '$_sonrakiVakit ${_languageService['time_to'] ?? 'vaktine'}',
+                          '$_sonrakiVakit ${_languageService['time_to']}',
                           style: const TextStyle(
                             color: Color(0xFF5BC0BE),
                             fontSize: 12,
@@ -581,7 +581,14 @@ class _OkyanusSayacWidgetState extends State<OkyanusSayacWidget>
   }
   
   Widget _buildWaveIndicator(TemaRenkleri renkler) {
-    final vakitler = ['İmsak', 'Güneş', 'Öğle', 'İkindi', 'Akşam', 'Yatsı'];
+    final vakitler = [
+      _languageService['imsak'],
+      _languageService['gunes'],
+      _languageService['ogle'],
+      _languageService['ikindi'],
+      _languageService['aksam'],
+      _languageService['yatsi'],
+    ];
     
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -666,7 +673,7 @@ class _OkyanusSayacWidgetState extends State<OkyanusSayacWidget>
 
   Widget _buildTakvimRow(TemaRenkleri renkler) {
     final now = DateTime.now();
-    final miladiTarih = DateFormat('dd MMM yyyy', 'tr_TR').format(now);
+    final miladiTarih = DateFormat('dd MMM yyyy', _getLocale()).format(now);
     final hicri = HijriCalendar.now();
     final hicriTarih = '${hicri.hDay} ${_getHicriAyAdi(hicri.hMonth)} ${hicri.hYear}';
     
@@ -710,21 +717,36 @@ class _OkyanusSayacWidgetState extends State<OkyanusSayacWidget>
   }
   
   String _getHicriAyAdi(int ay) {
-    const aylar = ['', 'Muharrem', 'Safer', 'Rebiülevvel', 'Rebiülahir', 
-      'Cemaziyelevvel', 'Cemaziyelahir', 'Recep', 'Şaban', 'Ramazan', 
-      'Şevval', 'Zilkade', 'Zilhicce'];
-    return aylar[ay];
+    if (ay < 1 || ay > 12) return '';
+    return _languageService['hijri_month_$ay'] ?? '';
   }
 
   IconData _getVakitIcon(String vakit) {
-    switch (vakit) {
-      case 'İmsak': return Icons.dark_mode;
-      case 'Güneş': return Icons.wb_sunny;
-      case 'Öğle': return Icons.light_mode;
-      case 'İkindi': return Icons.wb_twilight;
-      case 'Akşam': return Icons.nights_stay;
-      case 'Yatsı': return Icons.bedtime;
-      default: return Icons.access_time;
+    if (vakit == _languageService['imsak']) return Icons.dark_mode;
+    if (vakit == _languageService['gunes']) return Icons.wb_sunny;
+    if (vakit == _languageService['ogle']) return Icons.light_mode;
+    if (vakit == _languageService['ikindi']) return Icons.wb_twilight;
+    if (vakit == _languageService['aksam']) return Icons.nights_stay;
+    if (vakit == _languageService['yatsi']) return Icons.bedtime;
+    return Icons.access_time;
+  }
+
+  String _getLocale() {
+    switch (_languageService.currentLanguage) {
+      case 'tr':
+        return 'tr_TR';
+      case 'en':
+        return 'en_US';
+      case 'de':
+        return 'de_DE';
+      case 'fr':
+        return 'fr_FR';
+      case 'ar':
+        return 'ar_SA';
+      case 'fa':
+        return 'fa_IR';
+      default:
+        return 'tr_TR';
     }
   }
 }

@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'namazvakti_api_service.dart';
 import 'aladhan_api_service.dart';
+import 'konum_service.dart';
 
 class DiyanetApiService {
   static const _baseUrl = 'https://ezanvakti.emushaf.net';
@@ -12,24 +13,24 @@ class DiyanetApiService {
   static final Map<String, Map<String, dynamic>> _vakitCache = {};
   static final Map<String, DateTime> _vakitCacheTimes = {};
 
-  // İl ve İlçe cache
+  // City and district cache
   static List<Map<String, dynamic>>? _illerCache;
   static final Map<String, List<Map<String, dynamic>>> _ilcelerCache = {};
 
-  // Aylık vakit cache
+  // Monthly times cache
   static final Map<String, List<Map<String, dynamic>>> _aylikVakitCache = {};
 
-  // Cache temizleme metodu
+  // Clear cache
   static void clearCache() {
     _vakitCache.clear();
     _vakitCacheTimes.clear();
     _aylikVakitCache.clear();
     _illerCache = null;
     _ilcelerCache.clear();
-    debugPrint('✅ DiyanetApiService cache temizlendi');
+    debugPrint('✅ DiyanetApiService cache cleared');
   }
 
-  // Cache'i SharedPreferences'a kaydet
+  // Save cache to SharedPreferences
   static Future<void> _saveVakitToPrefs(
     String ilceId,
     Map<String, dynamic> data,
@@ -42,13 +43,13 @@ class DiyanetApiService {
         'vakit_cache_time_$ilceId',
         DateTime.now().millisecondsSinceEpoch,
       );
-      debugPrint('💾 Vakit verileri kaydedildi: $ilceId');
+      debugPrint('💾 Prayer data saved: $ilceId');
     } catch (e) {
-      debugPrint('⚠️ Cache kaydetme hatası: $e');
+      debugPrint('⚠️ Cache save error: $e');
     }
   }
 
-  // SharedPreferences'tan cache yükle
+  // Load cache from SharedPreferences
   static Future<Map<String, dynamic>?> _loadVakitFromPrefs(
     String ilceId,
   ) async {
@@ -61,24 +62,24 @@ class DiyanetApiService {
         final cacheDate = DateTime.fromMillisecondsSinceEpoch(cacheTime);
         final now = DateTime.now();
 
-        // Cache 7 günden eskiyse kullanma
+        // Do not use cache older than 7 days
         if (now.difference(cacheDate).inDays < 7) {
           final data = jsonDecode(jsonStr) as Map<String, dynamic>;
-          debugPrint('📂 Kaydedilmiş vakit verileri yüklendi: $ilceId');
+          debugPrint('📂 Cached prayer data loaded: $ilceId');
           return data;
         } else {
           debugPrint(
-            '⏰ Kaydedilmiş veriler çok eski (${now.difference(cacheDate).inDays} gün)',
+            '⏰ Cached data too old (${now.difference(cacheDate).inDays} days)',
           );
         }
       }
     } catch (e) {
-      debugPrint('⚠️ Cache yükleme hatası: $e');
+      debugPrint('⚠️ Cache load error: $e');
     }
     return null;
   }
 
-  // Aylık vakit cache'ini SharedPreferences'a kaydet
+  // Save monthly cache to SharedPreferences
   static Future<void> _saveAylikVakitToPrefs(
     String cacheKey,
     List<Map<String, dynamic>> data,
@@ -91,13 +92,13 @@ class DiyanetApiService {
         'aylik_vakit_time_$cacheKey',
         DateTime.now().millisecondsSinceEpoch,
       );
-      debugPrint('💾 Aylık vakit verileri kaydedildi: $cacheKey');
+      debugPrint('💾 Monthly prayer data saved: $cacheKey');
     } catch (e) {
-      debugPrint('⚠️ Aylık cache kaydetme hatası: $e');
+      debugPrint('⚠️ Monthly cache save error: $e');
     }
   }
 
-  // Aylık vakit cache'ini SharedPreferences'tan yükle
+  // Load monthly cache from SharedPreferences
   static Future<List<Map<String, dynamic>>?> _loadAylikVakitFromPrefs(
     String cacheKey,
   ) async {
@@ -110,57 +111,73 @@ class DiyanetApiService {
         final cacheDate = DateTime.fromMillisecondsSinceEpoch(cacheTime);
         final now = DateTime.now();
 
-        // Cache 30 günden eskiyse kullanma
+        // Do not use cache older than 30 days
         if (now.difference(cacheDate).inDays < 30) {
           final data = jsonDecode(jsonStr) as List;
           final result = data
               .map((item) => item as Map<String, dynamic>)
               .toList();
-          debugPrint('📂 Kaydedilmiş aylık vakit verileri yüklendi: $cacheKey');
+          debugPrint('📂 Cached monthly data loaded: $cacheKey');
           return result;
         } else {
           debugPrint(
-            '⏰ Kaydedilmiş aylık veriler çok eski (${now.difference(cacheDate).inDays} gün)',
+            '⏰ Cached monthly data too old (${now.difference(cacheDate).inDays} days)',
           );
         }
       }
     } catch (e) {
-      debugPrint('⚠️ Aylık cache yükleme hatası: $e');
+      debugPrint('⚠️ Monthly cache load error: $e');
     }
     return null;
   }
 
-  /// Bugünün namaz vakitlerini döndürür (Imsak, Gunes, Ogle, Ikindi, Aksam, Yatsi)
+  /// Returns today's prayer times (Imsak, Gunes, Ogle, Ikindi, Aksam, Yatsi)
   static Future<Map<String, String>?> getBugunVakitler(String ilceId) async {
-    // Geçersiz ID kontrolü - bazı ilçe ID'leri API'de çalışmıyor
+    if (KonumService.isManualIlceId(ilceId)) {
+      final manualData = await KonumService.getManualKonumData(ilceId);
+      if (manualData != null) {
+        final lat = manualData['lat'] as num?;
+        final lon = manualData['lon'] as num?;
+        if (lat != null && lon != null) {
+          return await AladhanApiService.getBugunVakitler(
+            latitude: lat.toDouble(),
+            longitude: lon.toDouble(),
+            timeZone: null,
+          );
+        }
+      }
+      debugPrint('⚠️ Manual location data missing for: $ilceId');
+      return null;
+    }
+    // Invalid ID check
     if (ilceId.isEmpty || ilceId == '0') {
       debugPrint(
-        '⚠️ Geçersiz ilçe ID, lütfen Ayarlar > Konum\'dan il/ilçe seçin',
+        '⚠️ Invalid district ID. Please select a location in Settings > Location.',
       );
       return null;
     }
 
     final data = await getVakitler(ilceId);
     if (data == null) {
-      // Diyanet API başarısız - 500 hatası muhtemelen geçersiz ID
+      // Diyanet API failed - likely invalid ID
       debugPrint(
-        '⚠️ İlçe ID $ilceId için veri alınamadı. Ayarlar > Konum\'dan farklı bir ilçe seçmeyi deneyin.',
+        '⚠️ No data for district ID $ilceId. Try selecting a different location in Settings > Location.',
       );
       return await NamazVaktiApiService.getBugunVakitler(ilceId);
     }
 
     final vakitler = data['vakitler'];
     if (vakitler == null || vakitler is! List || vakitler.isEmpty) {
-      // Yedek API'yi dene
+      // Try backup API
       return await NamazVaktiApiService.getBugunVakitler(ilceId);
     }
 
-    // Bugünün tarihini al
+    // Get today date
     final now = DateTime.now();
     final bugunStr =
         '${now.day.toString().padLeft(2, '0')}.${now.month.toString().padLeft(2, '0')}.${now.year}';
 
-    // Bugünün vakitlerini bul
+    // Find today prayer times
     Map<String, dynamic>? bugunVakit;
     for (final v in vakitler) {
       if (v is Map<String, dynamic>) {
@@ -172,14 +189,14 @@ class DiyanetApiService {
       }
     }
 
-    // Bugun bulunamazsa ilk kaydı kullan
+    // If today is missing, use first entry
     if (bugunVakit == null && vakitler.isNotEmpty) {
       bugunVakit = vakitler.first as Map<String, dynamic>?;
-      debugPrint('⚠️ Bugünün vakti bulunamadı, ilk kayıt kullanılıyor');
+      debugPrint('⚠️ Today not found, using first entry');
     }
 
     if (bugunVakit == null) {
-      // Yedek API'yi dene
+      // Try backup API
       return await NamazVaktiApiService.getBugunVakitler(ilceId);
     }
 
@@ -197,31 +214,47 @@ class DiyanetApiService {
     };
   }
 
-  // Belirli bir ay için vakitleri getir
+  // Fetch times for a specific month
   static Future<List<Map<String, dynamic>>> getAylikVakitler(
     String ilceId,
     int yil,
     int ay,
   ) async {
+    if (KonumService.isManualIlceId(ilceId)) {
+      final manualData = await KonumService.getManualKonumData(ilceId);
+      if (manualData != null) {
+        final city = manualData['city']?.toString() ?? '';
+        final country = manualData['country']?.toString() ?? '';
+        if (city.isNotEmpty && country.isNotEmpty) {
+          return await AladhanApiService.getAylikVakitler(
+            yil: yil,
+            ay: ay,
+            city: city,
+            country: country,
+          );
+        }
+      }
+      debugPrint('⚠️ Manual location data missing for: $ilceId');
+      return [];
+    }
     final cacheKey = '$ilceId-$yil-$ay';
 
-    // 1. RAM cache'de varsa döndür
+    // 1. Return from RAM cache if available
     if (_aylikVakitCache.containsKey(cacheKey)) {
-      print('📦 Aylık RAM cache kullanılıyor: $cacheKey');
+      print('📦 Using monthly RAM cache: $cacheKey');
       return _aylikVakitCache[cacheKey]!;
     }
 
-    // 2. SharedPreferences'tan yükle
+    // 2. Load from SharedPreferences
     final savedData = await _loadAylikVakitFromPrefs(cacheKey);
     if (savedData != null && savedData.isNotEmpty) {
       _aylikVakitCache[cacheKey] = savedData;
-      print('💾 Aylık kaydedilmiş veriler kullanılıyor: $cacheKey');
+      print('💾 Using saved monthly data: $cacheKey');
       return savedData;
     }
 
     try {
-      // API bugünden itibaren veri döndürüyor, parametreler kullanılacak
-      // Çözüm: parametresiz çağrı yap ve tüm ayları lokalde parse et
+      // API returns data from today; fetch all and filter locally
       final uri = Uri.parse('$_baseUrl/vakitler/$ilceId');
 
       final response = await http
@@ -235,14 +268,14 @@ class DiyanetApiService {
         final body = utf8.decode(response.bodyBytes);
         final decoded = jsonDecode(body);
 
-        // API direkt liste döndürüyor
+        // API returns a list directly
         if (decoded is List) {
           final tumVakitler = decoded
               .whereType<Map<String, dynamic>>()
               .map(_normalizeVakitEntry)
               .toList();
 
-          // Tüm vakitleri ay ay grupla ve cache'le
+          // Group all times by month and cache
           final Map<String, List<Map<String, dynamic>>> ayGruplari = {};
 
           for (var vakit in tumVakitler) {
@@ -260,40 +293,40 @@ class DiyanetApiService {
                 ayGruplari[key]!.add(vakit);
               }
             } catch (e) {
-              // Tarih parse hatası
+              // Date parse error
             }
           }
 
-          // Tüm ayları cache'le ve kaydet
+          // Cache and save all months
           for (var entry in ayGruplari.entries) {
             _aylikVakitCache[entry.key] = entry.value;
             await _saveAylikVakitToPrefs(entry.key, entry.value);
           }
 
-          // İstenen ayı döndür
+          // Return requested month
           if (ayGruplari.containsKey(cacheKey)) {
             print(
-              '✅ Aylık vakitler alındı ve kaydedildi: $cacheKey (${ayGruplari[cacheKey]!.length} gün)',
+              '✅ Monthly times fetched and saved: $cacheKey (${ayGruplari[cacheKey]!.length} days)',
             );
             return ayGruplari[cacheKey]!;
           }
         }
       } else if (response.statusCode == 500 || response.statusCode == 400) {
         print(
-          '⚠️ İlçe ID "$ilceId" API\'de desteklenmiyor. Lütfen farklı bir il/ilçe seçin.',
+          '⚠️ District ID "$ilceId" is not supported by the API. Please choose a different location.',
         );
       }
     } catch (e) {
-      print('⚠️ Aylık vakit alınamadı ($cacheKey): $e');
+      print('⚠️ Monthly times fetch failed ($cacheKey): $e');
     }
 
-    // Diyanet başarısız olursa Aladhan API'yi dene (Her ay için çalışır!)
-    print('! Diyanet API yetersiz, Aladhan API deneniyor...');
+    // If Diyanet fails, try Aladhan API (works for every month)
+    print('! Diyanet API insufficient, trying Aladhan API...');
     try {
       final aladhanVakitler = await AladhanApiService.getAylikVakitler(
         yil: yil,
         ay: ay,
-        city: 'Istanbul', // TODO: İlçe ID'sine göre şehir belirle
+        city: 'Istanbul', // TODO: Determine city from district ID
         country: 'Turkey',
       );
       if (aladhanVakitler.isNotEmpty) {
@@ -301,22 +334,22 @@ class DiyanetApiService {
         return aladhanVakitler;
       }
     } catch (e) {
-      print('⚠️ Aladhan API de başarısız: $e');
+      print('⚠️ Aladhan API also failed: $e');
     }
 
-    // API'den veri alınamadıysa boş liste döndür
-    print('❌ Aylık vakitler alınamadı: $cacheKey');
+    // Return empty list if no data
+    print('❌ Monthly times not available: $cacheKey');
     return [];
   }
 
-  // İlleri API'den getir
+  // Fetch cities from API
   static Future<List<Map<String, dynamic>>> getIller() async {
     if (_illerCache != null) {
       return _illerCache!;
     }
 
     try {
-      final uri = Uri.parse('$_baseUrl/sehirler/2'); // Türkiye = 2
+      final uri = Uri.parse('$_baseUrl/sehirler/2'); // Turkey = 2
       final response = await http
           .get(
             uri,
@@ -338,19 +371,19 @@ class DiyanetApiService {
                 },
               )
               .toList();
-          print('✅ ${_illerCache!.length} il API\'den yüklendi');
+          print('✅ ${_illerCache!.length} cities loaded from API');
           return _illerCache!;
         }
       }
     } catch (e) {
-      print('⚠️ İller API hatası: $e');
+      print('⚠️ Cities API error: $e');
     }
 
-    // Fallback - Varsayılan iller
+    // Fallback - default cities
     return _getDefaultIller();
   }
 
-  // İlçeleri API'den getir
+  // Fetch districts from API
   static Future<List<Map<String, dynamic>>> getIlceler(String ilId) async {
     if (_ilcelerCache.containsKey(ilId)) {
       return _ilcelerCache[ilId]!;
@@ -380,21 +413,21 @@ class DiyanetApiService {
               )
               .toList();
           _ilcelerCache[ilId] = List<Map<String, dynamic>>.from(ilceler);
-          print('✅ ${ilceler.length} ilçe API\'den yüklendi (il: $ilId)');
+          print('✅ ${ilceler.length} districts loaded from API (city: $ilId)');
           return _ilcelerCache[ilId]!;
         }
       }
     } catch (e) {
-      print('⚠️ İlçeler API hatası: $e');
+      print('⚠️ Districts API error: $e');
     }
 
-    // Fallback - Varsayılan ilçe (il merkezi)
+    // Fallback - default district (city center)
     return [
       {'IlceID': ilId, 'IlceAdi': 'Merkez'},
     ];
   }
 
-  // Türkçe karakter düzeltme
+  // Fix Turkish characters
   static String _fixTurkishChars(String text) {
     return text
         .replaceAll('Ä°', 'İ')
@@ -406,7 +439,7 @@ class DiyanetApiService {
         .replaceAll('Ä±', 'ı');
   }
 
-  // Varsayılan iller listesi (fallback)
+  // Default cities list (fallback)
   static List<Map<String, dynamic>> _getDefaultIller() {
     return [
       {'SehirID': '500', 'SehirAdi': 'ADANA'},
@@ -420,56 +453,56 @@ class DiyanetApiService {
     ];
   }
 
-  // Vakit saatlerini getir (önce cache, gerekirse API)
-  // Cache süresi: 7 gün - Kullanıcı yenile butonu ile manuel güncelleme yapabilir
+  // Fetch times (cache first, then API if needed)
+  // Cache duration: 7 days - user can manually refresh
   static Future<Map<String, dynamic>?> getVakitler(String ilceId) async {
     final now = DateTime.now();
 
-    // 1. RAM cache'i kontrol et (hızlı erişim için)
+    // 1. Check RAM cache (fast access)
     final cached = _vakitCache[ilceId];
     final cachedTime = _vakitCacheTimes[ilceId];
     if (cached != null && cachedTime != null) {
-      // RAM cache 7 günden yeni ise kullan
+      // Use RAM cache if newer than 7 days
       if (now.difference(cachedTime).inDays < 7) {
         print(
-          '📦 RAM cache kullanılıyor ($ilceId) - ${now.difference(cachedTime).inDays} gün önce',
+          '📦 Using RAM cache ($ilceId) - ${now.difference(cachedTime).inDays} days ago',
         );
         return cached;
       }
     }
 
-    // 2. SharedPreferences'tan kaydedilmiş veriyi kontrol et (7 gün cache)
+    // 2. Check saved data from SharedPreferences (7-day cache)
     final savedData = await _loadVakitFromPrefs(ilceId);
     if (savedData != null) {
-      // Cache'i RAM'e de yükle (hızlı erişim için)
+      // Load into RAM cache (fast access)
       _vakitCache[ilceId] = savedData;
       _vakitCacheTimes[ilceId] = now;
-      print('💾 Kaydedilmiş veriler kullanılıyor (7 gün cache): $ilceId');
+      print('💾 Using saved data (7-day cache): $ilceId');
       return savedData;
     }
 
-    // 3. Cache yoksa veya eskiyse - İnternetten yeni veri al
-    print('🌐 Cache yok veya eski, API\'den veri çekiliyor: $ilceId');
+    // 3. If no cache or too old, fetch from API
+    print('🌐 No cache or stale, fetching from API: $ilceId');
     try {
       final remote = await _fetchRemoteVakitler(ilceId);
       if (remote != null) {
         _vakitCache[ilceId] = remote;
         _vakitCacheTimes[ilceId] = now;
-        await _saveVakitToPrefs(ilceId, remote); // Kalıcı olarak kaydet
-        print('✅ API\'den veri başarıyla alındı ve kaydedildi: $ilceId');
+        await _saveVakitToPrefs(ilceId, remote); // Save persistently
+        print('✅ API data fetched and saved: $ilceId');
         return remote;
       }
     } catch (e) {
-      print('⚠️ Canlı vakit alınamadı ($ilceId): $e');
+      print('⚠️ Live times fetch failed ($ilceId): $e');
     }
 
-    // 4. İnternet yoksa ve RAM cache'de eski veri varsa onu kullan
+    // 4. If offline and RAM cache exists, use it
     if (cached != null) {
-      print('ℹ️ İnternet yok, eski RAM cache kullanılıyor: $ilceId');
+      print('ℹ️ Offline, using older RAM cache: $ilceId');
       return cached;
     }
 
-    print('❌ API\'den veri alınamadı ve hiçbir cache yok: $ilceId');
+    print('❌ API fetch failed and no cache available: $ilceId');
     return null;
   }
 
@@ -487,10 +520,10 @@ class DiyanetApiService {
     if (response.statusCode != 200) {
       if (response.statusCode == 500) {
         print(
-          '❌ İlçe ID "$ilceId" API\'de desteklenmiyor. Lütfen farklı bir il/ilçe seçin.',
+          '❌ District ID "$ilceId" is not supported by the API. Please choose a different location.',
         );
       } else {
-        print('⚠️ Vakit isteği başarısız (${response.statusCode}): $ilceId');
+        print('⚠️ Times request failed (${response.statusCode}): $ilceId');
       }
       return null;
     }
@@ -498,7 +531,7 @@ class DiyanetApiService {
     final body = utf8.decode(response.bodyBytes);
     final decoded = jsonDecode(body);
     if (decoded is! List) {
-      print('⚠️ Beklenmeyen vakit formatı: $ilceId');
+      print('⚠️ Unexpected times format: $ilceId');
       return null;
     }
 
@@ -508,17 +541,17 @@ class DiyanetApiService {
         .toList();
 
     if (vakitler.isEmpty) {
-      print('⚠️ Boş vakit verisi döndü: $ilceId');
+      print('⚠️ Empty times data returned: $ilceId');
       return null;
     }
 
-    print('✅ Vakitler canlı olarak alındı: $ilceId');
+    print('✅ Times fetched live: $ilceId');
     return {'IlceID': ilceId, 'vakitler': vakitler};
   }
 
   static Map<String, dynamic> _normalizeVakitEntry(Map<String, dynamic> raw) {
-    // API zaten doğru formatta veri döndürüyor (örn: "16.01.2026")
-    // Herhangi bir dönüşüm gerekmez
+    // API already returns correct format (e.g. "16.01.2026")
+    // No transformation needed
     return Map<String, dynamic>.from(raw);
   }
 }

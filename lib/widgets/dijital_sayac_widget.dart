@@ -28,7 +28,7 @@ class _DijitalSayacWidgetState extends State<DijitalSayacWidget> {
   @override
   void initState() {
     super.initState();
-    // Sadece shouldLoadData true ise veri yükle
+    // Only load data when shouldLoadData is true
     if (widget.shouldLoadData) {
       _vakitleriYukle();
       _timer = Timer.periodic(const Duration(seconds: 1), (_) {
@@ -94,12 +94,12 @@ class _DijitalSayacWidgetState extends State<DijitalSayacWidget> {
     final nowTotalSeconds = now.hour * 3600 + now.minute * 60 + now.second;
 
     final vakitSaatleri = [
-      {'adi': _languageService['imsak'] ?? 'İmsak', 'saat': _vakitSaatleri['Imsak']!},
-      {'adi': _languageService['gunes'] ?? 'Güneş', 'saat': _vakitSaatleri['Gunes']!},
-      {'adi': _languageService['ogle'] ?? 'Öğle', 'saat': _vakitSaatleri['Ogle']!},
-      {'adi': _languageService['ikindi'] ?? 'İkindi', 'saat': _vakitSaatleri['Ikindi']!},
-      {'adi': _languageService['aksam'] ?? 'Akşam', 'saat': _vakitSaatleri['Aksam']!},
-      {'adi': _languageService['yatsi'] ?? 'Yatsı', 'saat': _vakitSaatleri['Yatsi']!},
+      {'adi': _languageService['imsak'] ?? '', 'saat': _vakitSaatleri['Imsak']!},
+      {'adi': _languageService['gunes'] ?? '', 'saat': _vakitSaatleri['Gunes']!},
+      {'adi': _languageService['ogle'] ?? '', 'saat': _vakitSaatleri['Ogle']!},
+      {'adi': _languageService['ikindi'] ?? '', 'saat': _vakitSaatleri['Ikindi']!},
+      {'adi': _languageService['aksam'] ?? '', 'saat': _vakitSaatleri['Aksam']!},
+      {'adi': _languageService['yatsi'] ?? '', 'saat': _vakitSaatleri['Yatsi']!},
     ];
 
     List<int> vakitSaniyeleri = [];
@@ -130,7 +130,7 @@ class _DijitalSayacWidgetState extends State<DijitalSayacWidget> {
         int.parse(imsakSaat[0]),
         int.parse(imsakSaat[1]),
       );
-      sonrakiVakitAdi = _languageService['imsak'] ?? 'İmsak';
+      sonrakiVakitAdi = _languageService['imsak'] ?? '';
       final yatsiSaniye = vakitSaniyeleri.last;
       final imsakSaniye = vakitSaniyeleri.first;
       final toplamSure = (24 * 3600 - yatsiSaniye) + imsakSaniye;
@@ -145,7 +145,7 @@ class _DijitalSayacWidgetState extends State<DijitalSayacWidget> {
         int.parse(imsakSaat[0]),
         int.parse(imsakSaat[1]),
       );
-      sonrakiVakitAdi = _languageService['imsak'] ?? 'İmsak';
+      sonrakiVakitAdi = _languageService['imsak'] ?? '';
       final yatsiSaniye = vakitSaniyeleri.last;
       final imsakSaniye = vakitSaniyeleri.first;
       final toplamSure = (24 * 3600 - yatsiSaniye) + imsakSaniye;
@@ -217,7 +217,7 @@ class _DijitalSayacWidgetState extends State<DijitalSayacWidget> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            '$_sonrakiVakit ${_languageService['time_to'] ?? 'Vaktine'}',
+            '$_sonrakiVakit ${_languageService['time_to'] ?? ''}',
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -328,7 +328,7 @@ class _DijitalSayacWidgetState extends State<DijitalSayacWidget> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _languageService['gregorian_date'] ?? 'Miladi',
+                      _languageService['gregorian_date'] ?? '',
                       style: TextStyle(
                         color: renkler.yaziSecondary.withValues(alpha: 0.6),
                         fontSize: 10,
@@ -352,7 +352,7 @@ class _DijitalSayacWidgetState extends State<DijitalSayacWidget> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      _languageService['hijri_date'] ?? 'Hicri',
+                      _languageService['hijri_date'] ?? '',
                       style: TextStyle(
                         color: renkler.yaziSecondary.withValues(alpha: 0.6),
                         fontSize: 10,
@@ -441,28 +441,18 @@ class _DijitalSayacWidgetState extends State<DijitalSayacWidget> {
         return 'de_DE';
       case 'fr':
         return 'fr_FR';
+      case 'ar':
+        return 'ar_SA';
+      case 'fa':
+        return 'fa_IR';
       default:
         return 'tr_TR';
     }
   }
 
   String _getHicriAyAdi(int ay) {
-    const aylar = [
-      '',
-      'Muharrem',
-      'Safer',
-      'Rebiülevvel',
-      'Rebiülahir',
-      'Cemaziyelevvel',
-      'Cemaziyelahir',
-      'Recep',
-      'Şaban',
-      'Ramazan',
-      'Şevval',
-      'Zilkade',
-      'Zilhicce',
-    ];
-    return aylar[ay];
+    if (ay < 1 || ay > 12) return '';
+    return _languageService['hijri_month_$ay'] ?? '';
   }
 }
 

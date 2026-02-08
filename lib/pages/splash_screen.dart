@@ -15,7 +15,8 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  String _durum = 'Başlatılıyor...';
+  final LanguageService _languageService = LanguageService();
+  String _durumKey = 'splash_starting';
 
   @override
   void initState() {
@@ -72,7 +73,7 @@ class _SplashScreenState extends State<SplashScreen> {
       debugPrint(
         '🚀 Splash: Onboarding tamamlanmamış, izinler kontrol ediliyor...',
       );
-      setState(() => _durum = 'İzinler kontrol ediliyor...');
+      setState(() => _durumKey = 'splash_checking_permissions');
 
       // Kritik izinleri kontrol et (konum ve bildirim)
       final locationGranted = await PermissionService.checkLocationPermission();
@@ -103,7 +104,7 @@ class _SplashScreenState extends State<SplashScreen> {
     }
 
     // Önce kaydedilmiş konum var mı kontrol et
-    setState(() => _durum = 'Konum kontrol ediliyor...');
+    setState(() => _durumKey = 'splash_checking_location');
 
     // SharedPreferences'tan direkt oku
     final ilceId = prefs.getString('selected_ilce_id');
@@ -137,7 +138,7 @@ class _SplashScreenState extends State<SplashScreen> {
     }
 
     // Konum kaydedilmemişse (ilk açılış) konum iznini kontrol et
-    setState(() => _durum = 'Konum izni kontrol ediliyor...');
+    setState(() => _durumKey = 'splash_checking_location_permission');
 
     // Konum iznini kontrol et
     final konumIzniVar = await PermissionService.checkLocationPermission();
@@ -272,7 +273,7 @@ class _SplashScreenState extends State<SplashScreen> {
             const SizedBox(height: 40),
             // Durum göstergesi
             Text(
-              _durum,
+              _languageService[_durumKey] ?? '',
               style: TextStyle(
                 color: Colors.white.withOpacity(0.6),
                 fontSize: 13,

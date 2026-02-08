@@ -114,7 +114,7 @@ class _KuranSayfaState extends State<KuranSayfa>
       backgroundColor: renkler.arkaPlan,
       appBar: AppBar(
         title: Text(
-          _languageService['quran'] ?? 'KUR\'AN-I KERİM',
+          _languageService['quran'] ?? 'HOLY QURAN',
           style: TextStyle(
             letterSpacing: 2,
             fontSize: 14,
@@ -138,8 +138,8 @@ class _KuranSayfaState extends State<KuranSayfa>
             fontWeight: FontWeight.bold,
           ),
           tabs: [
-            Tab(text: _languageService['surahs_tab'] ?? 'SURELER'),
-            Tab(text: _languageService['juzs_tab'] ?? 'CÜZLER'),
+            Tab(text: _languageService['surahs_tab'] ?? 'SURAS'),
+            Tab(text: _languageService['juzs_tab'] ?? 'JUZS'),
           ],
         ),
       ),
@@ -152,17 +152,17 @@ class _KuranSayfaState extends State<KuranSayfa>
             : TabBarView(
                 controller: _tabController,
                 children: [
-                  // Sureler Tab
+                  // Surahs tab
                   ListView.builder(
                     padding: const EdgeInsets.all(12),
                     itemCount:
                         _sureler.length + (_sonOkunanSureNo != null ? 1 : 0),
                     itemBuilder: (context, index) {
-                      // İlk sırada "Kaldığınız Yerden" kartı
+                      // Resume card at the top
                       if (index == 0 && _sonOkunanSureNo != null) {
                         return _buildKaldiginYerdenKarti(renkler);
                       }
-                      // Normal sure kartları
+                      // Regular surah cards
                       final sureIndex = _sonOkunanSureNo != null
                           ? index - 1
                           : index;
@@ -170,17 +170,17 @@ class _KuranSayfaState extends State<KuranSayfa>
                       return _buildSureKarti(sure, renkler);
                     },
                   ),
-                  // Cüzler Tab
+                  // Juz tab
                   ListView.builder(
                     padding: const EdgeInsets.all(12),
                     itemCount:
                         _cuzler.length + (_sonOkunanSureNo != null ? 1 : 0),
                     itemBuilder: (context, index) {
-                      // İlk sırada "Kaldığınız Yerden" kartı
+                      // Resume card at the top
                       if (index == 0 && _sonOkunanSureNo != null) {
                         return _buildKaldiginYerdenKarti(renkler);
                       }
-                      // Normal cüz kartları
+                      // Regular juz cards
                       final cuzIndex = _sonOkunanSureNo != null
                           ? index - 1
                           : index;
@@ -248,7 +248,7 @@ class _KuranSayfaState extends State<KuranSayfa>
                     children: [
                       Text(
                         _languageService['resume_reading'] ??
-                            'KALDIĞINIZ YERDEN DEVAM EDİN',
+                          'CONTINUE WHERE YOU LEFT OFF',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 13,
@@ -259,7 +259,7 @@ class _KuranSayfaState extends State<KuranSayfa>
                       const SizedBox(height: 6),
                       Text(
                         _sonOkunanSureAd ??
-                            (_languageService['chapter'] ?? 'Sure'),
+                          (_languageService['chapter'] ?? 'Surah'),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 18,
@@ -268,7 +268,7 @@ class _KuranSayfaState extends State<KuranSayfa>
                       ),
                       if (resumeAyetNo != null)
                         Text(
-                          '${cuzNo != null ? '${_languageService['juz'] ?? 'Cüz'} $cuzNo • ' : ''}${_sonOkunanSureAd ?? (_languageService['chapter'] ?? 'Sure')} • ${_languageService['verse'] ?? 'Ayet'} $resumeAyetNo',
+                          '${cuzNo != null ? '${_languageService['juz'] ?? 'Juz'} $cuzNo • ' : ''}${_sonOkunanSureAd ?? (_languageService['chapter'] ?? 'Surah')} • ${_languageService['verse'] ?? 'Verse'} $resumeAyetNo',
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.9),
                             fontSize: 13,
@@ -316,7 +316,7 @@ class _KuranSayfaState extends State<KuranSayfa>
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                // Sure numarası
+                // Surah number
                 Container(
                   width: 45,
                   height: 45,
@@ -335,7 +335,7 @@ class _KuranSayfaState extends State<KuranSayfa>
                   ),
                 ),
                 const SizedBox(width: 16),
-                // Sure bilgisi
+                // Surah info
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -350,7 +350,7 @@ class _KuranSayfaState extends State<KuranSayfa>
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${sure.ayetSayisi} ayet • ${sure.indirildigiYer}',
+                        '${sure.ayetSayisi} ${_languageService['verse'] ?? 'Verse'} • ${sure.indirildigiYer}',
                         style: TextStyle(
                           color: renkler.yaziSecondary,
                           fontSize: 12,
@@ -359,7 +359,7 @@ class _KuranSayfaState extends State<KuranSayfa>
                     ],
                   ),
                 ),
-                // Arapça isim
+                // Arabic name
                 Text(
                   sure.arapca,
                   textDirection: TextDirection.rtl,
@@ -402,7 +402,7 @@ class _KuranSayfaState extends State<KuranSayfa>
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                // Cüz numarası
+                // Juz number
                 Container(
                   width: 45,
                   height: 45,
@@ -421,13 +421,13 @@ class _KuranSayfaState extends State<KuranSayfa>
                   ),
                 ),
                 const SizedBox(width: 16),
-                // Cüz bilgisi
+                // Juz info
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${_languageService['juz'] ?? 'Cüz'} ${cuz.no}',
+                        '${_languageService['juz'] ?? 'Juz'} ${cuz.no}',
                         style: TextStyle(
                           color: renkler.yaziPrimary,
                           fontSize: 16,
@@ -445,7 +445,7 @@ class _KuranSayfaState extends State<KuranSayfa>
                     ],
                   ),
                 ),
-                // Arapça yazı (Juz)
+                // Arabic text (Juz)
                 Text(
                   'جُزْءُ ${_getArabicNumber(cuz.no)}',
                   textDirection: TextDirection.rtl,
@@ -500,7 +500,7 @@ class _KuranSayfaState extends State<KuranSayfa>
     return arabicNumbers[number] ?? '$number';
   }
 
-  // Cüzler listesi (30 cüz)
+  // Juz list (30 juz)
   final List<Cuz> _cuzler = [
     Cuz(
       no: 1,
@@ -1593,7 +1593,7 @@ class Sure {
   });
 }
 
-// Cüz modeli
+// Juz model
 class Cuz {
   final int no;
   final String baslangicSure;
@@ -1614,7 +1614,7 @@ class Cuz {
   });
 }
 
-// Sure detay sayfası
+// Surah detail page
 class SureDetaySayfa extends StatefulWidget {
   final Sure sure;
   final int? baslangicAyetNo;
@@ -1639,7 +1639,7 @@ class _SureDetaySayfaState extends State<SureDetaySayfa> {
   bool _yukleniyor = true;
   String _hata = '';
   double _fontScale = 1.0;
-  bool _okumaModu = false; // false: Tema Renkleri, true: Siyah-Beyaz Mod
+  bool _okumaModu = false; // false: theme colors, true: black & white mode
   int? _gorunenAyetNo;
 
   @override
@@ -1660,10 +1660,10 @@ class _SureDetaySayfaState extends State<SureDetaySayfa> {
   }
 
   void _onScroll() {
-    // Görünen ilk ayeti yakala (basitleştirilmiş versiyon)
+    // Capture the first visible verse (simplified)
     if (_ayetler.isNotEmpty) {
       final scrollOffset = _scrollController.offset;
-      // Her ayet kartı yaklaşık 200-300 piksel yüksekliğinde
+      // Each verse card is roughly 200-300px tall
       final tahminiIndex = (scrollOffset / 250).floor();
       final yeniAyetNo = tahminiIndex < _ayetler.length
           ? _ayetler[tahminiIndex].no
@@ -1691,7 +1691,7 @@ class _SureDetaySayfaState extends State<SureDetaySayfa> {
           (a) => a.no == widget.baslangicAyetNo,
         );
         if (ayetIndex >= 0 && _scrollController.hasClients) {
-          // Her ayet kartı yaklaşık 250 piksel + header
+          // Each verse card is roughly 250px + header
           final position = ayetIndex * 250.0;
           _scrollController.animateTo(
             position,
@@ -1773,7 +1773,7 @@ class _SureDetaySayfaState extends State<SureDetaySayfa> {
 
   Future<void> _loadFontScale() async {
     final prefs = await SharedPreferences.getInstance();
-    // Her sure için ayrı font scale kaydı
+    // Store font scale per surah
     final scale = prefs.getDouble('sure_${widget.sure.no}_font_scale') ?? 1.0;
     if (mounted) {
       setState(() {
@@ -1806,7 +1806,7 @@ class _SureDetaySayfaState extends State<SureDetaySayfa> {
   }
 
   Future<void> _ayetleriYukle() async {
-    // Kısa sureler için hazır veri
+    // Preloaded data for short surahs
     final hazirAyetler = _getHazirAyetler(widget.sure.no);
     if (hazirAyetler.isNotEmpty) {
       setState(() {
@@ -1817,7 +1817,7 @@ class _SureDetaySayfaState extends State<SureDetaySayfa> {
       return;
     }
 
-    // API'den çekme girişimi
+    // Attempt to fetch from API
     try {
       final response = await http.get(
         Uri.parse(
@@ -1852,7 +1852,7 @@ class _SureDetaySayfaState extends State<SureDetaySayfa> {
       } else {
         setState(() {
           _hata =
-              _languageService['verses_load_failed'] ?? 'Ayetler yüklenemedi';
+              _languageService['verses_load_failed'] ?? 'Verses could not be loaded';
           _yukleniyor = false;
         });
       }
@@ -1860,7 +1860,7 @@ class _SureDetaySayfaState extends State<SureDetaySayfa> {
       setState(() {
         _hata =
             _languageService['connection_error_check_internet'] ??
-            'Bağlantı hatası: Lütfen internet bağlantınızı kontrol edin';
+            'Connection error: Please check your internet connection';
         _yukleniyor = false;
       });
     }
@@ -1919,7 +1919,7 @@ class _SureDetaySayfaState extends State<SureDetaySayfa> {
                     ),
                     const SizedBox(width: 12),
                     Text(
-                      _languageService['black_white_mode'] ?? 'Siyah-Beyaz Mod',
+                      _languageService['black_white_mode'] ?? 'Black & White Mode',
                     ),
                   ],
                 ),
@@ -1929,8 +1929,8 @@ class _SureDetaySayfaState extends State<SureDetaySayfa> {
                 child: Padding(
                   padding: EdgeInsets.only(left: 32),
                   child: Text(
-                    _languageService['reading_mode_desc'] ??
-                        'Okumayı rahatlatır',
+                      _languageService['reading_mode_desc'] ??
+                        'Eases reading',
                     style: const TextStyle(fontSize: 11, color: Colors.grey),
                   ),
                 ),
@@ -1940,12 +1940,12 @@ class _SureDetaySayfaState extends State<SureDetaySayfa> {
           IconButton(
             icon: Icon(Icons.text_decrease, color: _yaziRengi),
             onPressed: _decreaseFontSize,
-            tooltip: _languageService['font_decrease'] ?? 'Yazı Küçült',
+            tooltip: _languageService['font_decrease'] ?? 'Decrease Font',
           ),
           IconButton(
             icon: Icon(Icons.text_increase, color: _yaziRengi),
             onPressed: _increaseFontSize,
-            tooltip: _languageService['font_increase'] ?? 'Yazı Büyüt',
+            tooltip: _languageService['font_increase'] ?? 'Increase Font',
           ),
         ],
       ),
@@ -1963,8 +1963,8 @@ class _SureDetaySayfaState extends State<SureDetaySayfa> {
                     CircularProgressIndicator(color: _vurguRengi),
                     const SizedBox(height: 16),
                     Text(
-                      _languageService['verses_loading'] ??
-                          'Ayetler yükleniyor...',
+                        _languageService['verses_loading'] ??
+                          'Loading verses...',
                       style: TextStyle(color: _yaziSecondaryRengi),
                     ),
                   ],
@@ -1997,7 +1997,7 @@ class _SureDetaySayfaState extends State<SureDetaySayfa> {
                           backgroundColor: _vurguRengi,
                         ),
                         child: Text(
-                          _languageService['try_again'] ?? 'Tekrar Dene',
+                          _languageService['try_again'] ?? 'Try Again',
                         ),
                       ),
                     ],
@@ -2012,7 +2012,7 @@ class _SureDetaySayfaState extends State<SureDetaySayfa> {
                   if (index == 0 &&
                       widget.sure.no != 1 &&
                       widget.sure.no != 9) {
-                    // Besmele (Fatiha ve Tevbe hariç)
+                    // Basmalah (except Al-Fatiha and At-Tawbah)
                     return Container(
                       margin: const EdgeInsets.only(bottom: 16),
                       padding: const EdgeInsets.all(16),
@@ -2049,7 +2049,7 @@ class _SureDetaySayfaState extends State<SureDetaySayfa> {
   }
 
   Widget _buildAyetKarti(Ayet ayet, TemaRenkleri renkler) {
-    // Arapça veya Farsça dil seçiliyse okunuş ve meal gizlenecek
+    // Hide recitation/translation for Arabic or Persian
     final currentLang = _languageService.currentLanguage;
     final hideTranslation = currentLang == 'ar' || currentLang == 'fa';
 
@@ -2071,7 +2071,7 @@ class _SureDetaySayfaState extends State<SureDetaySayfa> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Ayet numarası
+          // Verse number
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
@@ -2103,7 +2103,7 @@ class _SureDetaySayfaState extends State<SureDetaySayfa> {
                 ),
                 const Spacer(),
                 Text(
-                  'Ayet ${ayet.no}',
+                  '${_languageService['verse'] ?? 'Verse'} ${ayet.no}',
                   style: TextStyle(
                     color: _okumaModu ? Colors.black87 : renkler.vurgu,
                     fontSize: 12,
@@ -2114,7 +2114,7 @@ class _SureDetaySayfaState extends State<SureDetaySayfa> {
             ),
           ),
 
-          // Arapça
+          // Arabic
           Padding(
             padding: const EdgeInsets.all(16),
             child: Text(
@@ -2130,7 +2130,7 @@ class _SureDetaySayfaState extends State<SureDetaySayfa> {
             ),
           ),
 
-          // Okunuş - Arapça/Farsça dışındaki dillerde göster
+          // Recitation - shown for non-Arabic/Persian languages
           if (ayet.okunus.isNotEmpty && !hideTranslation)
             Container(
               width: double.infinity,
@@ -2142,7 +2142,7 @@ class _SureDetaySayfaState extends State<SureDetaySayfa> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _languageService['recitation'] ?? 'Okunuş',
+                    _languageService['recitation'] ?? 'Recitation',
                     style: TextStyle(
                       color: _okumaModu
                           ? Colors.black54
@@ -2165,15 +2165,15 @@ class _SureDetaySayfaState extends State<SureDetaySayfa> {
               ),
             ),
 
-          // Meal - Arapça/Farsça dışındaki dillerde göster
-          if (!hideTranslation)
+          // Translation - shown for non-Arabic/Persian languages
+          if (!hideTranslation && ayet.meal.isNotEmpty)
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _languageService['translation'] ?? 'Meal',
+                    _languageService['translation'] ?? 'Translation',
                     style: TextStyle(
                       color: _okumaModu ? Colors.black87 : renkler.vurgu,
                       fontSize: 10,
@@ -2197,339 +2197,33 @@ class _SureDetaySayfaState extends State<SureDetaySayfa> {
     );
   }
 
-  // Popüler kısa sureler için hazır veri
+  // Preset short surahs data
   List<Ayet> _getHazirAyetler(int sureNo) {
-    final hazirSureler = {
-      1: [
-        // Fatiha
-        Ayet(
-          no: 1,
-          arapca: 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
-          okunus: 'Bismillâhirrahmânirrahîm',
-          meal: 'Rahmân ve Rahîm olan Allah\'ın adıyla.',
-        ),
-        Ayet(
-          no: 2,
-          arapca: 'الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ',
-          okunus: 'Elhamdulillâhi rabbil\'âlemîn',
-          meal: 'Hamd, âlemlerin Rabbi Allah\'a mahsustur.',
-        ),
-        Ayet(
-          no: 3,
-          arapca: 'الرَّحْمَٰنِ الرَّحِيمِ',
-          okunus: 'Errahmânirrahîm',
-          meal: 'O, Rahmân\'dır, Rahîm\'dir.',
-        ),
-        Ayet(
-          no: 4,
-          arapca: 'مَالِكِ يَوْمِ الدِّينِ',
-          okunus: 'Mâliki yevmiddîn',
-          meal: 'Din gününün sahibidir.',
-        ),
-        Ayet(
-          no: 5,
-          arapca: 'إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ',
-          okunus: 'İyyâke na\'budu ve iyyâke nesteîn',
-          meal: 'Yalnız sana ibadet ederiz ve yalnız senden yardım dileriz.',
-        ),
-        Ayet(
-          no: 6,
-          arapca: 'اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ',
-          okunus: 'İhdinassırâtal mustakîm',
-          meal: 'Bizi doğru yola ilet.',
-        ),
-        Ayet(
-          no: 7,
-          arapca:
-              'صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ',
-          okunus:
-              'Sırâtallezîne en\'amte aleyhim ğayril mağdûbi aleyhim veleddâllîn',
-          meal:
-              'Kendilerine nimet verdiklerinin yoluna; gazaba uğrayanların ve sapıkların yoluna değil.',
-        ),
-      ],
-      112: [
-        // İhlas
-        Ayet(
-          no: 1,
-          arapca: 'قُلْ هُوَ اللَّهُ أَحَدٌ',
-          okunus: 'Kul huvallâhu ehad',
-          meal: 'De ki: O Allah birdir.',
-        ),
-        Ayet(
-          no: 2,
-          arapca: 'اللَّهُ الصَّمَدُ',
-          okunus: 'Allâhussamed',
-          meal:
-              'Allah Samed\'dir. (Her şey O\'na muhtaçtır, O hiçbir şeye muhtaç değildir.)',
-        ),
-        Ayet(
-          no: 3,
-          arapca: 'لَمْ يَلِدْ وَلَمْ يُولَدْ',
-          okunus: 'Lem yelid ve lem yûled',
-          meal: 'O doğurmamıştır ve doğurulmamıştır.',
-        ),
-        Ayet(
-          no: 4,
-          arapca: 'وَلَمْ يَكُنْ لَهُ كُفُوًا أَحَدٌ',
-          okunus: 'Ve lem yekun lehû kufuven ehad',
-          meal: 'Ve O\'nun hiçbir dengi yoktur.',
-        ),
-      ],
-      113: [
-        // Felak
-        Ayet(
-          no: 1,
-          arapca: 'قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ',
-          okunus: 'Kul eûzu birabbil felak',
-          meal: 'De ki: Sabahın Rabbine sığınırım.',
-        ),
-        Ayet(
-          no: 2,
-          arapca: 'مِنْ شَرِّ مَا خَلَقَ',
-          okunus: 'Min şerri mâ halak',
-          meal: 'Yarattığı şeylerin şerrinden,',
-        ),
-        Ayet(
-          no: 3,
-          arapca: 'وَمِنْ شَرِّ غَاسِقٍ إِذَا وَقَبَ',
-          okunus: 'Ve min şerri ğâsikın izâ vekab',
-          meal: 'Karanlığı çöktüğü zaman gecenin şerrinden,',
-        ),
-        Ayet(
-          no: 4,
-          arapca: 'وَمِنْ شَرِّ النَّفَّاثَاتِ فِي الْعُقَدِ',
-          okunus: 'Ve min şerrinneffâsâti fil ukad',
-          meal: 'Düğümlere üfleyen kadınların şerrinden,',
-        ),
-        Ayet(
-          no: 5,
-          arapca: 'وَمِنْ شَرِّ حَاسِدٍ إِذَا حَسَدَ',
-          okunus: 'Ve min şerri hâsidin izâ hased',
-          meal: 'Ve haset ettiği zaman hasetçinin şerrinden.',
-        ),
-      ],
-      114: [
-        // Nas
-        Ayet(
-          no: 1,
-          arapca: 'قُلْ أَعُوذُ بِرَبِّ النَّاسِ',
-          okunus: 'Kul eûzu birabbinnâs',
-          meal: 'De ki: İnsanların Rabbine sığınırım.',
-        ),
-        Ayet(
-          no: 2,
-          arapca: 'مَلِكِ النَّاسِ',
-          okunus: 'Melikinnâs',
-          meal: 'İnsanların Melikine (hükümdarına),',
-        ),
-        Ayet(
-          no: 3,
-          arapca: 'إِلَٰهِ النَّاسِ',
-          okunus: 'İlâhinnâs',
-          meal: 'İnsanların İlahına,',
-        ),
-        Ayet(
-          no: 4,
-          arapca: 'مِنْ شَرِّ الْوَسْوَاسِ الْخَنَّاسِ',
-          okunus: 'Min şerril vesvâsil hannâs',
-          meal: 'Sinsi vesvesecinin şerrinden,',
-        ),
-        Ayet(
-          no: 5,
-          arapca: 'الَّذِي يُوَسْوِسُ فِي صُدُورِ النَّاسِ',
-          okunus: 'Ellezî yuvesvisu fî sudûrinnâs',
-          meal: 'O ki insanların göğüslerine vesvese verir,',
-        ),
-        Ayet(
-          no: 6,
-          arapca: 'مِنَ الْجِنَّةِ وَالنَّاسِ',
-          okunus: 'Minel cinneti vennâs',
-          meal: 'Gerek cinlerden, gerek insanlardan.',
-        ),
-      ],
-      108: [
-        // Kevser
-        Ayet(
-          no: 1,
-          arapca: 'إِنَّا أَعْطَيْنَاكَ الْكَوْثَرَ',
-          okunus: 'İnnâ a\'taynâkel kevser',
-          meal: 'Şüphesiz biz sana Kevser\'i verdik.',
-        ),
-        Ayet(
-          no: 2,
-          arapca: 'فَصَلِّ لِرَبِّكَ وَانْحَرْ',
-          okunus: 'Fesalli lirabbike venhar',
-          meal: 'O halde Rabbin için namaz kıl ve kurban kes.',
-        ),
-        Ayet(
-          no: 3,
-          arapca: 'إِنَّ شَانِئَكَ هُوَ الْأَبْتَرُ',
-          okunus: 'İnne şânieke huvel ebter',
-          meal: 'Doğrusu sana buğzeden, soyu kesik olanın ta kendisidir.',
-        ),
-      ],
-      103: [
-        // Asr
-        Ayet(
-          no: 1,
-          arapca: 'وَالْعَصْرِ',
-          okunus: 'Vel asr',
-          meal: 'Asra yemin olsun ki,',
-        ),
-        Ayet(
-          no: 2,
-          arapca: 'إِنَّ الْإِنْسَانَ لَفِي خُسْرٍ',
-          okunus: 'İnnel insâne lefî husr',
-          meal: 'İnsan gerçekten ziyan içindedir.',
-        ),
-        Ayet(
-          no: 3,
-          arapca:
-              'إِلَّا الَّذِينَ آمَنُوا وَعَمِلُوا الصَّالِحَاتِ وَتَوَاصَوْا بِالْحَقِّ وَتَوَاصَوْا بِالصَّبْرِ',
-          okunus:
-              'İllellezîne âmenû ve amilûssâlihâti ve tevâsav bilhakkı ve tevâsav bissabr',
-          meal:
-              'Ancak iman edip salih ameller işleyenler, birbirlerine hakkı tavsiye edenler ve birbirlerine sabrı tavsiye edenler başka.',
-        ),
-      ],
-      110: [
-        // Nasr
-        Ayet(
-          no: 1,
-          arapca: 'إِذَا جَاءَ نَصْرُ اللَّهِ وَالْفَتْحُ',
-          okunus: 'İzâ câe nasrullâhi vel feth',
-          meal: 'Allah\'ın yardımı ve fetih geldiği zaman,',
-        ),
-        Ayet(
-          no: 2,
-          arapca:
-              'وَرَأَيْتَ النَّاسَ يَدْخُلُونَ فِي دِينِ اللَّهِ أَفْوَاجًا',
-          okunus: 'Ve raeytennâse yedhulûne fî dînillâhi efvâcâ',
-          meal:
-              'Ve insanların bölük bölük Allah\'ın dinine girdiklerini gördüğün zaman,',
-        ),
-        Ayet(
-          no: 3,
-          arapca:
-              'فَسَبِّحْ بِحَمْدِ رَبِّكَ وَاسْتَغْفِرْهُ إِنَّهُ كَانَ تَوَّابًا',
-          okunus: 'Fesebbih bihamdi rabbike vestağfirh, innehû kâne tevvâbâ',
-          meal:
-              'Rabbine hamd ederek tesbih et ve O\'ndan bağışlama dile. Çünkü O, tevbeleri çok kabul edendir.',
-        ),
-      ],
-      109: [
-        // Kafirun
-        Ayet(
-          no: 1,
-          arapca: 'قُلْ يَا أَيُّهَا الْكَافِرُونَ',
-          okunus: 'Kul yâ eyyuhel kâfirûn',
-          meal: 'De ki: Ey kâfirler!',
-        ),
-        Ayet(
-          no: 2,
-          arapca: 'لَا أَعْبُدُ مَا تَعْبُدُونَ',
-          okunus: 'Lâ a\'budu mâ ta\'budûn',
-          meal: 'Ben sizin taptıklarınıza tapmam.',
-        ),
-        Ayet(
-          no: 3,
-          arapca: 'وَلَا أَنْتُمْ عَابِدُونَ مَا أَعْبُدُ',
-          okunus: 'Ve lâ entum âbidûne mâ a\'bud',
-          meal: 'Siz de benim taptığıma tapıcılar değilsiniz.',
-        ),
-        Ayet(
-          no: 4,
-          arapca: 'وَلَا أَنَا عَابِدٌ مَا عَبَدْتُمْ',
-          okunus: 'Ve lâ ene âbidun mâ abedtum',
-          meal: 'Ben de sizin taptıklarınıza tapacak değilim.',
-        ),
-        Ayet(
-          no: 5,
-          arapca: 'وَلَا أَنْتُمْ عَابِدُونَ مَا أَعْبُدُ',
-          okunus: 'Ve lâ entum âbidûne mâ a\'bud',
-          meal: 'Siz de benim taptığıma tapıcılar değilsiniz.',
-        ),
-        Ayet(
-          no: 6,
-          arapca: 'لَكُمْ دِينُكُمْ وَلِيَ دِينِ',
-          okunus: 'Lekum dînukum veliye dîn',
-          meal: 'Sizin dininiz size, benim dinim bana.',
-        ),
-      ],
-      97: [
-        // Kadir
-        Ayet(
-          no: 1,
-          arapca: 'إِنَّا أَنْزَلْنَاهُ فِي لَيْلَةِ الْقَدْرِ',
-          okunus: 'İnnâ enzelnâhu fî leyletil kadr',
-          meal: 'Şüphesiz biz onu (Kur\'an\'ı) Kadir gecesinde indirdik.',
-        ),
-        Ayet(
-          no: 2,
-          arapca: 'وَمَا أَدْرَاكَ مَا لَيْلَةُ الْقَدْرِ',
-          okunus: 'Ve mâ edrâke mâ leyletul kadr',
-          meal: 'Kadir gecesinin ne olduğunu sen bilir misin?',
-        ),
-        Ayet(
-          no: 3,
-          arapca: 'لَيْلَةُ الْقَدْرِ خَيْرٌ مِنْ أَلْفِ شَهْرٍ',
-          okunus: 'Leyletul kadri hayrun min elfi şehr',
-          meal: 'Kadir gecesi, bin aydan daha hayırlıdır.',
-        ),
-        Ayet(
-          no: 4,
-          arapca:
-              'تَنَزَّلُ الْمَلَائِكَةُ وَالرُّوحُ فِيهَا بِإِذْنِ رَبِّهِمْ مِنْ كُلِّ أَمْرٍ',
-          okunus:
-              'Tenezzelul melâiketu verrûhu fîhâ bi izni rabbihim min kulli emr',
-          meal:
-              'Melekler ve Ruh (Cebrail), Rablerinin izniyle her türlü iş için o gecede iner.',
-        ),
-        Ayet(
-          no: 5,
-          arapca: 'سَلَامٌ هِيَ حَتَّىٰ مَطْلَعِ الْفَجْرِ',
-          okunus: 'Selâmun hiye hattâ matlaıl fecr',
-          meal:
-              'O gece, tan yeri ağarıncaya kadar bir selamdır (esenlik ve güvenliktir).',
-        ),
-      ],
-      105: [
-        // Fil
-        Ayet(
-          no: 1,
-          arapca: 'أَلَمْ تَرَ كَيْفَ فَعَلَ رَبُّكَ بِأَصْحَابِ الْفِيلِ',
-          okunus: 'Elem tera keyfe feale rabbuke bi ashâbil fîl',
-          meal: 'Rabbinin fil sahiplerine ne yaptığını görmedin mi?',
-        ),
-        Ayet(
-          no: 2,
-          arapca: 'أَلَمْ يَجْعَلْ كَيْدَهُمْ فِي تَضْلِيلٍ',
-          okunus: 'Elem yec\'al keydehum fî tadlîl',
-          meal: 'Onların tuzaklarını boşa çıkarmadı mı?',
-        ),
-        Ayet(
-          no: 3,
-          arapca: 'وَأَرْسَلَ عَلَيْهِمْ طَيْرًا أَبَابِيلَ',
-          okunus: 'Ve ersele aleyhim tayran ebâbîl',
-          meal: 'Onların üzerine sürü sürü kuşlar gönderdi.',
-        ),
-        Ayet(
-          no: 4,
-          arapca: 'تَرْمِيهِمْ بِحِجَارَةٍ مِنْ سِجِّيلٍ',
-          okunus: 'Termîhim bi hicâretin min siccîl',
-          meal: 'Onlara pişmiş çamurdan taşlar atıyorlardı.',
-        ),
-        Ayet(
-          no: 5,
-          arapca: 'فَجَعَلَهُمْ كَعَصْفٍ مَأْكُولٍ',
-          okunus: 'Fecealehum keasfin me\'kûl',
-          meal: 'Sonunda onları yenilmiş ekin yaprağı gibi yaptı.',
-        ),
-      ],
-    };
-
-    return hazirSureler[sureNo] ?? [];
+    final languageCode = _languageService.currentLanguage;
+    final includeMeal = languageCode != 'ar' && languageCode != 'fa';
+    final data = _languageService['short_surah_data'];
+    if (data is Map) {
+      final sureData = data[sureNo.toString()];
+      if (sureData is List) {
+        return sureData
+          .whereType<Map<String, dynamic>>()
+            .map((item) {
+              final noValue = item['no'];
+              final no = noValue is int
+                  ? noValue
+                  : int.tryParse(noValue?.toString() ?? '') ?? 0;
+              return Ayet(
+                no: no,
+                arapca: item['arapca']?.toString() ?? '',
+                okunus: item['okunus']?.toString() ?? '',
+                meal: includeMeal ? (item['meal']?.toString() ?? '') : '',
+              );
+            })
+            .where((ayet) => ayet.no > 0)
+            .toList();
+      }
+    }
+    return [];
   }
 }
 

@@ -43,12 +43,12 @@ class _PremiumSayacWidgetState extends State<PremiumSayacWidget>
   ];
 
   Map<String, String> get _vakitAdlari => {
-    'Imsak': (_languageService['imsak'] ?? 'İMSAK').toUpperCase(),
-    'Gunes': (_languageService['gunes'] ?? 'GÜNEŞ').toUpperCase(),
-    'Ogle': (_languageService['ogle'] ?? 'ÖĞLE').toUpperCase(),
-    'Ikindi': (_languageService['ikindi'] ?? 'İKİNDİ').toUpperCase(),
-    'Aksam': (_languageService['aksam'] ?? 'AKŞAM').toUpperCase(),
-    'Yatsi': (_languageService['yatsi'] ?? 'YATSI').toUpperCase(),
+    'Imsak': _languageService['imsak'].toUpperCase(),
+    'Gunes': _languageService['gunes'].toUpperCase(),
+    'Ogle': _languageService['ogle'].toUpperCase(),
+    'Ikindi': _languageService['ikindi'].toUpperCase(),
+    'Aksam': _languageService['aksam'].toUpperCase(),
+    'Yatsi': _languageService['yatsi'].toUpperCase(),
   };
 
   @override
@@ -366,7 +366,7 @@ class _PremiumSayacWidgetState extends State<PremiumSayacWidget>
                             Text(
                               _mevcutVakit.isNotEmpty
                                   ? _mevcutVakit
-                                  : 'YÜKLENİYOR',
+                                  : _languageService['loading'].toUpperCase(),
                               style: TextStyle(
                                 color: renkler.vurgu,
                                 fontSize: 12,
@@ -562,7 +562,7 @@ class _PremiumSayacWidgetState extends State<PremiumSayacWidget>
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            'Sonraki: ',
+                            '${_languageService['next_prayer']}: ',
                             style: TextStyle(
                               color: renkler.yaziSecondary,
                               fontSize: 12,
@@ -609,7 +609,7 @@ class _PremiumSayacWidgetState extends State<PremiumSayacWidget>
 
   Widget _buildTakvimRow(TemaRenkleri renkler) {
     final now = DateTime.now();
-    final miladiTarih = DateFormat('dd MMM yyyy', 'tr_TR').format(now);
+    final miladiTarih = DateFormat('dd MMM yyyy', _getLocale()).format(now);
     final hicri = HijriCalendar.now();
     final hicriTarih =
         '${hicri.hDay} ${_getHicriAyAdi(hicri.hMonth)} ${hicri.hYear}';
@@ -669,22 +669,8 @@ class _PremiumSayacWidgetState extends State<PremiumSayacWidget>
   }
 
   String _getHicriAyAdi(int ay) {
-    const aylar = [
-      '',
-      'Muharrem',
-      'Safer',
-      'Rebiülevvel',
-      'Rebiülahir',
-      'Cemaziyelevvel',
-      'Cemaziyelahir',
-      'Recep',
-      'Şaban',
-      'Ramazan',
-      'Şevval',
-      'Zilkade',
-      'Zilhicce',
-    ];
-    return aylar[ay];
+    if (ay < 1 || ay > 12) return '';
+    return _languageService['hijri_month_$ay'] ?? '';
   }
 
   String _sonrakiVakitKey() {
@@ -695,21 +681,38 @@ class _PremiumSayacWidgetState extends State<PremiumSayacWidget>
   }
 
   IconData _getVakitIcon(String vakit) {
-    switch (vakit) {
-      case 'İMSAK':
-        return Icons.dark_mode_outlined;
-      case 'GÜNEŞ':
-        return Icons.wb_sunny_outlined;
-      case 'ÖĞLE':
-        return Icons.light_mode;
-      case 'İKİNDİ':
-        return Icons.wb_twilight;
-      case 'AKŞAM':
-        return Icons.nights_stay_outlined;
-      case 'YATSI':
-        return Icons.bedtime_outlined;
+    final imsak = _languageService['imsak'].toUpperCase();
+    final gunes = _languageService['gunes'].toUpperCase();
+    final ogle = _languageService['ogle'].toUpperCase();
+    final ikindi = _languageService['ikindi'].toUpperCase();
+    final aksam = _languageService['aksam'].toUpperCase();
+    final yatsi = _languageService['yatsi'].toUpperCase();
+
+    if (vakit == imsak) return Icons.dark_mode_outlined;
+    if (vakit == gunes) return Icons.wb_sunny_outlined;
+    if (vakit == ogle) return Icons.light_mode;
+    if (vakit == ikindi) return Icons.wb_twilight;
+    if (vakit == aksam) return Icons.nights_stay_outlined;
+    if (vakit == yatsi) return Icons.bedtime_outlined;
+    return Icons.schedule;
+  }
+
+  String _getLocale() {
+    switch (_languageService.currentLanguage) {
+      case 'tr':
+        return 'tr_TR';
+      case 'en':
+        return 'en_US';
+      case 'de':
+        return 'de_DE';
+      case 'fr':
+        return 'fr_FR';
+      case 'ar':
+        return 'ar_SA';
+      case 'fa':
+        return 'fa_IR';
       default:
-        return Icons.schedule;
+        return 'tr_TR';
     }
   }
 

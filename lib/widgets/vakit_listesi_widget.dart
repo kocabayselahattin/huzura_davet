@@ -84,7 +84,7 @@ class _VakitListesiWidgetState extends State<VakitListesiWidget> {
         _aktifVaktiGuncelle();
       }
     } catch (e) {
-      print('⚠️ Vakitler yüklenemedi: $e');
+      debugPrint('Failed to load prayer times: $e');
     }
   }
 
@@ -185,42 +185,42 @@ class _VakitListesiWidgetState extends State<VakitListesiWidget> {
       child: Column(
         children: [
           _vakitSatiri(
-            _languageService['imsak'] ?? 'İmsak',
+            _languageService['imsak'],
             vakitSaatleri['Imsak']!,
             Icons.nightlight_round,
             'Imsak',
             renkler,
           ),
           _vakitSatiri(
-            _languageService['gunes'] ?? 'Güneş',
+            _languageService['gunes'],
             vakitSaatleri['Gunes']!,
             Icons.wb_sunny,
             'Gunes',
             renkler,
           ),
           _vakitSatiri(
-            _languageService['ogle'] ?? 'Öğle',
+            _languageService['ogle'],
             vakitSaatleri['Ogle']!,
             Icons.light_mode,
             'Ogle',
             renkler,
           ),
           _vakitSatiri(
-            _languageService['ikindi'] ?? 'İkindi',
+            _languageService['ikindi'],
             vakitSaatleri['Ikindi']!,
             Icons.brightness_6,
             'Ikindi',
             renkler,
           ),
           _vakitSatiri(
-            _languageService['aksam'] ?? 'Akşam',
+            _languageService['aksam'],
             vakitSaatleri['Aksam']!,
             Icons.wb_twilight,
             'Aksam',
             renkler,
           ),
           _vakitSatiri(
-            _languageService['yatsi'] ?? 'Yatsı',
+            _languageService['yatsi'],
             vakitSaatleri['Yatsi']!,
             Icons.nights_stay,
             'Yatsi',

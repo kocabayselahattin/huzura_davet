@@ -8,51 +8,51 @@ import 'konum_service.dart';
 import 'ozel_gunler_service.dart';
 import 'language_service.dart';
 
-/// Android Home Screen Widget'larını güncelleyen servis
+/// Service that updates Android home screen widgets.
 class HomeWidgetService {
   static const String _appGroupId = 'group.com.kocabay.huzurvakti';
 
   static Timer? _updateTimer;
   static Map<String, String> _vakitSaatleri = {};
-  static String? _lastGeriSayim; // Son gönderilen geri sayım değeri
-  static int _lastMinute = -1; // Son güncellenen dakika
+  static String? _lastGeriSayim; // Last sent countdown value
+  static int _lastMinute = -1; // Last updated minute
   static String? _lastLanguage; // Son dil
 
-  /// Servisi başlat
+  /// Start the service.
   static Future<void> initialize() async {
     await HomeWidget.setAppGroupId(_appGroupId);
     await _loadVakitler();
     await _loadWidgetColors();
     await updateAllWidgets();
 
-    // Dil değişikliğinde widget'ları güncelle
+    // Update widgets when the language changes.
     LanguageService().addListener(_onLanguageChanged);
 
-    // Her 30 saniyede bir güncelle (performans için artırıldı)
+    // Update every 30 seconds.
     _updateTimer?.cancel();
     _updateTimer = Timer.periodic(const Duration(seconds: 30), (_) {
       updateAllWidgets();
     });
   }
 
-  /// Dil değişikliğinde çağrılır
+  /// Called when the language changes.
   static void _onLanguageChanged() {
     final currentLang = LanguageService().currentLanguage;
     if (_lastLanguage != currentLang) {
       _lastLanguage = currentLang;
-      _lastGeriSayim = null; // Cache'i temizle, widget güncellenmesi zorla
+      _lastGeriSayim = null; // Clear cache to force widget updates.
       updateAllWidgets();
     }
   }
 
-  /// Servisi durdur
+  /// Stop the service.
   static void dispose() {
     _updateTimer?.cancel();
     _updateTimer = null;
     LanguageService().removeListener(_onLanguageChanged);
   }
 
-  /// Widget renk ayarlarını yükle
+  /// Load widget color settings.
   static Future<void> _loadWidgetColors() async {
     final prefs = await SharedPreferences.getInstance();
     final arkaPlanKey = prefs.getString('widget_arkaplan_key') ?? 'orange';
@@ -64,7 +64,7 @@ class HomeWidgetService {
     await HomeWidget.saveWidgetData<double>('seffaflik', seffaflik);
   }
 
-  /// Widget renklerini güncelle (eski metod - tüm widgetlar için)
+  /// Update widget colors (legacy for all widgets).
   static Future<void> updateWidgetColors({
     required String arkaPlanKey,
     required String yaziRengiHex,
@@ -82,14 +82,14 @@ class HomeWidgetService {
     await updateAllWidgets();
   }
 
-  /// Belirli bir widget için renkleri güncelle
+  /// Update colors for a specific widget.
   static Future<void> updateWidgetColorsForWidget({
     required String widgetId,
     required String arkaPlanKey,
     required String yaziRengiHex,
     required double seffaflik,
   }) async {
-    // Widget'a özel renk ayarlarını kaydet
+    // Save widget-specific colors.
     await HomeWidget.saveWidgetData<String>('${widgetId}_arkaplan_key', arkaPlanKey);
     await HomeWidget.saveWidgetData<String>('${widgetId}_yazi_rengi_hex', yaziRengiHex);
     await HomeWidget.saveWidgetData<double>('${widgetId}_seffaflik', seffaflik);
@@ -97,7 +97,7 @@ class HomeWidgetService {
     await updateAllWidgets();
   }
 
-  /// Vakitleri yükle
+  /// Load prayer times.
   static Future<void> _loadVakitler() async {
     final ilceId = await KonumService.getIlceId();
     if (ilceId != null) {
@@ -115,11 +115,12 @@ class HomeWidgetService {
     }
   }
 
-  /// Tüm widget'ları güncelle
+  /// Update all widgets.
   static Future<void> updateAllWidgets() async {
     final now = DateTime.now();
+    final lang = LanguageService();
 
-    // Dakika değişmediyse güncelleme yapma (performans için)
+    // Skip updates when the minute has not changed.
     if (_lastMinute == now.minute && _vakitSaatleri.isNotEmpty) {
       return;
     }
@@ -131,26 +132,27 @@ class HomeWidgetService {
 
     final vakitBilgisi = _hesaplaVakitBilgisi(now);
 
-    // Geri sayım değişmediyse widget'ları güncelleme (gereksiz güncellemeyi önle)
+    // Skip updates when the countdown has not changed.
     final yeniGeriSayim = vakitBilgisi['geriSayim'] ?? '';
     if (_lastGeriSayim == yeniGeriSayim) {
-      return; // Değişiklik yok, güncelleme yapma
+      return; // No changes.
     }
     _lastGeriSayim = yeniGeriSayim;
 
-    // Tarih bilgileri
-    final miladiTarih = DateFormat('dd MMMM yyyy', 'tr_TR').format(now);
-    final miladiKisa = DateFormat('dd MMM yyyy', 'tr_TR').format(now);
+    // Dates
+    final locale = _getLocale();
+    final miladiTarih = DateFormat('dd MMMM yyyy', locale).format(now);
+    final miladiKisa = DateFormat('dd MMM yyyy', locale).format(now);
     final hicri = HijriCalendar.now();
     final hicriTarih =
         '${hicri.hDay} ${_getHicriAyAdi(hicri.hMonth)} ${hicri.hYear}';
 
-    // Konum bilgisi
+    // Location
     final il = await KonumService.getIl();
     final ilce = await KonumService.getIlce();
     final konum = il != null && ilce != null
         ? '$il / $ilce'
-        : il ?? 'Konum seçilmedi';
+        : il ?? (lang['location_not_selected'] ?? '');
 
     // Widget verilerini kaydet
     await HomeWidget.saveWidgetData<String>(
@@ -178,7 +180,7 @@ class HomeWidgetService {
       vakitBilgisi['kalanKisa'] ?? '',
     );
     await HomeWidget.saveWidgetData<String>('geri_sayim', yeniGeriSayim);
-    // İlerleme değeri 0-100 arası clamp
+    // Clamp progress value to 0-100.
     int ilerleme = int.tryParse(vakitBilgisi['ilerleme'] ?? '0') ?? 0;
     if (ilerleme < 0) ilerleme = 0;
     if (ilerleme > 100) ilerleme = 100;
@@ -189,7 +191,7 @@ class HomeWidgetService {
     await HomeWidget.saveWidgetData<String>('hicri_tarih', hicriTarih);
     await HomeWidget.saveWidgetData<String>('konum', konum);
 
-    // Vakit saatlerini kaydet
+    // Save prayer times.
     await HomeWidget.saveWidgetData<String>(
       'imsak_saati',
       _vakitSaatleri['Imsak'] ?? '',
@@ -215,7 +217,7 @@ class HomeWidgetService {
       _vakitSaatleri['Yatsi'] ?? '',
     );
 
-    // Günün sözü
+    // Daily hadith
     final hadis = await _getGununHadisi();
     await HomeWidget.saveWidgetData<String>('gunun_sozu', hadis['metin'] ?? '');
     await HomeWidget.saveWidgetData<String>(
@@ -223,13 +225,13 @@ class HomeWidgetService {
       hadis['kaynak'] ?? '',
     );
 
-    // Günün hadisi
+    // Daily hadith (legacy key)
     await HomeWidget.saveWidgetData<String>(
       'gunun_hadisi',
       hadis['metin'] ?? '',
     );
 
-    // Esmaül Hüsna
+    // Daily Asma al-Husna
     final esma = _getGununEsmasi();
     await HomeWidget.saveWidgetData<String>(
       'esma_arapca',
@@ -241,7 +243,7 @@ class HomeWidgetService {
     );
     await HomeWidget.saveWidgetData<String>('esma_anlam', esma['anlam'] ?? '');
 
-    // Özel gün kontrolü
+    // Special day check
     final ozelGun = OzelGunlerService.bugunOzelGunMu();
     if (ozelGun != null) {
       await HomeWidget.saveWidgetData<String>('ozel_gun_adi', ozelGun.ad);
@@ -256,59 +258,58 @@ class HomeWidgetService {
       await HomeWidget.saveWidgetData<bool>('ozel_gun_var', false);
     }
 
-    // Kıble derecesi (örnek değer - gerçek hesaplama için konum gerekli)
+    // Qibla degree (sample value - requires real location)
     await HomeWidget.saveWidgetData<double>('kible_derece', 156.7);
 
-    // Widget çeviri string'lerini gönder
-    final lang = LanguageService();
+    // Widget translations
     await HomeWidget.saveWidgetData<String>(
       'widget_time_remaining',
-      lang['widget_time_remaining'] ?? 'Vaktine Kalan Süre',
+      lang['widget_time_remaining'] ?? '',
     );
     await HomeWidget.saveWidgetData<String>(
       'widget_time_to',
-      lang['widget_time_to'] ?? 'vaktine',
+      lang['widget_time_to'] ?? '',
     );
     await HomeWidget.saveWidgetData<String>(
       'widget_current_time',
-      lang['widget_current_time'] ?? 'Vakti',
+      lang['widget_current_time'] ?? '',
     );
     await HomeWidget.saveWidgetData<String>(
       'widget_now_at',
-      lang['widget_now_at'] ?? 'Şu an',
+      lang['widget_now_at'] ?? '',
     );
     await HomeWidget.saveWidgetData<String>(
       'widget_now_in_time',
-      lang['widget_now_in_time'] ?? 'vaktinde',
+      lang['widget_now_in_time'] ?? '',
     );
     
-    // Vakit isimlerinin çevirilerini de gönder
+    // Prayer name translations
     await HomeWidget.saveWidgetData<String>(
       'label_imsak',
-      lang['imsak'] ?? 'İmsak',
+      lang['imsak'] ?? '',
     );
     await HomeWidget.saveWidgetData<String>(
       'label_gunes',
-      lang['gunes'] ?? 'Güneş',
+      lang['gunes'] ?? '',
     );
     await HomeWidget.saveWidgetData<String>(
       'label_ogle',
-      lang['ogle'] ?? 'Öğle',
+      lang['ogle'] ?? '',
     );
     await HomeWidget.saveWidgetData<String>(
       'label_ikindi',
-      lang['ikindi'] ?? 'İkindi',
+      lang['ikindi'] ?? '',
     );
     await HomeWidget.saveWidgetData<String>(
       'label_aksam',
-      lang['aksam'] ?? 'Akşam',
+      lang['aksam'] ?? '',
     );
     await HomeWidget.saveWidgetData<String>(
       'label_yatsi',
-      lang['yatsi'] ?? 'Yatsı',
+      lang['yatsi'] ?? '',
     );
 
-    // Widget'ları güncelle
+    // Trigger widget updates
     try {
       await HomeWidget.updateWidget(
         name: 'KlasikTuruncuWidget',
@@ -354,37 +355,44 @@ class HomeWidgetService {
         qualifiedAndroidName: 'com.example.huzur_vakti.widgets.OrigamiWidget',
       );
     } catch (e) {
-      // Widget güncellenemezse devam et
-      print('Widget güncelleme hatası: $e');
+      // Keep going if widget update fails.
+      print('Widget update error: $e');
     }
   }
 
-  /// Vakit bilgisini hesapla
+  /// Calculate prayer time info.
   static Map<String, String> _hesaplaVakitBilgisi(DateTime now) {
     final languageService = LanguageService();
+    final hourShort = languageService['hour_short'] ?? '';
+    final minuteShort = languageService['minute_short'] ?? '';
+    final timeLeftSuffix = languageService['time_left_suffix'] ?? '';
     
-    // Vakit isimlerinin çevirileri
+    // Prayer name translations
     String getVakitAdi(String key) {
       switch (key) {
-        case 'Imsak': return languageService['fajr'] ?? 'İmsak';
-        case 'Gunes': return languageService['sunrise'] ?? 'Güneş';
-        case 'Ogle': return languageService['dhuhr'] ?? 'Öğle';
-        case 'Ikindi': return languageService['asr'] ?? 'İkindi';
-        case 'Aksam': return languageService['maghrib'] ?? 'Akşam';
-        case 'Yatsi': return languageService['isha'] ?? 'Yatsı';
+        case 'Imsak': return languageService['imsak'] ?? '';
+        case 'Gunes': return languageService['gunes'] ?? '';
+        case 'Ogle': return languageService['ogle'] ?? '';
+        case 'Ikindi': return languageService['ikindi'] ?? '';
+        case 'Aksam': return languageService['aksam'] ?? '';
+        case 'Yatsi': return languageService['yatsi'] ?? '';
         default: return key;
       }
     }
     
     if (_vakitSaatleri.isEmpty) {
+      final shortRemaining = '2$hourShort 30$minuteShort';
+      final remainingWithSuffix = timeLeftSuffix.isNotEmpty
+          ? '$shortRemaining $timeLeftSuffix'
+          : shortRemaining;
       return {
         'sonrakiVakit': getVakitAdi('Ogle'),
         'sonrakiSaat': '12:30',
         'mevcutVakit': getVakitAdi('Gunes'),
         'mevcutSaat': '07:00',
-        'kalanSure': '2s 30dk kaldı',
-        'kalanKisa': '2s 30dk',
-        'geriSayim': '2s 30dk',
+        'kalanSure': remainingWithSuffix,
+        'kalanKisa': shortRemaining,
+        'geriSayim': shortRemaining,
         'ilerleme': '50',
       };
     }
@@ -400,7 +408,7 @@ class HomeWidgetService {
       {'key': 'Yatsi'},
     ];
 
-    // Vakit saniyelerini hesapla
+    // Calculate prayer time seconds.
     List<int> vakitSaniyeleri = [];
     for (final vakit in vakitListesi) {
       final saat = _vakitSaatleri[vakit['key']] ?? '00:00';
@@ -418,7 +426,7 @@ class HomeWidgetService {
     int gecenSaniye = 0;
     int kalanToplamSaniye = 0;
 
-    // Sonraki vakti bul
+    // Determine next prayer time.
     int sonrakiIndex = -1;
     for (int i = 0; i < vakitSaniyeleri.length; i++) {
       if (vakitSaniyeleri[i] > nowTotalSeconds) {
@@ -428,7 +436,7 @@ class HomeWidgetService {
     }
 
     if (sonrakiIndex == -1) {
-      // Tüm vakitler geçmiş, yarın imsak
+      // All prayer times passed; next is tomorrow's imsak.
       sonrakiVakit = getVakitAdi('Imsak');
       sonrakiSaat = _vakitSaatleri['Imsak'] ?? '05:30';
       mevcutVakit = getVakitAdi('Yatsi');
@@ -437,16 +445,16 @@ class HomeWidgetService {
       final yatsiSaniye = vakitSaniyeleri.last;
       final imsakSaniye = vakitSaniyeleri.first;
 
-      // Yatsıdan yarın imsaka kadar toplam süre
+      // Total duration from yatsi to next imsak.
       toplamSaniye = (24 * 3600 - yatsiSaniye) + imsakSaniye;
-      // Yatsıdan şimdiye kadar geçen süre
+      // Time elapsed since yatsi.
       gecenSaniye = nowTotalSeconds - yatsiSaniye;
       if (gecenSaniye < 0) gecenSaniye = 0;
 
-      // Yarın imsaka kalan süre
+      // Time remaining until next imsak.
       kalanToplamSaniye = (24 * 3600 - nowTotalSeconds) + imsakSaniye;
     } else if (sonrakiIndex == 0) {
-      // İmsak henüz olmadı (gece yarısından sonra, imsak öncesi)
+      // After midnight, before imsak.
       sonrakiVakit = getVakitAdi('Imsak');
       sonrakiSaat = _vakitSaatleri['Imsak'] ?? '05:30';
       mevcutVakit = getVakitAdi('Yatsi');
@@ -455,14 +463,14 @@ class HomeWidgetService {
       final yatsiSaniye = vakitSaniyeleri.last;
       final imsakSaniye = vakitSaniyeleri.first;
 
-      // Dün yatsıdan bugün imsaka kadar toplam süre
+      // Total duration from last yatsi to today's imsak.
       toplamSaniye = (24 * 3600 - yatsiSaniye) + imsakSaniye;
-      // Gece yarısından şimdiye + dün yatsıdan gece yarısına = geçen süre
+      // Elapsed time: after midnight + time from last yatsi to midnight.
       gecenSaniye = nowTotalSeconds + (24 * 3600 - yatsiSaniye);
 
       kalanToplamSaniye = imsakSaniye - nowTotalSeconds;
     } else {
-      // Normal durum: gündüz vakitleri
+      // Normal daytime period.
       sonrakiVakit = getVakitAdi(vakitListesi[sonrakiIndex]['key']!);
       sonrakiSaat =
           _vakitSaatleri[vakitListesi[sonrakiIndex]['key']] ?? '00:00';
@@ -488,23 +496,43 @@ class HomeWidgetService {
         : 0;
     ilerleme = ilerleme.clamp(0, 100);
 
-    // Geri sayım formatı: saniye YOK (widget'lar her 30sn güncellenir)
-    final geriSayimStr = kalanSaat > 0 
-        ? '${kalanSaat}s ${kalanDk}dk' 
-        : '$kalanDk dk';
+    // Countdown format without seconds.
+    final geriSayimStr = kalanSaat > 0
+      ? '$kalanSaat$hourShort $kalanDk$minuteShort'
+      : '$kalanDk$minuteShort';
+    final kalanSureStr = timeLeftSuffix.isNotEmpty
+      ? '$geriSayimStr $timeLeftSuffix'
+      : geriSayimStr;
 
     return {
       'sonrakiVakit': sonrakiVakit,
       'sonrakiSaat': sonrakiSaat,
       'mevcutVakit': mevcutVakit,
       'mevcutSaat': mevcutSaat,
-      'kalanSure': kalanSaat > 0 
-          ? '${kalanSaat}s ${kalanDk}dk kaldı'
-          : '$kalanDk dk kaldı',
+      'kalanSure': kalanSureStr,
       'kalanKisa': geriSayimStr,
       'geriSayim': geriSayimStr,
       'ilerleme': ilerleme.toString(),
     };
+  }
+
+  static String _getLocale() {
+    switch (LanguageService().currentLanguage) {
+      case 'tr':
+        return 'tr_TR';
+      case 'en':
+        return 'en_US';
+      case 'de':
+        return 'de_DE';
+      case 'fr':
+        return 'fr_FR';
+      case 'ar':
+        return 'ar_SA';
+      case 'fa':
+        return 'fa_IR';
+      default:
+        return 'en_US';
+    }
   }
 
   static String _getHicriAyAdi(int ay) {
@@ -516,52 +544,41 @@ class HomeWidgetService {
   }
 
   static Future<Map<String, String>> _getGununHadisi() async {
-    final hadisler = [
-      {'metin': 'Ameller niyetlere göredir.', 'kaynak': 'Buhârî'},
-      {
-        'metin':
-            'Müslüman, elinden ve dilinden Müslümanların güvende olduğu kimsedir.',
-        'kaynak': 'Buhârî',
-      },
-      {'metin': 'Kolaylaştırınız, zorlaştırmayınız.', 'kaynak': 'Buhârî'},
-      {
-        'metin': 'Sizin en hayırlınız ahlakça en güzel olanınızdır.',
-        'kaynak': 'Buhârî',
-      },
-      {'metin': 'Güzel söz sadakadır.', 'kaynak': 'Buhârî'},
-      {
-        'metin': 'Cennette yetim himaye edenle beraber olacağız.',
-        'kaynak': 'Buhârî',
-      },
-      {'metin': 'Allah temizdir, temizi sever.', 'kaynak': 'Tirmizî'},
-    ];
-
-    final dayOfYear = DateTime.now()
-        .difference(DateTime(DateTime.now().year, 1, 1))
-        .inDays;
-    final index = dayOfYear % hadisler.length;
-    return hadisler[index];
+    final languageService = LanguageService();
+    final hadisler = languageService['hadiths'];
+    if (hadisler is List && hadisler.isNotEmpty) {
+      final dayOfYear = DateTime.now()
+          .difference(DateTime(DateTime.now().year, 1, 1))
+          .inDays;
+      final index = dayOfYear % hadisler.length;
+      final hadis = hadisler[index];
+      if (hadis is Map) {
+        return {
+          'metin': hadis['text']?.toString() ?? '',
+          'kaynak': hadis['source']?.toString() ?? '',
+        };
+      }
+    }
+    return {'metin': '', 'kaynak': ''};
   }
 
   static Map<String, String> _getGununEsmasi() {
-    final esmalar = [
-      {'arapca': 'الرحمن', 'turkce': 'ER-RAHMÂN', 'anlam': 'Çok merhametli'},
-      {'arapca': 'الرحيم', 'turkce': 'ER-RAHÎM', 'anlam': 'Çok bağışlayan'},
-      {'arapca': 'الملك', 'turkce': 'EL-MELİK', 'anlam': 'Mülkün sahibi'},
-      {'arapca': 'القدوس', 'turkce': 'EL-KUDDÛS', 'anlam': 'Çok kutsal'},
-      {'arapca': 'السلام', 'turkce': 'ES-SELÂM', 'anlam': 'Selamet veren'},
-      {'arapca': 'المؤمن', 'turkce': "EL-MÜ'MİN", 'anlam': 'Güven veren'},
-      {
-        'arapca': 'المهيمن',
-        'turkce': 'EL-MÜHEYMİN',
-        'anlam': 'Koruyup gözeten',
-      },
-    ];
-
-    final dayOfYear = DateTime.now()
-        .difference(DateTime(DateTime.now().year, 1, 1))
-        .inDays;
-    final index = dayOfYear % esmalar.length;
-    return esmalar[index];
+    final languageService = LanguageService();
+    final esmalar = languageService['daily_esmaul_husna'];
+    if (esmalar is List && esmalar.isNotEmpty) {
+      final dayOfYear = DateTime.now()
+          .difference(DateTime(DateTime.now().year, 1, 1))
+          .inDays;
+      final index = dayOfYear % esmalar.length;
+      final esma = esmalar[index];
+      if (esma is Map) {
+        return {
+          'arapca': esma['arabic']?.toString() ?? '',
+          'turkce': esma['name']?.toString() ?? '',
+          'anlam': esma['meaning']?.toString() ?? '',
+        };
+      }
+    }
+    return {'arapca': '', 'turkce': '', 'anlam': ''};
   }
 }

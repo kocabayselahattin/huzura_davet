@@ -100,27 +100,27 @@ class _NeonSayacWidgetState extends State<NeonSayacWidget>
 
     final vakitListesi = [
       {
-        'adi': _languageService['imsak'] ?? 'İmsak',
+        'adi': _languageService['imsak'] ?? '',
         'saat': _vakitSaatleri['imsak']!,
       },
       {
-        'adi': _languageService['gunes'] ?? 'Güneş',
+        'adi': _languageService['gunes'] ?? '',
         'saat': _vakitSaatleri['gunes']!,
       },
       {
-        'adi': _languageService['ogle'] ?? 'Öğle',
+        'adi': _languageService['ogle'] ?? '',
         'saat': _vakitSaatleri['ogle']!,
       },
       {
-        'adi': _languageService['ikindi'] ?? 'İkindi',
+        'adi': _languageService['ikindi'] ?? '',
         'saat': _vakitSaatleri['ikindi']!,
       },
       {
-        'adi': _languageService['aksam'] ?? 'Akşam',
+        'adi': _languageService['aksam'] ?? '',
         'saat': _vakitSaatleri['aksam']!,
       },
       {
-        'adi': _languageService['yatsi'] ?? 'Yatsı',
+        'adi': _languageService['yatsi'] ?? '',
         'saat': _vakitSaatleri['yatsi']!,
       },
     ];
@@ -158,7 +158,7 @@ class _NeonSayacWidgetState extends State<NeonSayacWidget>
         int.parse(imsakParts[0]),
         int.parse(imsakParts[1]),
       );
-      sonrakiVakitAdi = _languageService['imsak'] ?? 'İmsak';
+      sonrakiVakitAdi = _languageService['imsak'] ?? '';
 
       // Yatsıdan yarın imsaka kadar ilerleme
       final yatsiSaniye = vakitSaniyeleri.last;
@@ -176,7 +176,7 @@ class _NeonSayacWidgetState extends State<NeonSayacWidget>
         int.parse(imsakParts[0]),
         int.parse(imsakParts[1]),
       );
-      sonrakiVakitAdi = _languageService['imsak'] ?? 'İmsak';
+      sonrakiVakitAdi = _languageService['imsak'] ?? '';
 
       // Dün yatsıdan bugün imsaka kadar ilerleme
       final yatsiSaniye = vakitSaniyeleri.last;
@@ -303,7 +303,7 @@ class _NeonSayacWidgetState extends State<NeonSayacWidget>
                           ],
                         ),
                         child: Text(
-                          '$_sonrakiVakit ${(_languageService['time_to'] ?? 'VAKTİNE').toUpperCase()}',
+                          '$_sonrakiVakit ${(_languageService['time_to'] ?? '').toUpperCase()}',
                           style: TextStyle(
                             color: renkler.vurgu,
                             fontSize: 14,
@@ -456,7 +456,7 @@ class _NeonSayacWidgetState extends State<NeonSayacWidget>
 
   Widget _buildTakvimRow(TemaRenkleri renkler) {
     final now = DateTime.now();
-    final miladiTarih = DateFormat('dd MMM yyyy', 'tr_TR').format(now);
+    final miladiTarih = DateFormat('dd MMM yyyy', _getLocale()).format(now);
     final hicri = HijriCalendar.now();
     final hicriTarih =
         '${hicri.hDay} ${_getHicriAyAdi(hicri.hMonth)} ${hicri.hYear}';
@@ -515,22 +515,27 @@ class _NeonSayacWidgetState extends State<NeonSayacWidget>
   }
 
   String _getHicriAyAdi(int ay) {
-    const aylar = [
-      '',
-      'Muharrem',
-      'Safer',
-      'Rebiülevvel',
-      'Rebiülahir',
-      'Cemaziyelevvel',
-      'Cemaziyelahir',
-      'Recep',
-      'Şaban',
-      'Ramazan',
-      'Şevval',
-      'Zilkade',
-      'Zilhicce',
-    ];
-    return aylar[ay];
+    if (ay < 1 || ay > 12) return '';
+    return _languageService['hijri_month_$ay'] ?? '';
+  }
+
+  String _getLocale() {
+    switch (_languageService.currentLanguage) {
+      case 'tr':
+        return 'tr_TR';
+      case 'en':
+        return 'en_US';
+      case 'de':
+        return 'de_DE';
+      case 'fr':
+        return 'fr_FR';
+      case 'ar':
+        return 'ar_SA';
+      case 'fa':
+        return 'fa_IR';
+      default:
+        return 'tr_TR';
+    }
   }
 }
 

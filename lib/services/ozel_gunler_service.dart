@@ -6,17 +6,17 @@ import 'package:timezone/timezone.dart' as tz;
 import 'language_service.dart';
 import 'alarm_service.dart';
 
-/// Özel gün ve gece türleri
+/// Special day and night types
 enum OzelGunTuru { bayram, kandil, mubarekGece, onemliGun }
 
-/// Özel gün modeli - Çevirileri dinamik olarak alır
+/// Special day model - pulls translations dynamically
 class OzelGun {
   final String adKey;
   final String aciklamaKey;
   final OzelGunTuru tur;
   final int hicriAy;
   final int hicriGun;
-  final bool geceOncesiMi; // Kandiller geceden başlar
+  final bool geceOncesiMi; // Kandil nights start on the previous night
 
   const OzelGun({
     required this.adKey,
@@ -27,34 +27,34 @@ class OzelGun {
     this.geceOncesiMi = false,
   });
 
-  /// Çevirili ad döndürür
+  /// Returns translated name
   String get ad {
     final langService = LanguageService();
     return langService[adKey] ?? adKey;
   }
 
-  /// Çevirili açıklama döndürür
+  /// Returns translated description
   String get aciklama {
     final langService = LanguageService();
     return langService[aciklamaKey] ?? aciklamaKey;
   }
 
-  /// Tebrik mesajını döndürür
+  /// Returns greeting message
   String get tebrikMesaji {
     final langService = LanguageService();
     switch (tur) {
       case OzelGunTuru.bayram:
-        return '${langService['eid_mubarak'] ?? 'Bayramınız Mübarek Olsun!'} 🌙';
+        return '${langService['eid_mubarak'] ?? ''} 🌙';
       case OzelGunTuru.kandil:
-        return '${langService['kandil_mubarak'] ?? 'Kandiliniz Mübarek Olsun!'} ✨';
+        return '${langService['kandil_mubarak'] ?? ''} ✨';
       case OzelGunTuru.mubarekGece:
-        return '$ad ${langService['blessed_night'] ?? 'Mübarek Olsun!'} 🤲';
+        return '$ad ${langService['blessed_night'] ?? ''} 🤲';
       case OzelGunTuru.onemliGun:
-        return '$ad ${langService['blessed_day'] ?? 'Hayırlı Olsun!'} 📿';
+        return '$ad ${langService['blessed_day'] ?? ''} 📿';
     }
   }
 
-  /// Alt başlık mesajı
+  /// Subtitle message
   String get altMesaj {
     return aciklama;
   }
@@ -63,12 +63,12 @@ class OzelGun {
 class OzelGunlerService {
   static const String _sonGosterilenGunKey = 'son_gosterilen_ozel_gun';
 
-  /// Oturum bazlı popup gösterildi flag'i
-  /// Uygulama açık olduğu sürece true kalır, böylece aynı oturumda popup bir kez gösterilir
+  /// Session-level popup shown flag
+  /// Stays true during the session to show the popup only once
   static bool _sessionPopupShown = false;
 
-  /// TEST MODU - Geliştirme sırasında test için kullanılır
-  /// Production'da false olmalı!
+  /// TEST MODE - used during development
+  /// Should be false in production.
   static const bool _testModu = false;
   static const OzelGun _testOzelGun = OzelGun(
     adKey: 'barat',
@@ -79,11 +79,11 @@ class OzelGunlerService {
     geceOncesiMi: true,
   );
 
-  /// Hicri takvime göre tüm özel günler
-  /// Hicri aylar: 1-Muharrem, 2-Safer, 3-Rebiülevvel, 4-Rebiülahir, 5-Cemaziyelevvel,
-  /// 6-Cemaziyelahir, 7-Recep, 8-Şaban, 9-Ramazan, 10-Şevval, 11-Zilkade, 12-Zilhicce
+  /// Special days by Hijri calendar
+  /// Hijri months: 1-Muharram, 2-Safar, 3-Rabi al-Awwal, 4-Rabi al-Thani, 5-Jumada al-Awwal,
+  /// 6-Jumada al-Thani, 7-Rajab, 8-Shaban, 9-Ramadan, 10-Shawwal, 11-Dhul Qadah, 12-Dhul Hijjah
   static const List<OzelGun> ozelGunler = [
-    // Muharrem Ayı (1)
+    // Muharram (1)
     OzelGun(
       adKey: 'hijri_new_year',
       aciklamaKey: 'hijri_new_year_desc',
@@ -99,7 +99,7 @@ class OzelGunlerService {
       hicriGun: 10,
     ),
 
-    // Rebiülevvel Ayı (3)
+    // Rabi al-Awwal (3)
     OzelGun(
       adKey: 'mawlid',
       aciklamaKey: 'mawlid_desc',
@@ -109,7 +109,7 @@ class OzelGunlerService {
       geceOncesiMi: true,
     ),
 
-    // Recep Ayı (7)
+    // Rajab (7)
     OzelGun(
       adKey: 'ragaib',
       aciklamaKey: 'ragaib_desc',
@@ -127,7 +127,7 @@ class OzelGunlerService {
       geceOncesiMi: true,
     ),
 
-    // Şaban Ayı (8)
+    // Shaban (8)
     OzelGun(
       adKey: 'barat',
       aciklamaKey: 'barat_desc',
@@ -137,7 +137,7 @@ class OzelGunlerService {
       geceOncesiMi: true,
     ),
 
-    // Ramazan Ayı (9)
+    // Ramadan (9)
     OzelGun(
       adKey: 'ramadan_start',
       aciklamaKey: 'ramadan_start_desc',
@@ -154,7 +154,7 @@ class OzelGunlerService {
       geceOncesiMi: true,
     ),
 
-    // Şevval Ayı (10)
+    // Shawwal (10)
     OzelGun(
       adKey: 'eid_al_fitr',
       aciklamaKey: 'eid_al_fitr_day1',
@@ -177,7 +177,7 @@ class OzelGunlerService {
       hicriGun: 3,
     ),
 
-    // Zilhicce Ayı (12)
+    // Dhul Hijjah (12)
     OzelGun(
       adKey: 'arafa',
       aciklamaKey: 'arafa_desc',
@@ -215,10 +215,10 @@ class OzelGunlerService {
     ),
   ];
 
-  /// Bugün özel bir gün mü kontrol et
-  /// Banner sabah 09:00'dan itibaren aktif olur
+  /// Check if today is a special day
+  /// Banner becomes active after 09:00
   static OzelGun? bugunOzelGunMu() {
-    // TEST MODU - Geliştirme sırasında test için
+    // TEST MODE - for development
     if (_testModu) {
       return _testOzelGun;
     }
@@ -229,59 +229,59 @@ class OzelGunlerService {
     final hicriGun = hicri.hDay;
 
     debugPrint(
-      '📅 [OzelGun] Bugün: $now.day/$now.month/$now.year $now.hour:$now.minute',
+      '📅 [OzelGun] Today: $now.day/$now.month/$now.year $now.hour:$now.minute',
     );
     debugPrint(
       '📅 [OzelGun] Hicri: $hicriGun/$hicriAy/$hicri.hYear',
     );
 
     for (final ozelGun in ozelGunler) {
-      // 1. Normal özel günler (geceOncesiMi == false): sadece o gün 09:00'dan itibaren
+      // 1. Normal special days (geceOncesiMi == false): only after 09:00
       if (!ozelGun.geceOncesiMi) {
         if (ozelGun.hicriAy == hicriAy && ozelGun.hicriGun == hicriGun) {
           if (now.hour >= 9) {
-            debugPrint('✅ [OzelGun] Bugün özel gün: \\${ozelGun.ad}');
+            debugPrint('✅ [OzelGun] Today is special: \${ozelGun.ad}');
             return ozelGun;
           } else {
             debugPrint(
-              '⏰ [OzelGun] \\${ozelGun.ad} var ama henüz saat 09:00 olmadı (\\${now.hour}:\\${now.minute})',
+              '⏰ [OzelGun] \${ozelGun.ad} exists but it is before 09:00 (\${now.hour}:\${now.minute})',
             );
           }
         }
       } else {
-        // 2. Kandil/gece günleri: hem bir önceki gün 09:00'dan, hem de asıl günün sabah 09:00'ına kadar
-        // a) Bir önceki gün 09:00'dan geceye kadar
+        // 2. Kandil/night days: from previous day 09:00 until next day 09:00
+        // a) Previous day 09:00 until night
         if (ozelGun.hicriAy == hicriAy && ozelGun.hicriGun == hicriGun + 1) {
           if (now.hour >= 9) {
             debugPrint(
-              '✅ [OzelGun] Yarın kandil/gece: \\${ozelGun.ad} (bugün göster)',
+              '✅ [OzelGun] Tomorrow is kandil/night: \${ozelGun.ad} (show today)',
             );
             return ozelGun;
           } else {
             debugPrint(
-              '⏰ [OzelGun] Yarın \\${ozelGun.ad} ama henüz saat 09:00 olmadı (\\${now.hour}:\\${now.minute})',
+              '⏰ [OzelGun] Tomorrow is \${ozelGun.ad} but it is before 09:00 (\${now.hour}:\${now.minute})',
             );
           }
         }
-        // b) Asıl gün gece 00:00'dan sabah 09:00'a kadar (yani gece boyunca)
+        // b) Main day 00:00 to 09:00
         if (ozelGun.hicriAy == hicriAy &&
             ozelGun.hicriGun == hicriGun &&
             now.hour < 9) {
           debugPrint(
-            '✅ [OzelGun] Gece devam ediyor: \\${ozelGun.ad} (sabah 09:00\'a kadar göster)',
+            '✅ [OzelGun] Night continues: \${ozelGun.ad} (show until 09:00)',
           );
           return ozelGun;
         }
       }
     }
 
-    debugPrint('❌ [OzelGun] Bugün özel gün/gece yok');
+    debugPrint('❌ [OzelGun] No special day/night today');
     return null;
   }
 
-  /// Bugün popup gösterilmeli mi kontrol et
+  /// Check if popup should be shown today
   static Future<bool> popupGosterilmeliMi() async {
-    // Oturum içinde zaten gösterildiyse tekrar gösterme
+    // Do not show again if already shown in this session
     if (_sessionPopupShown) {
       return false;
     }
@@ -295,7 +295,7 @@ class OzelGunlerService {
     final bugun = DateTime.now();
     final bugunKey = '${ozelGun.ad}_${bugun.year}_${bugun.month}_${bugun.day}';
 
-    // Aynı gün daha önce gösterilmişse tekrar gösterme
+    // Do not show again if already shown today
     if (sonGosterilen == bugunKey) {
       return false;
     }
@@ -303,9 +303,9 @@ class OzelGunlerService {
     return true;
   }
 
-  /// Popup gösterildi olarak işaretle
+  /// Mark popup as shown
   static Future<void> popupGosterildiIsaretle() async {
-    // Oturum flag'ini işaretle
+    // Mark session flag
     _sessionPopupShown = true;
 
     final ozelGun = bugunOzelGunMu();
@@ -318,16 +318,16 @@ class OzelGunlerService {
     await prefs.setString(_sonGosterilenGunKey, bugunKey);
   }
 
-  /// Yaklaşan özel günleri getir (30 gün içinde)
+  /// Get upcoming special days (within 30 days)
   static List<Map<String, dynamic>> yaklasanOzelGunler() {
     final List<Map<String, dynamic>> sonuc = [];
     final bugun = HijriCalendar.now();
 
     for (final ozelGun in ozelGunler) {
-      // Bu yılın tarihi
+      // This year's date
       int hedefYil = bugun.hYear;
 
-      // Eğer bu yılki tarih geçtiyse, gelecek yılı kullan
+      // If this year's date passed, use next year
       if (ozelGun.hicriAy < bugun.hMonth ||
           (ozelGun.hicriAy == bugun.hMonth && ozelGun.hicriGun < bugun.hDay)) {
         hedefYil++;
@@ -352,7 +352,7 @@ class OzelGunlerService {
         final simdi = DateTime.now();
         final fark = tarih.difference(simdi).inDays;
 
-        // 365 gün içinde olanları ekle
+        // Add those within 365 days
         if (fark >= 0 && fark <= 365) {
           sonuc.add({
             'ozelGun': ozelGun,
@@ -363,12 +363,12 @@ class OzelGunlerService {
           });
         }
       } catch (e) {
-        // Tarih dönüşüm hatası
-        debugPrint('Tarih dönüşüm hatası: $e');
+        // Date conversion error
+        debugPrint('Date conversion error: $e');
       }
     }
 
-    // Tarihe göre sırala
+    // Sort by date
     sonuc.sort(
       (a, b) => (a['kalanGun'] as int).compareTo(b['kalanGun'] as int),
     );
@@ -376,7 +376,7 @@ class OzelGunlerService {
     return sonuc;
   }
 
-  /// Hicri ay adını döndür
+  /// Return Hijri month name
   static String _getHicriAyAdi(int ay) {
     final languageService = LanguageService();
     if (ay >= 1 && ay <= 12) {
@@ -385,36 +385,36 @@ class OzelGunlerService {
     return '';
   }
 
-  // ========== ÖZEL GÜN BİLDİRİMLERİ ==========
+  // ========== SPECIAL DAY NOTIFICATIONS ==========
 
   static final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
   static const int _ozelGunBildirimIdBase = 5000;
 
-  /// Özel gün bildirimlerini zamanla
-  /// 7 gün içindeki özel günler için bildirim zamanlar
-  /// GeceOncesiMi olanlarda hem bir önceki gün 09:00'da, hem de asıl gün 00:05'te (sabah 09:00'dan önce) bildirim kurulur
+  /// Schedule special day notifications
+  /// Schedule notifications for special days within 7 days
+  /// For geceOncesiMi: schedule both previous day 09:00 and main day 00:05
   static Future<void> scheduleOzelGunBildirimleri() async {
     final prefs = await SharedPreferences.getInstance();
     final enabled = prefs.getBool('ozel_gun_bildirimleri_aktif') ?? true;
 
     if (!enabled) {
-      debugPrint('📅 Özel gün bildirimleri devre dışı');
+      debugPrint('📅 Special day notifications disabled');
       await cancelOzelGunBildirimleri();
       return;
     }
 
-    debugPrint('📅 Özel gün bildirimleri zamanlanıyor...');
+    debugPrint('📅 Scheduling special day notifications...');
 
-    // Önce mevcut bildirimleri iptal et
+    // Cancel existing notifications first
     await cancelOzelGunBildirimleri();
 
-    // Yaklaşan özel günleri al (7 gün içinde)
+    // Get upcoming special days (within 7 days)
     final yaklasanlar = yaklasanOzelGunler();
     int zamanlanandi = 0;
 
-    debugPrint('📅 ========== ÖZEL GÜN BİLDİRİM ZAMANLAMA ==========');
-    debugPrint('📅 Toplam ${yaklasanlar.length} özel gün bulundu');
+    debugPrint('📅 ========== SPECIAL DAY SCHEDULING ==========');
+    debugPrint('📅 Found ${yaklasanlar.length} special days total');
 
     int idOffset = 0;
     for (int i = 0; i < yaklasanlar.length && i < 10; i++) {
@@ -423,19 +423,19 @@ class OzelGunlerService {
       final tarih = item['tarih'] as DateTime;
       final kalanGun = item['kalanGun'] as int;
 
-      debugPrint('\n🔍 Kontrol ediliyor: ${ozelGun.ad}');
-      debugPrint('   📆 Tarih: ${tarih.day}/${tarih.month}/${tarih.year}');
-      debugPrint('   ⏰ Kalan gün: $kalanGun');
-      debugPrint('   🌙 Gece öncesi mi: ${ozelGun.geceOncesiMi}');
+      debugPrint('\n🔍 Checking: ${ozelGun.ad}');
+      debugPrint('   📆 Date: ${tarih.day}/${tarih.month}/${tarih.year}');
+      debugPrint('   ⏰ Days left: $kalanGun');
+      debugPrint('   🌙 Night-before: ${ozelGun.geceOncesiMi}');
 
-      // Sadece 7 gün içindeki özel günler için bildirim zamanla
+      // Only schedule for special days within 7 days
       if (kalanGun > 7) {
-        debugPrint('   ⏭️ Atlandı: 7 günden fazla');
+        debugPrint('   ⏭️ Skipped: more than 7 days');
         continue;
       }
 
       if (ozelGun.geceOncesiMi) {
-        // 1) Bir önceki gün 09:00'da (banner gibi)
+        // 1) Previous day at 09:00
         DateTime oncekiGunBildirimi = DateTime(
           tarih.year,
           tarih.month,
@@ -446,7 +446,7 @@ class OzelGunlerService {
         if (oncekiGunBildirimi.isAfter(DateTime.now())) {
           final tzOncekiGun = tz.TZDateTime.from(oncekiGunBildirimi, tz.local);
           debugPrint(
-            '   📍 Kandil/gece için önceki gün bildirimi: ${oncekiGunBildirimi.day}/${oncekiGunBildirimi.month} ${oncekiGunBildirimi.hour}:${oncekiGunBildirimi.minute.toString().padLeft(2, "0")}',
+            '   📍 Night-before notification: ${oncekiGunBildirimi.day}/${oncekiGunBildirimi.month} ${oncekiGunBildirimi.hour}:${oncekiGunBildirimi.minute.toString().padLeft(2, "0")}',
           );
           try {
             await _scheduleOzelGunBildirimi(
@@ -458,11 +458,11 @@ class OzelGunlerService {
             idOffset++;
           } catch (e) {
             debugPrint(
-              '❌ Özel gün bildirimi zamanlanamadı: ${ozelGun.ad} - $e',
+              '❌ Special day notification scheduling failed: ${ozelGun.ad} - $e',
             );
           }
         }
-        // 2) Asıl gün gece 00:05'te (sabah 09:00'dan önce, gece boyunca)
+        // 2) Main day at 00:05
         DateTime geceBildirimi = DateTime(
           tarih.year,
           tarih.month,
@@ -473,7 +473,7 @@ class OzelGunlerService {
         if (geceBildirimi.isAfter(DateTime.now())) {
           final tzGece = tz.TZDateTime.from(geceBildirimi, tz.local);
           debugPrint(
-            '   📍 Kandil/gece için gece bildirimi: ${geceBildirimi.day}/${geceBildirimi.month} ${geceBildirimi.hour}:${geceBildirimi.minute.toString().padLeft(2, "0")}',
+            '   📍 Night notification: ${geceBildirimi.day}/${geceBildirimi.month} ${geceBildirimi.hour}:${geceBildirimi.minute.toString().padLeft(2, "0")}',
           );
           try {
             await _scheduleOzelGunBildirimi(
@@ -485,12 +485,12 @@ class OzelGunlerService {
             idOffset++;
           } catch (e) {
             debugPrint(
-              '❌ Özel gün bildirimi zamanlanamadı: ${ozelGun.ad} - $e',
+              '❌ Special day notification scheduling failed: ${ozelGun.ad} - $e',
             );
           }
         }
       } else {
-        // Diğer günler: o günün sabahı 09:00
+        // Other days: 09:00 of the same day
         DateTime bildirimZamani = DateTime(
           tarih.year,
           tarih.month,
@@ -501,7 +501,7 @@ class OzelGunlerService {
         if (bildirimZamani.isAfter(DateTime.now())) {
           final tzBildirimZamani = tz.TZDateTime.from(bildirimZamani, tz.local);
           debugPrint(
-            '   📍 Normal gün bildirimi: ${bildirimZamani.day}/${bildirimZamani.month} ${bildirimZamani.hour}:${bildirimZamani.minute.toString().padLeft(2, "0")}',
+            '   📍 Normal day notification: ${bildirimZamani.day}/${bildirimZamani.month} ${bildirimZamani.hour}:${bildirimZamani.minute.toString().padLeft(2, "0")}',
           );
           try {
             await _scheduleOzelGunBildirimi(
@@ -513,18 +513,18 @@ class OzelGunlerService {
             idOffset++;
           } catch (e) {
             debugPrint(
-              '❌ Özel gün bildirimi zamanlanamadı: ${ozelGun.ad} - $e',
+              '❌ Special day notification scheduling failed: ${ozelGun.ad} - $e',
             );
           }
         }
       }
     }
 
-    debugPrint('✅ $zamanlanandi özel gün bildirimi zamanlandı');
+    debugPrint('✅ $zamanlanandi special day notifications scheduled');
   }
 
-  /// Tek bir özel gün bildirimi zamanla - AlarmManager kullanarak
-  /// Bu sayede uygulama kapalı olsa bile bildirim gelir
+  /// Schedule a single special day notification using AlarmManager
+  /// Works even when the app is closed
   static Future<void> _scheduleOzelGunBildirimi({
     required int id,
     required OzelGun ozelGun,
@@ -533,7 +533,7 @@ class OzelGunlerService {
     final languageService = LanguageService();
     await languageService.load();
 
-    // Bildirim içeriği
+    // Notification content
     String icon;
     switch (ozelGun.tur) {
       case OzelGunTuru.bayram:
@@ -553,7 +553,7 @@ class OzelGunlerService {
     final title = '$icon ${ozelGun.ad}';
     final body = ozelGun.tebrikMesaji;
 
-    // AlarmManager kullanarak zamanla (uygulama kapalı olsa bile çalışır)
+    // Schedule via AlarmManager (works even when app is closed)
     final triggerAtMillis = scheduledDate.millisecondsSinceEpoch;
 
     final success = await AlarmService.scheduleOzelGunAlarm(
@@ -568,18 +568,23 @@ class OzelGunlerService {
 
     if (success) {
       debugPrint(
-        '   📅 ${ozelGun.ad} - $tarihStr (ID: $id) - AlarmManager ile zamanlandı ✅',
+        '   📅 ${ozelGun.ad} - $tarihStr (ID: $id) - scheduled via AlarmManager ✅',
       );
     } else {
       debugPrint(
-        '   ❌ ${ozelGun.ad} - AlarmManager ile zamanlanamadı, fallback kullanılıyor',
+        '   ❌ ${ozelGun.ad} - AlarmManager scheduling failed, using fallback',
       );
 
-      // Fallback: zonedSchedule kullan
-      const androidPlatformChannelSpecifics = AndroidNotificationDetails(
+      // Fallback: use zonedSchedule
+      final channelName =
+          languageService['special_days_channel_name'] ?? 'Special days';
+      final channelDesc =
+          languageService['special_days_channel_desc'] ??
+          'Special days, nights, and holidays';
+      final androidPlatformChannelSpecifics = AndroidNotificationDetails(
         'ozel_gunler_channel',
-        'Özel Günler',
-        channelDescription: 'Kandiller, bayramlar ve mübarek geceler',
+        channelName,
+        channelDescription: channelDesc,
         importance: Importance.high,
         priority: Priority.high,
         playSound: true,
@@ -596,28 +601,28 @@ class OzelGunlerService {
         title: title,
         body: body,
         scheduledDate: scheduledDate,
-        notificationDetails: const NotificationDetails(
+        notificationDetails: NotificationDetails(
           android: androidPlatformChannelSpecifics,
         ),
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         payload: 'ozel_gun_${ozelGun.adKey}',
       );
       debugPrint(
-        '   📅 ${ozelGun.ad} - $tarihStr (ID: $id) - zonedSchedule ile zamanlandı',
+        '   📅 ${ozelGun.ad} - $tarihStr (ID: $id) - scheduled via zonedSchedule',
       );
     }
   }
 
-  /// Özel gün bildirimlerini iptal et
+  /// Cancel special day notifications
   static Future<void> cancelOzelGunBildirimleri() async {
     for (int i = 0; i < 10; i++) {
       await _notificationsPlugin.cancel(id: _ozelGunBildirimIdBase + i);
       await AlarmService.cancelAlarm(_ozelGunBildirimIdBase + i);
     }
-    debugPrint('🚫 Özel gün bildirimleri iptal edildi');
+    debugPrint('🚫 Special day notifications canceled');
   }
 
-  /// Özel gün bildirimlerini aç/kapat
+  /// Enable/disable special day notifications
   static Future<void> setOzelGunBildirimleriEnabled(bool enabled) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('ozel_gun_bildirimleri_aktif', enabled);

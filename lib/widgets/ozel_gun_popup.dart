@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/ozel_gunler_service.dart';
+import '../services/language_service.dart';
 
 class OzelGunPopup extends StatelessWidget {
   final OzelGun ozelGun;
@@ -13,6 +14,7 @@ class OzelGunPopup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final languageService = LanguageService();
     final renk = _getRenk(ozelGun.tur);
     final ikon = _getIkon(ozelGun.tur);
     
@@ -120,7 +122,7 @@ class OzelGunPopup extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'Kapatmak için dokunun',
+                        languageService['tap_to_close'],
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.9),
                           fontSize: 12,

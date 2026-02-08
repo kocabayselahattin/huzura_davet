@@ -47,13 +47,7 @@ class _GununIcerigiWidgetState extends State<GununIcerigiWidget> {
         return {'text': '', 'source': ''};
       }).toList();
     }
-    // Fallback Türkçe içerik
-    return [
-      {
-        'text': 'Şüphesiz namaz, hayâsızlıktan ve kötülükten alıkoyar.',
-        'source': 'Ankebût, 45',
-      },
-    ];
+    return [];
   }
 
   List<Map<String, String>> _getPrayers() {
@@ -69,13 +63,7 @@ class _GununIcerigiWidgetState extends State<GununIcerigiWidget> {
         return {'text': '', 'source': ''};
       }).toList();
     }
-    // Fallback Türkçe içerik
-    return [
-      {
-        'text': 'Rabbim! Bana, ana-babama ve müminlere mağfiret et.',
-        'source': 'İbrâhîm, 41',
-      },
-    ];
+    return [];
   }
 
   List<Map<String, String>> _getHadiths() {
@@ -91,14 +79,7 @@ class _GununIcerigiWidgetState extends State<GununIcerigiWidget> {
         return {'text': '', 'source': ''};
       }).toList();
     }
-    // Fallback Türkçe içerik
-    return [
-      {
-        'text':
-            'Ameller niyetlere göredir. Herkesin niyeti ne ise eline geçecek odur.',
-        'source': 'Buhârî, Müslim',
-      },
-    ];
+    return [];
   }
 
   Map<String, String> _getGununAyeti() {
@@ -115,7 +96,7 @@ class _GununIcerigiWidgetState extends State<GununIcerigiWidget> {
     if (prayers.isEmpty) return {'text': '', 'source': ''};
     final now = DateTime.now();
     final dayOfYear = now.difference(DateTime(now.year, 1, 1)).inDays;
-    final index = (dayOfYear + 7) % prayers.length; // Farklı sıralama için +7
+    final index = (dayOfYear + 7) % prayers.length; // Offset for variation (+7).
     return prayers[index];
   }
 
@@ -124,7 +105,7 @@ class _GununIcerigiWidgetState extends State<GununIcerigiWidget> {
     if (hadiths.isEmpty) return {'text': '', 'source': ''};
     final now = DateTime.now();
     final dayOfYear = now.difference(DateTime(now.year, 1, 1)).inDays;
-    final index = (dayOfYear + 14) % hadiths.length; // Farklı sıralama için +14
+    final index = (dayOfYear + 14) % hadiths.length; // Offset for variation (+14).
     return hadiths[index];
   }
 
@@ -137,14 +118,14 @@ class _GununIcerigiWidgetState extends State<GununIcerigiWidget> {
 
     return Column(
       children: [
-        // Başlık ve sayfa göstergesi
+        // Header and page indicator.
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                (_languageService['todays_content'] ?? 'GÜNÜN İÇERİĞİ')
+                (_languageService['todays_content'] ?? '')
                     .toUpperCase(),
                 style: TextStyle(
                   color: renkler.yaziSecondary,
@@ -153,7 +134,7 @@ class _GununIcerigiWidgetState extends State<GununIcerigiWidget> {
                   letterSpacing: 2,
                 ),
               ),
-              // Sayfa göstergesi
+              // Page indicator.
               Row(
                 children: [
                   _buildPageIndicator(0, renkler),
@@ -168,7 +149,7 @@ class _GununIcerigiWidgetState extends State<GununIcerigiWidget> {
         ),
         const SizedBox(height: 12),
 
-        // Kaydırılabilir içerik
+        // Scrollable content.
         SizedBox(
           height: 180,
           child: PageView(
@@ -180,7 +161,7 @@ class _GununIcerigiWidgetState extends State<GununIcerigiWidget> {
             },
             children: [
               _buildIcerikKart(
-                baslik: (_languageService['todays_verse'] ?? 'GÜNÜN AYETİ')
+                baslik: (_languageService['todays_verse'] ?? '')
                     .toUpperCase(),
                 icerik: gununAyeti['text'] ?? '',
                 kaynak: gununAyeti['source'] ?? '',
@@ -188,7 +169,7 @@ class _GununIcerigiWidgetState extends State<GununIcerigiWidget> {
                 renkler: renkler,
               ),
               _buildIcerikKart(
-                baslik: (_languageService['todays_hadith'] ?? 'GÜNÜN HADİSİ')
+                baslik: (_languageService['todays_hadith'] ?? '')
                     .toUpperCase(),
                 icerik: gununHadisi['text'] ?? '',
                 kaynak: gununHadisi['source'] ?? '',
@@ -196,7 +177,7 @@ class _GununIcerigiWidgetState extends State<GununIcerigiWidget> {
                 renkler: renkler,
               ),
               _buildIcerikKart(
-                baslik: (_languageService['todays_dua'] ?? 'GÜNÜN DUASI')
+                baslik: (_languageService['todays_dua'] ?? '')
                     .toUpperCase(),
                 icerik: gununDuasi['text'] ?? '',
                 kaynak: gununDuasi['source'] ?? '',
@@ -207,7 +188,7 @@ class _GununIcerigiWidgetState extends State<GununIcerigiWidget> {
           ),
         ),
 
-        // Kaydırma ipucu
+        // Swipe hint.
         Padding(
           padding: const EdgeInsets.only(top: 8),
           child: Row(
@@ -220,8 +201,7 @@ class _GununIcerigiWidgetState extends State<GununIcerigiWidget> {
               ),
               const SizedBox(width: 4),
               Text(
-                _languageService['swipe_for_more'] ??
-                    'Kaydırarak diğer içeriği görün',
+                _languageService['swipe_for_more'] ?? '',
                 style: TextStyle(
                   color: renkler.yaziSecondary.withValues(alpha: 0.5),
                   fontSize: 10,
@@ -284,7 +264,7 @@ class _GununIcerigiWidgetState extends State<GununIcerigiWidget> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Başlık
+          // Title.
           Row(
             children: [
               Container(
@@ -310,7 +290,7 @@ class _GununIcerigiWidgetState extends State<GununIcerigiWidget> {
 
           const SizedBox(height: 16),
 
-          // İçerik
+          // Content.
           Expanded(
             child: SingleChildScrollView(
               child: Text(
@@ -327,7 +307,7 @@ class _GununIcerigiWidgetState extends State<GununIcerigiWidget> {
 
           const SizedBox(height: 12),
 
-          // Kaynak
+          // Source.
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [

@@ -2,20 +2,20 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
-/// Ezanvakti.herokuapp.com API servisi - DiyanetAPI için yedek
+/// Ezanvakti.herokuapp.com API service - backup for Diyanet API
 class NamazVaktiApiService {
   static const _baseUrl = 'https://ezanvakti.herokuapp.com';
   static final Map<String, Map<String, dynamic>> _cache = {};
   static final Map<String, DateTime> _cacheTimes = {};
 
-  /// Bugünün namaz vakitlerini döndürür
+  /// Returns today's prayer times
   static Future<Map<String, String>?> getBugunVakitler(String ilceId) async {
     // Ezanvakti API format: vakitler/ilceId
 
     final cacheKey = 'today-$ilceId';
     final now = DateTime.now();
 
-    // Cache kontrolü
+    // Cache check
     if (_cache.containsKey(cacheKey) && _cacheTimes.containsKey(cacheKey)) {
       final cacheTime = _cacheTimes[cacheKey]!;
       if (now.difference(cacheTime) < const Duration(hours: 6)) {
@@ -33,7 +33,7 @@ class NamazVaktiApiService {
         final decoded = jsonDecode(body);
 
         if (decoded is List && decoded.isNotEmpty) {
-          // Bugünün tarihini bul
+          // Find today's date
           final bugunStr =
               '${now.day.toString().padLeft(2, '0')}.${now.month.toString().padLeft(2, '0')}.${now.year}';
 
@@ -48,7 +48,7 @@ class NamazVaktiApiService {
             }
           }
 
-          // Bulunamazsa ilk kaydı kullan
+          // If not found, use the first entry
           bugun ??= decoded[0] as Map<String, dynamic>;
 
           _cache[cacheKey] = bugun;
@@ -58,13 +58,13 @@ class NamazVaktiApiService {
         }
       }
     } catch (e) {
-      debugPrint('⚠️ Yedek API hatası: $e');
+      debugPrint('⚠️ Backup API error: $e');
     }
 
     return null;
   }
 
-  /// Aylık vakitleri döndürür
+  /// Returns monthly times
   static Future<List<Map<String, dynamic>>> getAylikVakitler(
     String ilceId,
     int yil,
@@ -79,7 +79,7 @@ class NamazVaktiApiService {
         final decoded = jsonDecode(body);
 
         if (decoded is List) {
-          // Sadece istenen ayı filtrele
+          // Filter only the requested month
           final vakitler = decoded
               .where((v) {
                 if (v is! Map<String, dynamic>) return false;
@@ -92,7 +92,7 @@ class NamazVaktiApiService {
                     return vYil == yil && vAy == ay;
                   }
                 } catch (e) {
-                  // Parse hatası
+                  // Parse error
                 }
                 return false;
               })
@@ -100,19 +100,19 @@ class NamazVaktiApiService {
               .toList();
 
           if (vakitler.isNotEmpty) {
-            debugPrint('✅ Yedek API: ${vakitler.length} günlük veri');
+            debugPrint('✅ Backup API: ${vakitler.length} days of data');
             return vakitler;
           }
         }
       }
     } catch (e) {
-      debugPrint('⚠️ Yedek API aylık vakit hatası: $e');
+      debugPrint('⚠️ Backup API monthly times error: $e');
     }
 
     return [];
   }
 
-  /// API yanıtını standart formata dönüştürür
+  /// Converts API response to standard format
   static Map<String, String> _formatVakitler(Map<String, dynamic> data) {
     return {
       'Imsak': data['Imsak']?.toString() ?? '05:30',
@@ -128,10 +128,10 @@ class NamazVaktiApiService {
     };
   }
 
-  /// Cache'i temizle
+  /// Clear cache
   static void clearCache() {
     _cache.clear();
     _cacheTimes.clear();
-    debugPrint('✅ Yedek API cache temizlendi');
+    debugPrint('✅ Backup API cache cleared');
   }
 }

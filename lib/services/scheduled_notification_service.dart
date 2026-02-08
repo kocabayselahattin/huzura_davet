@@ -6,9 +6,10 @@ import 'konum_service.dart';
 import 'diyanet_api_service.dart';
 import 'alarm_service.dart';
 import 'early_reminder_service.dart';
+import 'language_service.dart';
 
-/// Zamanlanmış alarm servisi - Uygulama kapalıyken bile vakit alarmlarını kurar
-/// NOT: Erken hatırlatma alarmları EarlyReminderService tarafından yönetilir
+/// Scheduled alarm service - schedules prayer alarms even when app is closed.
+/// NOTE: Early reminders are managed by EarlyReminderService.
 class ScheduledNotificationService {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
@@ -16,7 +17,7 @@ class ScheduledNotificationService {
   static Timer? _dailyScheduleTimer;
   static DateTime? _lastScheduleDate;
 
-  // Vakit isimleri
+  // Prayer time names
   static const List<String> _vakitler = [
     'Imsak',
     'Gunes',
@@ -26,17 +27,7 @@ class ScheduledNotificationService {
     'Yatsi',
   ];
 
-  // Vakit Türkçe isimleri
-  static const Map<String, String> _vakitTurkce = {
-    'Imsak': 'İmsak',
-    'Gunes': 'Güneş',
-    'Ogle': 'Öğle',
-    'Ikindi': 'İkindi',
-    'Aksam': 'Akşam',
-    'Yatsi': 'Yatsı',
-  };
-
-  /// Servisi başlat
+  /// Initialize service.
   static Future<void> initialize() async {
     if (_initialized) return;
 
@@ -48,7 +39,7 @@ class ScheduledNotificationService {
 
     await _notificationsPlugin.initialize(settings: initializationSettings);
 
-    // Android 13+ için bildirim izni kontrolü
+    // Android 13+ notification permission check
     final androidImplementation = _notificationsPlugin
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
@@ -56,93 +47,91 @@ class ScheduledNotificationService {
     if (androidImplementation != null) {
       final hasPermission =
           await androidImplementation.areNotificationsEnabled() ?? false;
-      debugPrint('📱 Bildirim izni durumu: $hasPermission');
+      debugPrint('📱 Notification permission status: $hasPermission');
 
       if (!hasPermission) {
-        debugPrint('⚠️ Bildirim izni verilmemiş! İzin isteniyor...');
+        debugPrint('⚠️ Notification permission missing. Requesting...');
         final granted =
             await androidImplementation.requestNotificationsPermission() ??
             false;
-        debugPrint('📱 Bildirim izni sonucu: $granted');
+        debugPrint('📱 Notification permission result: $granted');
 
         if (!granted) {
-          debugPrint('❌ Bildirim izni reddedildi! Bildirimler çalışmayacak.');
+          debugPrint('❌ Notification permission denied. Notifications will not work.');
         }
       }
 
-      // Exact alarm izni kontrolü (Android 12+)
+      // Exact alarm permission check (Android 12+)
       final canScheduleExact =
           await androidImplementation.canScheduleExactNotifications() ?? false;
-      debugPrint('⏰ Exact alarm izni: $canScheduleExact');
+      debugPrint('⏰ Exact alarm permission: $canScheduleExact');
 
       if (!canScheduleExact) {
-        debugPrint('⚠️ Exact alarm izni yok! İzin isteniyor...');
+        debugPrint('⚠️ Exact alarm permission missing. Requesting...');
         final granted =
             await androidImplementation.requestExactAlarmsPermission() ?? false;
-        debugPrint('⏰ Exact alarm izni sonucu: $granted');
+        debugPrint('⏰ Exact alarm permission result: $granted');
       }
     }
 
     _initialized = true;
-    debugPrint('✅ Zamanlanmış bildirim servisi başlatıldı');
+    debugPrint('✅ Scheduled notification service initialized');
 
-    // Günlük zamanlama kontrolü başlat
+    // Start daily scheduling check
     _startDailyScheduleCheck();
   }
 
-  /// Gunluk alarmlari kontrol eden timer baslat
-  /// 7 gunluk zamanlama oldugu icin her gun yeniden zamanlamaya gerek yok
-  /// Sadece zamanlamalar bitince yeniden zamanla
+  /// Start a timer that checks daily alarms.
+  /// With 7-day scheduling, re-schedule only when needed.
   static void _startDailyScheduleCheck() {
     _dailyScheduleTimer?.cancel();
-    // Her 30 dakikada bir kontrol et (pil tasarrufu için)
+    // Check every 30 minutes (battery friendly)
     _dailyScheduleTimer = Timer.periodic(const Duration(minutes: 30), (
       _,
     ) async {
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
 
-      // İlk kez zamanlanıyorsa
+      // First-time scheduling
       if (_lastScheduleDate == null) {
-        debugPrint('📅 İlk zamanlama yapılıyor...');
+        debugPrint('📅 Performing initial scheduling...');
         await scheduleAllPrayerNotifications();
         _lastScheduleDate = today;
         return;
       }
 
-      // 7 günlük zamanlama olduğu için 6. günde yeniden zamanla
-      // Böylece her zaman en az 1 günlük önceden zamanlanmış olur
+      // Re-schedule on day 6 to maintain at least 1 day scheduled
       final daysSinceLastSchedule = today.difference(_lastScheduleDate!).inDays;
       if (daysSinceLastSchedule >= 6) {
-        debugPrint('📅 6 gün geçti, bildirimler yeniden zamanlanıyor...');
+        debugPrint('📅 6 days passed, rescheduling notifications...');
         await scheduleAllPrayerNotifications();
         _lastScheduleDate = today;
       }
     });
   }
 
-  /// Tum vakit alarmlarini zamanla (7 gunluk - 1 hafta)
-  /// Bu sayede uygulama birkac gun acilmasa bile alarmlar calisir
+  /// Schedule all prayer alarms (7 days - 1 week)
+  /// Alarms work even if the app is closed for a few days.
   static Future<void> scheduleAllPrayerNotifications() async {
     try {
-      // 7 gün için zamanlama (1 hafta)
+      // Schedule for 7 days (1 week)
       const int zamanlamaSuresi = 7;
       debugPrint(
-        '🔔 $zamanlamaSuresi günlük vakit bildirimleri zamanlanıyor...',
+        '🔔 Scheduling $zamanlamaSuresi days of prayer notifications...',
       );
 
-      // Önce mevcut namaz vakti bildirimlerini/alarmlarını iptal et
+      // Cancel existing prayer notifications/alarms first
       await cancelAllNotifications();
 
-      // Konum ID'sini al
+      // Get location ID
       final ilceId = await KonumService.getIlceId();
       if (ilceId == null || ilceId.isEmpty) {
-        debugPrint('⚠️ KRITIK: Konum seçilmemiş, bildirimler zamanlanamıyor!');
-        debugPrint('📍 Kullanıcı konum seçmeli (il/ilçe)');
+        debugPrint('⚠️ CRITICAL: Location not selected, cannot schedule notifications.');
+        debugPrint('📍 User must select a location (city/district).');
         return;
       }
 
-      // 7 günlük vakit bilgisi için aylık verileri al
+      // Get monthly data for 7-day schedule
       final now = DateTime.now();
       final aylikVakitler = await DiyanetApiService.getAylikVakitler(
         ilceId,
@@ -150,10 +139,10 @@ class ScheduledNotificationService {
         now.month,
       );
 
-      // Gelecek ay da lazım olabilir (ay sonundaysak veya 7 gün için)
+      // Next month may be needed (end of month or 7 days)
       List<Map<String, dynamic>> sonrakiAyVakitler = [];
       if (now.day > 24) {
-        // 7 gün için erken başla
+        // Start early for 7 days
         final sonrakiAy = now.month == 12 ? 1 : now.month + 1;
         final sonrakiYil = now.month == 12 ? now.year + 1 : now.year;
         sonrakiAyVakitler = await DiyanetApiService.getAylikVakitler(
@@ -163,47 +152,49 @@ class ScheduledNotificationService {
         );
       }
 
-      // Tüm vakitleri birleştir
+      // Merge all times
       final tumVakitler = [...aylikVakitler, ...sonrakiAyVakitler];
 
       if (tumVakitler.isEmpty) {
-        debugPrint('⚠️ Vakit bilgisi alınamadı');
+        debugPrint('⚠️ Prayer time data not available');
         return;
       }
 
-      debugPrint('📋 Toplam ${tumVakitler.length} günlük veri alındı');
+      debugPrint('📋 Retrieved ${tumVakitler.length} days of data');
 
-      // Kullanıcı ayarlarını yükle
+      // Load user settings
       final prefs = await SharedPreferences.getInstance();
+      final languageService = LanguageService();
+      await languageService.load();
       int alarmCount = 0;
 
-      // 7 gün için döngü (1 hafta)
+      // Loop for 7 days (1 week)
       for (int gun = 0; gun < zamanlamaSuresi; gun++) {
         final hedefTarih = now.add(Duration(days: gun));
         final hedefTarihStr =
             '${hedefTarih.day.toString().padLeft(2, '0')}.${hedefTarih.month.toString().padLeft(2, '0')}.${hedefTarih.year}';
 
-        // O güne ait vakitleri bul
+        // Find times for the day
         final gunVakitler = tumVakitler.firstWhere(
           (v) => v['MiladiTarihKisa'] == hedefTarihStr,
           orElse: () => <String, dynamic>{},
         );
 
         if (gunVakitler.isEmpty) {
-          debugPrint('⚠️ $hedefTarihStr için vakit bulunamadı');
+          debugPrint('⚠️ No times found for $hedefTarihStr');
           continue;
         }
 
-        // Her vakit için TAM VAKİT alarmı zamanla
-        // NOT: Erken hatırlatma alarmları EarlyReminderService tarafından ayrıca zamanlanır
+        // Schedule on-time alarm for each prayer
+        // NOTE: Early reminders are scheduled separately by EarlyReminderService
         for (int i = 0; i < _vakitler.length; i++) {
           final vakitKey = _vakitler[i];
           final vakitKeyLower = vakitKey.toLowerCase();
 
-          // Ana bildirim switch'i - bu vakit için tüm bildirimler açık mı?
+          // Main notification switch
           final bildirimAcik = prefs.getBool('bildirim_$vakitKeyLower') ?? true;
 
-          // Vaktinde bildirim - tam vakitte bildirim gönder
+          // On-time notification flag
           final varsayilanVaktinde =
               (vakitKeyLower == 'ogle' ||
               vakitKeyLower == 'ikindi' ||
@@ -213,7 +204,7 @@ class ScheduledNotificationService {
               prefs.getBool('vaktinde_$vakitKeyLower') ?? varsayilanVaktinde;
 
           debugPrint(
-            '🔍 [$vakitKey] bildirim=$bildirimAcik, vaktinde=$vaktindeBildirim',
+            '🔍 [$vakitKey] notifications=$bildirimAcik, onTime=$vaktindeBildirim',
           );
 
           final vakitSaati = gunVakitler[vakitKey]?.toString();
@@ -221,11 +212,11 @@ class ScheduledNotificationService {
             continue;
           }
 
-          // Vaktinde alarm ses ID'si - direkt ID kullanıyoruz, normalizasyon yok
+            // On-time alarm sound ID - use raw ID
           final sesId =
               prefs.getString('bildirim_sesi_$vakitKeyLower') ?? 'best';
 
-          // Vakit saatini parse et
+            // Parse time
           final parts = vakitSaati.split(':');
           if (parts.length != 2) continue;
 
@@ -233,22 +224,22 @@ class ScheduledNotificationService {
           final dakika = int.tryParse(parts[1]);
           if (saat == null || dakika == null) continue;
 
-          // Vakit saatini kaydet (BootReceiver için)
+          // Save time for BootReceiver
           final dateKey =
               '${hedefTarih.year}-${hedefTarih.month.toString().padLeft(2, '0')}-${hedefTarih.day.toString().padLeft(2, '0')}';
           await prefs.setString('vakit_${vakitKeyLower}_$dateKey', vakitSaati);
 
           debugPrint(
-            '📌 $vakitKey: $saat:$dakika, Bildirim: $bildirimAcik, Vaktinde: $vaktindeBildirim',
+            '📌 $vakitKey: $saat:$dakika, notifications: $bildirimAcik, onTime: $vaktindeBildirim',
           );
 
-          // Ana bildirim switch'i kapalıysa atla
+          // Skip if notifications are off
           if (!bildirimAcik) {
-            debugPrint('   ⏭️ Bildirim kapalı, atlanıyor');
+            debugPrint('   ⏭️ Notifications off, skipping');
             continue;
           }
 
-          // TAM VAKİT ALARMI - Sadece vaktinde bildirim açıksa çal
+          // ON-TIME ALARM - only if on-time notifications enabled
           var alarmZamani = DateTime(
             hedefTarih.year,
             hedefTarih.month,
@@ -263,12 +254,14 @@ class ScheduledNotificationService {
               alarmZamani,
             );
 
-            debugPrint('   Alarm ID: $alarmId, Ses ID: $sesId');
+            debugPrint('   Alarm ID: $alarmId, sound ID: $sesId');
+
+            final prayerLabel = _getPrayerLabel(languageService, vakitKey);
 
             final success = await AlarmService.scheduleAlarm(
-              prayerName: _vakitTurkce[vakitKey] ?? vakitKey,
+              prayerName: prayerLabel,
               triggerAtMillis: alarmZamani.millisecondsSinceEpoch,
-              soundPath: sesId, // Direkt ses ID'si gönderiyoruz
+              soundPath: sesId, // Send raw sound ID
               useVibration: true,
               alarmId: alarmId,
               isEarly: false,
@@ -277,45 +270,45 @@ class ScheduledNotificationService {
 
             if (success) {
               alarmCount++;
-              debugPrint('   ✅ Tam vakit alarmı zamanlandı');
+              debugPrint('   ✅ On-time alarm scheduled');
             } else {
-              debugPrint('   ❌ Tam vakit alarmı zamanlanamadı');
+              debugPrint('   ❌ On-time alarm scheduling failed');
             }
           } else if (!vaktindeBildirim) {
-            debugPrint('   ⏭️ Vaktinde bildirim kapalı, alarm atlanıyor');
+            debugPrint('   ⏭️ On-time notification off, alarm skipped');
           } else {
-            debugPrint('   ⏭️ Alarm zamanı geçmiş, atlanıyor');
+            debugPrint('   ⏭️ Alarm time passed, skipping');
           }
         }
       }
 
-      // Erken hatırlatma alarmlarını da zamanla (EarlyReminderService üzerinden)
+      // Also schedule early reminders (via EarlyReminderService)
       final erkenAlarmCount =
           await EarlyReminderService.scheduleAllEarlyReminders();
       alarmCount += erkenAlarmCount;
 
       debugPrint(
-        '🔔 $zamanlamaSuresi gunluk zamanlama tamamlandi: $alarmCount alarm (erken: $erkenAlarmCount)',
+        '🔔 $zamanlamaSuresi day scheduling completed: $alarmCount alarms (early: $erkenAlarmCount)',
       );
 
-      // Son zamanlama tarihini kaydet
+      // Save last schedule date
       await prefs.setString('last_schedule_date', now.toIso8601String());
       await prefs.setInt('scheduled_days', zamanlamaSuresi);
     } catch (e, stackTrace) {
-      debugPrint('❌ Bildirim zamanlama hatası: $e');
+      debugPrint('❌ Notification scheduling error: $e');
       debugPrint('📋 Stack trace: $stackTrace');
     }
   }
 
-  /// Tum namaz vakti alarmlarini iptal et
-  /// NOT: Gunluk icerik ve ozel gun alarmlarini iptal etmez
+  /// Cancel all prayer time alarms
+  /// NOTE: Does not cancel daily content or special day alarms.
   static Future<void> cancelAllNotifications() async {
     await _cancelPrayerAlarms();
-    debugPrint('🗑️ Namaz vakti alarmlari iptal edildi');
+    debugPrint('🗑️ Prayer time alarms canceled');
   }
 
-  /// Namaz vakti alarmlarını iptal et (sadece tam vakit alarmları)
-  /// NOT: Erken hatırlatma alarmları EarlyReminderService tarafından iptal edilir
+  /// Cancel prayer time alarms (on-time only)
+  /// NOTE: Early reminders are canceled by EarlyReminderService.
   static Future<void> _cancelPrayerAlarms() async {
     final now = DateTime.now();
     for (int gun = 0; gun < 7; gun++) {
@@ -326,12 +319,31 @@ class ScheduledNotificationService {
         await AlarmService.cancelAlarm(alarmId);
       }
     }
-    // Erken hatırlatma alarmlarını da iptal et
+    // Also cancel early reminders
     await EarlyReminderService.cancelAllEarlyReminders();
   }
 
-  /// Yarının alarmlarını zamanla (gece yarısında çağrılacak)
+  /// Schedule next day's alarms (called at midnight)
   static Future<void> scheduleNextDayNotifications() async {
     await scheduleAllPrayerNotifications();
+  }
+
+  static String _getPrayerLabel(LanguageService languageService, String key) {
+    switch (key) {
+      case 'Imsak':
+        return languageService['imsak'] ?? key;
+      case 'Gunes':
+        return languageService['gunes'] ?? key;
+      case 'Ogle':
+        return languageService['ogle'] ?? key;
+      case 'Ikindi':
+        return languageService['ikindi'] ?? key;
+      case 'Aksam':
+        return languageService['aksam'] ?? key;
+      case 'Yatsi':
+        return languageService['yatsi'] ?? key;
+      default:
+        return key;
+    }
   }
 }

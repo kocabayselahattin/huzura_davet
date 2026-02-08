@@ -96,27 +96,27 @@ class _MinimalSayacWidgetState extends State<MinimalSayacWidget> {
 
     final vakitSaatleri = [
       {
-        'adi': _languageService['imsak'] ?? 'İmsak',
+        'adi': _languageService['imsak'] ?? '',
         'saat': _vakitSaatleri['Imsak']!,
       },
       {
-        'adi': _languageService['gunes'] ?? 'Güneş',
+        'adi': _languageService['gunes'] ?? '',
         'saat': _vakitSaatleri['Gunes']!,
       },
       {
-        'adi': _languageService['ogle'] ?? 'Öğle',
+        'adi': _languageService['ogle'] ?? '',
         'saat': _vakitSaatleri['Ogle']!,
       },
       {
-        'adi': _languageService['ikindi'] ?? 'İkindi',
+        'adi': _languageService['ikindi'] ?? '',
         'saat': _vakitSaatleri['Ikindi']!,
       },
       {
-        'adi': _languageService['aksam'] ?? 'Akşam',
+        'adi': _languageService['aksam'] ?? '',
         'saat': _vakitSaatleri['Aksam']!,
       },
       {
-        'adi': _languageService['yatsi'] ?? 'Yatsı',
+        'adi': _languageService['yatsi'] ?? '',
         'saat': _vakitSaatleri['Yatsi']!,
       },
     ];
@@ -221,22 +221,8 @@ class _MinimalSayacWidgetState extends State<MinimalSayacWidget> {
   }
 
   String _getHicriAyAdi(int ay) {
-    final aylar = [
-      '',
-      'Muharrem',
-      'Safer',
-      'Rebiülevvel',
-      'Rebiülahir',
-      'Cemaziyelevvel',
-      'Cemaziyelahir',
-      'Recep',
-      'Şaban',
-      'Ramazan',
-      'Şevval',
-      'Zilkade',
-      'Zilhicce',
-    ];
-    return aylar[ay];
+    if (ay < 1 || ay > 12) return '';
+    return _languageService['hijri_month_$ay'] ?? '';
   }
 
   @override
@@ -305,7 +291,7 @@ class _MinimalSayacWidgetState extends State<MinimalSayacWidget> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    _languageService['widget_now_at'] ?? 'Şu an',
+                    _languageService['widget_now_at'] ?? '',
                     style: TextStyle(color: secondaryTextColor, fontSize: 10),
                   ),
                 ],
@@ -345,7 +331,7 @@ class _MinimalSayacWidgetState extends State<MinimalSayacWidget> {
               children: [
                 _buildTimeUnit(
                   hours.toString().padLeft(2, '0'),
-                  'h',
+                  _languageService['hour_short'] ?? '',
                   textColor,
                   mutedColor,
                 ),
@@ -359,7 +345,7 @@ class _MinimalSayacWidgetState extends State<MinimalSayacWidget> {
                 ),
                 _buildTimeUnit(
                   minutes.toString().padLeft(2, '0'),
-                  'm',
+                  _languageService['minute_short'] ?? '',
                   textColor,
                   mutedColor,
                 ),
@@ -373,7 +359,7 @@ class _MinimalSayacWidgetState extends State<MinimalSayacWidget> {
                 ),
                 _buildTimeUnit(
                   seconds.toString().padLeft(2, '0'),
-                  's',
+                  _languageService['second_short'] ?? '',
                   textColor,
                   mutedColor,
                 ),

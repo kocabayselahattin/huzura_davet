@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import '../services/konum_service.dart';
 import '../services/diyanet_api_service.dart';
 import '../services/tema_service.dart';
+import '../services/language_service.dart';
 import 'package:intl/intl.dart';
 import 'package:hijri/hijri_calendar.dart';
 
@@ -17,8 +18,9 @@ class MihrapSayacWidget extends StatefulWidget {
 class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
     with TickerProviderStateMixin {
   final TemaService _temaService = TemaService();
+  final LanguageService _languageService = LanguageService();
   Timer? _timer;
-  String _gelecekVakit = "Öğle";
+  String _gelecekVakit = '';
   Duration _kalanSure = const Duration();
   Map<String, String> _vakitler = {};
   double _ecirOrani = 0.0;
@@ -42,6 +44,7 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
       }
     });
     _temaService.addListener(_onTemaChanged);
+    _languageService.addListener(_onTemaChanged);
   }
 
   void _onTemaChanged() {
@@ -53,17 +56,16 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
     _timer?.cancel();
     _archController.dispose();
     _temaService.removeListener(_onTemaChanged);
+    _languageService.removeListener(_onTemaChanged);
     super.dispose();
   }
 
   Future<void> _vakitleriYukle() async {
-    final konumlar = await KonumService.getKonumlar();
-    final aktifIndex = await KonumService.getAktifKonumIndex();
-
-    if (konumlar.isEmpty || aktifIndex >= konumlar.length) return;
-
-    final konum = konumlar[aktifIndex];
-    final ilceId = konum.ilceId;
+    final ilceId = await KonumService.getIlceId();
+    if (ilceId == null || ilceId.isEmpty) {
+      _setDefaultTimes();
+      return;
+    }
 
     try {
       final vakitler = await DiyanetApiService.getBugunVakitler(ilceId);
@@ -73,10 +75,28 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
           _vakitler = vakitler;
         });
         _vakitHesapla();
+      } else {
+        _setDefaultTimes();
       }
     } catch (e) {
-      debugPrint('Vakitler yüklenemedi: $e');
+      debugPrint('Failed to load prayer times: $e');
+      _setDefaultTimes();
     }
+  }
+
+  void _setDefaultTimes() {
+    if (!mounted) return;
+    setState(() {
+      _vakitler = {
+        'Imsak': '05:30',
+        'Gunes': '07:00',
+        'Ogle': '12:30',
+        'Ikindi': '15:30',
+        'Aksam': '18:00',
+        'Yatsi': '19:30',
+      };
+    });
+    _vakitHesapla();
   }
 
   void _vakitHesapla() {
@@ -85,12 +105,12 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
     final now = DateTime.now();
     final vakitSirasi = ['Imsak', 'Gunes', 'Ogle', 'Ikindi', 'Aksam', 'Yatsi'];
     final vakitIsimleri = {
-      'Imsak': 'İmsak',
-      'Gunes': 'Güneş',
-      'Ogle': 'Öğle',
-      'Ikindi': 'İkindi',
-      'Aksam': 'Akşam',
-      'Yatsi': 'Yatsı',
+      'Imsak': _languageService['imsak'],
+      'Gunes': _languageService['gunes'],
+      'Ogle': _languageService['ogle'],
+      'Ikindi': _languageService['ikindi'],
+      'Aksam': _languageService['aksam'],
+      'Yatsi': _languageService['yatsi'],
     };
 
     DateTime? gelecekVakitZamani;
@@ -126,7 +146,7 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
       final imsakZamani = vakitTimes['Imsak'];
       if (imsakZamani != null) {
         gelecekVakitZamani = imsakZamani.add(const Duration(days: 1));
-        gelecekVakitIsmi = 'İmsak';
+        gelecekVakitIsmi = _languageService['imsak'];
         gelecekVakitKey = 'Imsak';
       }
     }
@@ -180,9 +200,9 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
     final seconds = _kalanSure.inSeconds.remainder(60);
 
     final hijriNow = HijriCalendar.now();
-    final miladi = DateFormat('d MMM yyyy', 'tr_TR').format(DateTime.now());
+    final miladi = DateFormat('d MMM yyyy', _getLocale()).format(DateTime.now());
     final hicri =
-        '${hijriNow.hDay} ${_getHijriMonth(hijriNow.hMonth)} ${hijriNow.hYear}';
+      '${hijriNow.hDay} ${_getHijriMonth(hijriNow.hMonth)} ${hijriNow.hYear}';
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -273,16 +293,19 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    _buildTimePillar(hours.toString().padLeft(2, '0'), 'SAAT'),
+                    _buildTimePillar(
+                      hours.toString().padLeft(2, '0'),
+                      _languageService['hour_short'].toUpperCase(),
+                    ),
                     const SizedBox(width: 10),
                     _buildTimePillar(
                       minutes.toString().padLeft(2, '0'),
-                      'DAKİKA',
+                      _languageService['minute_short'].toUpperCase(),
                     ),
                     const SizedBox(width: 10),
                     _buildTimePillar(
                       seconds.toString().padLeft(2, '0'),
-                      'SANİYE',
+                      _languageService['second_short'].toUpperCase(),
                     ),
                   ],
                 ),
@@ -379,21 +402,27 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
   }
 
   String _getHijriMonth(int month) {
-    const months = [
-      'Muharrem',
-      'Safer',
-      'Rebiülevvel',
-      'Rebiülahir',
-      'Cemaziyelevvel',
-      'Cemaziyelahir',
-      'Recep',
-      'Şaban',
-      'Ramazan',
-      'Şevval',
-      'Zilkade',
-      'Zilhicce',
-    ];
-    return months[month - 1];
+    if (month < 1 || month > 12) return '';
+    return _languageService['hijri_month_$month'] ?? '';
+  }
+
+  String _getLocale() {
+    switch (_languageService.currentLanguage) {
+      case 'tr':
+        return 'tr_TR';
+      case 'en':
+        return 'en_US';
+      case 'de':
+        return 'de_DE';
+      case 'fr':
+        return 'fr_FR';
+      case 'ar':
+        return 'ar_SA';
+      case 'fa':
+        return 'fa_IR';
+      default:
+        return 'tr_TR';
+    }
   }
 }
 

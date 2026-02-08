@@ -8,8 +8,8 @@ import '../services/diyanet_api_service.dart';
 import '../services/tema_service.dart';
 import '../services/language_service.dart';
 
-/// Gece/Ay temalı sayaç widget'ı
-/// Koyu mavi gece gökyüzü, ay ve yıldızlar
+/// Night/Moon themed countdown widget.
+/// Deep blue night sky with moon and stars.
 class GeceSayacWidget extends StatefulWidget {
   final bool shouldLoadData;
   const GeceSayacWidget({super.key, this.shouldLoadData = true});
@@ -106,27 +106,27 @@ class _GeceSayacWidgetState extends State<GeceSayacWidget>
 
     final vakitSaatleri = [
       {
-        'adi': _languageService['imsak'] ?? 'İmsak',
+        'adi': _languageService['imsak'] ?? '',
         'saat': _vakitSaatleri['Imsak']!,
       },
       {
-        'adi': _languageService['gunes'] ?? 'Güneş',
+        'adi': _languageService['gunes'] ?? '',
         'saat': _vakitSaatleri['Gunes']!,
       },
       {
-        'adi': _languageService['ogle'] ?? 'Öğle',
+        'adi': _languageService['ogle'] ?? '',
         'saat': _vakitSaatleri['Ogle']!,
       },
       {
-        'adi': _languageService['ikindi'] ?? 'İkindi',
+        'adi': _languageService['ikindi'] ?? '',
         'saat': _vakitSaatleri['Ikindi']!,
       },
       {
-        'adi': _languageService['aksam'] ?? 'Akşam',
+        'adi': _languageService['aksam'] ?? '',
         'saat': _vakitSaatleri['Aksam']!,
       },
       {
-        'adi': _languageService['yatsi'] ?? 'Yatsı',
+        'adi': _languageService['yatsi'] ?? '',
         'saat': _vakitSaatleri['Yatsi']!,
       },
     ];
@@ -205,51 +205,54 @@ class _GeceSayacWidgetState extends State<GeceSayacWidget>
   }
 
   String _getHicriAyAdi(int ay) {
-    final aylar = [
-      '',
-      'Muharrem',
-      'Safer',
-      'Rebiülevvel',
-      'Rebiülahir',
-      'Cemaziyelevvel',
-      'Cemaziyelahir',
-      'Recep',
-      'Şaban',
-      'Ramazan',
-      'Şevval',
-      'Zilkade',
-      'Zilhicce',
-    ];
-    return aylar[ay];
+    if (ay < 1 || ay > 12) return '';
+    return _languageService['hijri_month_$ay'] ?? '';
   }
 
-  /// Ay fazını hesapla (0-7 arası 8 faz) - gun_donumu_sayac_widget.dart ile birebir aynı
-  /// 0=Yeni Ay, 1=Hilal (büyüyen), 2=İlk Dördün, 3=Dolmak Üzere
-  /// 4=Dolunay, 5=Küçülmeye Başlayan, 6=Son Dördün, 7=Hilal (küçülen)
-  int _getMoonPhaseIndex(DateTime date) {
-    // Bilinen yeni ay tarihi: 29 Aralık 2024 (daha güncel referans)
+  String _getLocale() {
+    switch (_languageService.currentLanguage) {
+      case 'tr':
+        return 'tr_TR';
+      case 'en':
+        return 'en_US';
+      case 'de':
+        return 'de_DE';
+      case 'fr':
+        return 'fr_FR';
+      case 'ar':
+        return 'ar_SA';
+      case 'fa':
+        return 'fa_IR';
+      default:
+        return 'tr_TR';
+    }
+  }
+
+  /// Calculate moon phase fraction (0.0-1.0) - same as gun_donumu_sayac_widget.dart.
+  /// 0.0=new moon, 0.5=full moon, 1.0=new moon.
+  double _getMoonPhaseFraction(DateTime date) {
+    // Known new moon date: Dec 29, 2024 (updated reference).
     final reference = DateTime.utc(2024, 12, 30, 22, 27);
     const synodicMonth = 29.53058867;
 
     final daysDiff = date.difference(reference).inHours / 24.0;
     final phase = (daysDiff % synodicMonth) / synodicMonth;
 
-    // 0-1 arasındaki değeri 0-7 faz indeksine çevir
-    return ((phase * 8) % 8).floor();
+    return phase;
   }
 
-  /// Ay fazına göre ay görseli - gun_donumu_sayac_widget.dart ile birebir aynı
-  Widget _buildMoonWithPhase(int phase) {
-    // Gerçek ay resmi üzerine gölge ile faz simülasyonu
+  /// Moon rendering by phase - same as gun_donumu_sayac_widget.dart.
+  Widget _buildMoonWithPhase(double phase) {
+    // Simulate phase with a shadow over the moon image.
     return Stack(
       children: [
-        // Ana ay resmi
+        // Base moon image.
         Image.asset(
           'assets/icon/moon.png',
           fit: BoxFit.cover,
-          errorBuilder: (_, _, __) => _fallbackMoon(phase),
+          errorBuilder: (context, error, stackTrace) => _fallbackMoon(phase),
         ),
-        // Faz gölgesi
+        // Phase shadow.
         CustomPaint(
           size: const Size(50, 50),
           painter: _MoonPhasePainter(phase: phase),
@@ -258,8 +261,8 @@ class _GeceSayacWidgetState extends State<GeceSayacWidget>
     );
   }
 
-  /// Fallback ay - gun_donumu_sayac_widget.dart ile birebir aynı
-  Widget _fallbackMoon(int phase) {
+  /// Fallback moon - same as gun_donumu_sayac_widget.dart.
+  Widget _fallbackMoon(double phase) {
     return Container(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
@@ -288,13 +291,13 @@ class _GeceSayacWidgetState extends State<GeceSayacWidget>
     final hicri = HijriCalendar.now();
     final hicriTarih =
         '${hicri.hDay} ${_getHicriAyAdi(hicri.hMonth)} ${hicri.hYear}';
-    final miladiTarih = DateFormat('dd MMMM yyyy', 'tr_TR').format(now);
+    final miladiTarih = DateFormat('dd MMMM yyyy', _getLocale()).format(now);
 
-    // Tema kontrolü: Varsayılansa orijinal, değilse tema renkleri
+    // Theme toggle: use original palette or theme colors.
     final kullanTemaRenkleri = !_temaService.sayacTemasiKullan;
     final temaRenkleri = _temaService.renkler;
 
-    // Orijinal renkler veya tema renkleri
+    // Original colors or theme colors.
     final primaryColor = kullanTemaRenkleri
         ? temaRenkleri.vurgu
         : const Color(0xFFFFF8DC);
@@ -324,7 +327,7 @@ class _GeceSayacWidgetState extends State<GeceSayacWidget>
         borderRadius: BorderRadius.circular(24),
         child: Stack(
           children: [
-            // Arka plan - Gece gökyüzü
+            // Background - night sky.
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -335,7 +338,7 @@ class _GeceSayacWidgetState extends State<GeceSayacWidget>
               ),
             ),
 
-            // Yıldızlar
+            // Stars.
             AnimatedBuilder(
               animation: _twinkleController,
               builder: (context, child) {
@@ -349,24 +352,24 @@ class _GeceSayacWidgetState extends State<GeceSayacWidget>
               },
             ),
 
-            // Hilal Ay - gun_donumu_sayac_widget.dart ile aynı
+            // Crescent moon - same as gun_donumu_sayac_widget.dart.
             Positioned(
               right: 30,
               top: 25,
               child: SizedBox(
                 width: 50,
                 height: 50,
-                child: _buildMoonWithPhase(_getMoonPhaseIndex(DateTime.now())),
+                child: _buildMoonWithPhase(_getMoonPhaseFraction(DateTime.now())),
               ),
             ),
 
-            // İçerik
+            // Content.
             Padding(
               padding: const EdgeInsets.all(24),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Üst: Vakit bilgisi
+                  // Top: prayer time info.
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -402,7 +405,7 @@ class _GeceSayacWidgetState extends State<GeceSayacWidget>
 
                   const SizedBox(height: 24),
 
-                  // Sayaç
+                  // Countdown.
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -442,7 +445,7 @@ class _GeceSayacWidgetState extends State<GeceSayacWidget>
 
                   const SizedBox(height: 20),
 
-                  // Alt: Tarihler
+                  // Bottom: dates.
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 20,
@@ -484,7 +487,7 @@ class _GeceSayacWidgetState extends State<GeceSayacWidget>
 
                   const SizedBox(height: 8),
 
-                  // İlerleme Barı
+                  // Progress bar.
                   _buildProgressBar(primaryColor, textColor),
                 ],
               ),
@@ -623,9 +626,9 @@ class _ProgressBarLinesPainter extends CustomPainter {
   }
 }
 
-/// Ay fazı çizici - gun_donumu_sayac_widget.dart ile birebir aynı
+/// Moon phase painter - same as gun_donumu_sayac_widget.dart.
 class _MoonPhasePainter extends CustomPainter {
-  final int phase;
+  final double phase;
 
   _MoonPhasePainter({required this.phase});
 
@@ -634,14 +637,21 @@ class _MoonPhasePainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2 - 1;
 
-    // Önce tüm ayı karanlık (siyah) boya
+    // Paint the moon fully dark first.
     final darkPaint = Paint()
       ..color = const Color(0xFF0A0A15).withOpacity(0.92)
       ..style = PaintingStyle.fill;
     canvas.drawCircle(center, radius, darkPaint);
 
-    // Dolunay ise tamamen aydınlık (beyaz) boya
-    if (phase == 4) {
+    // Illumination amount from 0.0 to 1.0.
+    final illumination = phase <= 0.5 ? (phase * 2) : ((1 - phase) * 2);
+    if (illumination <= 0.001) {
+      // New moon - keep it dark.
+      return;
+    }
+
+    // If full moon, paint fully bright.
+    if (illumination >= 0.999) {
       final lightPaint = Paint()
         ..color = const Color(0xFFFFFFFF)
         ..style = PaintingStyle.fill;
@@ -649,17 +659,13 @@ class _MoonPhasePainter extends CustomPainter {
       return;
     }
 
-    // Faz değerine göre aydınlık bölgenin genişliği
-    final illumination = (phase <= 4) ? phase / 4.0 : (8 - phase) / 4.0;
     final shadowRatio = 1 - math.pow(illumination, 0.35).toDouble();
+    final isWaxing = phase < 0.5;
 
     final path = Path();
 
-    if (phase == 0 || phase == 8) {
-      // Yeni ay - hiç aydınlık yok, sadece siyah kalacak
-      return;
-    } else if (phase < 4) {
-      // Büyüyen ay - SOL karanlık, SAĞ aydınlık
+    if (isWaxing) {
+      // Waxing moon - left dark, right bright.
       path.moveTo(center.dx, center.dy - radius);
       path.arcTo(
         Rect.fromCircle(center: center, radius: radius),
@@ -668,7 +674,7 @@ class _MoonPhasePainter extends CustomPainter {
         false,
       );
       final curveWidth = radius * (1 - shadowRatio * 2).abs();
-      if (phase < 2) {
+      if (illumination < 0.5) {
         path.arcTo(
           Rect.fromLTRB(
             center.dx - curveWidth,
@@ -694,7 +700,7 @@ class _MoonPhasePainter extends CustomPainter {
         );
       }
     } else {
-      // Küçülen ay - SAĞ karanlık, SOL aydınlık
+      // Waning moon - right dark, left bright.
       path.moveTo(center.dx, center.dy - radius);
       path.arcTo(
         Rect.fromCircle(center: center, radius: radius),
@@ -703,7 +709,7 @@ class _MoonPhasePainter extends CustomPainter {
         false,
       );
       final curveWidth = radius * (1 - shadowRatio * 2).abs();
-      if (phase > 6) {
+      if (illumination < 0.5) {
         path.arcTo(
           Rect.fromLTRB(
             center.dx - curveWidth,
@@ -730,7 +736,7 @@ class _MoonPhasePainter extends CustomPainter {
       }
     }
 
-    // Aydınlık kısmı clip et ve beyaz boya
+    // Clip the bright area and paint it white.
     canvas.save();
     canvas.clipPath(path);
     final lightPaint = Paint()

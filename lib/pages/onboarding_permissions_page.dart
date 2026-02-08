@@ -55,54 +55,46 @@ class _OnboardingPermissionsPageState extends State<OnboardingPermissionsPage>
     _steps = [
       _PermissionStep(
         icon: Icons.location_on,
-        title: _languageService['location_permission'] ?? 'Konum İzni',
+        title: _languageService['location_permission'] ?? '',
         description:
-            _languageService['location_permission_desc'] ??
-            'Bu izin ile:\n\n• Bulunduğunuz şehir ve ilçeye göre otomatik olarak doğru namaz vakitleri gösterilir\n• Konumunuz değiştiğinde (seyahat, taşınma) vakitler otomatik güncellenir\n• Manuel il/ilçe seçme zahmetinden kurtulursunuz\n\nDİKKAT: Bu izin verilmezse vakitleri manuel olarak il/ilçe seçerek ayarlayabilirsiniz.',
+            _languageService['location_permission_desc'] ?? '',
         color: Colors.blue,
       ),
       _PermissionStep(
         icon: Icons.notifications_active,
-        title: _languageService['notification_permission'] ?? 'Bildirim İzni',
+        title: _languageService['notification_permission'] ?? '',
         description:
-            _languageService['notification_permission_desc'] ??
-            'Bu izin ile:\n\n• Namaz vakitlerinde bildirim alırsınız\n• İmsak, Öğle, İkindi, Akşam, Yatsı vakitlerinde hatırlatma\n• Özel seçtiğiniz ezan sesi ile uyarı\n• Günlük içerikler (hadis, dua, ayet) bildirimi\n\nDİKKAT: Bu izin olmadan hiçbir bildirim alamazsınız.',
+            _languageService['notification_permission_desc'] ?? '',
         color: Colors.orange,
       ),
       _PermissionStep(
         icon: Icons.alarm,
         title:
-            _languageService['exact_alarm_permission'] ??
-            'Tam Zamanlı Alarm İzni',
+            _languageService['exact_alarm_permission'] ?? '',
         description:
-            _languageService['exact_alarm_permission_desc'] ??
-            'Bu izin ile:\n\n• Bildirimler TAM namaz vaktinde gelir (saniye hassasiyetinde)\n• Gecikmeli bildirim sorunu yaşamazsınız\n• Öğle 12:30 ise tam 12:30:00\'da bildirim\n• Android sistem kısıtlamaları bildirimleri engellemez\n\nDİKKAT: Bu izin olmadan bildirimler dakikalarca gecikebilir.',
+            _languageService['exact_alarm_permission_desc'] ?? '',
         color: Colors.purple,
       ),
       _PermissionStep(
         icon: Icons.layers,
-        title: _languageService['overlay_permission'] ?? 'Üstünde Göster İzni',
+        title: _languageService['overlay_permission'] ?? '',
         description:
-            _languageService['overlay_permission_desc'] ??
-            'Bu izin ile:\n\n• Namaz vakti geldiğinde tam ekran bildirim görürsünüz\n• Hangi uygulamada olursanız olun vakit bildirimi üstte gösterilir\n• Oyun oynarken, video izlerken bile bildirim alırsınız\n• Daha dikkat çekici ve fark edilebilir uyarılar\n\nDİKKAT: Bu izin olmadan sadece bildirim çubuğunda gösterilir.',
+            _languageService['overlay_permission_desc'] ?? '',
         color: Colors.teal,
       ),
       _PermissionStep(
         icon: Icons.battery_charging_full,
         title:
-            _languageService['battery_permission'] ??
-            'Pil Optimizasyonu Muafiyeti',
+            _languageService['battery_permission'] ?? '',
         description:
-            _languageService['battery_permission_desc'] ??
-            'Bu izin ile:\n\n• Android pil tasarrufu modu uygulamamızı durdurmaz\n• Arka planda bildirimleri kesintisiz gönderebiliriz\n• Telefon uyku modundayken bile vakitler zamanında gelir\n• Uygulama kapalıyken bile bildirimler çalışır\n\nDİKKAT: Bu izin olmadan Android bildirimleri engelleyebilir.',
+            _languageService['battery_permission_desc'] ?? '',
         color: Colors.green,
       ),
       _PermissionStep(
         icon: Icons.do_not_disturb,
-        title: _languageService['dnd_permission'] ?? 'Rahatsız Etme Modu İzni',
+        title: _languageService['dnd_permission'] ?? '',
         description:
-            _languageService['dnd_permission_desc'] ??
-            'Bu izin ile:\n\n• Namaz vakitlerinde telefonunuz otomatik sessiz moda geçer\n• Namaz kılarken rahatsız edilmezsiniz\n• Vakit bitince telefon normal moda döner\n• Sosyal medya, arama, mesaj bildirimleri geçici engellenir\n\nDİKKAT: İsteğe bağlı bir özelliktir, isterseniz kullanmayabilirsiniz.',
+            _languageService['dnd_permission_desc'] ?? '',
         color: Colors.red,
       ),
     ];
@@ -236,27 +228,27 @@ class _OnboardingPermissionsPageState extends State<OnboardingPermissionsPage>
           switch (_currentStep) {
             case 0: // Konum
               message =
-                  'Konum izni verilmedi. Manuel olarak konum seçebilirsiniz.\n\nAyarlar > Konum bölümünden il/ilçe seçin';
+                _languageService['permission_location_denied_info'] ?? '';
               break;
             case 1: // Bildirim
               message =
-                  'Bildirim izni verilmedi. Namaz vakti bildirimleri çalışmayacak.\n\nİsterseniz daha sonra telefonun Ayarlar menüsünden izin verebilirsiniz';
+                _languageService['permission_notification_denied_info'] ?? '';
               break;
             case 2: // Exact Alarm
               message =
-                  'Tam zamanlı alarm izni verilmedi. Bildirimler gecikmeli gelebilir.\n\nİsterseniz daha sonra telefonun Ayarlar menüsünden izin verebilirsiniz';
+                _languageService['permission_exact_alarm_denied_info'] ?? '';
               break;
             case 3: // Overlay
               message =
-                  'Üst katman izni verilmedi. Tam ekran bildirimler gösterilemeyecek.\n\nİsterseniz daha sonra telefonun Ayarlar menüsünden izin verebilirsiniz';
+                _languageService['permission_overlay_denied_info'] ?? '';
               break;
             case 4: // Pil
               message =
-                  'Pil optimizasyonu kapatılmadı. Arka plan bildirimleri sorun yaşayabilir.\n\nİsterseniz daha sonra telefonun Ayarlar menüsünden değiştirebilirsiniz';
+                _languageService['permission_battery_denied_info'] ?? '';
               break;
             case 5: // DND
               message =
-                  'Rahatsız Etme Modu izni verilmedi. Namaz vakitlerinde telefonunuz otomatik sessiz moda alınamayacak.\n\nİsterseniz daha sonra telefonun Ayarlar menüsünden izin verebilirsiniz';
+                _languageService['permission_dnd_denied_info'] ?? '';
               break;
           }
 
@@ -275,7 +267,7 @@ class _OnboardingPermissionsPageState extends State<OnboardingPermissionsPage>
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      _languageService['permission_info'] ?? 'İzin Bilgisi',
+                      _languageService['permission_info'] ?? '',
                       style: const TextStyle(color: Colors.white, fontSize: 18),
                     ),
                   ),
@@ -289,7 +281,7 @@ class _OnboardingPermissionsPageState extends State<OnboardingPermissionsPage>
                 TextButton(
                   onPressed: () => Navigator.pop(context, false),
                   child: Text(
-                    _languageService['try_again'] ?? 'Tekrar Dene',
+                    _languageService['try_again'] ?? '',
                     style: const TextStyle(
                       color: Colors.orange,
                       fontWeight: FontWeight.bold,
@@ -303,7 +295,7 @@ class _OnboardingPermissionsPageState extends State<OnboardingPermissionsPage>
                     foregroundColor: Colors.white,
                   ),
                   child: Text(
-                    _languageService['continue'] ?? 'Devam Et',
+                    _languageService['continue'] ?? '',
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -342,19 +334,18 @@ class _OnboardingPermissionsPageState extends State<OnboardingPermissionsPage>
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF2B3151),
         title: Text(
-          _languageService['skip_permissions'] ?? 'İzinleri Atla?',
+          _languageService['skip_permissions'] ?? '',
           style: const TextStyle(color: Colors.white),
         ),
         content: Text(
-          _languageService['skip_permissions_warning'] ??
-              'Bazı özellikler (bildirimler, konum tabanlı vakitler) düzgün çalışmayabilir.',
+          _languageService['skip_permissions_warning'] ?? '',
           style: const TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
-              _languageService['cancel'] ?? 'İptal',
+              _languageService['cancel'] ?? '',
               style: const TextStyle(color: Colors.white70),
             ),
           ),
@@ -365,7 +356,7 @@ class _OnboardingPermissionsPageState extends State<OnboardingPermissionsPage>
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
             child: Text(
-              _languageService['skip'] ?? 'Atla',
+              _languageService['skip'] ?? '',
               style: const TextStyle(color: Colors.white),
             ),
           ),
@@ -433,13 +424,13 @@ class _OnboardingPermissionsPageState extends State<OnboardingPermissionsPage>
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    '${_languageService['step'] ?? 'Adım'} ${_currentStep + 1} / ${_steps.length}',
+                    '${_languageService['step'] ?? ''} ${_currentStep + 1} / ${_steps.length}',
                     style: const TextStyle(color: Colors.white70, fontSize: 14),
                   ),
                   TextButton(
                     onPressed: _skipAll,
                     child: Text(
-                      _languageService['skip_all'] ?? 'Tümünü Atla',
+                      _languageService['skip_all'] ?? '',
                       style: const TextStyle(color: Colors.white54),
                     ),
                   ),
@@ -537,8 +528,7 @@ class _OnboardingPermissionsPageState extends State<OnboardingPermissionsPage>
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              _languageService['permission_granted'] ??
-                                  'İzin Verildi',
+                              _languageService['permission_granted'] ?? '',
                               style: const TextStyle(
                                 color: Colors.green,
                                 fontWeight: FontWeight.bold,
@@ -569,7 +559,7 @@ class _OnboardingPermissionsPageState extends State<OnboardingPermissionsPage>
                           ),
                         ),
                         child: Text(
-                          _languageService['back'] ?? 'Geri',
+                          _languageService['back'] ?? '',
                           style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 16,
@@ -603,12 +593,11 @@ class _OnboardingPermissionsPageState extends State<OnboardingPermissionsPage>
                           : Text(
                               isGranted
                                   ? (_currentStep < _steps.length - 1
-                                        ? (_languageService['continue_btn'] ??
-                                              'Devam')
-                                        : (_languageService['complete'] ??
-                                              'Tamamla'))
-                                  : (_languageService['grant_permission'] ??
-                                        'İzin Ver'),
+                                        ? (_languageService['continue'] ?? '')
+                                        : (_languageService['onboarding_complete'] ??
+                                          ''))
+                                : (_languageService['grant_permission'] ??
+                                  ''),
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 16,
@@ -625,10 +614,8 @@ class _OnboardingPermissionsPageState extends State<OnboardingPermissionsPage>
               // Alt bilgi
               Text(
                 _currentStep < _steps.length - 1
-                    ? (_languageService['permission_warning'] ??
-                          'Bu izni vermezseniz bazı özellikler çalışmayabilir')
-                    : (_languageService['all_permissions_granted'] ??
-                          'Tüm izinler alındı, uygulamayı kullanmaya başlayabilirsiniz'),
+                    ? (_languageService['permission_warning'] ?? '')
+                    : (_languageService['all_permissions_granted'] ?? ''),
                 style: const TextStyle(color: Colors.white38, fontSize: 12),
                 textAlign: TextAlign.center,
               ),

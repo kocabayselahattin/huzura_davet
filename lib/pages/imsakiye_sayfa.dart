@@ -63,7 +63,7 @@ class _ImsakiyeSayfaState extends State<ImsakiyeSayfa> {
       secilenIlceId = ilceId;
     });
     
-    // Konum yüklenince vakitleri çek
+    // Fetch times after location loads.
     if (ilceId != null) {
       _vakitleriYukle();
     }
@@ -77,7 +77,7 @@ class _ImsakiyeSayfaState extends State<ImsakiyeSayfa> {
     });
 
     try {
-      // Zorla yenileme istenirse cache'i temizle
+      // Clear cache when forced refresh is requested.
       if (forceRefresh) {
         DiyanetApiService.clearCache();
       }
@@ -111,7 +111,7 @@ class _ImsakiyeSayfaState extends State<ImsakiyeSayfa> {
           yukleniyor = false;
         });
         
-        // Bugüne scroll yap (frame sonrası)
+        // Scroll to today (after the frame).
         if (bugunIdx >= 0) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _scrollToBugun();
@@ -123,7 +123,7 @@ class _ImsakiyeSayfaState extends State<ImsakiyeSayfa> {
         });
       }
     } catch (e) {
-      print('Vakitler yüklenemedi: $e');
+      debugPrint('Failed to load prayer times: $e');
       setState(() {
         yukleniyor = false;
       });
@@ -146,11 +146,11 @@ class _ImsakiyeSayfaState extends State<ImsakiyeSayfa> {
   void _scrollToBugun() {
     if (_bugunIndex < 0 || !_scrollController.hasClients) return;
     
-    // Her satır yaklaşık 80 piksel yüksekliğinde (margin dahil)
+    // Each row is about 80px tall (including margin).
     const itemHeight = 88.0;
     final targetOffset = _bugunIndex * itemHeight;
     
-    // Ekranın ortasında görünsün
+    // Center the target row on screen.
     final screenHeight = MediaQuery.of(context).size.height;
     final centeredOffset = targetOffset - (screenHeight / 2) + (itemHeight / 2);
     
@@ -161,24 +161,26 @@ class _ImsakiyeSayfaState extends State<ImsakiyeSayfa> {
     );
   }
   
-  /// İmsakiyeyi yenile - cache temizleyerek API'den taze veri çek
+  /// Refresh the calendar by clearing cache and fetching fresh data.
   Future<void> _yenile() async {
-    // Kullanıcıya geri bildirim ver
+    // Notify the user.
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(_languageService['refreshing'] ?? 'Yenileniyor...'),
+        content: Text(_languageService['refreshing'] ?? 'Refreshing...'),
         duration: const Duration(seconds: 1),
         backgroundColor: Colors.orange,
       ),
     );
     
-    // Cache'i temizleyerek API'den yeni veri çek
+    // Fetch fresh data after cache clear.
     await _vakitleriYukle(forceRefresh: true);
     
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_languageService['refresh_success'] ?? 'İmsakiye güncellendi!'),
+          content: Text(
+            _languageService['refresh_success'] ?? 'Calendar updated!',
+          ),
           duration: const Duration(seconds: 2),
           backgroundColor: Colors.green,
         ),
@@ -191,14 +193,16 @@ class _ImsakiyeSayfaState extends State<ImsakiyeSayfa> {
     return Scaffold(
       backgroundColor: const Color(0xFF1B2741),
       appBar: AppBar(
-        title: Text(_languageService['imsakiye_title'] ?? 'İmsakiye'),
+        title: Text(
+          _languageService['imsakiye_title'] ?? 'Prayer Calendar',
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
-          // Yenile butonu
+          // Refresh button.
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: _languageService['refresh'] ?? 'Yenile',
+            tooltip: _languageService['refresh'] ?? 'Refresh',
             onPressed: yukleniyor ? null : _yenile,
           ),
         ],
@@ -218,8 +222,9 @@ class _ImsakiyeSayfaState extends State<ImsakiyeSayfa> {
                             color: Colors.white38,
                           ),
                           const SizedBox(height: 16),
-                          const Text(
-                            'Veri bulunamadı',
+                          Text(
+                            _languageService['no_data_found'] ??
+                                'No data found',
                             textAlign: TextAlign.center,
                             style: TextStyle(color: Colors.white70, fontSize: 16),
                           ),
@@ -246,7 +251,8 @@ class _ImsakiyeSayfaState extends State<ImsakiyeSayfa> {
           const Icon(Icons.location_off, size: 80, color: Colors.white38),
           const SizedBox(height: 20),
           Text(
-            _languageService['location_not_selected'] ?? 'Konum Seçilmedi',
+            _languageService['location_not_selected'] ??
+              'Location Not Selected',
             style: const TextStyle(
               color: Colors.white,
               fontSize: 20,
@@ -255,7 +261,8 @@ class _ImsakiyeSayfaState extends State<ImsakiyeSayfa> {
           ),
           const SizedBox(height: 10),
           Text(
-            _languageService['select_city_first'] ?? 'Vakitleri görmek için önce\nil ve ilçe seçmeniz gerekiyor',
+            _languageService['select_city_first'] ??
+              'Select a city/district to view prayer times',
             textAlign: TextAlign.center,
             style: const TextStyle(color: Colors.white70, fontSize: 14),
           ),
@@ -271,7 +278,10 @@ class _ImsakiyeSayfaState extends State<ImsakiyeSayfa> {
               }
             },
             icon: const Icon(Icons.location_city),
-            label: Text(_languageService['select_city_district'] ?? 'İl/İlçe Seç'),
+            label: Text(
+              _languageService['select_city_district'] ??
+                  'Select City/District',
+            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.cyanAccent,
               foregroundColor: Colors.black,
@@ -287,12 +297,12 @@ class _ImsakiyeSayfaState extends State<ImsakiyeSayfa> {
     final tarih = vakit['MiladiTarihKisa'] ?? '';
     final hicriTarih = vakit['HicriTarihUzun'] ?? '';
     
-    // Debug: İlk ve son satırda tarih yazdır
+    // Debug: log the first day for verification.
     if (tarih.isNotEmpty) {
-      // İlk günü debug için yazdır (sadece 1. gün)
+      // Log the first day for debug (day 1 only).
       final parts = tarih.split('.');
       if (parts.length == 3 && parts[0] == '01') {
-        print('🗓️ İmsakiye satırı: $tarih');
+        debugPrint('Imsakiye row: $tarih');
       }
     }
 
@@ -309,9 +319,9 @@ class _ImsakiyeSayfaState extends State<ImsakiyeSayfa> {
               ? 2000 + int.parse(yilParca)
               : int.parse(yilParca);
           tarihObj = DateTime(
-            yil, // Yıl
-            int.parse(ayParca), // Ay
-            int.parse(gunParca), // Gün
+            yil, // Year
+            int.parse(ayParca), // Month
+            int.parse(gunParca), // Day
           );
           final simdi = DateTime.now();
           bugun =
@@ -321,7 +331,7 @@ class _ImsakiyeSayfaState extends State<ImsakiyeSayfa> {
         }
       }
     } catch (e) {
-      // Tarih parse hatası
+      // Date parse error.
     }
 
     final gunAdi = tarihObj != null
@@ -431,12 +441,36 @@ class _ExpansibleTileState extends State<ExpansibleTile> {
               children: [
                 const Divider(color: Colors.white24),
                 const SizedBox(height: 8),
-                _vakitRow(_languageService['imsak'] ?? 'İmsak', widget.imsak, Icons.nightlight_round),
-                _vakitRow(_languageService['gunes'] ?? 'Güneş', widget.gunes, Icons.wb_sunny),
-                _vakitRow(_languageService['ogle'] ?? 'Öğle', widget.ogle, Icons.light_mode),
-                _vakitRow(_languageService['ikindi'] ?? 'İkindi', widget.ikindi, Icons.brightness_6),
-                _vakitRow(_languageService['aksam'] ?? 'Akşam', widget.aksam, Icons.wb_twilight),
-                _vakitRow(_languageService['yatsi'] ?? 'Yatsı', widget.yatsi, Icons.nights_stay),
+                _vakitRow(
+                  _languageService['imsak'] ?? 'Fajr',
+                  widget.imsak,
+                  Icons.nightlight_round,
+                ),
+                _vakitRow(
+                  _languageService['gunes'] ?? 'Sunrise',
+                  widget.gunes,
+                  Icons.wb_sunny,
+                ),
+                _vakitRow(
+                  _languageService['ogle'] ?? 'Dhuhr',
+                  widget.ogle,
+                  Icons.light_mode,
+                ),
+                _vakitRow(
+                  _languageService['ikindi'] ?? 'Asr',
+                  widget.ikindi,
+                  Icons.brightness_6,
+                ),
+                _vakitRow(
+                  _languageService['aksam'] ?? 'Maghrib',
+                  widget.aksam,
+                  Icons.wb_twilight,
+                ),
+                _vakitRow(
+                  _languageService['yatsi'] ?? 'Isha',
+                  widget.yatsi,
+                  Icons.nights_stay,
+                ),
               ],
             ),
           ),

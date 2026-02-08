@@ -248,6 +248,7 @@
             <intent-filter>
                 <action android:name="com.example.huzur_vakti.STAY_SILENT" />
                 <action android:name="com.example.huzur_vakti.EXIT_SILENT" />
+                <action android:name="com.example.huzur_vakti.AUTO_EXIT_SILENT" />
             </intent-filter>
         </receiver>
 

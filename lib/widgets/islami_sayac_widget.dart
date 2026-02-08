@@ -8,7 +8,7 @@ import '../services/konum_service.dart';
 import '../services/tema_service.dart';
 import '../services/language_service.dart';
 
-/// İslami Sayaç - Hilal, yıldız ve İslami geometrik desenlerle tasarım
+/// Islamic counter with crescent, stars, and geometric patterns
 class IslamiSayacWidget extends StatefulWidget {
   const IslamiSayacWidget({super.key});
 
@@ -99,12 +99,12 @@ class _IslamiSayacWidgetState extends State<IslamiSayacWidget>
     final nowTotalSeconds = now.hour * 3600 + now.minute * 60 + now.second;
 
     final vakitListesi = [
-      {'adi': _languageService['imsak'] ?? 'İmsak', 'saat': _vakitSaatleri['imsak']!},
-      {'adi': _languageService['gunes'] ?? 'Güneş', 'saat': _vakitSaatleri['gunes']!},
-      {'adi': _languageService['ogle'] ?? 'Öğle', 'saat': _vakitSaatleri['ogle']!},
-      {'adi': _languageService['ikindi'] ?? 'İkindi', 'saat': _vakitSaatleri['ikindi']!},
-      {'adi': _languageService['aksam'] ?? 'Akşam', 'saat': _vakitSaatleri['aksam']!},
-      {'adi': _languageService['yatsi'] ?? 'Yatsı', 'saat': _vakitSaatleri['yatsi']!},
+      {'adi': _languageService['imsak'], 'saat': _vakitSaatleri['imsak']!},
+      {'adi': _languageService['gunes'], 'saat': _vakitSaatleri['gunes']!},
+      {'adi': _languageService['ogle'], 'saat': _vakitSaatleri['ogle']!},
+      {'adi': _languageService['ikindi'], 'saat': _vakitSaatleri['ikindi']!},
+      {'adi': _languageService['aksam'], 'saat': _vakitSaatleri['aksam']!},
+      {'adi': _languageService['yatsi'], 'saat': _vakitSaatleri['yatsi']!},
     ];
 
     List<int> vakitSaniyeleri = [];
@@ -130,7 +130,7 @@ class _IslamiSayacWidgetState extends State<IslamiSayacWidget>
       final imsakParts = _vakitSaatleri['imsak']!.split(':');
       sonrakiVakitZamani = DateTime(yarin.year, yarin.month, yarin.day,
           int.parse(imsakParts[0]), int.parse(imsakParts[1]));
-      sonrakiVakitAdi = _languageService['imsak'] ?? 'İmsak';
+      sonrakiVakitAdi = _languageService['imsak'];
       final yatsiSaniye = vakitSaniyeleri.last;
       final imsakSaniye = vakitSaniyeleri.first;
       final toplamSure = (24 * 3600 - yatsiSaniye) + imsakSaniye;
@@ -140,7 +140,7 @@ class _IslamiSayacWidgetState extends State<IslamiSayacWidget>
       final imsakParts = _vakitSaatleri['imsak']!.split(':');
       sonrakiVakitZamani = DateTime(now.year, now.month, now.day,
           int.parse(imsakParts[0]), int.parse(imsakParts[1]));
-      sonrakiVakitAdi = _languageService['imsak'] ?? 'İmsak';
+      sonrakiVakitAdi = _languageService['imsak'];
       final yatsiSaniye = vakitSaniyeleri.last;
       final imsakSaniye = vakitSaniyeleri.first;
       final toplamSure = (24 * 3600 - yatsiSaniye) + imsakSaniye;
@@ -172,13 +172,13 @@ class _IslamiSayacWidgetState extends State<IslamiSayacWidget>
     final minutes = _kalanSure.inMinutes % 60;
     final seconds = _kalanSure.inSeconds % 60;
 
-    // Takvim bilgileri
+    // Calendar info
     final now = DateTime.now();
     final miladiTarih = DateFormat('dd.MM.yyyy').format(now);
     final hicri = HijriCalendar.now();
     final hicriTarih = '${hicri.hDay} ${_getHicriAyAdi(hicri.hMonth)} ${hicri.hYear}';
 
-    // Tema renklerini kullan
+    // Use theme colors
     final primaryColor = renkler.vurgu;
     final secondaryColor = renkler.vurguSecondary;
     final accentColor = renkler.yaziPrimary;
@@ -207,7 +207,7 @@ class _IslamiSayacWidgetState extends State<IslamiSayacWidget>
         borderRadius: BorderRadius.circular(24),
         child: Stack(
           children: [
-            // İslami geometrik desen arka planı
+            // Islamic geometric pattern background
             AnimatedBuilder(
               animation: _rotateController,
               builder: (context, child) {
@@ -221,7 +221,7 @@ class _IslamiSayacWidgetState extends State<IslamiSayacWidget>
               },
             ),
 
-            // Yıldızlar
+            // Stars
             AnimatedBuilder(
               animation: _starController,
               builder: (context, child) {
@@ -235,13 +235,13 @@ class _IslamiSayacWidgetState extends State<IslamiSayacWidget>
               },
             ),
 
-            // İçerik
+            // Content
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Üst bilgi
+                  // Header
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -263,7 +263,7 @@ class _IslamiSayacWidgetState extends State<IslamiSayacWidget>
                             ),
                           ),
                           Text(
-                            _languageService['time_remaining'] ?? 'Kalan Süre',
+                            _languageService['time_remaining'],
                             style: TextStyle(
                               color: accentColor.withOpacity(0.7),
                               fontSize: 12,
@@ -271,7 +271,7 @@ class _IslamiSayacWidgetState extends State<IslamiSayacWidget>
                           ),
                         ],
                       ),
-                      // Hilal ve yıldız
+                      // Crescent and star
                       AnimatedBuilder(
                         animation: _shimmerController,
                         builder: (context, child) {
@@ -301,7 +301,7 @@ class _IslamiSayacWidgetState extends State<IslamiSayacWidget>
 
                   const SizedBox(height: 16),
 
-                  // Zaman göstergesi - İslami çerçeve
+                  // Time display - Islamic frame
                   Expanded(
                     child: Center(
                       child: AnimatedBuilder(
@@ -334,7 +334,7 @@ class _IslamiSayacWidgetState extends State<IslamiSayacWidget>
                             ),
                             child: Stack(
                               children: [
-                                // Köşe süslemeleri
+                                // Corner decorations
                                 Positioned(
                                   top: 5,
                                   left: 5,
@@ -365,7 +365,7 @@ class _IslamiSayacWidgetState extends State<IslamiSayacWidget>
                                     child: _buildIslamicCorner(secondaryColor),
                                   ),
                                 ),
-                                // Zaman
+                                // Time
                                 Center(
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
@@ -388,12 +388,12 @@ class _IslamiSayacWidgetState extends State<IslamiSayacWidget>
 
                   const SizedBox(height: 12),
 
-                  // İlerleme çubuğu
+                  // Progress bar
                   _buildProgressBar(primaryColor, secondaryColor),
 
                   const SizedBox(height: 10),
 
-                  // Miladi ve Hicri Takvim
+                  // Gregorian and Hijri dates
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -401,7 +401,7 @@ class _IslamiSayacWidgetState extends State<IslamiSayacWidget>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _languageService['gregorian_date'] ?? 'Miladi',
+                            _languageService['gregorian_date'],
                             style: TextStyle(
                               color: secondaryColor.withOpacity(0.5),
                               fontSize: 9,
@@ -416,7 +416,7 @@ class _IslamiSayacWidgetState extends State<IslamiSayacWidget>
                           ),
                         ],
                       ),
-                      // İlerleme yüzdesi
+                      // Progress percentage
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
@@ -437,7 +437,7 @@ class _IslamiSayacWidgetState extends State<IslamiSayacWidget>
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            _languageService['hijri_date'] ?? 'Hicri',
+                            _languageService['hijri_date'],
                             style: TextStyle(
                               color: secondaryColor.withOpacity(0.5),
                               fontSize: 9,
@@ -464,10 +464,8 @@ class _IslamiSayacWidgetState extends State<IslamiSayacWidget>
   }
 
   String _getHicriAyAdi(int ay) {
-    const aylar = ['', 'Muharrem', 'Safer', 'Rebiülevvel', 'Rebiülahir', 
-      'Cemaziyelevvel', 'Cemaziyelahir', 'Recep', 'Şaban', 'Ramazan', 
-      'Şevval', 'Zilkade', 'Zilhicce'];
-    return aylar[ay];
+    if (ay < 1 || ay > 12) return '';
+    return _languageService['hijri_month_$ay'] ?? '';
   }
 
   Widget _buildIslamicCorner(Color color) {
@@ -500,7 +498,7 @@ class _IslamiSayacWidgetState extends State<IslamiSayacWidget>
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6),
       child: Text(
-        '۞',  // İslami sembol
+        '۞',  // Islamic symbol
         style: TextStyle(
           color: color.withOpacity(0.7),
           fontSize: 20,
@@ -544,7 +542,7 @@ class _IslamiSayacWidgetState extends State<IslamiSayacWidget>
   }
 }
 
-// İslami geometrik desen çizici
+// Islamic geometric pattern painter
 class _IslamicPatternPainter extends CustomPainter {
   final double rotation;
   final Color color;
@@ -558,7 +556,7 @@ class _IslamicPatternPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
 
-    // 8 köşeli yıldız deseni tekrarı
+    // Repeating 8-point star pattern
     final spacing = 60.0;
     for (double x = -spacing; x < size.width + spacing; x += spacing) {
       for (double y = -spacing; y < size.height + spacing; y += spacing) {
@@ -598,7 +596,7 @@ class _IslamicPatternPainter extends CustomPainter {
   }
 }
 
-// İslami yıldızlar çizici
+// Islamic stars painter
 class _IslamicStarsPainter extends CustomPainter {
   final double twinkle;
   final Color color;
@@ -616,7 +614,7 @@ class _IslamicStarsPainter extends CustomPainter {
       final phase = random.nextDouble() * math.pi * 2;
       final twinkleAmount = (math.sin(twinkle * 2 * math.pi + phase) + 1) / 2;
 
-      // Küçük 5 köşeli yıldız
+      // Small 5-point star
       _drawFivePointStar(
         canvas,
         Offset(x, y),
@@ -654,7 +652,7 @@ class _IslamicStarsPainter extends CustomPainter {
   }
 }
 
-// Hilal ve yıldız çizici
+// Crescent and star painter
 class _CrescentStarPainter extends CustomPainter {
   final Color color;
   final double shimmer;
@@ -668,7 +666,7 @@ class _CrescentStarPainter extends CustomPainter {
       ..color = color.withOpacity(0.8 + shimmer * 0.2)
       ..style = PaintingStyle.fill;
 
-    // Hilal (Crescent)
+    // Crescent shape
     final crescentPath = Path();
     final outerRadius = size.width * 0.35;
     final innerRadius = size.width * 0.28;
@@ -683,7 +681,7 @@ class _CrescentStarPainter extends CustomPainter {
 
     canvas.drawPath(crescentPath, paint);
 
-    // Yıldız
+    // Star
     final starCenter = Offset(center.dx + size.width * 0.15, center.dy - size.height * 0.1);
     _drawFivePointStar(canvas, starCenter, 8, paint);
   }
@@ -716,7 +714,7 @@ class _CrescentStarPainter extends CustomPainter {
   }
 }
 
-// İslami köşe süsü çizici
+// Islamic corner ornament painter
 class _IslamicCornerPainter extends CustomPainter {
   final Color color;
 
@@ -735,7 +733,7 @@ class _IslamicCornerPainter extends CustomPainter {
     
     canvas.drawPath(path, paint);
     
-    // Küçük süs
+    // Small ornament
     canvas.drawCircle(Offset(size.width * 0.3, size.height * 0.3), 2, 
       Paint()..color = color.withOpacity(0.5));
   }
