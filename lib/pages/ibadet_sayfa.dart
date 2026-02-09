@@ -648,11 +648,28 @@ class _IbadetSectionCard extends StatelessWidget {
   final TemaRenkleri renkler;
   final double fontScale;
 
+  static final RegExp _arabicRegex = RegExp(
+    r'[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]',
+  );
+  static const String _bullet = '\u2022';
+  static const String _okunusuLabel = 'Okunu\u015Fu:';
+  static const String _anlamiLabel = 'Anlam\u0131:';
+
   const _IbadetSectionCard({
     required this.section,
     required this.renkler,
     required this.fontScale,
   });
+
+  static bool _isArabic(String text) => _arabicRegex.hasMatch(text);
+
+  static String _normalizeLabel(String text) {
+    var normalized = text.trimLeft();
+    if (normalized.startsWith(_bullet)) {
+      normalized = normalized.substring(_bullet.length).trimLeft();
+    }
+    return normalized;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -690,10 +707,7 @@ class _IbadetSectionCard extends StatelessWidget {
                     ? const SizedBox(height: 8)
                     : item.startsWith('---')
                     ? Divider(color: renkler.ayirac, height: 24)
-                    : (item.contains('Ø³ÙØ¨Ù’') ||
-                          item.contains('Ø§Ù„Ù’') ||
-                          item.contains('Ù‚ÙÙ„Ù’') ||
-                          item.contains('Ø¨ÙØ³Ù’Ù…Ù'))
+                    : _isArabic(item)
                     ? Container(
                         width: double.infinity,
                         alignment: Alignment.centerRight,
@@ -713,16 +727,17 @@ class _IbadetSectionCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           if (!item.startsWith(' ') &&
-                              !item.startsWith('â€¢') &&
+                              !item.startsWith(_bullet) &&
                               !RegExp(r'^\d+\.').hasMatch(item) &&
                               !item.contains(':') &&
                               item.length < 50)
                             const SizedBox()
-                          else if (item.startsWith('â€¢') || item.startsWith(' '))
+                          else if (item.startsWith(_bullet) ||
+                              item.startsWith(' '))
                             const SizedBox()
                           else if (!RegExp(r'^\d+\.').hasMatch(item))
                             Text(
-                              'â€¢ ',
+                              '$_bullet ',
                               style: TextStyle(
                                 color: renkler.vurgu,
                                 fontSize: 14 * fontScale,
@@ -733,15 +748,24 @@ class _IbadetSectionCard extends StatelessWidget {
                               item,
                               style: TextStyle(
                                 color:
-                                    item.contains(':') &&
-                                        !item.contains('OkunuÅŸu:') &&
-                                        !item.contains('AnlamÄ±:')
+                                    _normalizeLabel(item).contains(':') &&
+                                        !_normalizeLabel(
+                                          item,
+                                        ).startsWith(_okunusuLabel) &&
+                                        !_normalizeLabel(
+                                          item,
+                                        ).startsWith(_anlamiLabel)
                                     ? renkler.yaziPrimary.withOpacity(0.9)
                                     : renkler.yaziPrimary,
                                 fontWeight:
-                                    (item.contains(':') && item.length < 40) ||
-                                        item.startsWith('OkunuÅŸu:') ||
-                                        item.startsWith('AnlamÄ±:')
+                                    (_normalizeLabel(item).contains(':') &&
+                                            _normalizeLabel(item).length < 40) ||
+                                        _normalizeLabel(
+                                          item,
+                                        ).startsWith(_okunusuLabel) ||
+                                        _normalizeLabel(
+                                          item,
+                                        ).startsWith(_anlamiLabel)
                                     ? FontWeight.w600
                                     : FontWeight.normal,
                                 height: 1.5,
