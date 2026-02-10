@@ -1,0 +1,15 @@
+Proje: Huzura Davet
+Tarih: 2026-02-10
+
+Keystore dosyasi:
+- Path: android/key.jks
+
+Key properties (android/key.properties):
+- storeFile: ../key.jks
+- keyAlias: upload
+- storePassword: [BURAYA YAZ]
+- keyPassword: [BURAYA YAZ]
+
+Yedekleme notu:
+- key.jks ve key.properties dosyalarini guvenli bir kasada sakla.
+- Bu dosyalar kaybolursa Play Console’a yeni surum yuklenemez.
