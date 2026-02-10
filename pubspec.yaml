@@ -74,12 +74,10 @@ dependency_overrides:
 
 flutter_launcher_icons:
   android: true
-  ios: true
   image_path: "assets/icon/app_icon.png"
   adaptive_icon_background: "#1B2741"
   adaptive_icon_foreground: "assets/icon/app_icon.png"
   min_sdk_android: 21
-  remove_alpha_ios: true
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
