@@ -41,7 +41,7 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     
     <application
-        android:label="Huzura Davet"
+        android:label="Huzur Vakti"
         android:name=".HuzurVaktiApplication"
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="true"

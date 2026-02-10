@@ -1,5 +1,5 @@
 {
-  "app_name": "Huzura Davet",
+  "app_name": "Huzur Vakti",
   "prayer_times": "Horaires de prière",
   "imsak": "Fajr",
   "gunes": "Lever du soleil",
@@ -187,8 +187,8 @@
   "release_notes": "Notes de version",
   
   "about_app": "À propos de l'application",
-  "about_desc": "Huzura Davet est un assistant d'adoration complet offrant des horaires de prière selon la localisation, un calendrier mensuel, des rappels/alarmes, un mode silencieux automatique, une boussole Qibla, des mosquées proches, du contenu Coran/hadith/dua, un compteur de dhikr, des jours spéciaux, la personnalisation des thèmes/compteurs/widgets, le multi-lieux et plusieurs langues.",
-  "what_is_huzur_vakti": "Qu'est-ce que Huzura Davet?",
+  "about_desc": "Huzur Vakti est un assistant d'adoration complet offrant des horaires de prière selon la localisation, un calendrier mensuel, des rappels/alarmes, un mode silencieux automatique, une boussole Qibla, des mosquées proches, du contenu Coran/hadith/dua, un compteur de dhikr, des jours spéciaux, la personnalisation des thèmes/compteurs/widgets, le multi-lieux et plusieurs langues.",
+  "what_is_huzur_vakti": "Qu'est-ce que Huzur Vakti?",
   "features": "Fonctionnalités",
   "accurate_prayer_times": "Heures de prière précises",
   "accurate_prayer_times_desc": "Calculs de temps précis basés sur les données officielles",
@@ -629,7 +629,7 @@
   "vibration_note_4": "4. Si rien ne fonctionne, c'est peut-être un problème d'appareil",
   "lock_screen_error": "Impossible de démarrer la notification de l'écran de verrouillage",
   "location_text": "Emplacement",
-  "splash_title": "HUZURA DAVET",
+  "splash_title": "HUZUR VAKTI",
   "splash_subtitle": "Atteignez la paix des heures de prière",
   "close": "Fermer",
   "selected": "sélectionné",

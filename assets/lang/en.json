@@ -1,5 +1,5 @@
 {
-  "app_name": "Huzura Davet",
+  "app_name": "Huzur Vakti",
   "prayer_times": "Prayer Times",
   "imsak": "Fajr",
   "gunes": "Sunrise",
@@ -195,8 +195,8 @@
   "release_notes": "Release Notes",
   
   "about_app": "About App",
-  "about_desc": "Huzura Davet is a comprehensive worship assistant offering location-based prayer times, a monthly timetable, reminders/alarms, automatic silent mode, Qibla compass, nearby mosques, Quran/hadith/dua content, dhikr counter, special days, theme/counter/widget customization, multi-location support, and multiple languages.",
-  "what_is_huzur_vakti": "What is Huzura Davet?",
+  "about_desc": "Huzur Vakti is a comprehensive worship assistant offering location-based prayer times, a monthly timetable, reminders/alarms, automatic silent mode, Qibla compass, nearby mosques, Quran/hadith/dua content, dhikr counter, special days, theme/counter/widget customization, multi-location support, and multiple languages.",
+  "what_is_huzur_vakti": "What is Huzur Vakti?",
   "features": "Features",
   "accurate_prayer_times": "Accurate Prayer Times",
   "accurate_prayer_times_desc": "Precise time calculations based on official religious authority data",
@@ -644,7 +644,7 @@
   "vibration_note_4": "4. If none work, it might be a device issue",
   "lock_screen_error": "Could not start lock screen notification",
   "location_text": "Location",
-  "splash_title": "HUZURA DAVET",
+  "splash_title": "HUZUR VAKTI",
   "splash_subtitle": "Reach the peace of prayer times",
   "close": "Close",
   "selected": "selected",

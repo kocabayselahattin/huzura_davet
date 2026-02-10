@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Huzura Davet</string>
+    <string name="app_name">Huzur Vakti</string>
     
     <!-- Widget Names - Widget Picker'da Görünür -->
     <string name="widget_klasik_turuncu_name">Klasik Namaz Vakti</string>

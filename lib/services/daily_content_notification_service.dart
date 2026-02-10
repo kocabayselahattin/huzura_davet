@@ -536,7 +536,7 @@ class DailyContentNotificationService {
       'Daily verse, hadith, and dua notifications';
     final channelTicker =
       languageService['daily_content_channel_ticker'] ?? 'Daily content';
-    final appName = languageService['app_name'] ?? 'Huzura Davet';
+    final appName = languageService['app_name'] ?? 'Huzur Vakti';
 
     final androidPlatformChannelSpecifics = AndroidNotificationDetails(
       'daily_content_channel_v4',

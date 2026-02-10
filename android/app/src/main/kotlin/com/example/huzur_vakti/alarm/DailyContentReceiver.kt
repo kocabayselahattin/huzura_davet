@@ -153,13 +153,13 @@ class DailyContentReceiver : BroadcastReceiver() {
                 val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
                 val wakeLock = powerManager.newWakeLock(
                     PowerManager.PARTIAL_WAKE_LOCK or PowerManager.ACQUIRE_CAUSES_WAKEUP,
-                    "HuzuraDavet::DailyContentWakeLock"
+                    "HuzurVakti::DailyContentWakeLock"
                 )
                 wakeLock.acquire(60_000L) // 60 saniye
                 
                 try {
                     val notificationId = intent.getIntExtra(EXTRA_NOTIFICATION_ID, 0)
-                    val title = intent.getStringExtra(EXTRA_TITLE) ?: "Huzura Davet"
+                    val title = intent.getStringExtra(EXTRA_TITLE) ?: "Huzur Vakti"
                     val body = intent.getStringExtra(EXTRA_BODY) ?: ""
                     val soundId = intent.getStringExtra(EXTRA_SOUND_FILE) ?: "ding_dong"
                     

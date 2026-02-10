@@ -1,5 +1,5 @@
 {
-  "app_name": "Huzura Davet",
+  "app_name": "Huzur Vakti",
   "prayer_times": "Namaz Vakitleri",
   "imsak": "İmsak",
   "gunes": "Güneş",
@@ -218,8 +218,8 @@
   "release_notes": "Sürüm Notları",
   
   "about_app": "Uygulama Hakkında",
-  "about_desc": "Huzura Davet; konuma göre namaz vakitleri, aylık imsakiye, bildirim/alarm, otomatik sessize alma, kıble pusulası, yakın camiler, Kur'an-hadis-dua içerikleri, zikir-matik, özel günler, tema-sayaç-widget özelleştirmeleri, çoklu konum ve dil desteği sunan kapsamlı bir ibadet asistanıdır.",
-  "what_is_huzur_vakti": "Huzura Davet Nedir?",
+  "about_desc": "Huzur Vakti; konuma göre namaz vakitleri, aylık imsakiye, bildirim/alarm, otomatik sessize alma, kıble pusulası, yakın camiler, Kur'an-hadis-dua içerikleri, zikir-matik, özel günler, tema-sayaç-widget özelleştirmeleri, çoklu konum ve dil desteği sunan kapsamlı bir ibadet asistanıdır.",
+  "what_is_huzur_vakti": "Huzur Vakti Nedir?",
   "features": "Özellikler",
   "accurate_prayer_times": "Kesin Namaz Vakitleri",
   "accurate_prayer_times_desc": "Diyanet İşleri Başkanlığı verilerine dayalı doğru vakit hesaplamaları",
@@ -667,7 +667,7 @@
   "vibration_note_4": "4. Eğer hiçbiri çalışmazsa cihaz sorunu olabilir",
   "lock_screen_error": "Kilit ekranı bildirimi başlatılamadı",
   "location_text": "Konum",
-  "splash_title": "HUZURA DAVET",
+  "splash_title": "HUZUR VAKTİ",
   "splash_subtitle": "Vaktin huzuruna erişin",
   "close": "Kapat",
   "selected": "seçildi",

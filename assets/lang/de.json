@@ -1,5 +1,5 @@
 {
-  "app_name": "Huzura Davet",
+  "app_name": "Huzur Vakti",
   "prayer_times": "Gebetszeiten",
   "imsak": "Fadschr",
   "gunes": "Sonnenaufgang",
@@ -195,8 +195,8 @@
   "release_notes": "Versionshinweise",
   
   "about_app": "Über die App",
-  "about_desc": "Huzura Davet ist ein umfassender Gebetsassistent mit standortbasierten Gebetszeiten, Monatsplan, Erinnerungen/Alarmen, automatischer Stummschaltung, Qibla-Kompass, nahegelegenen Moscheen, Koran/Hadith/Dua-Inhalten, Dhikr-Zähler, besonderen Tagen sowie Theme/Zähler/Widget-Anpassung, Mehrfachstandorten und mehreren Sprachen.",
-  "what_is_huzur_vakti": "Was ist Huzura Davet?",
+  "about_desc": "Huzur Vakti ist ein umfassender Gebetsassistent mit standortbasierten Gebetszeiten, Monatsplan, Erinnerungen/Alarmen, automatischer Stummschaltung, Qibla-Kompass, nahegelegenen Moscheen, Koran/Hadith/Dua-Inhalten, Dhikr-Zähler, besonderen Tagen sowie Theme/Zähler/Widget-Anpassung, Mehrfachstandorten und mehreren Sprachen.",
+  "what_is_huzur_vakti": "Was ist Huzur Vakti?",
   "features": "Funktionen",
   "accurate_prayer_times": "Genaue Gebetszeiten",
   "accurate_prayer_times_desc": "Präzise Zeitberechnungen basierend auf offiziellen Daten",
@@ -630,7 +630,7 @@
   "vibration_note_4": "4. Wenn nichts funktioniert, könnte es ein Geräteproblem sein",
   "lock_screen_error": "Sperrbildschirm-Benachrichtigung konnte nicht gestartet werden",
   "location_text": "Standort",
-  "splash_title": "HUZURA DAVET",
+  "splash_title": "HUZUR VAKTI",
   "splash_subtitle": "Erreichen Sie die Ruhe der Gebetszeiten",
   "close": "Schließen",
   "selected": "ausgewählt",
