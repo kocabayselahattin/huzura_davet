@@ -586,26 +586,53 @@ class _GunDonumuSayacWidgetState extends State<GunDonumuSayacWidget>
               ..._particles.map((p) => _buildParticle(p, width, height)),
 
             // === TEMPERATURE (TOP-RIGHT) ===
+            // Sıcaklık ve arka plandaki hava efekti (yağmur/kar/bulut)
+            // bulunduğun yerin gerçek, canlı hava durumunu yansıtır; bu pilin
+            // ucundaki (i) ikonu dokununca bunu bir kerelik açıklar.
             Positioned(
               top: 14,
               right: 14,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
+              child: Tooltip(
+                message:
+                    _languageService['weather_live_hint'] ??
+                    'Bu görünüm bulunduğun yerin gerçek hava durumuna göre değişir.',
+                triggerMode: TooltipTriggerMode.tap,
+                textStyle: const TextStyle(color: Colors.white, fontSize: 12),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.35),
-                  borderRadius: BorderRadius.circular(14),
+                  color: Colors.black.withOpacity(0.85),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text(
-                  _formatTemperature(_temperatureC),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'monospace',
-                    shadows: [Shadow(color: Colors.white54, blurRadius: 8)],
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.35),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _formatTemperature(_temperatureC),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'monospace',
+                          shadows: [
+                            Shadow(color: Colors.white54, blurRadius: 8),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Icon(
+                        Icons.info_outline_rounded,
+                        size: 12,
+                        color: Colors.white70,
+                      ),
+                    ],
                   ),
                 ),
               ),

@@ -23,17 +23,17 @@ class PaylasimKartiService {
   ///
   /// Kart henüz boyanmadıysa bir kare beklenir; yakalanamazsa null döner.
   static Future<Uint8List?> pngUret(GlobalKey anahtar) async {
-    final sinir =
-        anahtar.currentContext?.findRenderObject() as RenderRepaintBoundary?;
-    if (sinir == null) return null;
-
-    // İlk karede kart henüz boyanmamış olabilir; boyanmasını bekle.
-    if (sinir.debugNeedsPaint) {
-      await Future<void>.delayed(const Duration(milliseconds: 60));
-      if (sinir.debugNeedsPaint) return null;
-    }
-
     try {
+      final sinir =
+          anahtar.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      if (sinir == null) return null;
+
+      // İlk karede kart henüz boyanmamış olabilir; boyanmasını bekle.
+      // Burada RenderObject.debugNeedsPaint kullanılamaz: değeri yalnızca
+      // assert içinde atandığı için sürüm derlemesinde okunduğunda hata
+      // fırlatır ve paylaşım sonsuza dek "yükleniyor"da kalır.
+      await WidgetsBinding.instance.endOfFrame;
+
       final gorsel = await sinir.toImage(pixelRatio: _pikselOrani);
       final baytlar = await gorsel.toByteData(format: ui.ImageByteFormat.png);
       gorsel.dispose();
@@ -86,6 +86,52 @@ class PaylasimKartiService {
       await SharePlus.instance.share(
         ShareParams(
           files: [XFile(dosya.path, mimeType: 'image/png')],
+          text: metin,
+          subject: konu,
+          sharePositionOrigin: konum,
+        ),
+      );
+      unawaited(_eskiDosyalariTemizle());
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Birden çok karta bölünmüş içeriği tüm görselleri tek paylaşımda
+  /// birlikte göndererek paylaşır (bkz. PaylasimIcerigi.metniBol). Herhangi
+  /// bir kart yakalanamazsa false döner ki çağıran taraf metin paylaşımına
+  /// düşebilsin.
+  static Future<bool> gorselleriPaylas({
+    required List<GlobalKey> kartAnahtarlari,
+    String? metin,
+    String? konu,
+    Rect? konum,
+  }) async {
+    if (kartAnahtarlari.isEmpty) return false;
+    if (kartAnahtarlari.length == 1) {
+      return gorselPaylas(
+        kartAnahtari: kartAnahtarlari.first,
+        metin: metin,
+        konu: konu,
+        konum: konum,
+      );
+    }
+
+    final dosyalar = <File>[];
+    for (final anahtar in kartAnahtarlari) {
+      final baytlar = await pngUret(anahtar);
+      if (baytlar == null) return false;
+      dosyalar.add(await _dosyayaYaz(baytlar));
+    }
+
+    try {
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [
+            for (final dosya in dosyalar)
+              XFile(dosya.path, mimeType: 'image/png'),
+          ],
           text: metin,
           subject: konu,
           sharePositionOrigin: konum,

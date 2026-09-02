@@ -70,14 +70,29 @@ class OzelGunlerService {
   static const String _hijriDayShiftKey = 'hijri_day_shift';
   static const String _hijriDayShiftDateKey = 'hijri_day_shift_date';
 
+  static const String _imsakSaatKey = 'ozel_gun_imsak_saat';
+  static const String _imsakDakikaKey = 'ozel_gun_imsak_dakika';
+  static const String _imsakDateKey = 'ozel_gun_imsak_date';
+  static const String _aksamSaatKey = 'ozel_gun_aksam_saat';
+  static const String _aksamDakikaKey = 'ozel_gun_aksam_dakika';
+
   // Cache keys for special days list
-  static const String _ozelGunlerCacheKey = 'ozel_gunler_cache';
-  static const String _ozelGunlerCacheTimeKey = 'ozel_gunler_cache_time';
+  // v2: 'tarih' artık özel günün gerçek tarihi (eskiden gösterim tarihiydi).
+  static const String _ozelGunlerCacheKey = 'ozel_gunler_cache_v2';
+  static const String _ozelGunlerCacheTimeKey = 'ozel_gunler_cache_time_v2';
 
   static int _hijriDayShift = 0;
 
   /// Public getter for hijri day shift (used by HomeWidgetService for native sync)
   static int get hijriDayShift => _hijriDayShift;
+
+  /// Gün sınırları: normal özel günler imsakla başlar, kandil/mübarek geceler
+  /// bir önceki günün akşam ezanıyla başlayıp asıl günün imsağında biter.
+  /// Varsayılanlar [syncVakitlerWithDiyanet] ile güncel değerlerle değişir.
+  static int _imsakSaat = 5;
+  static int _imsakDakika = 30;
+  static int _aksamSaat = 19;
+  static int _aksamDakika = 0;
 
   /// Session-level popup shown flag
   /// Stays true during the session to show the popup only once
@@ -166,6 +181,82 @@ class OzelGunlerService {
     } catch (e) {
       debugPrint('🗓️ [HijriShift] Failed to sync: $e');
     }
+  }
+
+  /// Özel gün sınırlarında kullanılan imsak ve akşam vakitlerini Diyanet'ten
+  /// senkronize eder. Normal özel günler imsakla başlar; kandil/mübarek geceler
+  /// bir önceki günün akşam ezanıyla başlayıp asıl günün imsağında biter.
+  static Future<void> syncVakitlerWithDiyanet() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      final now = DateTime.now();
+      final todayKey = '${now.year}-${now.month}-${now.day}';
+
+      final cachedImsakSaat = prefs.getInt(_imsakSaatKey);
+      final cachedImsakDakika = prefs.getInt(_imsakDakikaKey);
+      if (cachedImsakSaat != null && cachedImsakDakika != null) {
+        _imsakSaat = cachedImsakSaat;
+        _imsakDakika = cachedImsakDakika;
+      }
+      final cachedAksamSaat = prefs.getInt(_aksamSaatKey);
+      final cachedAksamDakika = prefs.getInt(_aksamDakikaKey);
+      if (cachedAksamSaat != null && cachedAksamDakika != null) {
+        _aksamSaat = cachedAksamSaat;
+        _aksamDakika = cachedAksamDakika;
+      }
+
+      final cachedDateKey = prefs.getString(_imsakDateKey);
+      if (cachedDateKey == todayKey) {
+        debugPrint(
+          '🌅 [Vakit] Using cached times: imsak=$_imsakSaat:$_imsakDakika '
+          'aksam=$_aksamSaat:$_aksamDakika',
+        );
+        return;
+      }
+
+      final ilceId = await KonumService.getIlceId();
+      if (ilceId == null ||
+          ilceId.isEmpty ||
+          KonumService.isManualIlceId(ilceId)) {
+        debugPrint('🌅 [Vakit] Skip: no Turkey district selected');
+        return;
+      }
+
+      final vakitler = await DiyanetApiService.getBugunVakitler(ilceId);
+      final imsak = _parseSaat(vakitler?['Imsak']);
+      final aksam = _parseSaat(vakitler?['Aksam']);
+      if (imsak == null || aksam == null) {
+        debugPrint('🌅 [Vakit] Skip: Imsak/Aksam time missing');
+        return;
+      }
+
+      _imsakSaat = imsak.saat;
+      _imsakDakika = imsak.dakika;
+      _aksamSaat = aksam.saat;
+      _aksamDakika = aksam.dakika;
+      await prefs.setInt(_imsakSaatKey, imsak.saat);
+      await prefs.setInt(_imsakDakikaKey, imsak.dakika);
+      await prefs.setInt(_aksamSaatKey, aksam.saat);
+      await prefs.setInt(_aksamDakikaKey, aksam.dakika);
+      await prefs.setString(_imsakDateKey, todayKey);
+
+      debugPrint(
+        '🌅 [Vakit] Applied imsak=$_imsakSaat:$_imsakDakika '
+        'aksam=$_aksamSaat:$_aksamDakika',
+      );
+    } catch (e) {
+      debugPrint('🌅 [Vakit] Failed to sync: $e');
+    }
+  }
+
+  static ({int saat, int dakika})? _parseSaat(String? value) {
+    if (value == null || !value.contains(':')) return null;
+    final parts = value.split(':');
+    final saat = int.tryParse(parts[0]);
+    final dakika = int.tryParse(parts[1]);
+    if (saat == null || dakika == null) return null;
+    return (saat: saat, dakika: dakika);
   }
 
   /// Sadece SharedPreferences'taki önbellek değerini hafızaya yükler.
@@ -382,40 +473,39 @@ class OzelGunlerService {
     );
     debugPrint('📅 [OzelGun] Hicri: $hicriGun/$hicriAy/$hicri.hYear');
 
+    final imsakVakti = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      _imsakSaat,
+      _imsakDakika,
+    );
     for (final ozelGun in ozelGunler) {
-      // 1. Normal special days (geceOncesiMi == false): only after 09:00
+      if (ozelGun.hicriAy != hicriAy) continue;
+
       if (!ozelGun.geceOncesiMi) {
-        if (ozelGun.hicriAy == hicriAy && ozelGun.hicriGun == hicriGun) {
-          if (now.hour >= 9) {
-            debugPrint('✅ [OzelGun] Today is special: \${ozelGun.ad}');
-            return ozelGun;
-          } else {
-            debugPrint(
-              '⏰ [OzelGun] \${ozelGun.ad} exists but it is before 09:00 (\${now.hour}:\${now.minute})',
-            );
-          }
+        // 1. Bayram/arefe gibi gündüz başlayan günler: imsaktan gün sonuna.
+        if (ozelGun.hicriGun == hicriGun && !now.isBefore(imsakVakti)) {
+          debugPrint('✅ [OzelGun] Today is special: ${ozelGun.ad}');
+          return ozelGun;
         }
       } else {
-        // 2. Kandil/night days: from previous day 09:00 until next day 09:00
-        // a) Previous day 09:00 until night
-        if (ozelGun.hicriAy == hicriAy && ozelGun.hicriGun == hicriGun + 1) {
-          if (now.hour >= 9) {
-            debugPrint(
-              '✅ [OzelGun] Tomorrow is kandil/night: \${ozelGun.ad} (show today)',
-            );
-            return ozelGun;
-          } else {
-            debugPrint(
-              '⏰ [OzelGun] Tomorrow is \${ozelGun.ad} but it is before 09:00 (\${now.hour}:\${now.minute})',
-            );
-          }
-        }
-        // b) Main day 00:00 to 09:00
-        if (ozelGun.hicriAy == hicriAy &&
-            ozelGun.hicriGun == hicriGun &&
-            now.hour < 9) {
+        // 2. Kandil/mübarek geceler: İslami günde önce gece gelir; asıl günün
+        //    imsağında biter. Kullanıcı geceyi önceden bilsin diye gösterim
+        //    bir önceki gün sabah 09:00'da başlar (akşam ezanı yalnızca
+        //    "gece başladı" bildirimi için kullanılır).
+        // a) Kandilden önceki gün, 09:00'dan gece yarısına kadar.
+        if (ozelGun.hicriGun == hicriGun + 1 && now.hour >= 9) {
           debugPrint(
-            '✅ [OzelGun] Night continues: \${ozelGun.ad} (show until 09:00)',
+            '✅ [OzelGun] Tonight is kandil/night: ${ozelGun.ad} (show today)',
+          );
+          return ozelGun;
+        }
+        // b) Kandilin asıl günü, gece yarısından imsağa kadar.
+        if (ozelGun.hicriGun == hicriGun && now.isBefore(imsakVakti)) {
+          debugPrint(
+            '✅ [OzelGun] Night continues: ${ozelGun.ad} '
+            '(until Imsak $_imsakSaat:$_imsakDakika)',
           );
           return ozelGun;
         }
@@ -439,11 +529,11 @@ class OzelGunlerService {
     final prefs = await SharedPreferences.getInstance();
     final sonGosterilen = prefs.getString(_sonGosterilenGunKey);
 
-    final bugun = DateTime.now();
-    final bugunKey = '${ozelGun.ad}_${bugun.year}_${bugun.month}_${bugun.day}';
+    final gosterimAnahtari = _ozelGunGosterimAnahtari(ozelGun);
 
-    // Do not show again if already shown today
-    if (sonGosterilen == bugunKey) {
+    // Do not show again if this occurrence was already shown
+    // (window may span two calendar days: previous day 09:00 → Imsak).
+    if (sonGosterilen == gosterimAnahtari) {
       return false;
     }
 
@@ -459,10 +549,19 @@ class OzelGunlerService {
     if (ozelGun == null) return;
 
     final prefs = await SharedPreferences.getInstance();
-    final bugun = DateTime.now();
-    final bugunKey = '${ozelGun.ad}_${bugun.year}_${bugun.month}_${bugun.day}';
+    await prefs.setString(
+      _sonGosterilenGunKey,
+      _ozelGunGosterimAnahtari(ozelGun),
+    );
+  }
 
-    await prefs.setString(_sonGosterilenGunKey, bugunKey);
+  /// Bir özel günün "gösterildi" anahtarı: takvim gününe değil, o özel günün
+  /// hicri oluşuna göre üretilir. Böylece gece öncesi ve gece sonrası (imsağa
+  /// kadar) iki farklı miladi güne düşse bile aynı anahtar kalır ve popup
+  /// sadece bir kez gösterilir.
+  static String _ozelGunGosterimAnahtari(OzelGun ozelGun) {
+    final hicri = hijriNowTR();
+    return '${ozelGun.adKey}_${hicri.hYear}_${ozelGun.hicriAy}_${ozelGun.hicriGun}';
   }
 
   /// Get upcoming special days (within 30 days)
@@ -501,13 +600,18 @@ class OzelGunlerService {
             ? tarih.subtract(const Duration(days: 1))
             : tarih;
         final simdi = DateTime.now();
-        final fark = gosterimTarih.difference(simdi).inDays;
+        // Kalan gün özel günün gerçek tarihine göre hesaplanır; gece öncesi
+        // gösterim kaydırması bu sayacı etkilemez.
+        final fark = tarih
+            .difference(DateTime(simdi.year, simdi.month, simdi.day))
+            .inDays;
 
         // Add those within 365 days
         if (fark >= 0 && fark <= 365) {
           sonuc.add({
             'ozelGun': ozelGun,
-            'tarih': gosterimTarih,
+            'tarih': tarih,
+            'gosterimTarih': gosterimTarih,
             'kalanGun': fark,
             'hicriTarih':
                 '${ozelGun.hicriGun} ${_getHicriAyAdi(ozelGun.hicriAy)} $hedefYil',
@@ -546,10 +650,18 @@ class OzelGunlerService {
           (g) => g.adKey == adKey && g.hicriGun == (map['hicriGun'] as int),
           orElse: () => ozelGunler.first,
         );
+        final tarih = DateTime.parse(map['tarih'] as String);
+        final gosterimTarihStr = map['gosterimTarih'] as String?;
+        final gosterimTarih = gosterimTarihStr != null
+            ? DateTime.parse(gosterimTarihStr)
+            : (ozelGun.geceOncesiMi
+                  ? tarih.subtract(const Duration(days: 1))
+                  : tarih);
         return {
           'ozelGun': ozelGun,
-          'tarih': DateTime.parse(map['tarih'] as String),
-          'kalanGun': DateTime.parse(map['tarih'] as String)
+          'tarih': tarih,
+          'gosterimTarih': gosterimTarih,
+          'kalanGun': tarih
               .difference(DateTime(now.year, now.month, now.day))
               .inDays,
           'hicriTarih': map['hicriTarih'] as String,
@@ -578,10 +690,12 @@ class OzelGunlerService {
       final serialized = gunler.map((item) {
         final ozelGun = item['ozelGun'] as OzelGun;
         final tarih = item['tarih'] as DateTime;
+        final gosterimTarih = (item['gosterimTarih'] as DateTime?) ?? tarih;
         return {
           'adKey': ozelGun.adKey,
           'hicriGun': ozelGun.hicriGun,
           'tarih': tarih.toIso8601String(),
+          'gosterimTarih': gosterimTarih.toIso8601String(),
           'hicriTarih': item['hicriTarih'] as String,
         };
       }).toList();
@@ -695,16 +809,18 @@ class OzelGunlerService {
       final kalanGun = match.gDate.difference(startDate).inDays;
       if (kalanGun < 0 || kalanGun > daysAhead) continue;
 
-      // Kandil/mübarek geceler önceki akşam başlar → gösterim tarihi 1 gün önce
+      // Kandil/mübarek geceler önceki akşam başlar → gösterim/bildirim 1 gün önce
       final gosterimTarih = ozelGun.geceOncesiMi
           ? match.gDate.subtract(const Duration(days: 1))
           : match.gDate;
-      final gosterimKalanGun = gosterimTarih.difference(startDate).inDays;
 
       result.add({
         'ozelGun': ozelGun,
-        'tarih': gosterimTarih,
-        'kalanGun': gosterimKalanGun,
+        // Özel günün gerçek (hicri) tarihi — listede bu gösterilir.
+        'tarih': match.gDate,
+        // Gösterim/bildirimin başladığı gün (kandillerde bir gün önce).
+        'gosterimTarih': gosterimTarih,
+        'kalanGun': kalanGun,
         'hicriTarih':
             '${ozelGun.hicriGun} ${_getHicriAyAdi(ozelGun.hicriAy)} ${match.hYear}',
       });
@@ -750,6 +866,7 @@ class OzelGunlerService {
   static Future<void> scheduleOzelGunBildirimleri() async {
     // Ensure Hijri calendar is aligned (important for conversions used below).
     await syncHijriDayShiftWithDiyanet();
+    await syncVakitlerWithDiyanet();
 
     final prefs = await SharedPreferences.getInstance();
     final enabled = prefs.getBool('ozel_gun_bildirimleri_aktif') ?? true;
@@ -776,7 +893,10 @@ class OzelGunlerService {
     for (int i = 0; i < yaklasanlar.length && i < 10; i++) {
       final item = yaklasanlar[i];
       final ozelGun = item['ozelGun'] as OzelGun;
-      final tarih = item['tarih'] as DateTime;
+      // Bildirimler gösterim tarihine göre kurulur: kandillerde bu, geceyi
+      // içeren bir önceki gündür (ör. 23'ünü 24'üne bağlayan gece → 23 Ağustos).
+      final tarih =
+          (item['gosterimTarih'] as DateTime?) ?? (item['tarih'] as DateTime);
       final kalanGun = item['kalanGun'] as int;
 
       debugPrint('\n🔍 Checking: ${ozelGun.ad}');
@@ -819,15 +939,14 @@ class OzelGunlerService {
             );
           }
         }
-        // 2) Gecenin başlangıcı: bir sonraki takvim günü saat 00:05
-        //    (ör. Kadir Gecesi → 17 Mart 00:05 = 16 Mart akşamından geçen gece)
-        final gecenextDay = tarih.add(const Duration(days: 1));
+        // 2) Gecenin fiilen başladığı an: aynı günün akşam ezanı.
+        //    (ör. 23 Ağustos'u 24'üne bağlayan kandil → 23 Ağustos akşamı)
         DateTime geceBildirimi = DateTime(
-          gecenextDay.year,
-          gecenextDay.month,
-          gecenextDay.day,
-          0,
-          5,
+          tarih.year,
+          tarih.month,
+          tarih.day,
+          _aksamSaat,
+          _aksamDakika,
         );
         if (geceBildirimi.isAfter(DateTime.now())) {
           final tzGece = tz.TZDateTime.from(geceBildirimi, tz.local);
@@ -952,7 +1071,6 @@ class OzelGunlerService {
         visibility: NotificationVisibility.public,
         autoCancel: false,
         ongoing: false,
-        largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
       );
 
       await _notificationsPlugin.zonedSchedule(

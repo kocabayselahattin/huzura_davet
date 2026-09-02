@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 import 'package:flutter/services.dart' show rootBundle;
-import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'kuran_veri_service.dart';
 import 'language_service.dart';
@@ -13,28 +13,59 @@ import 'language_service.dart';
 ///
 /// - Ayet: cihazda gömülü tam Kur'an'dan (Elmalılı Hamdi Yazır meali) —
 ///   tarihe göre deterministik, internet gerektirmez.
-/// - Hadis / Dua: ücretsiz ve kayıtsız CDN'den (fawazahmed0/hadith-api,
-///   Sahih-i Buhârî Türkçe çevirisi) çekilir. Sonuç **tarih anahtarlı** olarak
-///   önbelleğe yazılır; bildirimler ileri tarihler için önceden çektiğinde o
-///   gün gelince kart aynı önbellekten okur ve içerik birebir aynı olur.
-/// - İnternet yoksa dil dosyasındaki yerel havuza düşülür ve o metin de
-///   önbelleğe yazılır, böylece tutarlılık yine korunur.
+/// - Hadis / Dua: cihazda gömülü, önceden indirilmiş Sahih-i Buhârî Türkçe
+///   çevirisinden (bkz. assets/data/gunluk_icerik_metinleri.json — kaynağı
+///   fawazahmed0/hadith-api, tool/gunluk_icerik_indir.dart ile tek seferlik
+///   indirilip pakete gömüldü). Bu sayede uygulama içerik için ağa hiç
+///   bağımlı değildir; dış CDN kapansa/değişse bile hiçbir şey etkilenmez.
+/// - Sonuç yine de **tarih anahtarlı** önbelleğe yazılır; bildirimler ileri
+///   tarihler için önceden hazırlandığında o gün gelince kart aynı
+///   önbellekten okur ve içerik birebir aynı olur.
+/// - Havuzdaki bir numara herhangi bir nedenle yerel metinler dosyasında
+///   bulunamazsa (ör. gelecekte havuz güncellenip metin dosyası eşlenmezse)
+///   dil dosyasındaki küçük yedek havuza düşülür.
 class GunlukHadisDuaService {
-  static const _cdnBase =
-      'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions';
-
   /// Havuz dosyası: hangi kitabın hangi hadis numaralarının günlük içerik
-  /// olarak kullanılabileceğini tutar. Metinlerin kendisi değil, yalnızca
-  /// numaralar burada; içerik her gün CDN'den tek tek çekilir.
+  /// olarak kullanılabileceğini tutar (metinlerin kendisi değil, yalnızca
+  /// numaralar — gerçek metinler [_metinlerAsset] içinde).
   ///
   /// Numaralar önceden süzülmüştür (çeviri mevcut ve karta/bildirime sığacak
   /// uzunlukta). Aksi halde uygun içeriği bulmak için ileri arama gerekiyor ve
   /// ardışık günler aynı hadise düşebiliyordu.
   static const _havuzAsset = 'assets/data/gunluk_icerik_havuzu.json';
 
+  /// "kitap/no" -> {text, source} eşlemesini tutan, cihazda gömülü metin
+  /// dosyası (bkz. tool/gunluk_icerik_indir.dart).
+  static const _metinlerAsset = 'assets/data/gunluk_icerik_metinleri.json';
+
   static List<_HavuzKaynagi>? _hadisKaynaklari;
   static List<_HavuzKaynagi>? _duaKaynaklari;
+  static Map<String, dynamic>? _metinler;
   static Future<void>? _havuzFuture;
+
+  /// Havuzdaki numaralar kaynak kitapta olduğu sırayla (konu/bölüm sırasıyla)
+  /// durduğu için sıra numarasını doğrudan kullanmak, bir kitabın tek bir
+  /// konusunun (ör. "Kitâbü'l-İstiskâ" / yağmur duası bölümü) art arda onlarca
+  /// gün gösterilmesine yol açar. Sabit tohumlu bir karıştırma ile sıra
+  /// numarasını havuz içinde deterministik ama "dağınık" bir konuma
+  /// eşleştiriyoruz; tarihe göre sonuç yine sabit kalır (kart/bildirim
+  /// tutarlılığı bozulmaz), sadece ardışık günler artık aynı bölüme denk
+  /// gelmez.
+  static const int _karistirmaTohumu = 20240101;
+  static List<int>? _hadisKarisikSira;
+  static List<int>? _duaKarisikSira;
+
+  static List<int> _karisikSiraOlustur(int uzunluk) {
+    final sira = List<int>.generate(uzunluk, (i) => i);
+    final rastgele = Random(_karistirmaTohumu);
+    for (var i = uzunluk - 1; i > 0; i--) {
+      final j = rastgele.nextInt(i + 1);
+      final gecici = sira[i];
+      sira[i] = sira[j];
+      sira[j] = gecici;
+    }
+    return sira;
+  }
 
   static Future<void> _havuzuYukle() {
     if (_hadisKaynaklari != null) return Future.value();
@@ -47,6 +78,15 @@ class GunlukHadisDuaService {
       final data = json.decode(jsonStr) as Map<String, dynamic>;
       _hadisKaynaklari = _kaynaklariAyristir(data['hadis']);
       _duaKaynaklari = _kaynaklariAyristir(data['dua']);
+      _hadisKarisikSira = _karisikSiraOlustur(
+        _hadisKaynaklari!.fold<int>(0, (t, k) => t + k.nolar.length),
+      );
+      _duaKarisikSira = _karisikSiraOlustur(
+        _duaKaynaklari!.fold<int>(0, (t, k) => t + k.nolar.length),
+      );
+
+      final metinlerStr = await rootBundle.loadString(_metinlerAsset);
+      _metinler = json.decode(metinlerStr) as Map<String, dynamic>;
     } catch (_) {
       _havuzFuture = null;
     }
@@ -89,11 +129,13 @@ class GunlukHadisDuaService {
   /// ardışık günler farklı içerik alır.
   static ({String kitap, String kisaAd, int no})? _havuzKonumu(
     List<_HavuzKaynagi> kaynaklar,
+    List<int> karisikSira,
     int sira,
   ) {
     final toplam = kaynaklar.fold<int>(0, (t, k) => t + k.nolar.length);
     if (toplam == 0) return null;
-    var kalan = ((sira % toplam) + toplam) % toplam;
+    final duzSira = ((sira % toplam) + toplam) % toplam;
+    var kalan = karisikSira[duzSira];
     for (final kaynak in kaynaklar) {
       if (kalan < kaynak.nolar.length) {
         return (
@@ -120,56 +162,35 @@ class GunlukHadisDuaService {
     return (monthOffset + dayOffset) % length;
   }
 
-  /// Referans metninde geçen "Tekrar: 54, 2529...", "Diğer Tahric:: ..."
-  /// gibi kaynakça kırıntılarını ve tıklama notlarını temizler.
-  static String _metniTemizle(String text) {
-    var temiz = text;
-    temiz = temiz.split('İZAHI İÇİN BURAYA TIKLA').first;
-    temiz = temiz.replaceAll(RegExp(r'Tekrar:[^.]*\.'), '');
-    temiz = temiz.replaceAll(RegExp(r'Diğer Tahric:.*$', dotAll: true), '');
-    return temiz.trim();
+  /// Yerel metin havuzundan tek bir hadis/dua metnini bulur ("kitap/no"
+  /// anahtarıyla). Metin indirme sırasında zaten temizlenmiş olarak
+  /// kaydedildiği için burada ek işleme gerek yoktur (bkz.
+  /// tool/gunluk_icerik_indir.dart).
+  static Map<String, String>? _hadisNoBul(String kitap, int no) {
+    final kayit = _metinler?['$kitap/$no'];
+    if (kayit is! Map) return null;
+    final metin = kayit['text']?.toString() ?? '';
+    if (metin.isEmpty) return null;
+    return {
+      'text': metin,
+      'source': kayit['source']?.toString() ?? '',
+    };
   }
 
-  /// Tek bir hadisi CDN'den çeker (~1 KB'lık istek).
-  static Future<Map<String, String>?> _hadisNoGetir(
-    String kitap,
-    String kisaAd,
-    int no,
-  ) async {
-    try {
-      final response = await http
-          .get(Uri.parse('$_cdnBase/$kitap/$no.json'))
-          .timeout(const Duration(seconds: 6));
-      if (response.statusCode != 200) return null;
-      final data = json.decode(utf8.decode(response.bodyBytes));
-      final hadithler = data['hadiths'];
-      if (hadithler is! List || hadithler.isEmpty) return null;
-      final ilk = hadithler.first;
-      final metin = _metniTemizle(ilk['text']?.toString() ?? '');
-      if (metin.isEmpty) return null;
-      return {
-        'text': metin,
-        'source': '$kisaAd, ${ilk['hadithnumber']}',
-      };
-    } catch (_) {
-      return null;
-    }
-  }
-
-  /// Havuzdaki [baslangicSira] konumundan başlayarak, uzunluğu karta/bildirime
-  /// sığan ilk hadisi arar. Aradaki numaralar eksik olabildiği (ve bazı
-  /// rivayetler çok uzun olduğu) için sırayla ilerler.
-  static Future<Map<String, String>?> _uygunHadisBul({
+  /// Havuzdaki [baslangicSira] konumundan başlayarak, yerel metin dosyasında
+  /// karşılığı bulunan ilk hadisi döndürür. Numaralar önceden süzülüp
+  /// indirildiği için ilk deneme normalde başarılı olur; ek denemeler
+  /// yalnızca (teorik olarak) eksik kalmış birkaç kayda karşıdır.
+  static Map<String, String>? _uygunHadisBul({
     required List<_HavuzKaynagi> kaynaklar,
+    required List<int> karisikSira,
     required int baslangicSira,
     int denemeSayisi = 3,
-  }) async {
-    // Havuzdaki numaralar önceden süzülmüş olduğu için ilk deneme normalde
-    // başarılı olur; ek denemeler yalnızca geçici ağ hatalarına karşıdır.
+  }) {
     for (int i = 0; i < denemeSayisi; i++) {
-      final konum = _havuzKonumu(kaynaklar, baslangicSira + i);
+      final konum = _havuzKonumu(kaynaklar, karisikSira, baslangicSira + i);
       if (konum == null) return null;
-      final sonuc = await _hadisNoGetir(konum.kitap, konum.kisaAd, konum.no);
+      final sonuc = _hadisNoBul(konum.kitap, konum.no);
       if (sonuc != null && (sonuc['text'] ?? '').isNotEmpty) {
         return sonuc;
       }
@@ -214,8 +235,8 @@ class GunlukHadisDuaService {
     );
   }
 
-  /// Ortak akış: önbellek → ağ → yerel havuz. Sonuç her durumda önbelleğe
-  /// yazılır, böylece kart ve bildirim aynı içeriği gösterir.
+  /// Ortak akış: önbellek → gömülü metin havuzu → yedek havuz. Sonuç her
+  /// durumda önbelleğe yazılır, böylece kart ve bildirim aynı içeriği gösterir.
   static Future<Map<String, String>> _icerikGetir({
     required String tur,
     required DateTime tarih,
@@ -238,15 +259,18 @@ class GunlukHadisDuaService {
     await _havuzuYukle();
     final kaynaklar =
         (duaMi ? _duaKaynaklari : _hadisKaynaklari) ?? const <_HavuzKaynagi>[];
+    final karisikSira =
+        (duaMi ? _duaKarisikSira : _hadisKarisikSira) ?? const <int>[];
 
-    final agSonucu = kaynaklar.isEmpty
+    final gomuluSonuc = kaynaklar.isEmpty || karisikSira.isEmpty
         ? null
-        : await _uygunHadisBul(
+        : _uygunHadisBul(
             kaynaklar: kaynaklar,
+            karisikSira: karisikSira,
             baslangicSira: _gunSayisi(tarih),
           );
 
-    final sonuc = agSonucu ??
+    final sonuc = gomuluSonuc ??
         _yerelHavuzdan(
           listeAnahtari: yerelListeAnahtari,
           tarih: tarih,

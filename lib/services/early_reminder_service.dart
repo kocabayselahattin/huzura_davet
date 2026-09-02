@@ -109,7 +109,6 @@ class EarlyReminderService {
       if (!_initialized) await initialize();
 
       final languageService = LanguageService();
-      final minuteShort = languageService['minute_short'] ?? 'min';
 
       debugPrint('⏰ ===== EARLY REMINDER SCHEDULING START =====');
 
@@ -265,11 +264,12 @@ class EarlyReminderService {
           );
 
           final prayerLabel = _getPrayerLabel(languageService, vakitKey);
-          final prayerName = '$prayerLabel ($erkenDakika $minuteShort)';
 
-          // Schedule alarm - send sound ID directly
+          // Schedule alarm - send sound ID directly. Bildirim başlığı/gövdesi
+          // native tarafta oluşturulurken erkenDakika ayrıca kullanılıyor,
+          // bu yüzden buraya "(45 dk)" gibi bir ek eklenmiyor.
           final success = await AlarmService.scheduleAlarm(
-            prayerName: prayerName,
+            prayerName: prayerLabel,
             triggerAtMillis: erkenAlarmZamani.millisecondsSinceEpoch,
             soundPath: erkenSesId, // Ses ID'si
             useVibration: true,

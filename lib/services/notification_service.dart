@@ -1,13 +1,12 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/foundation.dart';
-import 'package:audioplayers/audioplayers.dart';
 import 'package:app_settings/app_settings.dart';
 import 'language_service.dart';
+import 'ses_onizleme_service.dart';
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
-  static AudioPlayer? _audioPlayer;
   static bool _initialized = false;
   static final Set<String> _createdChannels = {};
 
@@ -37,7 +36,7 @@ class NotificationService {
 
   // Convert sound file name to Android raw resource name
   static String _getSoundResourceName(String? soundAsset) {
-    if (soundAsset == null || soundAsset.isEmpty) return 'ding_dong';
+    if (soundAsset == null || soundAsset.isEmpty) return 'best';
 
     // Get file name and remove extension
     String name = soundAsset.toLowerCase();
@@ -52,16 +51,6 @@ class NotificationService {
     name = name.replaceAll(RegExp(r'[^a-z0-9_]'), '_');
 
     return name;
-  }
-
-  static Future<AudioPlayer> _getAudioPlayer() async {
-    if (_audioPlayer == null) {
-      _audioPlayer = AudioPlayer();
-      // AudioPlayer settings
-      await _audioPlayer!.setReleaseMode(ReleaseMode.stop);
-      await _audioPlayer!.setPlayerMode(PlayerMode.mediaPlayer);
-    }
-    return _audioPlayer!;
   }
 
   static Future<void> initialize([dynamic context]) async {
@@ -202,7 +191,6 @@ class NotificationService {
         autoCancel: false,
         ongoing: false,
         ticker: prayerChannelTicker,
-        largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
       );
 
       final notificationDetails = NotificationDetails(
@@ -228,37 +216,20 @@ class NotificationService {
   }
 
   /// Test sound (while app is open)
+  ///
+  /// Ses, bildirimlerin kullandığı res/raw kopyasından çalınır; "sounds/"
+  /// öneki ve ".mp3" uzantısı verilse de kabul edilir.
   static Future<void> testSound(String soundAsset) async {
-    try {
-      final player = await _getAudioPlayer();
-      await player.stop();
-
-      String assetPath = soundAsset;
-      if (!assetPath.startsWith('sounds/')) {
-        assetPath = 'sounds/$soundAsset';
-      }
-
-      await player.setVolume(1.0);
-      await player.setPlayerMode(PlayerMode.mediaPlayer);
-      await player.play(AssetSource(assetPath));
-      debugPrint('🔊 Test sound played: $assetPath');
-    } catch (e) {
-      debugPrint('⚠️ Test sound failed: $e');
-    }
+    final sesId = soundAsset
+        .replaceFirst('sounds/', '')
+        .replaceAll('.mp3', '')
+        .toLowerCase();
+    final calindi = await SesOnizlemeService.cal(sesId);
+    debugPrint(
+      calindi ? '🔊 Test sound played: $sesId' : '⚠️ Test sound failed: $sesId',
+    );
   }
 
   /// Stop sound
-  static Future<void> stopSound() async {
-    if (_audioPlayer != null) {
-      await _audioPlayer!.stop();
-    }
-  }
-
-  /// Dispose resources
-  static Future<void> dispose() async {
-    if (_audioPlayer != null) {
-      await _audioPlayer!.dispose();
-      _audioPlayer = null;
-    }
-  }
+  static Future<void> stopSound() => SesOnizlemeService.durdur();
 }

@@ -76,13 +76,13 @@ class KlasikTuruncuWidget : AppWidgetProvider() {
 
             
             // Önce widget'a özel ayarları kontrol et, yoksa varsayılanı kullan
-            val arkaPlanKey = widgetData.getString("klasik_arkaplan_key", null) 
-                ?: widgetData.getString("arkaplan_key", "orange") 
-                ?: "orange"
-            val yaziRengiHex = widgetData.getString("klasik_yazi_rengi_hex", null) 
-                ?: widgetData.getString("yazi_rengi_hex", "FFFFFF") 
-                ?: "FFFFFF"
-            val yaziRengi = WidgetUtils.parseColorSafe(yaziRengiHex, Color.WHITE)
+            val gorunum = WidgetGorunum.coz(
+                context, widgetData, appWidgetId,
+                "klasik_arkaplan_key", "orange",
+                "klasik_yazi_rengi_hex", "FFFFFF"
+            )
+            val arkaPlanKey = gorunum.zeminAnahtari
+            val yaziRengi = gorunum.yaziRengi
             val yaziRengiSecondary = Color.argb(180, Color.red(yaziRengi), Color.green(yaziRengi), Color.blue(yaziRengi))
             
             val views = RemoteViews(context.packageName, R.layout.widget_klasik_turuncu)
@@ -137,24 +137,7 @@ class KlasikTuruncuWidget : AppWidgetProvider() {
                 views.setTextViewTextSize(R.id.tv_yatsi, TypedValue.COMPLEX_UNIT_SP, 11f)
             }
             
-            // Arka plan ayarla
-            val bgDrawable = when(arkaPlanKey) {
-                "orange" -> R.drawable.widget_bg_orange
-                "light" -> R.drawable.widget_bg_light
-                "dark" -> R.drawable.widget_bg_dark_mosque
-                "sunset" -> R.drawable.widget_bg_sunset
-                "green" -> R.drawable.widget_bg_green
-                "purple" -> R.drawable.widget_bg_purple
-                "red" -> R.drawable.widget_bg_red
-                "blue" -> R.drawable.widget_bg_blue
-                "teal" -> R.drawable.widget_bg_teal
-                "pink" -> R.drawable.widget_bg_pink
-                "transparent" -> R.drawable.widget_bg_transparent
-                "semi_black" -> R.drawable.widget_bg_semi_black
-                "semi_white" -> R.drawable.widget_bg_semi_white
-                else -> R.drawable.widget_bg_orange
-            }
-            views.setInt(R.id.widget_root, "setBackgroundResource", bgDrawable)
+            views.setInt(R.id.widget_root, "setBackgroundResource", gorunum.zeminKaynagi)
             
             // Vakit saatlerini ayarla (renk ile)
             val imsakColor = if (mevcutVakit == "İmsak") yaziRengi else yaziRengiSecondary

@@ -34,7 +34,7 @@ class DailyContentNotificationService {
   static const int tahajjudNotificationId = 1003;
 
   // Default sound file
-  static const String defaultNotificationSound = 'ding_dong';
+  static const String defaultNotificationSound = 'best';
   static const String _tahajjudSoundKey = 'daily_content_tahajjud_sound';
   static const String _tahajjudEnabledKey = 'daily_content_tahajjud_enabled';
 
@@ -347,6 +347,12 @@ class DailyContentNotificationService {
               body: 'daily_tahajjud_notification_desc',
               scheduledDate: tahajjudTime,
               soundId: tahajjudSoundId,
+              // Teheccüd, vakit/erken alarmları gibi zamanında uyandırmalı;
+              // Doze'dan tamamen muaf olan setAlarmClock ile zamanlanır (bkz.
+              // AlarmReceiver.kt). Ayet/hadis/dua bilgilendirme amaçlı
+              // olduğundan onlarda daha az öncelikli setExactAndAllowWhileIdle
+              // yeterli.
+              alarmClock: true,
             );
             scheduledCount++;
           }
@@ -411,6 +417,7 @@ class DailyContentNotificationService {
     required String body, // Localization key
     required tz.TZDateTime scheduledDate,
     required String soundId,
+    bool alarmClock = false,
   }) async {
     // Load translations
     final languageService = LanguageService();
@@ -458,6 +465,15 @@ class DailyContentNotificationService {
 
     debugPrint('🔊 Daily content sound ID: $soundId');
 
+    // Bildirime tıklanınca hangi içeriğin açılacağını native tarafa taşımak
+    // için 'title' çeviri anahtarından sabit bir tür kimliği türetilir.
+    const contentTypes = {
+      'todays_verse': 'verse',
+      'todays_hadith': 'hadith',
+      'todays_dua': 'prayer',
+      'todays_tahajjud': 'tahajjud',
+    };
+
     // Schedule via AlarmManager
     final success = await AlarmService.scheduleDailyContentAlarm(
       notificationId: id,
@@ -465,6 +481,8 @@ class DailyContentNotificationService {
       body: bodyText,
       triggerAtMillis: scheduledDate.millisecondsSinceEpoch,
       soundFile: soundId,
+      alarmClock: alarmClock,
+      contentType: contentTypes[title] ?? '',
     );
 
     if (success) {
@@ -572,7 +590,6 @@ class DailyContentNotificationService {
       visibility: NotificationVisibility.public,
       autoCancel: false,
       ticker: channelTicker,
-      largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
       // BigText style - show full content
       styleInformation: BigTextStyleInformation(
         body,

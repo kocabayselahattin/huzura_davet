@@ -21,10 +21,7 @@ class _OnboardingPermissionsPageState extends State<OnboardingPermissionsPage>
   // İzin durumları
   bool _locationGranted = false;
   bool _notificationGranted = false;
-  bool _overlayGranted = false;
-  bool _batteryOptDisabled = false;
   bool _exactAlarmGranted = false;
-  bool _dndGranted = false;
 
   late List<_PermissionStep> _steps;
 
@@ -51,6 +48,14 @@ class _OnboardingPermissionsPageState extends State<OnboardingPermissionsPage>
     }
   }
 
+  // Yalnızca uygulamanın çekirdek işlevi (vakit hesaplama, bildirim, tam
+  // zamanında alarm) için gerçekten şart olan izinler burada istenir.
+  // Üstte gösterme, pil optimizasyonu ve Rahatsız Etmeyin erişimi gibi
+  // hiçbir aktif özelliği açmayan/özel izinler kullanıcıyı gereksiz
+  // yormamak ve Play Store'un "gerekçesiz hassas izin" uyarılarından
+  // kaçınmak için buradan kaldırıldı; pil optimizasyonu artık Ayarlar
+  // sayfasında, gerektiğinde açılan isteğe bağlı bir satır (bkz.
+  // ayarlar_sayfa.dart).
   void _initSteps() {
     _steps = [
       _PermissionStep(
@@ -75,28 +80,6 @@ class _OnboardingPermissionsPageState extends State<OnboardingPermissionsPage>
             _languageService['exact_alarm_permission_desc'] ?? '',
         color: Colors.purple,
       ),
-      _PermissionStep(
-        icon: Icons.layers,
-        title: _languageService['overlay_permission'] ?? '',
-        description:
-            _languageService['overlay_permission_desc'] ?? '',
-        color: Colors.teal,
-      ),
-      _PermissionStep(
-        icon: Icons.battery_charging_full,
-        title:
-            _languageService['battery_permission'] ?? '',
-        description:
-            _languageService['battery_permission_desc'] ?? '',
-        color: Colors.green,
-      ),
-      _PermissionStep(
-        icon: Icons.do_not_disturb,
-        title: _languageService['dnd_permission'] ?? '',
-        description:
-            _languageService['dnd_permission_desc'] ?? '',
-        color: Colors.red,
-      ),
     ];
   }
 
@@ -107,54 +90,35 @@ class _OnboardingPermissionsPageState extends State<OnboardingPermissionsPage>
     final notificationStatus =
         await PermissionService.checkNotificationPermission();
     final exactAlarmStatus = await PermissionService.hasExactAlarmPermission();
-    final overlayStatus = await PermissionService.hasOverlayPermission();
-    final batteryStatus =
-        await PermissionService.isBatteryOptimizationDisabled();
-    final dndStatus = await PermissionService.hasDndPolicyAccess();
 
     if (mounted) {
       setState(() {
         _locationGranted = locationStatus;
         _notificationGranted = notificationStatus;
         _exactAlarmGranted = exactAlarmStatus;
-        _overlayGranted = overlayStatus;
-        _batteryOptDisabled = batteryStatus;
-        _dndGranted = dndStatus;
       });
     }
   }
 
+  /// Kesin alarm izni harici Ayarlar ekranında verilir; uygulama geri
+  /// döndüğünde (resume) durumu yeniden kontrol eder.
   Future<void> _recheckSpecialPermissions() async {
     if (!Platform.isAndroid) return;
-    final overlayStatus = await PermissionService.hasOverlayPermission();
-    final batteryStatus =
-        await PermissionService.isBatteryOptimizationDisabled();
-    final dndStatus = await PermissionService.hasDndPolicyAccess();
+    final exactAlarmStatus = await PermissionService.hasExactAlarmPermission();
     if (mounted) {
       setState(() {
-        _overlayGranted = overlayStatus;
-        _batteryOptDisabled = batteryStatus;
-        _dndGranted = dndStatus;
+        _exactAlarmGranted = exactAlarmStatus;
       });
     }
   }
 
-  Future<bool> _checkOverlayWithRetry() async {
+  Future<bool> _checkExactAlarmWithRetry() async {
     for (int i = 0; i < 4; i++) {
-      final granted = await PermissionService.hasOverlayPermission();
+      final granted = await PermissionService.hasExactAlarmPermission();
       if (granted) return true;
       await Future.delayed(const Duration(milliseconds: 700));
     }
-    return await PermissionService.hasOverlayPermission();
-  }
-
-  Future<bool> _checkBatteryWithRetry() async {
-    for (int i = 0; i < 4; i++) {
-      final granted = await PermissionService.isBatteryOptimizationDisabled();
-      if (granted) return true;
-      await Future.delayed(const Duration(milliseconds: 700));
-    }
-    return await PermissionService.isBatteryOptimizationDisabled();
+    return await PermissionService.hasExactAlarmPermission();
   }
 
   Future<void> _requestCurrentPermission() async {
@@ -183,33 +147,10 @@ class _OnboardingPermissionsPageState extends State<OnboardingPermissionsPage>
           }
           break;
         case 2: // Exact Alarm
-          granted = await PermissionService.requestExactAlarmPermission();
+          await PermissionService.requestExactAlarmPermission();
           if (mounted) {
-            _exactAlarmGranted =
-                await PermissionService.hasExactAlarmPermission();
+            _exactAlarmGranted = await _checkExactAlarmWithRetry();
             granted = _exactAlarmGranted;
-          }
-          break;
-        case 3: // Overlay
-          await PermissionService.openOverlaySettings();
-          if (mounted) {
-            _overlayGranted = await _checkOverlayWithRetry();
-            granted = _overlayGranted;
-          }
-          break;
-        case 4: // Pil
-          await PermissionService.requestBatteryOptimizationExemption();
-          if (mounted) {
-            _batteryOptDisabled = await _checkBatteryWithRetry();
-            granted = _batteryOptDisabled;
-          }
-          break;
-        case 5: // DND
-          await PermissionService.openDndPolicySettings();
-          if (mounted) {
-            await Future.delayed(const Duration(milliseconds: 500));
-            _dndGranted = await PermissionService.hasDndPolicyAccess();
-            granted = _dndGranted;
           }
           break;
       }
@@ -237,18 +178,6 @@ class _OnboardingPermissionsPageState extends State<OnboardingPermissionsPage>
             case 2: // Exact Alarm
               message =
                 _languageService['permission_exact_alarm_denied_info'] ?? '';
-              break;
-            case 3: // Overlay
-              message =
-                _languageService['permission_overlay_denied_info'] ?? '';
-              break;
-            case 4: // Pil
-              message =
-                _languageService['permission_battery_denied_info'] ?? '';
-              break;
-            case 5: // DND
-              message =
-                _languageService['permission_dnd_denied_info'] ?? '';
               break;
           }
 
@@ -373,12 +302,6 @@ class _OnboardingPermissionsPageState extends State<OnboardingPermissionsPage>
         return _notificationGranted;
       case 2:
         return _exactAlarmGranted;
-      case 3:
-        return _overlayGranted;
-      case 4:
-        return _batteryOptDisabled;
-      case 5:
-        return _dndGranted;
       default:
         return false;
     }

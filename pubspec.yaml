@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.1.16+20
+version: 1.2.0+26
 
 environment:
   sdk: ^3.10.4
@@ -57,6 +57,7 @@ dependencies:
   open_meteo: ^3.0.0
   app_settings: ^7.0.0
   share_plus: ^12.0.2
+  package_info_plus: ^9.0.0
 
 dev_dependencies:
   flutter_test:
@@ -91,12 +92,17 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
-  # Ses dosyaları, dil dosyaları ve icon
+  # Dil dosyaları, veri ve icon
+  # Sesler burada değil: bildirim/alarm ile ön dinleme aynı dosyaları
+  # android/app/src/main/res/raw altından kullanır (bkz. SesOnizleme.kt).
   assets:
-    - assets/sounds/
     - assets/lang/
     - assets/data/kuran_meal.json
     - assets/data/gunluk_icerik_havuzu.json
+    - assets/data/gunluk_icerik_metinleri.json
+    - assets/data/mushaf_sayfalari.json
+    - assets/data/dua_kutuphanesi.json
+    - assets/data/genel_dualar.json
     - assets/icon/app_icon.png
     - assets/icon/sun.png
     - assets/icon/moon.png
@@ -104,6 +110,17 @@ flutter:
     - assets/icon/sky_night.png
     - assets/icon/sun.png
     - assets/icon/moon.png
+
+  fonts:
+    - family: NotoNaskhArabic
+      fonts:
+        - asset: assets/fonts/NotoNaskhArabic.ttf
+    - family: Amiri
+      fonts:
+        - asset: assets/fonts/Amiri-Regular.ttf
+    - family: ScheherazadeNew
+      fonts:
+        - asset: assets/fonts/ScheherazadeNew-Regular.ttf
 
   # To add assets to your application, add an assets section, like this:
   # assets:

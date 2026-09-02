@@ -150,6 +150,12 @@ class AlarmService {
     required String body,
     required int triggerAtMillis,
     required String soundFile,
+    // true ise vakit/erken alarmlarıyla aynı setAlarmClock ile zamanlanır
+    // (Doze'dan muaf, en güvenilir tür); yalnızca teheccüd bunu kullanır.
+    bool alarmClock = false,
+    // "verse" | "hadith" | "prayer" | "tahajjud" — bildirime tıklanınca
+    // hangi içeriğin açılacağını native tarafa taşır (bkz. MainActivity.kt).
+    String contentType = '',
   }) async {
     try {
       final triggerTime = DateTime.fromMillisecondsSinceEpoch(triggerAtMillis);
@@ -173,6 +179,8 @@ class AlarmService {
           'body': body,
           'triggerAtMillis': triggerAtMillis,
           'soundFile': soundFile, // Raw sound ID
+          'alarmClock': alarmClock,
+          'contentType': contentType,
         },
       );
       debugPrint('✅ [DAILY CONTENT ALARM RESULT] title=$title, result=$result');
@@ -180,6 +188,31 @@ class AlarmService {
     } catch (e) {
       debugPrint('❌ Daily content alarm scheduling error: $e');
       return false;
+    }
+  }
+
+  /// Uygulama açıkken (arka plandan öne gelirken) günlük içerik bildirimine
+  /// tıklanırsa native taraf bu geri çağrıyı tetikler (bkz.
+  /// MainActivity.kt::onNewIntent). [onAcildi] "verse"/"hadith"/"prayer"/
+  /// "tahajjud" değerini alır.
+  static void gunlukIcerikDinle(void Function(String tur) onAcildi) {
+    _channel.setMethodCallHandler((call) async {
+      if (call.method == 'gunlukIcerikBildirimiAcildi') {
+        final tur = call.arguments as String?;
+        if (tur != null && tur.isNotEmpty) onAcildi(tur);
+      }
+      return null;
+    });
+  }
+
+  /// Soğuk başlangıçta (uygulama kapalıyken bildirime tıklanarak açıldıysa)
+  /// bekleyen günlük içerik türünü döner. Native tarafta bir kez okunup
+  /// temizlenir; tekrar çağrıldığında (ör. hot reload) null döner.
+  static Future<String?> gunlukIcerikBekleyenTuruAl() async {
+    try {
+      return await _channel.invokeMethod<String>('getPendingDailyContentType');
+    } catch (_) {
+      return null;
     }
   }
 

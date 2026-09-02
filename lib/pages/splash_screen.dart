@@ -9,6 +9,7 @@ import 'belirgin_aciklama_sayfa.dart';
 import 'gdpr_onay_sayfa.dart';
 import '../services/permission_service.dart';
 import '../services/language_service.dart';
+import '../services/konum_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -211,6 +212,10 @@ class _SplashScreenState extends State<SplashScreen> {
   // Hızlı ilçe ID validasyonu (async olmadan)
   bool _hizliValidasyon(String? ilceId) {
     if (ilceId == null || ilceId.isEmpty) return false;
+
+    // Yurt dışı için kullanılan manuel konum ID'leri ("manual:ÜLKE:Şehir")
+    // sayısal değildir; Diyanet ilçe ID aralığı kontrolüne tabi değildir.
+    if (KonumService.isManualIlceId(ilceId)) return true;
 
     // Bilinen geçersiz ID'ler
     const invalidIds = [

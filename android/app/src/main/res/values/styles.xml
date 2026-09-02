@@ -53,4 +53,9 @@
              uçtan uca çizim artık varsayılan davranış. -->
         <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
     </style>
+
+    <!-- Widget yapılandırma ekranı (açık tema) -->
+    <style name="WidgetYapilandirmaTheme" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">?android:attr/colorBackground</item>
+    </style>
 </resources>

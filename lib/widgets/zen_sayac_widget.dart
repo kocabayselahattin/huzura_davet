@@ -353,30 +353,33 @@ class _ZenSayacWidgetState extends State<ZenSayacWidget>
                   Padding(
                     padding: const EdgeInsets.only(right: 4),
                     child: Center(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          _buildZenTimeUnit(
-                            hours.toString().padLeft(2, '0'),
-                            'Saat',
-                            primaryColor,
-                            textColor,
-                          ),
-                          const SizedBox(width: 12),
-                          _buildZenTimeUnit(
-                            minutes.toString().padLeft(2, '0'),
-                            'Dakika',
-                            primaryColor,
-                            textColor,
-                          ),
-                          const SizedBox(width: 12),
-                          _buildZenTimeUnit(
-                            seconds.toString().padLeft(2, '0'),
-                            'Saniye',
-                            primaryColor,
-                            textColor,
-                          ),
-                        ],
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _buildZenTimeUnit(
+                              hours.toString().padLeft(2, '0'),
+                              'Saat',
+                              primaryColor,
+                              textColor,
+                            ),
+                            const SizedBox(width: 12),
+                            _buildZenTimeUnit(
+                              minutes.toString().padLeft(2, '0'),
+                              'Dakika',
+                              primaryColor,
+                              textColor,
+                            ),
+                            const SizedBox(width: 12),
+                            _buildZenTimeUnit(
+                              seconds.toString().padLeft(2, '0'),
+                              'Saniye',
+                              primaryColor,
+                              textColor,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),

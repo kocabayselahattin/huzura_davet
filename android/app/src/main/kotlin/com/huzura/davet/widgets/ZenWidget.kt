@@ -64,35 +64,18 @@ class ZenWidget : AppWidgetProvider() {
             val sehir = konum.split("/").firstOrNull()?.trim()?.uppercase() ?: konum.uppercase()
             
             // Önce widget'a özel ayarları kontrol et, yoksa varsayılanı kullan
-            val arkaPlanKey = widgetData.getString("zen_arkaplan_key", null) 
-                ?: widgetData.getString("arkaplan_key", "light") 
-                ?: "light"
-            val yaziRengiHex = widgetData.getString("zen_yazi_rengi_hex", null) 
-                ?: widgetData.getString("yazi_rengi_hex", "212121") 
-                ?: "212121"
-            val yaziRengi = WidgetUtils.parseColorSafe(yaziRengiHex, Color.parseColor("#212121"))
+            val gorunum = WidgetGorunum.coz(
+                context, widgetData, appWidgetId,
+                "zen_arkaplan_key", "light",
+                "zen_yazi_rengi_hex", "212121"
+            )
+            val arkaPlanKey = gorunum.zeminAnahtari
+            val yaziRengi = gorunum.yaziRengi
             val yaziRengiSecondary = Color.argb(180, Color.red(yaziRengi), Color.green(yaziRengi), Color.blue(yaziRengi))
             
             val views = RemoteViews(context.packageName, R.layout.widget_zen)
             
-            // Arka plan ayarla
-            val bgDrawable = when(arkaPlanKey) {
-                "orange" -> R.drawable.widget_bg_orange
-                "light" -> R.drawable.widget_bg_card_light
-                "dark" -> R.drawable.widget_bg_card_dark
-                "sunset" -> R.drawable.widget_bg_sunset
-                "green" -> R.drawable.widget_bg_green
-                "purple" -> R.drawable.widget_bg_purple
-                "red" -> R.drawable.widget_bg_red
-                "blue" -> R.drawable.widget_bg_blue
-                "teal" -> R.drawable.widget_bg_teal
-                "pink" -> R.drawable.widget_bg_pink
-                "transparent" -> R.drawable.widget_bg_transparent
-                "semi_black" -> R.drawable.widget_bg_semi_black
-                "semi_white" -> R.drawable.widget_bg_semi_white
-                else -> R.drawable.widget_bg_card_light
-            }
-            views.setInt(R.id.widget_root, "setBackgroundResource", bgDrawable)
+            views.setInt(R.id.widget_root, "setBackgroundResource", gorunum.zeminKaynagi)
             
             // Accent rengi (ayarlardan alınabilir)
             val mavi = Color.parseColor("#2196F3")

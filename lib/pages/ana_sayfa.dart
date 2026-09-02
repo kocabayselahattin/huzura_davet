@@ -38,11 +38,15 @@ import '../services/language_service.dart';
 import '../services/home_widget_service.dart';
 import '../services/scheduled_notification_service.dart';
 import '../models/konum_model.dart';
+import '../data/il_ilce_data.dart';
+import '../services/diyanet_api_service.dart';
 import 'imsakiye_sayfa.dart';
 import 'ayarlar_sayfa.dart';
 import 'zikir_matik_sayfa.dart';
 import 'kirk_hadis_sayfa.dart';
 import 'kuran_sayfa.dart';
+import 'kutuphane_sayfa.dart';
+import 'zekat_hesaplayici_sayfa.dart';
 import 'ibadet_sayfa.dart';
 import 'ozel_gunler_sayfa.dart';
 import 'kible_sayfa.dart';
@@ -59,7 +63,7 @@ class AnaSayfa extends StatefulWidget {
 }
 
 class _AnaSayfaState extends State<AnaSayfa>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   String konumBasligi = "";
   final TemaService _temaService = TemaService();
   final LanguageService _languageService = LanguageService();
@@ -79,9 +83,14 @@ class _AnaSayfaState extends State<AnaSayfa>
   // Key for widget refresh
   Key _vakitListesiKey = UniqueKey();
 
+  // Konum kontrolünü art arda çok sık tetiklememek için (ör. bildirim
+  // panelini açıp kapatınca resume/pause peş peşe tetiklenebiliyor).
+  DateTime? _sonKonumKontrolZamani;
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
 
     // FAB pulse animasyonu
     _fabAnimController = AnimationController(
@@ -105,6 +114,7 @@ class _AnaSayfaState extends State<AnaSayfa>
       // Schedule notifications
       _scheduleNotifications();
       // Auto location update check
+      _sonKonumKontrolZamani = DateTime.now();
       _checkLocationChange();
     });
   }
@@ -115,6 +125,24 @@ class _AnaSayfaState extends State<AnaSayfa>
     } catch (e) {
       debugPrint('⚠️ Notification scheduling error: $e');
     }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state != AppLifecycleState.resumed) return;
+
+    // Uygulama arka plandan öne her geldiğinde (ör. seyahat sonrası tekrar
+    // açıldığında) konum değişikliğini yeniden kontrol et. initState'teki
+    // tek seferlik kontrol yalnızca soğuk başlatmayı kapsıyordu.
+    final simdi = DateTime.now();
+    if (_sonKonumKontrolZamani != null &&
+        simdi.difference(_sonKonumKontrolZamani!) <
+            const Duration(minutes: 1)) {
+      return;
+    }
+    _sonKonumKontrolZamani = simdi;
+    _checkLocationChange();
   }
 
   /// Check location changes and notify if city changed.
@@ -166,6 +194,8 @@ class _AnaSayfaState extends State<AnaSayfa>
 
       final currentCity = locationInfo['city']?.toString().toUpperCase() ?? '';
       final currentDistrict = locationInfo['district']?.toString() ?? '';
+      final currentCountryCode =
+          locationInfo['country_code']?.toString().toUpperCase() ?? '';
       final savedCity = aktifKonum.ilAdi.toUpperCase();
 
       // Normalize locale-specific characters
@@ -184,7 +214,14 @@ class _AnaSayfaState extends State<AnaSayfa>
 
         // Ask the user
         if (mounted) {
-          _showLocationChangeDialog(currentCity, currentDistrict, savedCity);
+          _showLocationChangeDialog(
+            currentCity,
+            currentDistrict,
+            savedCity,
+            position.latitude,
+            position.longitude,
+            currentCountryCode,
+          );
         }
       }
     } catch (e) {
@@ -255,6 +292,9 @@ class _AnaSayfaState extends State<AnaSayfa>
     String newCity,
     String newDistrict,
     String savedCity,
+    double lat,
+    double lon,
+    String countryCode,
   ) {
     final renkler = _temaService.renkler;
 
@@ -353,16 +393,17 @@ class _AnaSayfaState extends State<AnaSayfa>
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
-              // Navigate to location selection
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const IlIlceSecSayfa()),
-              ).then((_) {
-                // Reload location on return
-                _konumYukle();
-              });
+              // Kullanıcıyı seçim sayfasına atmadan tespit edilen konumu
+              // doğrudan uygula; vakit/sayaç/widget verileri otomatik yenilenir.
+              await _konumuDogrudanGuncelle(
+                newCity,
+                newDistrict,
+                lat,
+                lon,
+                countryCode,
+              );
             },
             child: Text(_languageService['yes_update'] ?? ''),
           ),
@@ -390,6 +431,7 @@ class _AnaSayfaState extends State<AnaSayfa>
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _fabAnimController.dispose();
     _konumPageController?.dispose();
     _temaService.removeListener(_onTemaChanged);
@@ -448,6 +490,174 @@ class _AnaSayfaState extends State<AnaSayfa>
           _vakitListesiKey = UniqueKey(); // Force rebuild prayer list
         });
       }
+    }
+  }
+
+  /// Konum değişti diyaloğundaki "Evet, güncelle" ile çağrılır. Kullanıcıyı
+  /// il/ilçe seçim sayfasına atmadan, GPS'ten tespit edilen konumu doğrudan
+  /// uygular; ardından vakit listesi, sayaç ve widget verilerini yeniler.
+  ///
+  /// Önce yerel IlIlceData (Türkiye) listesiyle il eşleştirmesi denenir.
+  /// Eşleşme bulunamazsa (yurt dışı bir konum) il_ilce_sec_sayfa.dart'taki
+  /// manuel konum sistemiyle aynı biçimde (lat/lon + şehir/ülke, Aladhan API
+  /// üzerinden) doğrudan kaydedilir — hiçbir sayfaya yönlendirme yapılmaz.
+  Future<void> _konumuDogrudanGuncelle(
+    String yeniIl,
+    String yeniIlce,
+    double lat,
+    double lon,
+    String countryCode,
+  ) async {
+    // Canlı Diyanet API'sini önce dene: statik IlIlceData'daki eski format
+    // ID'ler (ör. 1757) Diyanet'in güncel API'siyle çalışmıyor ve uygulama
+    // yeniden açıldığında splash_screen'in hızlı doğrulaması bu ID'leri
+    // geçersiz sayıp kullanıcıyı konum seçim sayfasına geri atıyordu.
+    var illerListesi = <Map<String, dynamic>>[];
+    try {
+      illerListesi = await DiyanetApiService.getIller();
+    } catch (_) {
+      illerListesi = [];
+    }
+    if (illerListesi.isEmpty) illerListesi = IlIlceData.getIller();
+
+    final aramaIl = _normalizeString(yeniIl.toUpperCase());
+    Map<String, dynamic>? bulunanIl;
+    try {
+      bulunanIl = illerListesi.firstWhere((il) {
+        final sehirAdi = _normalizeString(
+          (il['SehirAdi'] ?? '').toString().toUpperCase(),
+        );
+        return sehirAdi == aramaIl ||
+            sehirAdi.contains(aramaIl) ||
+            aramaIl.contains(sehirAdi);
+      });
+    } catch (_) {
+      bulunanIl = null;
+    }
+
+    if (bulunanIl == null) {
+      await _yurtDisiKonumuUygula(yeniIl, lat, lon, countryCode);
+      return;
+    }
+
+    final ilId = bulunanIl['SehirID'].toString();
+    final ilAdi = bulunanIl['SehirAdi'].toString();
+    var ilceler = <Map<String, dynamic>>[];
+    try {
+      ilceler = await DiyanetApiService.getIlceler(ilId);
+    } catch (_) {
+      ilceler = [];
+    }
+    if (ilceler.isEmpty) ilceler = IlIlceData.getIlceler(ilId);
+    if (ilceler.isEmpty) return;
+
+    Map<String, dynamic>? bulunanIlce;
+    if (yeniIlce.isNotEmpty) {
+      final aramaIlce = _normalizeString(yeniIlce.toUpperCase());
+      try {
+        bulunanIlce = ilceler.firstWhere((ilce) {
+          final ilceAdi = _normalizeString(
+            (ilce['IlceAdi'] ?? '').toString().toUpperCase(),
+          );
+          return ilceAdi == aramaIlce ||
+              ilceAdi.contains(aramaIlce) ||
+              aramaIlce.contains(ilceAdi);
+        });
+      } catch (_) {
+        bulunanIlce = null;
+      }
+    }
+    bulunanIlce ??= ilceler.firstWhere(
+      (ilce) => (ilce['IlceAdi'] ?? '').toString().toUpperCase() == 'MERKEZ',
+      orElse: () => ilceler.first,
+    );
+
+    final ilceId = bulunanIlce['IlceID'].toString();
+    final ilceAdi = bulunanIlce['IlceAdi'].toString();
+
+    final mevcutKonumlar = await KonumService.getKonumlar();
+    final mevcutIndex = mevcutKonumlar.indexWhere(
+      (k) => k.ilId == ilId && k.ilceId == ilceId,
+    );
+
+    if (mevcutIndex == -1) {
+      await KonumService.addKonum(
+        KonumModel(ilAdi: ilAdi, ilId: ilId, ilceAdi: ilceAdi, ilceId: ilceId),
+      );
+      final guncelListe = await KonumService.getKonumlar();
+      await KonumService.setAktifKonumIndex(guncelListe.length - 1);
+    } else {
+      await KonumService.setAktifKonumIndex(mevcutIndex);
+    }
+
+    await _konumYukle();
+    await HomeWidgetService.updateAllWidgets();
+    if (mounted) {
+      setState(() {
+        _vakitListesiKey = UniqueKey();
+      });
+    }
+  }
+
+  /// Yurt dışı konumları için: il_ilce_sec_sayfa.dart'taki manuel konum
+  /// aramasıyla aynı anahtar biçimini (`manual:ÜLKE:Şehir`) kullanarak
+  /// lat/lon + şehir/ülke bilgisini doğrudan kaydeder. Vakitler bu durumda
+  /// Diyanet ilçe ID'si yerine DiyanetApiService üzerinden Aladhan API'ye
+  /// (koordinat tabanlı) yönlendirilir; ayrı bir il/ilçe eşleşmesi gerekmez.
+  Future<void> _yurtDisiKonumuUygula(
+    String sehir,
+    double lat,
+    double lon,
+    String countryCode,
+  ) async {
+    if (sehir.isEmpty || countryCode.isEmpty) {
+      // country_code alınamadıysa otomatik eşleşme yapılamaz — son çare
+      // olarak manuel seçim sayfasına düş.
+      if (mounted) {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const IlIlceSecSayfa()),
+        );
+        await _konumYukle();
+      }
+      return;
+    }
+
+    final manualKey = 'manual:$countryCode:$sehir';
+
+    await KonumService.setManualKonumData(
+      key: manualKey,
+      lat: lat,
+      lon: lon,
+      city: sehir,
+      country: countryCode,
+    );
+
+    final yeniKonum = KonumModel(
+      ilAdi: sehir,
+      ilId: 'manual:$countryCode',
+      ilceAdi: countryCode,
+      ilceId: manualKey,
+      aktif: true,
+    );
+
+    final mevcutKonumlar = await KonumService.getKonumlar();
+    final mevcutIndex = mevcutKonumlar.indexWhere((k) => k.ilceId == manualKey);
+
+    if (mevcutIndex == -1) {
+      await KonumService.addKonum(yeniKonum);
+      final guncelListe = await KonumService.getKonumlar();
+      await KonumService.setAktifKonumIndex(guncelListe.length - 1);
+    } else {
+      await KonumService.setAktifKonumIndex(mevcutIndex);
+    }
+
+    await _konumYukle();
+    await HomeWidgetService.updateAllWidgets();
+    if (mounted) {
+      setState(() {
+        _vakitListesiKey = UniqueKey();
+      });
     }
   }
 
@@ -1118,6 +1328,20 @@ class _AnaSayfaState extends State<AnaSayfa>
                       },
                     ),
                     _buildMenuCard(
+                      icon: Icons.calculate_rounded,
+                      title: _languageService['zakat_calculator'] ?? '',
+                      color: Colors.amber,
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ZekatHesaplayiciSayfa(),
+                          ),
+                        );
+                      },
+                    ),
+                    _buildMenuCard(
                       icon: Icons.explore,
                       title: _languageService['qibla'] ?? '',
                       color: Colors.orange,
@@ -1197,6 +1421,20 @@ class _AnaSayfaState extends State<AnaSayfa>
                           context,
                           MaterialPageRoute(
                             builder: (context) => const KuranSayfa(),
+                          ),
+                        );
+                      },
+                    ),
+                    _buildMenuCard(
+                      icon: Icons.local_library_rounded,
+                      title: _languageService['library'] ?? '',
+                      color: Colors.brown,
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const KutuphaneSayfa(),
                           ),
                         );
                       },

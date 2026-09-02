@@ -37,6 +37,10 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
   bool yukleniyor = false;
   bool konumTespit = false;
   bool _manuelAraniyor = false;
+
+  /// "Tamam"a basıldıktan sonra kayıt/widget güncellemesi sürerken true olur;
+  /// düğme dönen göstergeye çevrilir ve tekrar basılamaz.
+  bool _kaydediliyor = false;
   double? _manuelLat;
   double? _manuelLon;
   String? _manuelCity;
@@ -111,67 +115,77 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
   }
 
   Future<void> _illeriYukle() async {
+    // Yerel veriyi anında göster ki liste API cevabını beklerken (yavaş
+    // ağda 10 sn'ye kadar sürebiliyor) boş görünmesin. API başarılı
+    // olursa liste sessizce güncel veriyle değiştirilir.
     setState(() {
+      iller = IlIlceData.getIller();
+      filtrelenmisIller = _ilAramaController.text.trim().isEmpty
+          ? iller
+          : iller.where((il) {
+              final sehirAdi = (il['SehirAdi'] ?? '').toString().toLowerCase();
+              return sehirAdi.contains(_ilAramaController.text.trim().toLowerCase());
+            }).toList();
       yukleniyor = true;
     });
+    print('✅ ${iller.length} cities loaded from local data (instant)');
 
-    // Try API first (for up-to-date and accurate data)
     try {
       final illerData = await DiyanetApiService.getIller();
-      if (illerData.isNotEmpty) {
+      if (illerData.isNotEmpty && mounted) {
         setState(() {
           iller = illerData;
-          filtrelenmisIller = iller;
-          yukleniyor = false;
+          filtrelenmisIller = _ilAramaController.text.trim().isEmpty
+              ? iller
+              : iller.where((il) {
+                  final sehirAdi = (il['SehirAdi'] ?? '').toString().toLowerCase();
+                  return sehirAdi.contains(
+                    _ilAramaController.text.trim().toLowerCase(),
+                  );
+                }).toList();
         });
-        print('✅ ${iller.length} cities loaded from API');
-        return;
+        print('✅ ${iller.length} cities loaded from API (refreshed)');
       }
     } catch (e) {
-      print('⚠️ City API load failed, falling back to local data: $e');
+      print('⚠️ City API load failed, keeping local data: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          yukleniyor = false;
+        });
+      }
     }
-
-    // Fallback to local data if API fails
-    final yerelIller = IlIlceData.getIller();
-    setState(() {
-      iller = yerelIller;
-      filtrelenmisIller = iller;
-      yukleniyor = false;
-    });
-    print('✅ ${iller.length} cities loaded from local data (fallback)');
   }
 
   Future<void> _ilceleriYukle(String ilId) async {
+    // Yerel veriyi anında göster ki liste API cevabını beklerken boş
+    // görünmesin; API başarılı olursa güncel veriyle sessizce değiştirilir.
     setState(() {
+      ilceler = IlIlceData.getIlceler(ilId);
+      filtrelenmisIlceler = ilceler;
+      _ilceAramaController.clear();
       yukleniyor = true;
     });
+    print('✅ ${ilceler.length} districts loaded from local data (instant)');
 
-    // Try API first (for up-to-date and accurate data)
     try {
       final ilcelerData = await DiyanetApiService.getIlceler(ilId);
-      if (ilcelerData.isNotEmpty) {
+      if (ilcelerData.isNotEmpty && mounted) {
         setState(() {
           ilceler = ilcelerData;
           filtrelenmisIlceler = ilceler;
-          _ilceAramaController.clear();
-          yukleniyor = false;
         });
-        print('✅ ${ilceler.length} districts loaded from API');
-        return;
+        print('✅ ${ilceler.length} districts loaded from API (refreshed)');
       }
     } catch (e) {
-      print('⚠️ District API load failed, falling back to local data: $e');
+      print('⚠️ District API load failed, keeping local data: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          yukleniyor = false;
+        });
+      }
     }
-
-    // Fallback to local data if API fails
-    final yerelIlceler = IlIlceData.getIlceler(ilId);
-    setState(() {
-      ilceler = yerelIlceler;
-      filtrelenmisIlceler = ilceler;
-      _ilceAramaController.clear();
-      yukleniyor = false;
-    });
-    print('✅ ${ilceler.length} districts loaded from local data (fallback)');
   }
 
   void _ilAra(String aranan) {
@@ -1078,64 +1092,115 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
     return dLat * dLat + dLon * dLon;
   }
 
-  Future<void> _kaydet() async {
-    if (secilenIlId != null && secilenIlceId != null) {
-      if (KonumService.isManualIlceId(secilenIlceId)) {
-        if (_manuelLat == null ||
-            _manuelLon == null ||
-            _manuelCity == null ||
-            _manuelCountry == null) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  _languageService['location_unavailable_enable_gps'] ??
-                      'Location search failed. Try again.',
-                ),
+  /// Konumu kaydeden "Tamam" düğmesi.
+  ///
+  /// Kayıt sırasında widget güncellemesi ve vakit yenilemesi yapıldığı için
+  /// birkaç saniye sürebiliyor; bu sürede düğme dönen göstergeye çevrilir ve
+  /// yeniden basılamaz. Aksi hâlde ekran donmuş gibi görünüyordu.
+  ///
+  /// `yukleniyor` de engelleyici listeye eklendi: il/ilçe listesi önce yerel
+  /// (eski format ID'li) veriyle anında gösterilip arka planda güncel API
+  /// verisiyle değiştiriliyor — bu yenileme bitmeden kaydedilirse eski,
+  /// geçersiz bir ilçe ID'si kaydedilip uygulama yeniden açıldığında konumun
+  /// sıfırlanmasına yol açabilir.
+  Widget _tamamDugmesi() {
+    return ElevatedButton.icon(
+      onPressed: (_kaydediliyor || yukleniyor) ? null : _kaydet,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.cyanAccent,
+        foregroundColor: const Color(0xFF1B2741),
+        disabledBackgroundColor: Colors.cyanAccent.withOpacity(0.7),
+        disabledForegroundColor: const Color(0xFF1B2741),
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+      icon: _kaydediliyor
+          ? const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.4,
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1B2741)),
               ),
-            );
+            )
+          : const Icon(Icons.check),
+      label: Text(
+        _kaydediliyor
+            ? (_languageService['location_saved_updating'] ?? 'Updating...')
+            : (_languageService['ok'] ?? 'OK'),
+        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  Future<void> _kaydet() async {
+    if (_kaydediliyor) return;
+    if (secilenIlId != null && secilenIlceId != null) {
+      setState(() => _kaydediliyor = true);
+      try {
+        if (KonumService.isManualIlceId(secilenIlceId)) {
+          if (_manuelLat == null ||
+              _manuelLon == null ||
+              _manuelCity == null ||
+              _manuelCountry == null) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    _languageService['location_unavailable_enable_gps'] ??
+                        'Location search failed. Try again.',
+                  ),
+                ),
+              );
+            }
+            return;
           }
-          return;
+          await KonumService.setManualKonumData(
+            key: secilenIlceId!,
+            lat: _manuelLat!,
+            lon: _manuelLon!,
+            city: _manuelCity!,
+            country: _manuelCountry!,
+          );
         }
-        await KonumService.setManualKonumData(
-          key: secilenIlceId!,
-          lat: _manuelLat!,
-          lon: _manuelLon!,
-          city: _manuelCity!,
-          country: _manuelCountry!,
+        // Create a new location model
+        final yeniKonum = KonumModel(
+          ilAdi: secilenIlAdi!,
+          ilId: secilenIlId!,
+          ilceAdi: secilenIlceAdi!,
+          ilceId: secilenIlceId!,
+          aktif: true,
         );
-      }
-      // Create a new location model
-      final yeniKonum = KonumModel(
-        ilAdi: secilenIlAdi!,
-        ilId: secilenIlId!,
-        ilceAdi: secilenIlceAdi!,
-        ilceId: secilenIlceId!,
-        aktif: true,
-      );
 
-      // Add location to list (no-op if already exists)
-      await KonumService.addKonum(yeniKonum);
+        // Add location to list (no-op if already exists)
+        await KonumService.addKonum(yeniKonum);
 
-      // Save to legacy system as well (compatibility)
-      await KonumService.setIl(secilenIlAdi!, secilenIlId!);
-      await KonumService.setIlce(secilenIlceAdi!, secilenIlceId!);
+        // Save to legacy system as well (compatibility)
+        await KonumService.setIl(secilenIlAdi!, secilenIlId!);
+        await KonumService.setIlce(secilenIlceAdi!, secilenIlceId!);
 
-      // Update widgets and app data immediately
-      print('🔄 Location changed, updating data...');
-      await HomeWidgetService.updateAllWidgets();
+        // Update widgets and app data immediately
+        print('🔄 Location changed, updating data...');
+        await HomeWidgetService.updateAllWidgets();
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              _languageService['location_saved_updating'] ??
-                  'Location saved and updating...',
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                _languageService['location_saved_updating'] ??
+                    'Location saved and updating...',
+              ),
             ),
-          ),
-        );
-        // Return true to trigger home page refresh
-        Navigator.pop(context, true);
+          );
+          // Return true to trigger home page refresh
+          Navigator.pop(context, true);
+        }
+      } finally {
+        // Sayfa kapanmışsa setState çağrılmaz; kalırsa düğme yeniden basılabilir
+        // hâle gelir (ör. konum verisi eksik olduğu için erken dönüldüğünde).
+        if (mounted) setState(() => _kaydediliyor = false);
       }
     }
   }
@@ -1488,6 +1553,40 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
 
             const SizedBox(height: 8),
 
+            // Liste anında yerel veriyle dolduruluyor; bu sadece arka planda
+            // güncel API verisi çekilirken görülen ince bir bilgilendirme.
+            // Liste hiçbir zaman boş kalmıyor, sadece burada tazeleniyor.
+            if (yukleniyor)
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 4,
+                ),
+                child: Row(
+                  children: [
+                    const SizedBox(
+                      width: 12,
+                      height: 12,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 1.6,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Colors.cyanAccent,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      _languageService['updating_from_internet'] ??
+                          'Güncel liste internetten alınıyor...',
+                      style: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
             // City list
             if (secilenIlId == null)
               Expanded(
@@ -1756,25 +1855,7 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
                       top: false,
                       child: SizedBox(
                         width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: _kaydet,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.cyanAccent,
-                            foregroundColor: const Color(0xFF1B2741),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          icon: const Icon(Icons.check),
-                          label: Text(
-                            _languageService['ok'] ?? 'OK',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
+                        child: _tamamDugmesi(),
                       ),
                     ),
                   ),
@@ -1800,25 +1881,7 @@ class _IlIlceSecSayfaState extends State<IlIlceSecSayfa> {
                     top: false,
                     child: SizedBox(
                       width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: _kaydet,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.cyanAccent,
-                          foregroundColor: const Color(0xFF1B2741),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        icon: const Icon(Icons.check),
-                        label: Text(
-                          _languageService['ok'] ?? 'OK',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
+                      child: _tamamDugmesi(),
                     ),
                   ),
                 ),

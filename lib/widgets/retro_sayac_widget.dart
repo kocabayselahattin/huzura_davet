@@ -281,46 +281,43 @@ class _RetroSayacWidgetState extends State<RetroSayacWidget>
                     AnimatedBuilder(
                       animation: _blinkAnimation,
                       builder: (context, child) {
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 25),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              _buildLCDDigit(hours.toString().padLeft(2, '0'), lcdGreen),
-                              Opacity(
-                                opacity: _blinkAnimation.value,
-                                child: Text(
-                                  ':',
-                                  style: TextStyle(
-                                    color: lcdGreen,
-                                    fontSize: 46,
-                                    fontFamily: 'monospace',
-                                    fontWeight: FontWeight.bold,
-                                    shadows: [
-                                      Shadow(color: lcdGreen, blurRadius: 10),
-                                    ],
-                                  ),
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _buildLCDDigit(hours.toString().padLeft(2, '0'), lcdGreen),
+                            Opacity(
+                              opacity: _blinkAnimation.value,
+                              child: Text(
+                                ':',
+                                style: TextStyle(
+                                  color: lcdGreen,
+                                  fontSize: 46,
+                                  fontFamily: 'monospace',
+                                  fontWeight: FontWeight.bold,
+                                  shadows: [
+                                    Shadow(color: lcdGreen, blurRadius: 10),
+                                  ],
                                 ),
                               ),
-                              _buildLCDDigit(minutes.toString().padLeft(2, '0'), lcdGreen),
-                              Opacity(
-                                opacity: _blinkAnimation.value,
-                                child: Text(
-                                  ':',
-                                  style: TextStyle(
-                                    color: lcdGreen,
-                                    fontSize: 46,
-                                    fontFamily: 'monospace',
-                                    fontWeight: FontWeight.bold,
-                                    shadows: [
-                                      Shadow(color: lcdGreen, blurRadius: 10),
-                                    ],
-                                  ),
+                            ),
+                            _buildLCDDigit(minutes.toString().padLeft(2, '0'), lcdGreen),
+                            Opacity(
+                              opacity: _blinkAnimation.value,
+                              child: Text(
+                                ':',
+                                style: TextStyle(
+                                  color: lcdGreen,
+                                  fontSize: 46,
+                                  fontFamily: 'monospace',
+                                  fontWeight: FontWeight.bold,
+                                  shadows: [
+                                    Shadow(color: lcdGreen, blurRadius: 10),
+                                  ],
                                 ),
                               ),
-                              _buildLCDDigit(seconds.toString().padLeft(2, '0'), lcdGreen),
-                            ],
-                          ),
+                            ),
+                            _buildLCDDigit(seconds.toString().padLeft(2, '0'), lcdGreen),
+                          ],
                         );
                       },
                     ),
