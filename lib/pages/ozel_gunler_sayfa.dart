@@ -43,7 +43,9 @@ class _OzelGunlerSayfaState extends State<OzelGunlerSayfa> {
   }
 
   Future<void> _cacheDenYukleVeArkaPlandaGuncelle() async {
-    // 1. Try loading from cache first (instant, no network)
+    // 1. Try loading from cache first (instant, no network).
+    // If cache exists, use it as-is — do not refetch automatically.
+    // The user refreshes manually via the refresh button in the AppBar.
     final cached = await OzelGunlerService.cachedOzelGunler();
     if (cached != null && cached.isNotEmpty) {
       if (!mounted) return;
@@ -51,12 +53,10 @@ class _OzelGunlerSayfaState extends State<OzelGunlerSayfa> {
         _yaklasanGunler = cached;
         _yukleniyor = false;
       });
-      // Always refresh in background to keep data fresh
-      _gunleriYukle(showSnackbar: false);
       return;
     }
 
-    // 2. No cache available, must fetch from network (first time)
+    // 2. No cache available, must fetch from network (first launch only)
     await _gunleriYukle(showSnackbar: false);
   }
 

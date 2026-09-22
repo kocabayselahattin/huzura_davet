@@ -416,24 +416,27 @@ class _MatrixSayacWidgetState extends State<MatrixSayacWidget>
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    _buildDigit(
-                                      hours.toString().padLeft(2, '0'),
-                                      matrixGreen,
-                                    ),
-                                    _buildColon(matrixGreen),
-                                    _buildDigit(
-                                      minutes.toString().padLeft(2, '0'),
-                                      matrixGreen,
-                                    ),
-                                    _buildColon(matrixGreen),
-                                    _buildDigit(
-                                      seconds.toString().padLeft(2, '0'),
-                                      matrixGreen,
-                                    ),
-                                  ],
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      _buildDigit(
+                                        hours.toString().padLeft(2, '0'),
+                                        matrixGreen,
+                                      ),
+                                      _buildColon(matrixGreen),
+                                      _buildDigit(
+                                        minutes.toString().padLeft(2, '0'),
+                                        matrixGreen,
+                                      ),
+                                      _buildColon(matrixGreen),
+                                      _buildDigit(
+                                        seconds.toString().padLeft(2, '0'),
+                                        matrixGreen,
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),

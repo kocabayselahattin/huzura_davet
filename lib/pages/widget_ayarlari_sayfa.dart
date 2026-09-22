@@ -745,6 +745,14 @@ class _WidgetAyarlariSayfaState extends State<WidgetAyarlariSayfa>
                 }
               });
             },
+            // Sayfa TemaService'in genel renklerini kullanmadığından, switch
+            // varsayılan ColorScheme.dark rollerine düşüyor ve kart açık
+            // temalarda zor seçiliyordu; kontrastı burada elle sabitliyoruz.
+            activeThumbColor: Theme.of(context).colorScheme.primary,
+            activeTrackColor:
+                Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
+            inactiveThumbColor: Colors.grey.shade500,
+            inactiveTrackColor: Colors.grey.shade500.withValues(alpha: 0.35),
             secondary: Icon(
               Icons.opacity,
               color: Theme.of(context).colorScheme.primary,

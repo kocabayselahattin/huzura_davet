@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:geomag/geomag.dart';
-import 'package:audioplayers/audioplayers.dart';
 import '../services/tema_service.dart';
 import '../services/language_service.dart';
+import '../services/ses_onizleme_service.dart';
 import '../services/vibration_service.dart';
 import '../services/konum_service.dart';
 
@@ -46,7 +46,6 @@ class _KibleSayfaState extends State<KibleSayfa> {
 
   // Correct-direction feedback state.
   bool _wasCorrectDirection = false;
-  AudioPlayer? _audioPlayer;
   DateTime? _lastFeedbackTime;
 
   // Kaaba coordinates.
@@ -58,7 +57,6 @@ class _KibleSayfaState extends State<KibleSayfa> {
     super.initState();
     _temaService.addListener(_onTemaChanged);
     _languageService.addListener(_onTemaChanged);
-    _audioPlayer = AudioPlayer();
     _pusulaStiliniYukle();
     _startCompass();
     _konumuAl();
@@ -85,7 +83,7 @@ class _KibleSayfaState extends State<KibleSayfa> {
     _temaService.removeListener(_onTemaChanged);
     _languageService.removeListener(_onTemaChanged);
     _compassSub?.cancel();
-    _audioPlayer?.dispose();
+    SesOnizlemeService.durdur();
     super.dispose();
   }
 
@@ -153,8 +151,8 @@ class _KibleSayfaState extends State<KibleSayfa> {
       // Strong vibration pattern.
       await VibrationService.vibratePattern([0, 150, 100, 150, 100, 200]);
 
-      // Sound effect.
-      await _audioPlayer?.play(AssetSource('sounds/Ding_Dong.mp3'));
+      // Sound effect (res/raw'daki dosyadan çalınır).
+      await SesOnizlemeService.cal('ding_dong');
     } catch (e) {
       debugPrint('⚠️ Qibla feedback error: $e');
     }

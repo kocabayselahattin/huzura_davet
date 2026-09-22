@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'bildirim_ayarlari_sayfa.dart';
@@ -8,6 +9,7 @@ import 'gizlilik_politikasi_sayfa.dart';
 import 'sayac_ayarlari_sayfa.dart';
 import '../services/tema_service.dart';
 import '../services/language_service.dart';
+import '../services/permission_service.dart';
 import 'widget_ayarlari_sayfa.dart';
 import 'splash_screen.dart';
 
@@ -18,22 +20,49 @@ class AyarlarSayfa extends StatefulWidget {
   State<AyarlarSayfa> createState() => _AyarlarSayfaState();
 }
 
-class _AyarlarSayfaState extends State<AyarlarSayfa> {
+class _AyarlarSayfaState extends State<AyarlarSayfa>
+    with WidgetsBindingObserver {
   final TemaService _temaService = TemaService();
   final LanguageService _languageService = LanguageService();
+
+  // Pil optimizasyonu isteğe bağlı bir ayardır; kullanıcı bunu Ayarlar'dan
+  // ne zaman isterse açar (bkz. onboarding_permissions_page.dart'taki not —
+  // ilk kurulumda zorunlu tutulmuyor).
+  bool _pilOptimizasyonuKapali = false;
 
   @override
   void initState() {
     super.initState();
     _temaService.addListener(_onTemaChanged);
     _languageService.addListener(_onTemaChanged);
+    WidgetsBinding.instance.addObserver(this);
+    _pilDurumunuYukle();
   }
 
   @override
   void dispose() {
     _temaService.removeListener(_onTemaChanged);
     _languageService.removeListener(_onTemaChanged);
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Pil izni harici Ayarlar ekranında verilir; uygulamaya dönünce
+    // durumu yeniden kontrol et.
+    if (state == AppLifecycleState.resumed) _pilDurumunuYukle();
+  }
+
+  Future<void> _pilDurumunuYukle() async {
+    if (!Platform.isAndroid) return;
+    final kapali = await PermissionService.isBatteryOptimizationDisabled();
+    if (mounted) setState(() => _pilOptimizasyonuKapali = kapali);
+  }
+
+  Future<void> _pilOptimizasyonuIste() async {
+    await PermissionService.requestBatteryOptimizationExemption();
+    await _pilDurumunuYukle();
   }
 
   void _onTemaChanged() {
@@ -78,6 +107,26 @@ class _AyarlarSayfaState extends State<AyarlarSayfa> {
             renkler: renkler,
           ),
           Divider(color: renkler.ayirac),
+
+          // Battery optimization (opsiyonel - alarmların gecikmeden çalması için)
+          if (Platform.isAndroid) ...[
+            _ayarSatiri(
+              icon: Icons.battery_charging_full,
+              iconColor: _pilOptimizasyonuKapali
+                  ? Colors.green
+                  : Colors.orange,
+              baslik: _languageService['battery_permission'] ?? '',
+              altBaslik: _pilOptimizasyonuKapali
+                  ? (_languageService['permission_granted'] ?? '')
+                  : (_languageService['battery_permission_desc'] ?? ''),
+              onTap: _pilOptimizasyonuKapali ? null : _pilOptimizasyonuIste,
+              renkler: renkler,
+              trailing: _pilOptimizasyonuKapali
+                  ? const Icon(Icons.check_circle, color: Colors.green)
+                  : Icon(Icons.chevron_right, color: renkler.yaziSecondary),
+            ),
+            Divider(color: renkler.ayirac),
+          ],
 
           // Location settings
           _ayarSatiri(
@@ -387,7 +436,7 @@ class _AyarlarSayfaState extends State<AyarlarSayfa> {
     required Color iconColor,
     required String baslik,
     required String altBaslik,
-    required VoidCallback onTap,
+    required VoidCallback? onTap,
     required TemaRenkleri renkler,
     Widget? trailing,
   }) {

@@ -2,16 +2,18 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:audioplayers/audioplayers.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:path_provider/path_provider.dart';
 import '../services/dnd_service.dart';
+import '../services/permission_service.dart';
 import '../services/scheduled_notification_service.dart';
 import '../services/daily_content_notification_service.dart';
 import '../services/early_reminder_service.dart';
 import '../services/language_service.dart';
+import '../services/ses_onizleme_service.dart';
 import '../services/tema_service.dart';
+import '../widgets/ses_secici_sheet.dart';
 
 class BildirimAyarlariSayfa extends StatefulWidget {
   const BildirimAyarlariSayfa({super.key});
@@ -21,7 +23,6 @@ class BildirimAyarlariSayfa extends StatefulWidget {
 }
 
 class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
-  final AudioPlayer _audioPlayer = AudioPlayer();
   final LanguageService _languageService = LanguageService();
   final TemaService _temaService = TemaService();
 
@@ -73,11 +74,8 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
   TimeOfDay _gunlukHadisSaati = const TimeOfDay(hour: 13, minute: 0);
   TimeOfDay _gunlukDuaSaati = const TimeOfDay(hour: 20, minute: 0);
   TimeOfDay _gunlukTeheccudSaati = const TimeOfDay(hour: 3, minute: 0);
-  String _gunlukIcerikSesi = 'ding_dong'; // Ses ID'si
-  String _gunlukTeheccudSesi = 'ding_dong'; // Ses ID'si
-
-  // Sound playback state (play/pause toggle)
-  String? _sesCalanKey; // Which prayer is playing
+  String _gunlukIcerikSesi = 'best'; // Ses ID'si
+  String _gunlukTeheccudSesi = 'best'; // Ses ID'si
 
   // MethodChannel for lock screen service
   static const _lockScreenChannel = MethodChannel('huzur_vakti/lockscreen');
@@ -121,6 +119,11 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
   // Sound options - getter because it needs languageService
   // Each sound has a lowercase unique ID (Android raw resource name)
   List<Map<String, String>> get _sesSecenekleri => [
+    {
+      'id': 'system_default',
+      'ad': _languageService['sound_system_default'] ?? '',
+      'dosya': 'system_default',
+    },
     {
       'id': 'aksam_ezani',
       'ad': _languageService['sound_aksam_ezani'] ?? '',
@@ -343,7 +346,7 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
   void dispose() {
     _temaService.removeListener(_onTemaChanged);
     _languageService.removeListener(_onTemaChanged);
-    _audioPlayer.dispose();
+    SesOnizlemeService.durdur();
     super.dispose();
   }
 
@@ -411,6 +414,98 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
       _kilitEkraniBildirimi =
           prefs.getBool('kilit_ekrani_bildirimi_aktif') ?? false;
     });
+
+    await _eskiVarsayilanSesiDuzelt(prefs);
+  }
+
+  /// main.dart'taki ilk kurulum varsayılanları eskiden ".mp3" uzantılı
+  /// kaydediliyordu (ör. "best.mp3"), ama dropdown'daki ve her yerdeki ses
+  /// kimlikleri uzantısızdır ("best"). Uzantılı değer hiçbir seçenekle
+  /// eşleşmediği için ekran listenin ilk öğesine ("Akşam Ezanı") düşüyordu —
+  /// gerçek ses zaten "best" çalıyordu, sadece görünen isim yanlıştı.
+  ///
+  /// Tek seferlik göç: kayıtlı ses kimliklerinden ".mp3" uzantısını temizler.
+  /// Kullanıcının kendi seçtiği bir ses de aynı biçimde düzeltilir, bu ses
+  /// tercihini bozmaz. Bayrak kaydedildikten sonra tekrar tetiklenmez.
+  Future<void> _eskiVarsayilanSesiDuzelt(SharedPreferences prefs) async {
+    const bayrak = 'ses_uzantisi_temizligi_migrasyonu_v1';
+    if (prefs.getBool(bayrak) ?? false) return;
+
+    String temizle(String sesId) {
+      if (sesId.toLowerCase().endsWith('.mp3')) {
+        return sesId.substring(0, sesId.length - 4);
+      }
+      return sesId;
+    }
+
+    var degisti = false;
+
+    setState(() {
+      for (final vakit in _bildirimSesi.keys) {
+        final temizSes = temizle(_bildirimSesi[vakit]!);
+        if (temizSes != _bildirimSesi[vakit]) {
+          _bildirimSesi[vakit] = temizSes;
+          degisti = true;
+        }
+        final temizErkenSes = temizle(_erkenBildirimSesi[vakit]!);
+        if (temizErkenSes != _erkenBildirimSesi[vakit]) {
+          _erkenBildirimSesi[vakit] = temizErkenSes;
+          degisti = true;
+        }
+      }
+      final temizGunlukSes = temizle(_gunlukIcerikSesi);
+      if (temizGunlukSes != _gunlukIcerikSesi) {
+        _gunlukIcerikSesi = temizGunlukSes;
+        degisti = true;
+      }
+      final temizTeheccudSes = temizle(_gunlukTeheccudSesi);
+      if (temizTeheccudSes != _gunlukTeheccudSesi) {
+        _gunlukTeheccudSesi = temizTeheccudSes;
+        degisti = true;
+      }
+    });
+
+    if (degisti) {
+      for (final vakit in _bildirimSesi.keys) {
+        await prefs.setString('bildirim_sesi_$vakit', _bildirimSesi[vakit]!);
+        await prefs.setString(
+          'erken_bildirim_sesi_$vakit',
+          _erkenBildirimSesi[vakit]!,
+        );
+      }
+      await prefs.setString(
+        'daily_content_notification_sound',
+        _gunlukIcerikSesi,
+      );
+      await prefs.setString(
+        'daily_content_tahajjud_sound',
+        _gunlukTeheccudSesi,
+      );
+
+      // Yeni ses zamanlanmış alarmlara da yansımalı; aksi hâlde bir sonraki
+      // vakit hâlâ eski sesle çalar. _ayarlariKaydet() burada çağrılmaz:
+      // o akış izin diyalogları açıyor, sayfa açılışında uygun değil.
+      try {
+        await EarlyReminderService.saveAndReschedule(
+          erkenSureler: Map<String, int>.from(_erkenBildirim),
+          erkenSesler: Map<String, String>.from(_erkenBildirimSesi),
+        );
+        await ScheduledNotificationService.scheduleAllPrayerNotifications();
+        await DailyContentNotificationService.setDailyContentNotificationSettings(
+          enabled: _gunlukIcerikBildirimleri,
+          tahajjudEnabled: _teheccudBildirimiAcik,
+          soundFileName: _gunlukIcerikSesi,
+          tahajjudSoundFileName: _gunlukTeheccudSesi,
+          verseTime: _formatTimeOfDay(_gunlukAyetSaati),
+          hadithTime: _formatTimeOfDay(_gunlukHadisSaati),
+          prayerTime: _formatTimeOfDay(_gunlukDuaSaati),
+          tahajjudTime: _formatTimeOfDay(_gunlukTeheccudSaati),
+        );
+      } catch (e) {
+        debugPrint('⚠️ Ses göçü sonrası yeniden zamanlama hatası: $e');
+      }
+    }
+    await prefs.setBool(bayrak, true);
   }
 
   Future<void> _ayarlariKaydet() async {
@@ -621,6 +716,34 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
     if (!value) {
       // Clear legacy DND schedules when disabling mute
       await DndService.cancelPrayerDnd();
+    } else {
+      // AlarmService, vakit girince telefonu ringerMode = SILENT yaparak
+      // susturuyor; Android 7+ bu değişikliği yalnızca Rahatsız Etmeyin
+      // erişimi verilmişse uygular, aksi hâlde sessizce yok sayar. İzin
+      // burada, tam bu özelliği açarken bağlamsal olarak istenir.
+      final hasAccess = await PermissionService.hasDndPolicyAccess();
+      if (!hasAccess && mounted) {
+        final git = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(_languageService['dnd_permission'] ?? ''),
+            content: Text(_languageService['dnd_permission_desc'] ?? ''),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text(_languageService['cancel'] ?? ''),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: Text(_languageService['grant_permission'] ?? ''),
+              ),
+            ],
+          ),
+        );
+        if (git == true) {
+          await PermissionService.openDndPolicySettings();
+        }
+      }
     }
 
     if (mounted) {
@@ -690,56 +813,11 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
     }
   }
 
-  Future<void> _sesCal(String key, String sesId) async {
-    try {
-      if (_sesCalanKey == key) {
-        // Stop if the same button was pressed
-        await _audioPlayer.stop();
-        setState(() => _sesCalanKey = null);
-      } else {
-        // If a different button was pressed, stop then play new
-        await _audioPlayer.stop();
-
-        if (sesId == 'custom' && _ozelSesDosyalari.containsKey(key)) {
-          // Play custom sound
-          await _audioPlayer.play(DeviceFileSource(_ozelSesDosyalari[key]!));
-        } else if (sesId != 'custom') {
-          // Resolve file name from ID
-          final sesSecenegi = _sesSecenekleri.firstWhere(
-            (s) => s['id'] == sesId,
-            orElse: () => _sesSecenekleri.first,
-          );
-          final sesDosyasi = sesSecenegi['dosya']!;
-          // Play asset sound
-          await _audioPlayer.play(AssetSource('sounds/$sesDosyasi'));
-        }
-
-        setState(() => _sesCalanKey = key);
-
-        // Auto toggle when playback ends
-        _audioPlayer.onPlayerStateChanged.listen((state) {
-          if (state == PlayerState.stopped || state == PlayerState.completed) {
-            setState(() => _sesCalanKey = null);
-          }
-        });
-      }
-    } catch (e) {
-      setState(() => _sesCalanKey = null);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${_languageService['sound_error'] ?? ''}: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _ozelSesSec(String key) async {
-    final isErken = key.endsWith('_erken');
-    final baseKey = isErken ? key.replaceFirst('_erken', '') : key;
-    // Inform the user first
+  /// Cihazdan bir ses dosyası seçtirip uygulama dizinine kopyalar; kopyalanan
+  /// dosyanın yolunu döndürür. Kullanıcı vazgeçerse veya kopyalama başarısız
+  /// olursa null döner. Ses seçici panelde ([sesSeciciSheetAc]) "özel ses"
+  /// satırına dokunulduğunda çağrılır (bkz. [_vakitSesSecimiAc]).
+  Future<String?> _ozelDosyaSecVeKopyala(String key) async {
     final devam = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -758,7 +836,7 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
       ),
     );
 
-    if (devam != true) return;
+    if (devam != true) return null;
 
     try {
       final result = await FilePicker.platform.pickFiles(
@@ -766,68 +844,34 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
         allowMultiple: false,
       );
 
-      if (result != null && result.files.single.path != null) {
-        final secilenDosyaYolu = result.files.single.path!;
+      if (result == null || result.files.single.path == null) return null;
 
-        // Copy file with a safe name into app directory
-        final guvenliDosyaYolu = await _copyCustomSoundFile(
-          secilenDosyaYolu,
-          key,
-        );
+      final guvenliDosyaYolu = await _copyCustomSoundFile(
+        result.files.single.path!,
+        key,
+      );
 
-        if (guvenliDosyaYolu != null) {
-          setState(() {
-            _ozelSesDosyalari[key] = guvenliDosyaYolu;
-            if (isErken) {
-              _erkenBildirimSesi[baseKey] = 'custom';
-            } else {
-              _bildirimSesi[baseKey] = 'custom';
-            }
-            _degisiklikYapildi = true;
-          });
-
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(_languageService['custom_sound_selected'] ?? ''),
-                backgroundColor: Colors.green,
-              ),
-            );
-          }
-
-          // Play selected sound
-          await _sesCal(key, 'custom');
-        } else {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  _languageService['custom_sound_copy_error'] ?? '',
-                ),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-        }
-      } else {
-        // User canceled, keep previous selection
+      if (guvenliDosyaYolu != null) {
         if (mounted) {
-          setState(() {
-            // If custom selected but file missing, fallback to default
-            if (isErken) {
-              if (_erkenBildirimSesi[baseKey] == 'custom' &&
-                  !_ozelSesDosyalari.containsKey(key)) {
-                _erkenBildirimSesi[baseKey] = _sesSecenekleri.first['id']!;
-              }
-            } else {
-              if (_bildirimSesi[baseKey] == 'custom' &&
-                  !_ozelSesDosyalari.containsKey(key)) {
-                _bildirimSesi[baseKey] = _sesSecenekleri.first['id']!;
-              }
-            }
-          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(_languageService['custom_sound_selected'] ?? ''),
+              backgroundColor: Colors.green,
+            ),
+          );
         }
+        return guvenliDosyaYolu;
       }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_languageService['custom_sound_copy_error'] ?? ''),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return null;
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -839,9 +883,53 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
           ),
         );
       }
+      return null;
     }
   }
-  // ... existing code ...
+
+  /// [_sesSecenekleri] içindeki bir ses kimliğinin görünen adı; "custom" ise
+  /// seçilen dosyanın adı gösterilir.
+  String _sesAdi(String sesId, String? ozelYol) {
+    if (sesId == 'custom') {
+      if (ozelYol != null) {
+        return ozelYol.split('/').last.split('\\').last;
+      }
+      return _languageService['custom_sound'] ?? '';
+    }
+    final girdi = _sesSecenekleri.firstWhere(
+      (s) => s['id'] == sesId,
+      orElse: () => _sesSecenekleri.first,
+    );
+    return girdi['ad'] ?? sesId;
+  }
+
+  /// Vakit bildirimi (an bildirim ya da erken hatırlatma) için ortak ses
+  /// seçici paneli açar ve seçimi uygular. [key], [_ozelSesDosyalari]
+  /// içindeki özel dosya kaydı için kullanılan anahtardır (an bildirimde
+  /// vakit adı, erken hatırlatmada "${vakit}_erken").
+  Future<void> _vakitSesSecimiAc({
+    required String key,
+    required String seciliSesId,
+    required void Function(String yeniId) uygula,
+  }) async {
+    final secim = await sesSeciciSheetAc(
+      context: context,
+      renkler: _temaService.renkler,
+      baslik: _languageService['on_time_sound'] ?? '',
+      secenekler: _sesSecenekleri,
+      seciliSesId: seciliSesId,
+      ozelDosyaSec: () => _ozelDosyaSecVeKopyala(key),
+    );
+    if (secim == null) return;
+
+    setState(() {
+      if (secim.id == 'custom') {
+        _ozelSesDosyalari[key] = secim.ozelYol!;
+      }
+      uygula(secim.id);
+      _degisiklikYapildi = true;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -982,6 +1070,10 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
                           await _toggleSessizeAl(value);
                         },
                         activeThumbColor: renkler.vurguSecondary,
+                        inactiveThumbColor: renkler.yaziSecondary,
+                        inactiveTrackColor: renkler.yaziSecondary.withOpacity(
+                          0.3,
+                        ),
                       ),
                     ],
                   ),
@@ -1038,6 +1130,10 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
                           });
                         },
                         activeThumbColor: renkler.vurgu,
+                        inactiveThumbColor: renkler.yaziSecondary,
+                        inactiveTrackColor: renkler.yaziSecondary.withOpacity(
+                          0.3,
+                        ),
                       ),
                     ],
                   ),
@@ -1063,153 +1159,77 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
                     padding: const EdgeInsets.only(left: 36, right: 12),
                     child: Column(
                       children: [
-                        Row(
-                          children: [
-                            const Text('📖', style: TextStyle(fontSize: 16)),
-                            const SizedBox(width: 8),
-                            Text(
-                              _languageService['daily_verse_label'] ?? '',
-                              style: TextStyle(
-                                color: renkler.yaziSecondary,
-                                fontSize: 13,
-                              ),
-                            ),
-                            const Spacer(),
-                            TextButton(
-                              onPressed: () => _pickDailyContentTime(
-                                current: _gunlukAyetSaati,
-                                onSelected: (value) {
-                                  _gunlukAyetSaati = value;
-                                },
-                              ),
-                              child: Text(
-                                _formatTimeOfDay(_gunlukAyetSaati),
-                                style: TextStyle(
-                                  color: renkler.vurgu,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
+                        ZamanSeciciSatiri(
+                          renkler: renkler,
+                          leading: const Text(
+                            '📖',
+                            style: TextStyle(fontSize: 16),
+                          ),
+                          etiket: _languageService['daily_verse_label'] ?? '',
+                          saatMetni: _formatTimeOfDay(_gunlukAyetSaati),
+                          onTap: () => _pickDailyContentTime(
+                            current: _gunlukAyetSaati,
+                            onSelected: (value) {
+                              _gunlukAyetSaati = value;
+                            },
+                          ),
                         ),
-                        const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            const Text('📿', style: TextStyle(fontSize: 16)),
-                            const SizedBox(width: 8),
-                            Text(
-                              _languageService['daily_hadith_label'] ?? '',
-                              style: TextStyle(
-                                color: renkler.yaziSecondary,
-                                fontSize: 13,
-                              ),
-                            ),
-                            const Spacer(),
-                            TextButton(
-                              onPressed: () => _pickDailyContentTime(
-                                current: _gunlukHadisSaati,
-                                onSelected: (value) {
-                                  _gunlukHadisSaati = value;
-                                },
-                              ),
-                              child: Text(
-                                _formatTimeOfDay(_gunlukHadisSaati),
-                                style: TextStyle(
-                                  color: renkler.vurgu,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
+                        const SizedBox(height: 8),
+                        ZamanSeciciSatiri(
+                          renkler: renkler,
+                          leading: const Text(
+                            '📿',
+                            style: TextStyle(fontSize: 16),
+                          ),
+                          etiket: _languageService['daily_hadith_label'] ?? '',
+                          saatMetni: _formatTimeOfDay(_gunlukHadisSaati),
+                          onTap: () => _pickDailyContentTime(
+                            current: _gunlukHadisSaati,
+                            onSelected: (value) {
+                              _gunlukHadisSaati = value;
+                            },
+                          ),
                         ),
-                        const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            const Text('🤲', style: TextStyle(fontSize: 16)),
-                            const SizedBox(width: 8),
-                            Text(
-                              _languageService['daily_dua_label'] ?? '',
-                              style: TextStyle(
-                                color: renkler.yaziSecondary,
-                                fontSize: 13,
-                              ),
-                            ),
-                            const Spacer(),
-                            TextButton(
-                              onPressed: () => _pickDailyContentTime(
-                                current: _gunlukDuaSaati,
-                                onSelected: (value) {
-                                  _gunlukDuaSaati = value;
-                                },
-                              ),
-                              child: Text(
-                                _formatTimeOfDay(_gunlukDuaSaati),
-                                style: TextStyle(
-                                  color: renkler.vurgu,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
+                        const SizedBox(height: 8),
+                        ZamanSeciciSatiri(
+                          renkler: renkler,
+                          leading: const Text(
+                            '🤲',
+                            style: TextStyle(fontSize: 16),
+                          ),
+                          etiket: _languageService['daily_dua_label'] ?? '',
+                          saatMetni: _formatTimeOfDay(_gunlukDuaSaati),
+                          onTap: () => _pickDailyContentTime(
+                            current: _gunlukDuaSaati,
+                            onSelected: (value) {
+                              _gunlukDuaSaati = value;
+                            },
+                          ),
                         ),
                         const SizedBox(height: 10),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.music_note,
-                              color: renkler.vurgu,
-                              size: 16,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
+                        SesSeciciSatiri(
+                          renkler: renkler,
+                          icon: Icons.music_note_rounded,
+                          etiket:
                               _languageService['daily_content_alarm_sound'] ??
+                              '',
+                          secilenAd: _sesAdi(_gunlukIcerikSesi, null),
+                          onTap: () async {
+                            final secim = await sesSeciciSheetAc(
+                              context: context,
+                              renkler: renkler,
+                              baslik:
+                                  _languageService['daily_content_alarm_sound'] ??
                                   '',
-                              style: TextStyle(
-                                color: renkler.yaziSecondary,
-                                fontSize: 13,
-                              ),
-                            ),
-                            const Spacer(),
-                            SizedBox(
-                              width: 160,
-                              child: DropdownButtonHideUnderline(
-                                child: DropdownButton<String>(
-                                  value:
-                                      _gunlukIcerikSesSecenekleri.any(
-                                        (s) => s['id'] == _gunlukIcerikSesi,
-                                      )
-                                      ? _gunlukIcerikSesi
-                                      : _gunlukIcerikSesSecenekleri.first['id'],
-                                  isExpanded: true,
-                                  dropdownColor: renkler.kartArkaPlan,
-                                  icon: Icon(
-                                    Icons.arrow_drop_down,
-                                    color: renkler.vurgu,
-                                  ),
-                                  style: TextStyle(color: renkler.yaziPrimary),
-                                  items: _gunlukIcerikSesSecenekleri.map((ses) {
-                                    return DropdownMenuItem(
-                                      value: ses['id'],
-                                      child: Text(
-                                        ses['ad']!,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    );
-                                  }).toList(),
-                                  onChanged: (value) {
-                                    if (value == null) return;
-                                    setState(() {
-                                      _gunlukIcerikSesi = value;
-                                      _degisiklikYapildi = true;
-                                    });
-                                  },
-                                ),
-                              ),
-                            ),
-                          ],
+                              secenekler: _gunlukIcerikSesSecenekleri,
+                              seciliSesId: _gunlukIcerikSesi,
+                            );
+                            if (secim == null) return;
+                            setState(() {
+                              _gunlukIcerikSesi = secim.id;
+                              _degisiklikYapildi = true;
+                            });
+                          },
                         ),
                       ],
                     ),
@@ -1252,6 +1272,10 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
                           });
                         },
                         activeThumbColor: renkler.vurgu,
+                        inactiveThumbColor: renkler.yaziSecondary,
+                        inactiveTrackColor: renkler.yaziSecondary.withOpacity(
+                          0.3,
+                        ),
                       ),
                     ],
                   ),
@@ -1261,103 +1285,50 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
                       padding: const EdgeInsets.only(left: 36, right: 12),
                       child: Column(
                         children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.access_time,
-                                color: renkler.vurgu,
-                                size: 16,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
+                          ZamanSeciciSatiri(
+                            renkler: renkler,
+                            leading: Icon(
+                              Icons.access_time,
+                              color: renkler.vurgu,
+                              size: 16,
+                            ),
+                            etiket:
                                 _languageService['daily_tahajjud_label'] ?? '',
-                                style: TextStyle(
-                                  color: renkler.yaziSecondary,
-                                  fontSize: 13,
-                                ),
-                              ),
-                              const Spacer(),
-                              TextButton(
-                                onPressed: () => _pickDailyContentTime(
-                                  current: _gunlukTeheccudSaati,
-                                  onSelected: (value) {
-                                    setState(() {
-                                      _gunlukTeheccudSaati = value;
-                                      _degisiklikYapildi = true;
-                                    });
-                                  },
-                                ),
-                                child: Text(
-                                  _formatTimeOfDay(_gunlukTeheccudSaati),
-                                  style: TextStyle(
-                                    color: renkler.vurgu,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ],
+                            saatMetni: _formatTimeOfDay(_gunlukTeheccudSaati),
+                            onTap: () => _pickDailyContentTime(
+                              current: _gunlukTeheccudSaati,
+                              onSelected: (value) {
+                                setState(() {
+                                  _gunlukTeheccudSaati = value;
+                                  _degisiklikYapildi = true;
+                                });
+                              },
+                            ),
                           ),
                           const SizedBox(height: 6),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.nights_stay,
-                                color: renkler.vurgu,
-                                size: 16,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
+                          SesSeciciSatiri(
+                            renkler: renkler,
+                            icon: Icons.nights_stay_rounded,
+                            etiket:
                                 _languageService['daily_tahajjud_alarm_sound'] ??
+                                '',
+                            secilenAd: _sesAdi(_gunlukTeheccudSesi, null),
+                            onTap: () async {
+                              final secim = await sesSeciciSheetAc(
+                                context: context,
+                                renkler: renkler,
+                                baslik:
+                                    _languageService['daily_tahajjud_alarm_sound'] ??
                                     '',
-                                style: TextStyle(
-                                  color: renkler.yaziSecondary,
-                                  fontSize: 13,
-                                ),
-                              ),
-                              const Spacer(),
-                              SizedBox(
-                                width: 160,
-                                child: DropdownButtonHideUnderline(
-                                  child: DropdownButton<String>(
-                                    value:
-                                        _gunlukIcerikSesSecenekleri.any(
-                                          (s) => s['id'] == _gunlukTeheccudSesi,
-                                        )
-                                        ? _gunlukTeheccudSesi
-                                        : _gunlukIcerikSesSecenekleri
-                                              .first['id'],
-                                    isExpanded: true,
-                                    dropdownColor: renkler.kartArkaPlan,
-                                    icon: Icon(
-                                      Icons.arrow_drop_down,
-                                      color: renkler.vurgu,
-                                    ),
-                                    style: TextStyle(
-                                      color: renkler.yaziPrimary,
-                                    ),
-                                    items: _gunlukIcerikSesSecenekleri.map(
-                                      (ses) {
-                                        return DropdownMenuItem(
-                                          value: ses['id'],
-                                          child: Text(
-                                            ses['ad']!,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        );
-                                      },
-                                    ).toList(),
-                                    onChanged: (value) {
-                                      if (value == null) return;
-                                      setState(() {
-                                        _gunlukTeheccudSesi = value;
-                                        _degisiklikYapildi = true;
-                                      });
-                                    },
-                                  ),
-                                ),
-                              ),
-                            ],
+                                secenekler: _gunlukIcerikSesSecenekleri,
+                                seciliSesId: _gunlukTeheccudSesi,
+                              );
+                              if (secim == null) return;
+                              setState(() {
+                                _gunlukTeheccudSesi = secim.id;
+                                _degisiklikYapildi = true;
+                              });
+                            },
                           ),
                         ],
                       ),
@@ -1402,6 +1373,10 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
                           await _toggleKilitEkraniBildirimi(value);
                         },
                         activeThumbColor: renkler.vurguSecondary,
+                        inactiveThumbColor: renkler.yaziSecondary,
+                        inactiveTrackColor: renkler.yaziSecondary.withOpacity(
+                          0.3,
+                        ),
                       ),
                     ],
                   ),
@@ -1587,6 +1562,8 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
                 });
               },
               activeThumbColor: renkler.vurgu,
+              inactiveThumbColor: renkler.yaziSecondary,
+              inactiveTrackColor: renkler.yaziSecondary.withOpacity(0.3),
             ),
           ),
 
@@ -1644,6 +1621,9 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
                             });
                           },
                           activeThumbColor: renkler.vurguSecondary,
+                          inactiveThumbColor: renkler.yaziSecondary,
+                          inactiveTrackColor: renkler.yaziSecondary
+                              .withOpacity(0.3),
                         ),
                       ],
                     ),
@@ -1749,110 +1729,27 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
                             ],
                           ),
                           const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Container(
-                                  height: 36,
-                                  decoration: BoxDecoration(
-                                    color: renkler.kartArkaPlan.withOpacity(
-                                      0.5,
-                                    ),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: DropdownButtonHideUnderline(
-                                    child: DropdownButton<String>(
-                                      value:
-                                          _sesSecenekleri.any(
-                                            (s) => s['id'] == seciliSes,
-                                          )
-                                          ? seciliSes
-                                          : _sesSecenekleri.first['id'],
-                                      isExpanded: true,
-                                      dropdownColor: renkler.kartArkaPlan,
-                                      icon: Icon(
-                                        Icons.arrow_drop_down,
-                                        color: renkler.vurguSecondary,
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                      ),
-                                      style: TextStyle(
-                                        color: renkler.yaziPrimary,
-                                      ),
-                                      items: _sesSecenekleri.map((ses) {
-                                        return DropdownMenuItem(
-                                          value: ses['id'],
-                                          child: Text(ses['ad']!),
-                                        );
-                                      }).toList(),
-                                      onChanged: (value) async {
-                                        if (value != null) {
-                                          if (value == 'custom') {
-                                            await _ozelSesSec(key);
-                                          } else {
-                                            setState(() {
-                                              final eskiSes =
-                                                  _bildirimSesi[key]!;
-                                              _bildirimSesi[key] = value;
-                                              // If early sound matches old on-time sound, sync to new sound
-                                              if (_erkenBildirimSesi[key] ==
-                                                  eskiSes) {
-                                                _erkenBildirimSesi[key] = value;
-                                              }
-                                              _degisiklikYapildi = true;
-                                            });
-                                          }
-                                        }
-                                      },
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: _sesCalanKey == key
-                                      ? renkler.vurguSecondary.withOpacity(0.3)
-                                      : renkler.vurgu.withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: IconButton(
-                                  onPressed: () => _sesCal(key, seciliSes),
-                                  icon: Icon(
-                                    _sesCalanKey == key
-                                        ? Icons.stop_circle
-                                        : Icons.play_circle,
-                                    color: _sesCalanKey == key
-                                        ? renkler.vurguSecondary
-                                        : renkler.vurgu,
-                                    size: 28,
-                                  ),
-                                  tooltip: _sesCalanKey == key
-                                      ? (_languageService['stop'] ?? '')
-                                      : (_languageService['listen'] ?? ''),
-                                  padding: EdgeInsets.zero,
-                                  constraints: const BoxConstraints(
-                                    minWidth: 40,
-                                    minHeight: 40,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (seciliSes == 'custom' &&
-                              _ozelSesDosyalari.containsKey(key))
-                            Padding(
-                              padding: const EdgeInsets.only(top: 6),
-                              child: Text(
-                                '${_languageService['custom'] ?? ''}: ${_ozelSesDosyalari[key]!.split('/').last.split('\\').last}',
-                                style: const TextStyle(
-                                  color: Colors.white38,
-                                  fontSize: 11,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                          SesSeciciSatiri(
+                            renkler: renkler,
+                            icon: Icons.music_note_rounded,
+                            etiket: _languageService['on_time_sound'] ?? '',
+                            secilenAd: _sesAdi(
+                              seciliSes,
+                              _ozelSesDosyalari[key],
                             ),
+                            onTap: () => _vakitSesSecimiAc(
+                              key: key,
+                              seciliSesId: seciliSes,
+                              uygula: (yeniId) {
+                                final eskiSes = _bildirimSesi[key]!;
+                                _bildirimSesi[key] = yeniId;
+                                // If early sound matches old on-time sound, sync to new sound
+                                if (_erkenBildirimSesi[key] == eskiSes) {
+                                  _erkenBildirimSesi[key] = yeniId;
+                                }
+                              },
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -1874,16 +1771,16 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
                         children: [
                           Row(
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.timer,
-                                color: Colors.cyanAccent,
+                                color: renkler.vurgu,
                                 size: 18,
                               ),
                               const SizedBox(width: 8),
                               Text(
                                 _languageService['early_sound'] ?? '',
-                                style: const TextStyle(
-                                  color: Colors.cyanAccent,
+                                style: TextStyle(
+                                  color: renkler.vurgu,
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -1891,102 +1788,22 @@ class _BildirimAyarlariSayfaState extends State<BildirimAyarlariSayfa> {
                             ],
                           ),
                           const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Container(
-                                  height: 36,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: DropdownButtonHideUnderline(
-                                    child: DropdownButton<String>(
-                                      value:
-                                          _sesSecenekleri.any(
-                                            (s) => s['id'] == erkenSeciliSes,
-                                          )
-                                          ? erkenSeciliSes
-                                          : _sesSecenekleri.first['id'],
-                                      isExpanded: true,
-                                      dropdownColor: const Color(0xFF2B3151),
-                                      icon: const Icon(
-                                        Icons.arrow_drop_down,
-                                        color: Colors.cyanAccent,
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                      ),
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                      ),
-                                      items: _sesSecenekleri.map((ses) {
-                                        return DropdownMenuItem(
-                                          value: ses['id'],
-                                          child: Text(ses['ad']!),
-                                        );
-                                      }).toList(),
-                                      onChanged: (value) async {
-                                        if (value != null) {
-                                          if (value == 'custom') {
-                                            await _ozelSesSec('${key}_erken');
-                                          } else {
-                                            setState(() {
-                                              _erkenBildirimSesi[key] = value;
-                                              _degisiklikYapildi = true;
-                                            });
-                                          }
-                                        }
-                                      },
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: _sesCalanKey == '${key}_erken'
-                                      ? Colors.red.withOpacity(0.3)
-                                      : Colors.green.withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: IconButton(
-                                  onPressed: () =>
-                                      _sesCal('${key}_erken', erkenSeciliSes),
-                                  icon: Icon(
-                                    _sesCalanKey == '${key}_erken'
-                                        ? Icons.stop_circle
-                                        : Icons.play_circle,
-                                    color: _sesCalanKey == '${key}_erken'
-                                        ? Colors.red
-                                        : Colors.green,
-                                    size: 28,
-                                  ),
-                                  tooltip: _sesCalanKey == '${key}_erken'
-                                      ? (_languageService['stop'] ?? '')
-                                      : (_languageService['listen'] ?? ''),
-                                  padding: EdgeInsets.zero,
-                                  constraints: const BoxConstraints(
-                                    minWidth: 40,
-                                    minHeight: 40,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (erkenSeciliSes == 'custom' &&
-                              _ozelSesDosyalari.containsKey('${key}_erken'))
-                            Padding(
-                              padding: const EdgeInsets.only(top: 6),
-                              child: Text(
-                                '${_languageService['custom'] ?? ''}: ${_ozelSesDosyalari['${key}_erken']!.split('/').last.split('\\').last}',
-                                style: const TextStyle(
-                                  color: Colors.white38,
-                                  fontSize: 11,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                          SesSeciciSatiri(
+                            renkler: renkler,
+                            icon: Icons.music_note_rounded,
+                            etiket: _languageService['early_sound'] ?? '',
+                            secilenAd: _sesAdi(
+                              erkenSeciliSes,
+                              _ozelSesDosyalari['${key}_erken'],
                             ),
+                            onTap: () => _vakitSesSecimiAc(
+                              key: '${key}_erken',
+                              seciliSesId: erkenSeciliSes,
+                              uygula: (yeniId) {
+                                _erkenBildirimSesi[key] = yeniId;
+                              },
+                            ),
+                          ),
                         ],
                       ),
                     ),

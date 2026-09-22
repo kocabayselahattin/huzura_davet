@@ -68,35 +68,18 @@ class CosmicWidget : AppWidgetProvider() {
             val miladiTarih = WidgetUtils.getMiladiTarih(context)
             
             // Önce widget'a özel ayarları kontrol et, yoksa varsayılanı kullan
-            val arkaPlanKey = widgetData.getString("cosmic_arkaplan_key", null) 
-                ?: widgetData.getString("arkaplan_key", "purple") 
-                ?: "purple"
-            val yaziRengiHex = widgetData.getString("cosmic_yazi_rengi_hex", null) 
-                ?: widgetData.getString("yazi_rengi_hex", "FFFFFF") 
-                ?: "FFFFFF"
-            val yaziRengi = WidgetUtils.parseColorSafe(yaziRengiHex, Color.WHITE)
+            val gorunum = WidgetGorunum.coz(
+                context, widgetData, appWidgetId,
+                "cosmic_arkaplan_key", "purple",
+                "cosmic_yazi_rengi_hex", "FFFFFF"
+            )
+            val arkaPlanKey = gorunum.zeminAnahtari
+            val yaziRengi = gorunum.yaziRengi
             val yaziRengiSecondary = Color.argb(180, Color.red(yaziRengi), Color.green(yaziRengi), Color.blue(yaziRengi))
             
             val views = RemoteViews(context.packageName, R.layout.widget_cosmic)
             
-            // Arka plan ayarla
-            val bgDrawable = when(arkaPlanKey) {
-                "orange" -> R.drawable.widget_bg_orange
-                "light" -> R.drawable.widget_bg_card_light
-                "dark" -> R.drawable.widget_bg_card_dark
-                "sunset" -> R.drawable.widget_bg_sunset
-                "green" -> R.drawable.widget_bg_green
-                "purple" -> R.drawable.widget_bg_purple
-                "red" -> R.drawable.widget_bg_red
-                "blue" -> R.drawable.widget_bg_blue
-                "teal" -> R.drawable.widget_bg_teal
-                "pink" -> R.drawable.widget_bg_pink
-                "transparent" -> R.drawable.widget_bg_transparent
-                "semi_black" -> R.drawable.widget_bg_semi_black
-                "semi_white" -> R.drawable.widget_bg_semi_white
-                else -> R.drawable.widget_bg_purple
-            }
-            views.setInt(R.id.widget_root, "setBackgroundResource", bgDrawable)
+            views.setInt(R.id.widget_root, "setBackgroundResource", gorunum.zeminKaynagi)
             
             // Galaktik renkler (accent olarak kullanılır)
             val cosmicPink = Color.parseColor("#E040FB")

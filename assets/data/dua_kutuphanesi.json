@@ -1,0 +1,182 @@
+[
+  {
+    "id": "ezan_1",
+    "kategori": "ezan",
+    "baslik": "Ezan Duası",
+    "arapca": "اَللّٰهُمَّ رَبَّ هٰذِهِ الدَّعْوَةِ التَّامَّةِ وَالصَّلَاةِ الْقَائِمَةِ آتِ مُحَمَّدًا الْوَسٖيلَةَ وَالْفَضٖيلَةَ وَابْعَثْهُ مَقَامًا مَحْمُودًا الَّذٖى وَعَدْتَهُ إِنَّكَ لَا تُخْلِفُ الْمٖيعَادَ",
+    "okunus": "Allâhümme Rabbe hâzihi'd-da'veti't-tâmmeh, ves-salâtil-kâimeh, âti Muhammeden-il vesîlete vel fadîlete, veb'as-hü makâmen mahmûdenillezî veadteh, inneke lâ tuhlifü'l-mîâd",
+    "meal": "Allah'ım! Bu eksiksiz davetin ve kılınacak namazın Rabbi! Muhammed'e vesîleyi (cennette yüksek bir makamı) ve fazileti ver, onu kendisine vaad ettiğin makam-ı mahmûda (şefaat makamına) ulaştır. Şüphesiz Sen, verdiğin sözden dönmezsin.",
+    "kaynak": "Buhârî, Ezân, 8"
+  },
+  {
+    "id": "nazar_1",
+    "kategori": "nazar",
+    "baslik": "Nazar Ayeti (Kalem Sûresi)",
+    "arapca": "وَإِنْ يَكَادُ الَّذٖينَ كَفَرُوا لَيُزْلِقُونَكَ بِأَبْصَارِهِمْ لَمَّا سَمِعُوا الذِّكْرَ وَيَقُولُونَ إِنَّهُ لَمَجْنُونٌ. وَمَا هُوَ إِلَّا ذِكْرٌ لِلْعَالَمٖينَ",
+    "okunus": "Ve in yekâdüllezîne keferû le yuzlikûneke bi ebsârihim lemmâ semiu'z-zikra ve yekûlûne innehû le mecnûn. Ve mâ hüve illâ zikrun lil-âlemîn",
+    "meal": "İnkâr edenler Kur'an'ı işittikleri zaman neredeyse seni gözleriyle devirecekler; 'O gerçekten bir delidir' diyorlar. Hâlbuki o (Kur'an), âlemler için ancak bir öğüttür.",
+    "kaynak": "Kur'ân-ı Kerîm, Kalem, 51-52"
+  },
+  {
+    "id": "nazar_2",
+    "kategori": "nazar",
+    "baslik": "Nazar Duası (Hadis)",
+    "arapca": "أُعٖيذُكَ بِكَلِمَاتِ اللَّهِ التَّامَّةِ مِنْ كُلِّ شَيْطَانٍ وَهَامَّةٍ وَمِنْ كُلِّ عَيْنٍ لَامَّةٍ",
+    "okunus": "Üîzüke bi kelimâtillâhi't-tâmmeti min külli şeytânin ve hâmmeh, ve min külli aynin lâmmeh",
+    "meal": "Seni; her türlü şeytandan, zehirli haşerattan ve nazar değdiren her gözden Allah'ın eksiksiz kelimeleriyle korumaya alırım.",
+    "kaynak": "Buhârî, Enbiyâ, 10"
+  },
+  {
+    "id": "yemek_1",
+    "kategori": "yemek",
+    "baslik": "Yemeğe Başlarken",
+    "arapca": "بِسْمِ اللَّهِ",
+    "okunus": "Bismillâh",
+    "meal": "Allah'ın adıyla.",
+    "kaynak": "Ebû Dâvûd, Et'ime, 15"
+  },
+  {
+    "id": "yemek_2",
+    "kategori": "yemek",
+    "baslik": "Besmeleyi Unutunca",
+    "arapca": "بِسْمِ اللَّهِ أَوَّلَهُ وَآخِرَهُ",
+    "okunus": "Bismillâhi evvelehû ve âhirah",
+    "meal": "Başında da sonunda da Allah'ın adıyla.",
+    "kaynak": "Ebû Dâvûd, Et'ime, 19"
+  },
+  {
+    "id": "yemek_3",
+    "kategori": "yemek",
+    "baslik": "Yemekten Sonra",
+    "arapca": "اَلْحَمْدُ لِلّٰهِ الَّذٖى أَطْعَمَنٖى هٰذَا وَرَزَقَنٖيهِ مِنْ غَيْرِ حَوْلٍ مِنّٖى وَلَا قُوَّةٍ",
+    "okunus": "Elhamdü lillâhillezî at'amenî hâzâ ve razekanîhi min ğayri havlin minnî ve lâ kuvveh",
+    "meal": "Bende bir güç ve kuvvet olmaksızın bana bu yemeği yediren ve rızık olarak veren Allah'a hamd olsun.",
+    "kaynak": "Tirmizî, Et'ime, 34"
+  },
+  {
+    "id": "uyku_1",
+    "kategori": "uyku",
+    "baslik": "Yatarken",
+    "arapca": "بِاسْمِكَ اللَّهُمَّ أَمُوتُ وَأَحْيَا",
+    "okunus": "Bismike Allâhümme emûtü ve ahyâ",
+    "meal": "Allah'ım! Senin adınla ölür (uyur) ve dirilirim (uyanırım).",
+    "kaynak": "Buhârî, Deavât, 6"
+  },
+  {
+    "id": "uyku_2",
+    "kategori": "uyku",
+    "baslik": "Uyanınca",
+    "arapca": "اَلْحَمْدُ لِلّٰهِ الَّذٖى أَحْيَانَا بَعْدَ مَا أَمَاتَنَا وَإِلَيْهِ النُّشُورُ",
+    "okunus": "Elhamdü lillâhillezî ahyânâ ba'de mâ emâtenâ ve ileyhin nüşûr",
+    "meal": "Bizi öldürdükten (uyuttuktan) sonra dirilten (uyandıran) Allah'a hamd olsun; dönüş de yalnız O'nadır.",
+    "kaynak": "Buhârî, Deavât, 7"
+  },
+  {
+    "id": "uyku_3",
+    "kategori": "uyku",
+    "baslik": "Kötü Rüya Görünce",
+    "arapca": "اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنْ عَمَلِ الشَّيْطَانِ وَسَيِّئَاتِ الأَحْلاَمِ",
+    "okunus": "Allâhümme innî eûzü bike min ameli'ş-şeytâni ve seyyiâti'l-ahlâm",
+    "meal": "Allah'ım! Şeytanın işinden ve kötü rüyaların şerrinden sana sığınırım.",
+    "kaynak": "Tirmizî, Rü'yâ, 4"
+  },
+  {
+    "id": "yolculuk_1",
+    "kategori": "yolculuk",
+    "baslik": "Yolculuğa Çıkarken (Biniş Duası)",
+    "arapca": "سُبْحَانَ الَّذٖى سَخَّرَ لَنَا هٰذَا وَمَا كُنَّا لَهُ مُقْرِنٖينَ وَإِنَّا إِلٰى رَبِّنَا لَمُنْقَلِبُونَ",
+    "okunus": "Sübhânellezî sehhara lenâ hâzâ ve mâ künnâ lehû mukrinîn ve innâ ilâ rabbinâ le münkalibûn",
+    "meal": "Bunu bizim hizmetimize veren Allah'ı tesbih ederiz; yoksa bizim buna gücümüz yetmezdi. Şüphesiz biz Rabbimize döneceğiz.",
+    "kaynak": "Müslim, Hac, 425"
+  },
+  {
+    "id": "yolculuk_2",
+    "kategori": "yolculuk",
+    "baslik": "Yolculuk Duası",
+    "arapca": "اللَّهُمَّ إِنَّا نَسْأَلُكَ فٖى سَفَرِنَا هٰذَا الْبِرَّ وَالتَّقْوٰى",
+    "okunus": "Allâhümme innâ nes'elüke fî seferinâ hâzel birra vet takvâ",
+    "meal": "Allah'ım! Bu yolculuğumuzda senden iyilik ve takva dileriz.",
+    "kaynak": "Müslim, Hac, 425"
+  },
+  {
+    "id": "yolculuk_3",
+    "kategori": "yolculuk",
+    "baslik": "Dönüşte Okunacak",
+    "arapca": "آيِبُونَ تَائِبُونَ عَابِدُونَ لِرَبِّنَا حَامِدُونَ",
+    "okunus": "Âyibûne tâibûne âbidûne li rabbinâ hâmidûn",
+    "meal": "Biz (Allah'a) dönen, tövbe eden, ibadet eden ve Rabbimize hamdeden kimseleriz.",
+    "kaynak": "Buhârî, Umre, 10"
+  },
+  {
+    "id": "sifa_1",
+    "kategori": "sifa",
+    "baslik": "Hasta Ziyaretinde",
+    "arapca": "اَللّٰهُمَّ رَبَّ النَّاسِ أَذْهِبِ الْبَأْسَ اشْفِ أَنْتَ الشَّافٖى لَا شِفَاءَ إِلَّا شِفَاؤُكَ شِفَاءً لَا يُغَادِرُ سَقَمًا",
+    "okunus": "Allâhümme rabbe'n-nâsi ezhibi'l-be'se işfi ente'ş-şâfî lâ şifâe illâ şifâuke şifâen lâ yuğâdiru sekamâ",
+    "meal": "Allah'ım! İnsanların Rabbi! Sıkıntıyı gider, şifa ver. Şifa veren ancak sensin. Senin şifandan başka şifa yoktur. Öyle bir şifa ver ki, hiçbir hastalık bırakmasın.",
+    "kaynak": "Buhârî, Merdâ, 20"
+  },
+  {
+    "id": "sifa_2",
+    "kategori": "sifa",
+    "baslik": "Ağrıyan Yere Okunacak",
+    "arapca": "بِسْمِ اللَّهِ (3 defa) أَعُوذُ بِعِزَّةِ اللَّهِ وَقُدْرَتِهِ مِنْ شَرِّ مَا أَجِدُ وَأُحَاذِرُ (7 defa)",
+    "okunus": "Bismillâh (3 kez); Eûzü bi izzetillâhi ve kudratihî min şerri mâ ecidü ve ühâzir (7 kez)",
+    "meal": "Allah'ın adıyla (3 kez). Allah'ın izzet ve kudretine, hissettiğim ve çekindiğim şeyin şerrinden sığınırım (7 kez).",
+    "kaynak": "Müslim, Selâm, 67"
+  },
+  {
+    "id": "sifa_3",
+    "kategori": "sifa",
+    "baslik": "Kısa Şifa Duası",
+    "arapca": "أَذْهِبِ الْبَأْسَ رَبَّ النَّاسِ وَاشْفِ أَنْتَ الشَّافٖى",
+    "okunus": "Ezhibi'l-be'se rabbe'n-nâsi veşfi ente'ş-şâfî",
+    "meal": "Ey insanların Rabbi! Sıkıntıyı gider, şifa ver, şifa veren ancak sensin.",
+    "kaynak": "Buhârî, Merdâ, 20"
+  },
+  {
+    "id": "sikinti_1",
+    "kategori": "sikinti",
+    "baslik": "Sıkıntı Anında",
+    "arapca": "حَسْبُنَا اللَّهُ وَنِعْمَ الْوَكٖيلُ",
+    "okunus": "Hasbünallâhü ve ni'mel vekîl",
+    "meal": "Allah bize yeter, O ne güzel vekildir.",
+    "kaynak": "Kur'ân-ı Kerîm, Âl-i İmrân, 173"
+  },
+  {
+    "id": "sikinti_2",
+    "kategori": "sikinti",
+    "baslik": "Kederli Anda (Yûnus Peygamberin Duası)",
+    "arapca": "لَا إِلٰهَ إِلَّا أَنْتَ سُبْحَانَكَ إِنّٖى كُنْتُ مِنَ الظَّالِمٖينَ",
+    "okunus": "Lâ ilâhe illâ ente sübhâneke innî küntü minez zâlimîn",
+    "meal": "Senden başka ilah yoktur. Seni tenzih ederim. Gerçekten ben zalimlerden oldum.",
+    "kaynak": "Kur'ân-ı Kerîm, Enbiyâ, 87"
+  },
+  {
+    "id": "sikinti_3",
+    "kategori": "sikinti",
+    "baslik": "Kaygı ve Borç Sıkıntısında",
+    "arapca": "اَللّٰهُمَّ إِنّٖى أَعُوذُ بِكَ مِنَ الْهَمِّ وَالْحَزَنِ وَالْعَجْزِ وَالْكَسَلِ وَالْبُخْلِ وَالْجُبْنِ وَضَلَعِ الدَّيْنِ وَغَلَبَةِ الرِّجَالِ",
+    "okunus": "Allâhümme innî eûzü bike minel hemmi vel hazeni vel aczi vel keseli vel buhli vel cübni ve dala'id deyni ve ğalebetir ricâl",
+    "meal": "Allah'ım! Kederden, hüzünden, acizlikten, tembellikten, cimrilikten, korkaklıktan, borç yükünden ve insanların baskısından sana sığınırım.",
+    "kaynak": "Buhârî, Deavât, 36"
+  },
+  {
+    "id": "istihare_1",
+    "kategori": "istihare",
+    "baslik": "İstihare Duası",
+    "arapca": "اَللّٰهُمَّ إِنّٖى أَسْتَخٖيرُكَ بِعِلْمِكَ وَأَسْتَقْدِرُكَ بِقُدْرَتِكَ وَأَسْأَلُكَ مِنْ فَضْلِكَ الْعَظٖيمِ فَإِنَّكَ تَقْدِرُ وَلَا أَقْدِرُ وَتَعْلَمُ وَلَا أَعْلَمُ وَأَنْتَ عَلَّامُ الْغُيُوبِ اَللّٰهُمَّ إِنْ كُنْتَ تَعْلَمُ أَنَّ هٰذَا الْأَمْرَ خَيْرٌ لٖى فٖى دٖينٖى وَمَعَاشٖى وَعَاقِبَةِ أَمْرٖى فَاقْدُرْهُ لٖى وَيَسِّرْهُ لٖى ثُمَّ بَارِكْ لٖى فٖيهِ وَإِنْ كُنْتَ تَعْلَمُ أَنَّ هٰذَا الْأَمْرَ شَرٌّ لٖى فٖى دٖينٖى وَمَعَاشٖى وَعَاقِبَةِ أَمْرٖى فَاصْرِفْهُ عَنّٖى وَاصْرِفْنٖى عَنْهُ وَاقْدُرْ لِيَ الْخَيْرَ حَيْثُ كَانَ ثُمَّ أَرْضِنٖى بِهِ",
+    "okunus": "Allâhümme innî estehîruke bi ilmike ve estakdiruke bi kudratike ve es'elüke min fadlike'l-azîm. Fe inneke takdiru ve lâ akdir, ve ta'lemu ve lâ a'lem, ve ente allâmü'l-ğuyûb. Allâhümme in künte ta'lemu enne hâze'l-emra hayrun lî fî dînî ve meâşî ve âkibeti emrî fakdurhu lî ve yessirhu lî, sümme bârik lî fîh. Ve in künte ta'lemu enne hâze'l-emra şerrun lî fî dînî ve meâşî ve âkibeti emrî, fasrifhü annî vasrifnî anh, vakdur liye'l-hayra haysü kâne sümme erdınî bih",
+    "meal": "Allah'ım! İlminle senden hayırlısını isterim. Kudretinle bana güç ver, senden büyük lütfunu isterim. Şüphesiz sen her şeye kadirsin, ben ise gücü yetmeyenim. Sen her şeyi bilirsin, ben bilmem. Gaybları bilen ancak sensin. Allah'ım! Eğer bu iş, dinim, hayatım ve işimin sonu bakımından benim için hayırlıysa onu bana takdir eyle, kolaylaştır ve bana onda bereket ver. Eğer bu iş benim için dinim, hayatım ve işimin sonu bakımından kötü ise, onu benden, beni de ondan uzaklaştır; nerede olursa olsun hayrı bana takdir et, sonra da beni ona razı kıl.",
+    "kaynak": "Buhârî, Teheccüd, 25"
+  },
+  {
+    "id": "istihare_2",
+    "kategori": "istihare",
+    "baslik": "İstihareden Sonra",
+    "arapca": "اَللّٰهُمَّ اجْعَلِ الْخِيَرَةَ فٖيمَا اخْتَرْتَهُ لٖى",
+    "okunus": "Allâhümmec'alil hiyerate fîmahtertehû lî",
+    "meal": "Allah'ım! Hayrı, benim için seçtiğinde kıl.",
+    "kaynak": "Buhârî, Teheccüd, 25 (istihare duasının devamı, mealen)"
+  }
+]

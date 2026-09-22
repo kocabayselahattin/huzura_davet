@@ -89,6 +89,10 @@ class KonumService {
   static Future<bool> isIlceIdValid(String? ilceId) async {
     if (ilceId == null || ilceId.isEmpty) return false;
 
+    // Manual (yurt dışı) konumlar "manual:ÜLKE:Şehir" biçiminde, sayısal
+    // ID aralığı kontrolüne tabi değil.
+    if (isManualIlceId(ilceId)) return true;
+
     // Known invalid IDs (legacy local IDs that cause 500/400 errors in API)
     const invalidIds = [
       '1219', '1823', '1020', '1003', '1421', // Legacy system IDs

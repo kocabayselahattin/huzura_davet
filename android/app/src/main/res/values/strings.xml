@@ -39,4 +39,16 @@
     <string name="aksam">Akşam</string>
     <string name="yatsi">Yatsı</string>
     
+
+    <!-- Widget yapılandırma ekranı (widget eklenirken açılır) -->
+    <string name="widget_yapilandirma_ekran_adi">Widget Görünümü</string>
+    <string name="widget_yapilandirma_baslik">Widget Görünümü</string>
+    <string name="widget_yapilandirma_aciklama">Zemini ve görünürlüğünü seçin. Düşük değer widget’ı daha şeffaf yapar; yazı rengi zemine göre otomatik ayarlanır.</string>
+    <string name="widget_yapilandirma_zemin">Zemin</string>
+    <string name="widget_yapilandirma_zemin_ipucu">Daha fazla renk için sağa kaydırın →</string>
+    <string name="widget_yapilandirma_saydamlik">Görünürlük</string>
+    <string name="widget_yapilandirma_saydamlik_deger">%1$d%%</string>
+    <string name="widget_yapilandirma_ornek_sehir">İSTANBUL</string>
+    <string name="widget_yapilandirma_ornek_sayac">02:30:45</string>
+    <string name="widget_yapilandirma_kaydet">Kaydet</string>
 </resources>

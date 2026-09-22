@@ -14,6 +14,15 @@ import 'services/scheduled_notification_service.dart';
 import 'services/daily_content_notification_service.dart';
 import 'services/ozel_gunler_service.dart';
 import 'services/kuran_veri_service.dart';
+import 'services/hatim_plan_service.dart';
+import 'services/alarm_service.dart';
+import 'services/gunluk_icerik_yonlendirme_service.dart';
+import 'app_version.dart';
+
+/// Uygulama genelinde tek Navigator; günlük içerik bildirimine tıklanınca
+/// hangi sayfada olunursa olunsun ana sayfaya geri dönebilmek için gerekir
+/// (bkz. _HuzurVaktiAppState._gunlukIcerikBildirimineTiklandi).
+final navigatorKey = GlobalKey<NavigatorState>();
 
 /// Save default notification settings in SharedPreferences on first run.
 Future<void> _initializeDefaultNotificationSettings(
@@ -47,24 +56,28 @@ Future<void> _initializeDefaultNotificationSettings(
     'yatsi': true,
   };
 
-  // Default notification sounds.
+  // Default notification sounds. Ses kimlikleri uzantısız tutulur
+  // ("best", "aksam_ezani" ...) — bildirim ayarları sayfasındaki dropdown
+  // seçenekleri de aynı biçimde. Buraya ".mp3" uzantılı yazılırsa hiçbir
+  // seçenekle eşleşmediği için dropdown listenin ilk öğesine ("Akşam Ezanı")
+  // düşüyor; gerçek ses "best" olsa bile ekranda yanlış isim görünüyordu.
   const defaultBildirimSesi = {
-    'imsak': 'best.mp3',
-    'gunes': 'best.mp3',
-    'ogle': 'best.mp3',
-    'ikindi': 'best.mp3',
-    'aksam': 'best.mp3',
-    'yatsi': 'best.mp3',
+    'imsak': 'best',
+    'gunes': 'best',
+    'ogle': 'best',
+    'ikindi': 'best',
+    'aksam': 'best',
+    'yatsi': 'best',
   };
 
   // Default early notification sounds (same as on-time).
   const defaultErkenBildirimSesi = {
-    'imsak': 'best.mp3',
-    'gunes': 'best.mp3',
-    'ogle': 'best.mp3',
-    'ikindi': 'best.mp3',
-    'aksam': 'best.mp3',
-    'yatsi': 'best.mp3',
+    'imsak': 'best',
+    'gunes': 'best',
+    'ogle': 'best',
+    'ikindi': 'best',
+    'aksam': 'best',
+    'yatsi': 'best',
   };
 
   // Default on-time reminder states.
@@ -204,6 +217,10 @@ void main() async {
   // 🔔 Save default early notification values on first run.
   await _initializeDefaultNotificationSettings(prefs);
 
+  // pubspec.yaml'daki sürümü oku; "Hakkında" ve ana sayfa bunu ayrı ayrı
+  // güncellemek zorunda kalmadan otomatik yansıtır.
+  await appVersionYukle();
+
   // Everything required to render the first frame is ready — show the UI now.
   // The remaining work (notification scheduling, network sync, widget updates)
   // does not affect what is on screen and used to run BEFORE runApp(), leaving
@@ -230,6 +247,7 @@ Future<void> _arkaPlanBaslatma() async {
     // 🗓️ Sync Hijri calendar with Turkey/Diyanet to avoid 1-day drift (Ramadan, Berat, etc.).
     // MUST run before HomeWidgetService.initialize() so hijriNowTR() uses the correct shift.
     await OzelGunlerService.syncHijriDayShiftWithDiyanet();
+    await OzelGunlerService.syncVakitlerWithDiyanet();
 
     // Initialize Home Widget service and schedule background updates.
     await HomeWidgetService.initialize();
@@ -255,6 +273,10 @@ Future<void> _arkaPlanBaslatma() async {
     // Scheduled last: it fetches each day's verse/hadith/dua, so it is the
     // slowest step and the least urgent.
     await DailyContentNotificationService.scheduleDailyContentNotifications();
+
+    // 📖 Reading plan reminder: AlarmManager has no infinite repeat, so the
+    // rolling reminder window (bkz. HatimPlanService) is refilled here too.
+    await HatimPlanService.tumHatirlaticilariYenidenZamanla();
   } catch (e) {
     debugPrint('⚠️ Background startup error: $e');
   }
@@ -276,6 +298,22 @@ class _HuzurVaktiAppState extends State<HuzurVaktiApp> {
     super.initState();
     _temaService.addListener(_onTemaChanged);
     _languageService.addListener(_onTemaChanged);
+
+    // Uygulama açıkken (arka plandan öne gelirken) günlük içerik
+    // bildirimine tıklanırsa.
+    AlarmService.gunlukIcerikDinle(_gunlukIcerikBildirimineTiklandi);
+    // Soğuk başlangıçta (uygulama kapalıyken bildirime tıklanarak
+    // açıldıysa) bekleyen bir istek olabilir.
+    AlarmService.gunlukIcerikBekleyenTuruAl().then((tur) {
+      if (tur != null && tur.isNotEmpty) _gunlukIcerikBildirimineTiklandi(tur);
+    });
+  }
+
+  void _gunlukIcerikBildirimineTiklandi(String tur) {
+    // Kullanıcı hangi sayfada olursa olsun ana sayfaya dönülür ki
+    // "Günün İçeriği" kartı görünür olsun.
+    navigatorKey.currentState?.popUntil((route) => route.isFirst);
+    GunlukIcerikYonlendirmeService.bildir(tur);
   }
 
   @override
@@ -292,6 +330,7 @@ class _HuzurVaktiAppState extends State<HuzurVaktiApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
       title: _languageService['app_name'],
       theme: _temaService.buildThemeData(),

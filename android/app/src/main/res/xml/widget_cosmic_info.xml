@@ -10,4 +10,6 @@
     android:previewImage="@drawable/preview_widget_cosmic"
     android:previewLayout="@layout/widget_cosmic"
     android:resizeMode="horizontal|vertical"
-    android:widgetCategory="home_screen" />
+    android:widgetCategory="home_screen"
+    android:configure="com.huzura.davet.widgets.WidgetYapilandirmaActivity"
+    android:widgetFeatures="reconfigurable" />

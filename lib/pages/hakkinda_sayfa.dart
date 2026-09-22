@@ -264,6 +264,20 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
           _languageService['feature_content_desc'] ?? '',
       },
       {
+        'ikon': Icons.auto_stories_rounded,
+        'renk': Colors.brown,
+        'baslik': _languageService['feature_hatim'] ?? '',
+        'aciklama':
+          _languageService['feature_hatim_desc'] ?? '',
+      },
+      {
+        'ikon': Icons.share_rounded,
+        'renk': Colors.teal,
+        'baslik': _languageService['feature_share'] ?? '',
+        'aciklama':
+          _languageService['feature_share_desc'] ?? '',
+      },
+      {
         'ikon': Icons.blur_circular,
         'renk': Colors.purple,
         'baslik': _languageService['feature_dhikr'] ?? '',
@@ -489,7 +503,7 @@ class _HakkindaSayfaState extends State<HakkindaSayfa> {
           _iletisimSatiri(
             Icons.email,
             _languageService['email'] ?? '',
-            ' ',
+            'huzuradavetapp@gmail.com',
             renkler,
           ),
           _iletisimSatiri(
