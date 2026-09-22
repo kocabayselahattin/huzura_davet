@@ -364,9 +364,51 @@ class DiyanetApiService {
       print('⚠️ Aladhan API also failed: $e');
     }
 
+    // Bu ay hiç cache'lenmemiş ve her iki API de başarısız oldu. Son çare:
+    // günlük vakit akışının (getVakitler) ayrıca çektiği ~32 günlük
+    // pencerede bu aya ait günler varsa (örn. kullanıcı ana ekranı bu
+    // dönemde açmış ama imsakiyede bu ayı hiç görüntülememiş) onları
+    // kullan — hiç veri göstermemekten iyidir.
+    final dailyFallback = await _extractMonthFromDailyCache(ilceId, yil, ay);
+    if (dailyFallback.isNotEmpty) {
+      print(
+        'ℹ️ Offline, using partial data from daily cache: $cacheKey (${dailyFallback.length} days)',
+      );
+      return dailyFallback;
+    }
+
     // Return empty list if no data
     print('❌ Monthly times not available: $cacheKey');
     return [];
+  }
+
+  /// [getVakitler]'ın ayrı sakladığı ~32 günlük günlük vakit önbelleğinden
+  /// (RAM veya SharedPreferences), istenen ay/yıla ait günleri süzer.
+  /// Aylık önbellek (bkz. [_aylikVakitCache]) o ay için hiç doldurulmamışsa
+  /// bile bu pencere kısmen örtüşebilir; bulunursa çevrimdışıyken tamamen
+  /// boş göstermek yerine bu kısmi veri son çare olarak kullanılır.
+  static Future<List<Map<String, dynamic>>> _extractMonthFromDailyCache(
+    String ilceId,
+    int yil,
+    int ay,
+  ) async {
+    Map<String, dynamic>? data = _vakitCache[ilceId];
+    data ??= await _loadVakitFromPrefs(ilceId);
+    if (data == null) return [];
+
+    final vakitler = data['vakitler'];
+    if (vakitler is! List) return [];
+
+    final ayStr = ay.toString().padLeft(2, '0');
+    final yilStr = yil.toString();
+    return vakitler
+        .whereType<Map<String, dynamic>>()
+        .where((v) {
+          final tarih = v['MiladiTarihKisa']?.toString() ?? '';
+          final parts = tarih.split('.');
+          return parts.length == 3 && parts[1] == ayStr && parts[2] == yilStr;
+        })
+        .toList();
   }
 
   static int _daysInMonth(int year, int month) {
