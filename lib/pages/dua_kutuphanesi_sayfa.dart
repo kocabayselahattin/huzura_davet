@@ -22,9 +22,11 @@ class DuaKutuphanesiSayfa extends StatefulWidget {
 class _DuaKutuphanesiSayfaState extends State<DuaKutuphanesiSayfa> {
   final TemaService _temaService = TemaService();
   final LanguageService _languageService = LanguageService();
+  final TextEditingController _aramaController = TextEditingController();
 
   Set<String> _favoriIdleri = {};
   bool _sadeceFavoriler = false;
+  String _aramaMetni = '';
 
   @override
   void initState() {
@@ -32,9 +34,28 @@ class _DuaKutuphanesiSayfaState extends State<DuaKutuphanesiSayfa> {
     _favorileriYukle();
   }
 
+  @override
+  void dispose() {
+    _aramaController.dispose();
+    super.dispose();
+  }
+
   Future<void> _favorileriYukle() async {
     final favoriler = await DuaKutuphanesiService.favoriIdleri();
     if (mounted) setState(() => _favoriIdleri = favoriler);
+  }
+
+  List<DuaKaydi> _filtrele(List<DuaKaydi> dualar, String aranan) {
+    final q = aranan.trim().toLowerCase();
+    if (q.isEmpty) return const [];
+    return dualar.where((d) {
+      return d.baslik.toLowerCase().contains(q) ||
+          d.meal.toLowerCase().contains(q) ||
+          d.arapca.toLowerCase().contains(q) ||
+          d.okunus.toLowerCase().contains(q) ||
+          d.kaynak.toLowerCase().contains(q) ||
+          _kategoriBasligi(d.kategori).toLowerCase().contains(q);
+    }).toList();
   }
 
   String _ceviri(String anahtar, String yedek) {
@@ -88,9 +109,85 @@ class _DuaKutuphanesiSayfaState extends State<DuaKutuphanesiSayfa> {
             : null,
         child: SafeArea(
           top: false,
-          child: _sadeceFavoriler ? _favoriListesi(renkler) : _kategoriListesi(renkler),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                child: _aramaKutusu(renkler),
+              ),
+              Expanded(
+                child: _aramaMetni.trim().isNotEmpty
+                    ? _aramaSonuclari(renkler)
+                    : (_sadeceFavoriler
+                        ? _favoriListesi(renkler)
+                        : _kategoriListesi(renkler)),
+              ),
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  Widget _aramaKutusu(TemaRenkleri renkler) {
+    return TextField(
+      controller: _aramaController,
+      onChanged: (deger) => setState(() => _aramaMetni = deger),
+      style: TextStyle(color: renkler.yaziPrimary),
+      decoration: InputDecoration(
+        hintText: _ceviri('dua_search_hint', 'Dua ara...'),
+        hintStyle: TextStyle(color: renkler.yaziSecondary),
+        prefixIcon: Icon(Icons.search_rounded, color: renkler.yaziSecondary),
+        suffixIcon: _aramaMetni.isNotEmpty
+            ? IconButton(
+                icon: Icon(Icons.clear_rounded, color: renkler.yaziSecondary),
+                onPressed: () {
+                  _aramaController.clear();
+                  setState(() => _aramaMetni = '');
+                },
+              )
+            : null,
+        filled: true,
+        fillColor: renkler.kartArkaPlan,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      ),
+    );
+  }
+
+  Widget _aramaSonuclari(TemaRenkleri renkler) {
+    return FutureBuilder<List<List<DuaKaydi>>>(
+      future: Future.wait([
+        DuaKutuphanesiService.tumDualar(),
+        DuaKutuphanesiService.genelDualar(),
+      ]),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator(color: renkler.vurgu));
+        }
+        final tumu = [...?snapshot.data?[0], ...?snapshot.data?[1]];
+        final sonuclar = _filtrele(tumu, _aramaMetni);
+        if (sonuclar.isEmpty) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Text(
+                _ceviri('search_no_results', 'Sonuç bulunamadı'),
+                textAlign: TextAlign.center,
+                style: TextStyle(color: renkler.yaziSecondary),
+              ),
+            ),
+          );
+        }
+        return ListView.builder(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+          itemCount: sonuclar.length,
+          itemBuilder: (context, index) => _duaListeOgesi(sonuclar[index], renkler),
+        );
+      },
     );
   }
 
