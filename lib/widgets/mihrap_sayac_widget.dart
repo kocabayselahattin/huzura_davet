@@ -18,6 +18,35 @@ class MihrapSayacWidget extends StatefulWidget {
 class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
     with TickerProviderStateMixin {
   final TemaService _temaService = TemaService();
+
+  // Counter theme: original palette; manual theme: app theme colors.
+  bool get _temaRenkleriKullan => !_temaService.sayacTemasiKullan;
+
+  List<Color> get _arkaPlanRenkleri {
+    if (!_temaRenkleriKullan) {
+      return const [Color(0xFF2C1810), Color(0xFF5D4037), Color(0xFF8D6E63)];
+    }
+    final r = _temaService.renkler;
+    return [
+      r.arkaPlan,
+      r.kartArkaPlan,
+      Color.lerp(r.kartArkaPlan, r.vurgu, 0.35)!,
+    ];
+  }
+
+  Color get _golgeRengi =>
+      _temaRenkleriKullan ? _temaService.renkler.vurgu : const Color(0xFF5D4037);
+
+  Color get _vurguRengi =>
+      _temaRenkleriKullan ? _temaService.renkler.vurgu : Colors.amber;
+
+  Color get _ikincilVurgu => _temaRenkleriKullan
+      ? _temaService.renkler.vurguSecondary
+      : Colors.orange;
+
+  Color get _ucuncuVurgu => _temaRenkleriKullan
+      ? _temaService.renkler.vurguSecondary
+      : Colors.deepOrange;
   final LanguageService _languageService = LanguageService();
   Timer? _timer;
   String _gelecekVakit = '';
@@ -207,15 +236,15 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF2C1810), Color(0xFF5D4037), Color(0xFF8D6E63)],
+          colors: _arkaPlanRenkleri,
         ),
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF5D4037).withOpacity(0.5),
+            color: _golgeRengi.withOpacity(0.5),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -258,11 +287,11 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
                       ),
                     ),
                     const Text(' • ', style: TextStyle(color: Colors.white38)),
-                    const Icon(Icons.mosque, color: Colors.amber, size: 12),
+                    Icon(Icons.mosque, color: _vurguRengi, size: 12),
                     const SizedBox(width: 4),
                     Text(
                       hicri,
-                      style: const TextStyle(color: Colors.amber, fontSize: 11),
+                      style: TextStyle(color: _vurguRengi, fontSize: 11),
                     ),
                   ],
                 ),
@@ -276,12 +305,12 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
                   decoration: BoxDecoration(
                     color: Colors.black.withOpacity(0.3),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                    border: Border.all(color: _vurguRengi.withOpacity(0.3)),
                   ),
                   child: Text(
                     _gelecekVakit.toUpperCase(),
-                    style: const TextStyle(
-                      color: Colors.amber,
+                    style: TextStyle(
+                      color: _vurguRengi,
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 2,
@@ -331,14 +360,14 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                Colors.amber.withOpacity(0.3),
-                Colors.amber.withOpacity(0.1),
+                _vurguRengi.withOpacity(0.3),
+                _vurguRengi.withOpacity(0.1),
               ],
             ),
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.amber.withOpacity(0.4), width: 2),
+            border: Border.all(color: _vurguRengi.withOpacity(0.4), width: 2),
             boxShadow: [
-              BoxShadow(color: Colors.amber.withOpacity(0.2), blurRadius: 8),
+              BoxShadow(color: _vurguRengi.withOpacity(0.2), blurRadius: 8),
             ],
           ),
           child: Center(
@@ -382,13 +411,13 @@ class _MihrapSayacWidgetState extends State<MihrapSayacWidget>
               child: Container(
                 height: 5,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Colors.amber, Colors.orange, Colors.deepOrange],
+                  gradient: LinearGradient(
+                    colors: [_vurguRengi, _ikincilVurgu, _ucuncuVurgu],
                   ),
                   borderRadius: BorderRadius.circular(6),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.amber.withOpacity(0.6),
+                      color: _vurguRengi.withOpacity(0.6),
                       blurRadius: 6,
                     ),
                   ],

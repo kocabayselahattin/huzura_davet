@@ -17,6 +17,31 @@ class KalemSayacWidget extends StatefulWidget {
 class _KalemSayacWidgetState extends State<KalemSayacWidget>
     with SingleTickerProviderStateMixin {
   final TemaService _temaService = TemaService();
+
+  // Counter theme: original palette; manual theme: app theme colors.
+  bool get _temaRenkleriKullan => !_temaService.sayacTemasiKullan;
+
+  List<Color> get _arkaPlanRenkleri {
+    if (!_temaRenkleriKullan) {
+      return const [Color(0xFF1B4332), Color(0xFF2D6A4F), Color(0xFF40916C)];
+    }
+    final r = _temaService.renkler;
+    return [
+      r.arkaPlan,
+      r.kartArkaPlan,
+      Color.lerp(r.kartArkaPlan, r.vurgu, 0.35)!,
+    ];
+  }
+
+  Color get _golgeRengi =>
+      _temaRenkleriKullan ? _temaService.renkler.vurgu : const Color(0xFF40916C);
+
+  Color get _vurguRengi =>
+      _temaRenkleriKullan ? _temaService.renkler.vurgu : Colors.amber;
+
+  Color get _ikincilVurgu => _temaRenkleriKullan
+      ? _temaService.renkler.vurguSecondary
+      : Colors.orange;
   final LanguageService _languageService = LanguageService();
   Timer? _timer;
   String _gelecekVakit = '';
@@ -208,15 +233,15 @@ class _KalemSayacWidgetState extends State<KalemSayacWidget>
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
+          gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF1B4332), Color(0xFF2D6A4F), Color(0xFF40916C)],
+            colors: _arkaPlanRenkleri,
           ),
           borderRadius: BorderRadius.circular(30),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF40916C).withOpacity(0.5),
+              color: _golgeRengi.withOpacity(0.5),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -261,8 +286,8 @@ class _KalemSayacWidgetState extends State<KalemSayacWidget>
                       ),
                       Text(
                         hicri,
-                        style: const TextStyle(
-                          color: Colors.amber,
+                        style: TextStyle(
+                          color: _vurguRengi,
                           fontSize: 11,
                         ),
                       ),
@@ -347,13 +372,13 @@ class _KalemSayacWidgetState extends State<KalemSayacWidget>
                                 child: Container(
                                   height: 8,
                                   decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                      colors: [Colors.amber, Colors.orange],
+                                    gradient: LinearGradient(
+                                      colors: [_vurguRengi, _ikincilVurgu],
                                     ),
                                     borderRadius: BorderRadius.circular(8),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.amber.withOpacity(0.5),
+                                        color: _vurguRengi.withOpacity(0.5),
                                         blurRadius: 6,
                                       ),
                                     ],
