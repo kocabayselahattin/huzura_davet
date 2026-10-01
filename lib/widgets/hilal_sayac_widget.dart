@@ -18,6 +18,27 @@ class HilalSayacWidget extends StatefulWidget {
 class _HilalSayacWidgetState extends State<HilalSayacWidget>
     with SingleTickerProviderStateMixin {
   final TemaService _temaService = TemaService();
+
+  // Counter theme: original palette; manual theme: app theme colors.
+  bool get _temaRenkleriKullan => !_temaService.sayacTemasiKullan;
+
+  List<Color> get _arkaPlanRenkleri {
+    if (!_temaRenkleriKullan) {
+      return const [Color(0xFF0D1B2A), Color(0xFF1B263B), Color(0xFF415A77)];
+    }
+    final r = _temaService.renkler;
+    return [
+      r.arkaPlan,
+      r.kartArkaPlan,
+      Color.lerp(r.kartArkaPlan, r.vurgu, 0.35)!,
+    ];
+  }
+
+  Color get _golgeRengi =>
+      _temaRenkleriKullan ? _temaService.renkler.vurgu : const Color(0xFF415A77);
+
+  Color get _vurguRengi =>
+      _temaRenkleriKullan ? _temaService.renkler.vurgu : Colors.amber;
   final LanguageService _languageService = LanguageService();
   Timer? _timer;
   String _gelecekVakit = '';
@@ -206,15 +227,15 @@ class _HilalSayacWidgetState extends State<HilalSayacWidget>
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
-          colors: [Color(0xFF0D1B2A), Color(0xFF1B263B), Color(0xFF415A77)],
+          colors: _arkaPlanRenkleri,
         ),
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF415A77).withOpacity(0.5),
+            color: _golgeRengi.withOpacity(0.5),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -263,7 +284,7 @@ class _HilalSayacWidgetState extends State<HilalSayacWidget>
                     const Text(' • ', style: TextStyle(color: Colors.white38)),
                     Text(
                       hicri,
-                      style: const TextStyle(color: Colors.amber, fontSize: 11),
+                      style: TextStyle(color: _vurguRengi, fontSize: 11),
                     ),
                   ],
                 ),
@@ -323,8 +344,8 @@ class _HilalSayacWidgetState extends State<HilalSayacWidget>
                         child: LinearProgressIndicator(
                           value: _ecirOrani,
                           backgroundColor: Colors.white.withOpacity(0.1),
-                          valueColor: const AlwaysStoppedAnimation<Color>(
-                            Colors.amber,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            _vurguRengi,
                           ),
                           minHeight: 5,
                         ),

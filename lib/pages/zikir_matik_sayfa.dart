@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:math' as math;
 import 'dart:convert';
 import '../services/vibration_service.dart';
 import '../services/language_service.dart';
 import '../services/tema_service.dart';
+import '../widgets/zikir_sayac_cemberi.dart';
 
 class ZikirMatikSayfa extends StatefulWidget {
   const ZikirMatikSayfa({super.key});
@@ -14,8 +14,7 @@ class ZikirMatikSayfa extends StatefulWidget {
   State<ZikirMatikSayfa> createState() => _ZikirMatikSayfaState();
 }
 
-class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
-    with TickerProviderStateMixin {
+class _ZikirMatikSayfaState extends State<ZikirMatikSayfa> {
   final LanguageService _languageService = LanguageService();
   final TemaService _temaService = TemaService();
   int _sayac = 0;
@@ -23,11 +22,6 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
   int _toplamTur = 0;
   bool _titresimAcik = true;
   double _fontScale = 1.0;
-
-  late AnimationController _pulseController;
-  late AnimationController _rippleController;
-  late Animation<double> _pulseAnimation;
-  late Animation<double> _rippleAnimation;
 
   final List<int> _hedefler = [33, 99, 100, 500, 1000];
   
@@ -54,22 +48,6 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
     super.initState();
     _languageService.addListener(_onLanguageChanged);
     _temaService.addListener(_onLanguageChanged);
-    _pulseController = AnimationController(
-      duration: const Duration(milliseconds: 150),
-      vsync: this,
-    );
-    _pulseAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
-
-    _rippleController = AnimationController(
-      duration: const Duration(milliseconds: 600),
-      vsync: this,
-    );
-    _rippleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _rippleController, curve: Curves.easeOut),
-    );
-    
     _verileriYukle();
   }
   
@@ -125,15 +103,10 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
   void dispose() {
     _languageService.removeListener(_onLanguageChanged);
     _temaService.removeListener(_onLanguageChanged);
-    _pulseController.dispose();
-    _rippleController.dispose();
     super.dispose();
   }
 
   void _artir() async {
-    _pulseController.forward().then((_) => _pulseController.reverse());
-    _rippleController.forward(from: 0.0);
-
     final turTamamlandi = _sayac + 1 >= _hedef;
 
     setState(() {
@@ -342,7 +315,6 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
 
   @override
   Widget build(BuildContext context) {
-    final progress = _sayac / _hedef;
     final temaRenkleri = _temaService.renkler;
 
     return Scaffold(
@@ -588,93 +560,16 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
           ),
           Expanded(
             child: Center(
-              child: GestureDetector(
+              child: ZikirSayacCemberi(
+                sayac: _sayac,
+                hedef: _hedef,
+                zikirMetni: _zikirler[_secilenZikirIndex]['isim']!,
+                fontScale: _fontScale,
                 onTap: _artir,
-                child: AnimatedBuilder(
-                  animation: Listenable.merge([_pulseAnimation, _rippleAnimation]),
-                  builder: (context, child) {
-                    return Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        if (_rippleAnimation.value > 0)
-                          Container(
-                            width: 260 + (_rippleAnimation.value * 60),
-                            height: 260 + (_rippleAnimation.value * 60),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: temaRenkleri.vurgu.withOpacity(1 - _rippleAnimation.value),
-                                width: 3,
-                              ),
-                            ),
-                          ),
-                        SizedBox(
-                          width: 260,
-                          height: 260,
-                          child: CustomPaint(
-                            painter: _CircleProgressPainter(
-                              progress: progress,
-                              backgroundColor: temaRenkleri.kartArkaPlan.withOpacity(0.3),
-                              progressColor: temaRenkleri.vurgu,
-                              strokeWidth: 8,
-                            ),
-                          ),
-                        ),
-                        Transform.scale(
-                          scale: _pulseAnimation.value,
-                          child: Container(
-                            width: 220,
-                            height: 220,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [temaRenkleri.kartArkaPlan, temaRenkleri.arkaPlan],
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: temaRenkleri.vurgu.withOpacity(0.3),
-                                  blurRadius: 30,
-                                  spreadRadius: 5,
-                                ),
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.5),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 10),
-                                ),
-                              ],
-                            ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  '$_sayac',
-                                  style: TextStyle(
-                                    color: temaRenkleri.vurgu,
-                                    fontSize: 72 * _fontScale,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 2,
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                                  child: Text(
-                                    _zikirler[_secilenZikirIndex]['isim']!,
-                                    style: TextStyle(color: temaRenkleri.yaziSecondary, fontSize: 14 * _fontScale),
-                                    textAlign: TextAlign.center,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
+                arkaPlanRengi: temaRenkleri.arkaPlan,
+                oncekiArkaPlanRengi: temaRenkleri.kartArkaPlan,
+                vurguRengi: temaRenkleri.vurgu,
+                yaziSecondaryRengi: temaRenkleri.yaziSecondary,
               ),
             ),
           ),
@@ -737,53 +632,5 @@ class _ZikirMatikSayfaState extends State<ZikirMatikSayfa>
         child: Icon(icon, color: temaRenkleri.vurgu, size: isLarge ? 32 : 24),
       ),
     );
-  }
-}
-
-class _CircleProgressPainter extends CustomPainter {
-  final double progress;
-  final Color backgroundColor;
-  final Color progressColor;
-  final double strokeWidth;
-
-  _CircleProgressPainter({
-    required this.progress,
-    required this.backgroundColor,
-    required this.progressColor,
-    required this.strokeWidth,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = (size.width - strokeWidth) / 2;
-
-    final bgPaint = Paint()
-      ..color = backgroundColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
-
-    canvas.drawCircle(center, radius, bgPaint);
-
-    final progressPaint = Paint()
-      ..color = progressColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
-
-    final sweepAngle = 2 * math.pi * progress;
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      -math.pi / 2,
-      sweepAngle,
-      false,
-      progressPaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _CircleProgressPainter oldDelegate) {
-    return oldDelegate.progress != progress;
   }
 }

@@ -29,6 +29,11 @@ class MainActivity : FlutterActivity() {
 	companion object {
 		private const val TAG = "MainActivity"
 		private const val PREF_DEFERRED_LOCK_SCREEN_START = "flutter.pending_lock_screen_start_after_boot"
+
+		// Günlük içerik (ayet/hadis/dua/teheccüd) bildirimine tıklanınca
+		// hangi içeriğin açılacağını taşıyan intent extra'sı (bkz.
+		// AlarmService.showPersistentNotification).
+		const val EXTRA_DAILY_CONTENT_TYPE = "gunluk_icerik_turu"
 	}
 
 	private val dndChannelName = "huzur_vakti/dnd"
@@ -37,6 +42,8 @@ class MainActivity : FlutterActivity() {
 	private val alarmChannelName = "huzur_vakti/alarms"
 	private val lockScreenChannelName = "huzur_vakti/lockscreen"
 	private val NOTIFICATION_PERMISSION_CODE = 1001
+
+	private var alarmChannel: MethodChannel? = null
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -48,6 +55,17 @@ class MainActivity : FlutterActivity() {
 			WindowCompat.setDecorFitsSystemWindows(window, false)
 		}
 		maybeStartDeferredLockScreenService()
+	}
+
+	// launchMode="singleTop" olduğu için uygulama zaten açıkken bildirime
+	// tıklanırsa onCreate değil bu çağrılır; Flutter motoru ve kanal zaten
+	// hazır olduğundan içerik türünü doğrudan iletebiliriz.
+	override fun onNewIntent(intent: Intent) {
+		super.onNewIntent(intent)
+		setIntent(intent)
+		intent.getStringExtra(EXTRA_DAILY_CONTENT_TYPE)?.let { tur ->
+			alarmChannel?.invokeMethod("gunlukIcerikBildirimiAcildi", tur)
+		}
 	}
 
 	private fun maybeStartDeferredLockScreenService() {
@@ -70,6 +88,9 @@ class MainActivity : FlutterActivity() {
 
 		// Vibration Handler
 		VibrationHandler.setup(flutterEngine, this)
+
+		// Uygulama içi ses ön dinlemesi (res/raw'dan çalar)
+		SesOnizleme.setup(flutterEngine, this)
 
 		// Widget Channel
 		MethodChannel(flutterEngine.dartExecutor.binaryMessenger, widgetsChannelName)
@@ -102,9 +123,19 @@ class MainActivity : FlutterActivity() {
 			}
 
 		// Alarm Channel - Vakit alarmları için
-		MethodChannel(flutterEngine.dartExecutor.binaryMessenger, alarmChannelName)
+		val alarmMethodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, alarmChannelName)
+		alarmChannel = alarmMethodChannel
+		alarmMethodChannel
 			.setMethodCallHandler { call, result ->
 				when (call.method) {
+					"getPendingDailyContentType" -> {
+						// Soğuk başlangıçta (uygulama kapalıyken bildirime tıklandığında)
+						// Flutter taraf hazır olunca bunu bir kez çağırıp değeri alır.
+						// Tekrar okununca aynı içerik yeniden açılmasın diye temizlenir.
+						val tur = intent?.getStringExtra(EXTRA_DAILY_CONTENT_TYPE)
+						intent?.removeExtra(EXTRA_DAILY_CONTENT_TYPE)
+						result.success(tur)
+					}
 					"scheduleAlarm" -> {
 						val prayerName = call.argument<String>("prayerName") ?: ""
 						val triggerAtMillis = call.argument<Number>("triggerAtMillis")?.toLong() ?: 0L
@@ -153,6 +184,8 @@ class MainActivity : FlutterActivity() {
 						val body = call.argument<String>("body") ?: ""
 						val triggerAtMillis = call.argument<Number>("triggerAtMillis")?.toLong() ?: 0L
 						val soundFile = call.argument<String>("soundFile") ?: "ding_dong"
+						val alarmClock = call.argument<Boolean>("alarmClock") ?: false
+						val contentType = call.argument<String>("contentType") ?: ""
 
 						if (notificationId > 0 && triggerAtMillis > System.currentTimeMillis()) {
 							val success = com.huzura.davet.alarm.DailyContentReceiver.scheduleDailyContent(
@@ -161,7 +194,9 @@ class MainActivity : FlutterActivity() {
 								title = title,
 								body = body,
 								triggerAtMillis = triggerAtMillis,
-								soundFile = soundFile
+								soundFile = soundFile,
+								useAlarmClock = alarmClock,
+								contentType = contentType
 							)
 							result.success(success)
 						} else {

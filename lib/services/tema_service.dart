@@ -854,7 +854,9 @@ class TemaService extends ChangeNotifier {
     );
 
     _mevcutTema = AppTema.ozel;
+    _sayacTemasiKullan = false; // Manual theme selected
     await prefs.setInt('tema_index', AppTema.ozel.index);
+    await prefs.setBool('sayac_temasi_kullan', false);
     notifyListeners();
   }
 

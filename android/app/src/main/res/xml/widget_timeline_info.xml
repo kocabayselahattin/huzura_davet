@@ -10,4 +10,6 @@
     android:targetCellWidth="3"
     android:targetCellHeight="2"
     android:updatePeriodMillis="0"
-    android:widgetCategory="home_screen" />
+    android:widgetCategory="home_screen"
+    android:configure="com.huzura.davet.widgets.WidgetYapilandirmaActivity"
+    android:widgetFeatures="reconfigurable" />

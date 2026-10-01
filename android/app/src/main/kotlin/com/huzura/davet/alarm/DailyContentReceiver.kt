@@ -37,7 +37,10 @@ class DailyContentReceiver : BroadcastReceiver() {
         const val EXTRA_TITLE = "title"
         const val EXTRA_BODY = "body"
         const val EXTRA_SOUND_FILE = "sound_file"
-        
+        // "verse" | "hadith" | "prayer" | "tahajjud" — bildirime tıklanınca
+        // Flutter tarafında hangi içeriğin açılacağını belirtir.
+        const val EXTRA_CONTENT_TYPE = "content_type"
+
         /**
          * Günlük içerik bildirimi zamanla
          */
@@ -47,31 +50,53 @@ class DailyContentReceiver : BroadcastReceiver() {
             title: String,
             body: String,
             triggerAtMillis: Long,
-            soundFile: String
+            soundFile: String,
+            // true ise (teheccüd) vakit/erken alarmlarıyla aynı setAlarmClock
+            // kullanılır - Doze'dan tamamen muaf, en güvenilir alarm türü
+            // (bkz. AlarmReceiver.kt). Diğer günlük içerikler (ayet/hadis/dua)
+            // bilgilendirme amaçlı olduğundan varsayılan false ile daha az
+            // öncelikli setExactAndAllowWhileIdle kullanmaya devam eder.
+            useAlarmClock: Boolean = false,
+            contentType: String = ""
         ): Boolean {
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-            
+
             val intent = Intent(context, DailyContentReceiver::class.java).apply {
                 action = ACTION_DAILY_CONTENT
                 putExtra(EXTRA_NOTIFICATION_ID, notificationId)
                 putExtra(EXTRA_TITLE, title)
                 putExtra(EXTRA_BODY, body)
                 putExtra(EXTRA_SOUND_FILE, soundFile)
+                putExtra(EXTRA_CONTENT_TYPE, contentType)
             }
-            
+
             val pendingIntent = PendingIntent.getBroadcast(
                 context,
                 notificationId,
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
-            
+
             val triggerTime = java.text.SimpleDateFormat("dd.MM.yyyy HH:mm:ss", java.util.Locale.getDefault())
                 .format(java.util.Date(triggerAtMillis))
-            Log.d(TAG, "📅 Günlük içerik zamanlanıyor: $title - $triggerTime (ID: $notificationId)")
-            
+            Log.d(TAG, "📅 Günlük içerik zamanlanıyor: $title - $triggerTime (ID: $notificationId, alarmClock: $useAlarmClock)")
+
             return try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (useAlarmClock && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && alarmManager.canScheduleExactAlarms()) {
+                    alarmManager.setAlarmClock(
+                        AlarmManager.AlarmClockInfo(triggerAtMillis, pendingIntent),
+                        pendingIntent
+                    )
+                    Log.d(TAG, "✅ Günlük içerik setAlarmClock ile zamanlandı")
+                    true
+                } else if (useAlarmClock && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    alarmManager.setAlarmClock(
+                        AlarmManager.AlarmClockInfo(triggerAtMillis, pendingIntent),
+                        pendingIntent
+                    )
+                    Log.d(TAG, "✅ Günlük içerik setAlarmClock ile zamanlandı (M+)")
+                    true
+                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     val canScheduleExact = alarmManager.canScheduleExactAlarms()
                     if (canScheduleExact) {
                         alarmManager.setExactAndAllowWhileIdle(
@@ -163,9 +188,10 @@ class DailyContentReceiver : BroadcastReceiver() {
                     val title = intent.getStringExtra(EXTRA_TITLE) ?: "Huzura Davet"
                     val body = intent.getStringExtra(EXTRA_BODY) ?: ""
                     val soundId = intent.getStringExtra(EXTRA_SOUND_FILE) ?: "ding_dong"
-                    
+                    val contentType = intent.getStringExtra(EXTRA_CONTENT_TYPE) ?: ""
+
                     Log.d(TAG, "🔔 Günlük içerik için AlarmService başlatılıyor: $title (ses ID: $soundId)")
-                    
+
                     // AlarmService'i başlat - böylece alarm sesi doğru çalar
                     val serviceIntent = Intent(context, AlarmService::class.java).apply {
                         action = "DAILY_CONTENT_ALARM"
@@ -176,6 +202,7 @@ class DailyContentReceiver : BroadcastReceiver() {
                         putExtra(AlarmReceiver.EXTRA_IS_EARLY, false)
                         putExtra(AlarmReceiver.EXTRA_EARLY_MINUTES, 0)
                         putExtra("content_body", body) // Günlük içerik için body ekstra
+                        putExtra("content_type", contentType)
                     }
                     
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

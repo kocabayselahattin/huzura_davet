@@ -70,6 +70,17 @@
             </intent-filter>
         </activity>
         
+        <!-- Widget eklenirken açılan zemin/görünürlük ekranı -->
+        <activity
+            android:name=".widgets.WidgetYapilandirmaActivity"
+            android:exported="true"
+            android:label="@string/widget_yapilandirma_ekran_adi"
+            android:theme="@style/WidgetYapilandirmaTheme">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
+
         <!-- Widget 1: Klasik Turuncu (3x2) -->
         <receiver 
             android:name=".widgets.KlasikTuruncuWidget"

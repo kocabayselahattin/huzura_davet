@@ -12,4 +12,6 @@
     android:previewLayout="@layout/widget_klasik_turuncu"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen"
+    android:configure="com.huzura.davet.widgets.WidgetYapilandirmaActivity"
+    android:widgetFeatures="reconfigurable"
     android:description="@string/widget_klasik_desc" />

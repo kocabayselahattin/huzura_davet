@@ -101,7 +101,11 @@ class HomeWidgetService {
     await HomeWidget.saveWidgetData<String>('${widgetId}_yazi_rengi_hex', yaziRengiHex);
     await HomeWidget.saveWidgetData<double>('${widgetId}_seffaflik', seffaflik);
 
-    await updateAllWidgets();
+    // zorla: true — renk değişikliği geri sayım/vakit metnine bağlı değil,
+    // bu yüzden aşağıdaki "dakika değişmedi" kısayolu burada atlanmalı.
+    // Aksi hâlde kullanıcı Kaydet'e bastığında widget ekranda hemen
+    // değişmiyor, en fazla bir dakika sonraki doğal güncellemeyi bekliyordu.
+    await updateAllWidgets(zorla: true);
   }
 
   /// Load prayer times.
@@ -123,7 +127,12 @@ class HomeWidgetService {
   }
 
   /// Update all widgets.
-  static Future<void> updateAllWidgets() async {
+  ///
+  /// [zorla] true ise, saat/geri sayım değişmemiş olsa bile widget'lara
+  /// güncelleme gönderilir. Yalnızca vakit metnine bakan kısayollar (aşağıda)
+  /// renk/arka plan gibi vakitten bağımsız değişiklikleri yakalayamaz;
+  /// bu tür değişikliklerden sonra çağıran taraf zorla:true geçmelidir.
+  static Future<void> updateAllWidgets({bool zorla = false}) async {
     final now = DateTime.now();
     final lang = LanguageService();
     final today = DateTime(now.year, now.month, now.day);
@@ -138,7 +147,7 @@ class HomeWidgetService {
     }
 
     // Skip updates when the minute has not changed.
-    if (_lastMinute == now.minute && _vakitSaatleri.isNotEmpty) {
+    if (!zorla && _lastMinute == now.minute && _vakitSaatleri.isNotEmpty) {
       return;
     }
     _lastMinute = now.minute;
@@ -152,7 +161,9 @@ class HomeWidgetService {
     // Skip updates when neither the countdown nor the current prayer has changed.
     final yeniGeriSayim = vakitBilgisi['geriSayim'] ?? '';
     final yeniMevcutVakit = vakitBilgisi['mevcutVakit'] ?? '';
-    if (_lastGeriSayim == yeniGeriSayim && _lastMevcutVakit == yeniMevcutVakit) {
+    if (!zorla &&
+        _lastGeriSayim == yeniGeriSayim &&
+        _lastMevcutVakit == yeniMevcutVakit) {
       return; // No changes.
     }
     _lastGeriSayim = yeniGeriSayim;

@@ -18,6 +18,27 @@ class NurSayacWidget extends StatefulWidget {
 class _NurSayacWidgetState extends State<NurSayacWidget>
     with TickerProviderStateMixin {
   final TemaService _temaService = TemaService();
+
+  // Counter theme: original palette; manual theme: app theme colors.
+  bool get _temaRenkleriKullan => !_temaService.sayacTemasiKullan;
+
+  List<Color> get _arkaPlanRenkleri {
+    if (!_temaRenkleriKullan) {
+      return const [Color(0xFF1A237E), Color(0xFF283593), Color(0xFF3949AB)];
+    }
+    final r = _temaService.renkler;
+    return [
+      r.arkaPlan,
+      r.kartArkaPlan,
+      Color.lerp(r.kartArkaPlan, r.vurgu, 0.35)!,
+    ];
+  }
+
+  Color get _golgeRengi =>
+      _temaRenkleriKullan ? _temaService.renkler.vurgu : const Color(0xFF3949AB);
+
+  Color get _vurguRengi =>
+      _temaRenkleriKullan ? _temaService.renkler.vurgu : Colors.cyanAccent;
   final LanguageService _languageService = LanguageService();
   Timer? _timer;
   String _gelecekVakit = '';
@@ -215,15 +236,15 @@ class _NurSayacWidgetState extends State<NurSayacWidget>
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFF1A237E), Color(0xFF283593), Color(0xFF3949AB)],
+          colors: _arkaPlanRenkleri,
         ),
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF3949AB).withOpacity(0.5),
+            color: _golgeRengi.withOpacity(0.5),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -273,8 +294,8 @@ class _NurSayacWidgetState extends State<NurSayacWidget>
                     Text(
                       hicri,
                       textScaler: TextScaler.noScaling,
-                      style: const TextStyle(
-                        color: Colors.cyanAccent,
+                      style: TextStyle(
+                        color: _vurguRengi,
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                         inherit: false,
@@ -390,7 +411,7 @@ class _NurSayacWidgetState extends State<NurSayacWidget>
                 child: LinearProgressIndicator(
                   value: _ecirOrani,
                   backgroundColor: Colors.white.withOpacity(0.1),
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.cyanAccent),
+                  valueColor: AlwaysStoppedAnimation<Color>(_vurguRengi),
                   minHeight: 5,
                 ),
               ),

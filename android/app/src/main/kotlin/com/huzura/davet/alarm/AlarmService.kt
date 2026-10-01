@@ -31,6 +31,7 @@ import android.view.KeyEvent
 import androidx.core.app.NotificationCompat
 import com.huzura.davet.MainActivity
 import com.huzura.davet.R
+import java.io.File
 import java.util.Calendar
 
 class AlarmService : Service() {
@@ -93,6 +94,9 @@ class AlarmService : Service() {
     private var currentEarlyMinutes = 0
     private var currentIsDailyContent = false
     private var currentContentBody = ""
+    // "verse" | "hadith" | "prayer" | "tahajjud" — bildirime tıklanınca
+    // Flutter tarafında hangi içeriğin açılacağını belirtir.
+    private var currentContentType = ""
     private var wasPhoneSilentBefore = false // Alarm başlamadan önce telefon sessiz miydi
 
     // Ekran kapanma (güç/kilit tuşu) algılama için BroadcastReceiver
@@ -370,6 +374,7 @@ class AlarmService : Service() {
         val isEarly = intent?.getBooleanExtra(AlarmReceiver.EXTRA_IS_EARLY, false) ?: false
         val earlyMinutes = intent?.getIntExtra(AlarmReceiver.EXTRA_EARLY_MINUTES, 0) ?: 0
         val contentBody = intent?.getStringExtra("content_body") // Günlük içerik için
+        val contentType = intent?.getStringExtra("content_type") ?: ""
         val isDailyContent = intent?.action == "DAILY_CONTENT_ALARM"
 
         // AlarmService tek bir servis örneği üzerinden çalışır; vakit alarmı,
@@ -402,6 +407,7 @@ class AlarmService : Service() {
         currentEarlyMinutes = earlyMinutes
         currentIsDailyContent = isDailyContent
         currentContentBody = contentBody ?: ""
+        currentContentType = contentType
 
         Log.d(TAG, "🎶 Gelen ses ID'si: $soundId, Erken: $isEarly, Günlük İçerik: $isDailyContent")
 
@@ -474,10 +480,24 @@ class AlarmService : Service() {
         }
     }
 
+    /// Kullanıcının cihazdan seçtiği özel ses, Flutter tarafında dosya yolu
+    /// olarak (bkz. bildirim_ayarlari_sayfa.dart / hatim_plan_service.dart)
+    /// gönderilir — kısa bir ID ("best" vb.) değil, "/" içeren tam bir yol.
+    /// Böyle bir yol geldiğinde raw kaynak aramak yerine doğrudan o dosya
+    /// çalınır.
+    private fun ozelSesDosyasi(soundId: String): File? {
+        if (!soundId.contains('/')) return null
+        val dosya = File(soundId)
+        return if (dosya.exists()) dosya else null
+    }
+
     private fun playSound(soundId: String) {
         mediaPlayer?.release()
-        val resId = getSoundResourceId(soundId)
-        Log.d(TAG, "🎵 Ses çalınıyor - ID: $soundId, Resource ID: $resId")
+        val ozelDosya = ozelSesDosyasi(soundId)
+        Log.d(
+            TAG,
+            "🎵 Ses çalınıyor - ID: $soundId, özelDosya=${ozelDosya?.absolutePath}"
+        )
 
         mediaPlayer = MediaPlayer().apply {
             // ÖNEMLİ: Ses nitelikleri setDataSource()'dan ÖNCE ayarlanmalı.
@@ -492,7 +512,21 @@ class AlarmService : Service() {
                     .setFlags(AudioAttributes.FLAG_AUDIBILITY_ENFORCED)
                     .build()
             )
-            setDataSource(applicationContext, android.net.Uri.parse("android.resource://$packageName/$resId"))
+            try {
+                if (soundId == "system_default") {
+                    val defaultUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+                    setDataSource(applicationContext, defaultUri)
+                } else if (ozelDosya != null) {
+                    setDataSource(ozelDosya.absolutePath)
+                } else {
+                    val resId = getSoundResourceId(soundId)
+                    setDataSource(applicationContext, android.net.Uri.parse("android.resource://$packageName/$resId"))
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "❌ Özel ses dosyası okunamadı, varsayılana dönülüyor: ${e.message}")
+                val resId = getSoundResourceId("best")
+                setDataSource(applicationContext, android.net.Uri.parse("android.resource://$packageName/$resId"))
+            }
             isLooping = false
             prepareAsync()
             setOnPreparedListener {
@@ -605,6 +639,11 @@ class AlarmService : Service() {
 
         val mainIntent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            // Günlük içerik bildirimine tıklanınca Flutter tarafı hangi
+            // içeriği (ayet/hadis/dua/teheccüd) açacağını bilsin diye.
+            if (currentIsDailyContent && currentContentType.isNotEmpty()) {
+                putExtra(MainActivity.EXTRA_DAILY_CONTENT_TYPE, currentContentType)
+            }
         }
         val mainPendingIntent = PendingIntent.getActivity(
             this, 10, mainIntent,
